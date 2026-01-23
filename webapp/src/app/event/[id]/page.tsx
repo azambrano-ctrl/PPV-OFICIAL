@@ -261,8 +261,8 @@ export default function EventDetailPage() {
 
                         {/* Sidebar */}
                         <div className="space-y-6">
-                            {/* Countdown Card */}
-                            {isUpcoming && (
+                            {/* Countdown Card - Only show if truly upcoming and in the future */}
+                            {isUpcoming && !isPast(eventDate) && (
                                 <div className="card p-6 bg-gradient-to-br from-primary-900/20 to-dark-900 border-primary-500/20">
                                     <h3 className="font-semibold mb-2 text-center">Comienza en:</h3>
                                     <div className="text-3xl font-bold text-center gradient-text mb-4">
@@ -286,44 +286,41 @@ export default function EventDetailPage() {
                                             <CheckCircle className="w-6 h-6" />
                                             <span className="font-semibold">Ya compraste este evento</span>
                                         </div>
-                                        {isLive ? (
+                                        {isLive || isPast(eventDate) || isFinished ? (
                                             <button
                                                 onClick={handleWatchNow}
                                                 className="w-full btn btn-primary"
                                             >
                                                 <Play className="w-5 h-5 mr-2" />
-                                                Ver Ahora
+                                                {isLive ? 'Ver Ahora (En Vivo)' : 'Ver Repetición'}
                                             </button>
-                                        ) : isUpcoming ? (
+                                        ) : (
                                             <div className="text-center py-4">
                                                 <p className="text-dark-400">El evento comenzará pronto</p>
                                                 <p className="text-sm text-dark-500 mt-2">
                                                     Recibirás una notificación cuando inicie
                                                 </p>
                                             </div>
-                                        ) : (
-                                            <button
-                                                onClick={handleWatchNow}
-                                                className="w-full btn btn-secondary"
-                                            >
-                                                Ver Repetición
-                                            </button>
                                         )}
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
                                         <div className="text-center py-4">
                                             <p className="text-3xl font-bold gradient-text mb-2">
-                                                {formatCurrency(event.price, event.currency)}
+                                                {event.price === 0 ? 'Gratis' : formatCurrency(event.price, event.currency)}
                                             </p>
                                             <p className="text-sm text-dark-400">Acceso completo al evento</p>
                                         </div>
                                         <button
                                             onClick={handlePurchaseClick}
-                                            disabled={isFinished}
+                                            disabled={event.price > 0 && (isFinished || isPast(eventDate))}
                                             className="w-full btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            {isFinished ? 'Evento Finalizado' : 'Comprar Acceso'}
+                                            {event.price > 0 && (isFinished || isPast(eventDate))
+                                                ? 'Evento Finalizado'
+                                                : event.price === 0
+                                                    ? 'Obtener Acceso Gratis'
+                                                    : 'Comprar Acceso'}
                                         </button>
                                         <ul className="space-y-2 text-sm text-dark-400">
                                             <li className="flex items-center gap-2">
