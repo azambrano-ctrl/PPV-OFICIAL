@@ -13,6 +13,7 @@ interface LiveStream {
     rtmp_url: string;
     status: string;
     mux_playback_id: string;
+    mux_live_stream_id: string;
 }
 
 export default function StreamConfigPage() {
