@@ -250,10 +250,11 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         // Check if user is admin
         if (req.user!.role !== 'admin') {
-            return res.status(403).json({
+            res.status(403).json({
                 success: false,
                 error: 'Access denied. Admin only.',
             });
+            return;
         }
 
         const result = await pool.query(
@@ -279,20 +280,22 @@ router.put(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         // Check if user is admin
         if (req.user!.role !== 'admin') {
-            return res.status(403).json({
+            res.status(403).json({
                 success: false,
                 error: 'Access denied. Admin only.',
             });
+            return;
         }
 
         const { userId } = req.params;
         const { role } = req.body;
 
         if (!['user', 'admin'].includes(role)) {
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 error: 'Invalid role. Must be "user" or "admin".',
             });
+            return;
         }
 
         const result = await pool.query(
@@ -301,10 +304,11 @@ router.put(
         );
 
         if (result.rows.length === 0) {
-            return res.status(404).json({
+            res.status(404).json({
                 success: false,
                 error: 'User not found',
             });
+            return;
         }
 
         res.json({

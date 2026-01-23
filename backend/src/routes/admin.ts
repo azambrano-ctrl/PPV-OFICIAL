@@ -106,11 +106,12 @@ router.post(
         );
 
         if (existingStream.rows.length > 0) {
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message: 'Live stream already exists for this event',
                 data: existingStream.rows[0],
             });
+            return;
         }
 
         // Create stream in Mux
@@ -175,10 +176,11 @@ router.get(
         );
 
         if (result.rows.length === 0) {
-            return res.json({
+            res.json({
                 success: true,
                 data: null,
             });
+            return;
         }
 
         // Optionally fetch up-to-date status from Mux
@@ -242,10 +244,11 @@ router.delete(
         );
 
         if (result.rows.length === 0) {
-            return res.status(404).json({
+            res.status(404).json({
                 success: false,
                 message: 'Stream not found',
             });
+            return;
         }
 
         const stream = result.rows[0];

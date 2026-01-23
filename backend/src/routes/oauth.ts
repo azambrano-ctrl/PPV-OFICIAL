@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import jwt from 'jsonwebtoken';
+const jwt = require('jsonwebtoken');
 import dotenv from 'dotenv';
 import { findUserByEmail, createUser } from '../services/userService';
 
@@ -56,10 +56,11 @@ if (isGoogleOAuthConfigured) {
 // Initiate Google OAuth
 router.get('/google', (req: Request, res: Response, next) => {
     if (!isGoogleOAuthConfigured) {
-        return res.status(503).json({
+        res.status(503).json({
             success: false,
             message: 'Google OAuth is not configured. Please add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to environment variables.',
         });
+        return;
     }
 
     passport.authenticate('google', {

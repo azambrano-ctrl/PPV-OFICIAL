@@ -89,7 +89,7 @@ router.post(
     uploadEventImages,
     asyncHandler(async (req: AuthRequest, res: Response) => {
         // Parse form data
-        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+        const files = (req as any).files;
 
         const eventData = {
             title: req.body.title,
@@ -130,11 +130,12 @@ router.put(
         uploadEventImages(req, res, (err: any) => {
             if (err) {
                 console.error('[ERROR] Multer Middleware Failed:', err);
-                return res.status(500).json({
+                res.status(500).json({
                     success: false,
                     message: 'File upload failed',
                     error: err.message || 'Unknown upload error'
                 });
+                return;
             }
             console.log('[DEBUG] Upload processed. Body keys:', Object.keys(req.body));
             next();
@@ -146,7 +147,7 @@ router.put(
             console.log('[DEBUG] Request body:', req.body);
             // console.log('[DEBUG] Files:', req.files); // Careful with binary data
 
-            const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+            const files = (req as any).files;
             const updates: any = {};
 
             // Only update fields that are provided
