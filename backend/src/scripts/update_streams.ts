@@ -38,7 +38,7 @@ async function updateAllStreams() {
         );
 
         console.log('Verification - Updated events:\n');
-        verifyResult.rows.forEach((event, index) => {
+        verifyResult.rows.forEach((event: any, index: number) => {
             console.log(`${index + 1}. ${event.title}`);
             console.log(`   Stream: ${event.stream_key}`);
             console.log(`   Thumbnail: ${event.thumbnail_url}`);

@@ -1,6 +1,6 @@
 
 import { updateEvent } from '../services/eventService';
-import { query } from '../config/database';
+import { updateEvent } from '../services/eventService';
 
 async function main() {
     const eventId = '216d6dbb-efe2-4efa-8937-4ebae242205b'; // ID from previous step

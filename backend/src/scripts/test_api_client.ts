@@ -15,7 +15,7 @@ async function testFrontendCall() {
 
         console.log('Status:', response.status);
 
-        const data = await response.json();
+        const data: any = await response.json();
         console.log('Data structure keys:', Object.keys(data));
 
         if (data.success) {
