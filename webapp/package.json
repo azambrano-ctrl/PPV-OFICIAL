@@ -13,6 +13,8 @@
         "@hookform/resolvers": "^3.10.0",
         "@stripe/react-stripe-js": "^2.9.0",
         "@stripe/stripe-js": "^2.4.0",
+        "@tailwindcss/forms": "^0.5.7",
+        "@tailwindcss/typography": "^0.5.10",
         "@types/node": "^20.10.6",
         "@types/react": "^18.2.46",
         "@types/react-dom": "^18.2.18",
@@ -40,8 +42,6 @@
         "zustand": "^4.5.7"
     },
     "devDependencies": {
-        "@tailwindcss/forms": "^0.5.7",
-        "@tailwindcss/typography": "^0.5.10",
         "eslint": "^8.56.0",
         "eslint-config-next": "14.1.0"
     }
