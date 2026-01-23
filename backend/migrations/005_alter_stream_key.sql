@@ -1,0 +1,1 @@
+ALTER TABLE events ALTER COLUMN stream_key TYPE TEXT;
