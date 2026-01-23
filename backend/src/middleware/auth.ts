@@ -60,7 +60,7 @@ export const verifyRefreshToken = (token: string): JWTPayload => {
  * Middleware to authenticate requests
  */
 export const authenticate = (
-    req: AuthRequest,
+    req: Request,
     res: Response,
     next: NextFunction
 ): void => {
@@ -78,7 +78,7 @@ export const authenticate = (
         const token = authHeader.substring(7);
         const decoded = verifyAccessToken(token);
 
-        req.user = decoded;
+        (req as any).user = decoded;
         next();
     } catch (error) {
         logger.error('Authentication error:', error);
@@ -93,11 +93,12 @@ export const authenticate = (
  * Middleware to check if user is admin
  */
 export const requireAdmin = (
-    req: AuthRequest,
+    req: Request,
     res: Response,
     next: NextFunction
 ): void => {
-    if (!req.user) {
+    const authReq = req as AuthRequest;
+    if (!authReq.user) {
         res.status(401).json({
             success: false,
             message: 'Authentication required',
@@ -105,7 +106,7 @@ export const requireAdmin = (
         return;
     }
 
-    if (req.user.role !== 'admin') {
+    if (authReq.user.role !== 'admin') {
         res.status(403).json({
             success: false,
             message: 'Admin access required',
