@@ -13,7 +13,7 @@ const router = express.Router();
  */
 router.get(
     '/',
-    asyncHandler(async (req, res) => {
+    asyncHandler(async (_req: express.Request, res: express.Response) => {
         const settings = await settingsService.getSettings();
         res.json({
             success: true,
@@ -32,12 +32,12 @@ router.put(
     authenticate,
     requireAdmin,
     uploadSettingsImages,
-    asyncHandler(async (req, res) => {
+    asyncHandler(async (req: any, res: express.Response) => {
         const updates: settingsService.UpdateSettingsDTO = {};
 
         // Handle file uploads
         if (req.files && typeof req.files === 'object' && 'homepage_background' in req.files) {
-            const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+            const files = req.files as { [fieldname: string]: any[] };
             if (files.homepage_background && files.homepage_background[0]) {
                 updates.homepage_background = `/uploads/${files.homepage_background[0].filename}`;
             }

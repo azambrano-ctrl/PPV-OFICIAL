@@ -115,6 +115,7 @@ router.get(
             console.error('Google OAuth callback error:', error);
             const webUrl = process.env.WEB_URL || 'http://localhost:3000';
             res.redirect(`${webUrl}/login?error=auth_failed`);
+            return;
         }
     }
 );

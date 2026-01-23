@@ -76,15 +76,16 @@ router.get(
             const existingToken = existingTokenResult.rows[0];
 
             // Build URL - check if it's an absolute URL or a Mux Playback ID
-            const isAbsoluteUrl = event.stream_key.startsWith('http');
+            const streamKey = event.stream_key || '';
+            const isAbsoluteUrl = streamKey.startsWith('http');
             let streamUrl: string;
 
             if (isAbsoluteUrl) {
                 // Already a complete URL (e.g., test stream)
-                streamUrl = event.stream_key;
+                streamUrl = streamKey;
             } else {
                 // It's a Mux Playback ID - construct Mux URL
-                streamUrl = `https://stream.mux.com/${event.stream_key}.m3u8`;
+                streamUrl = `https://stream.mux.com/${streamKey}.m3u8`;
             }
 
             console.log(`[Stream Token] Event: ${event.title}, Stream URL: ${streamUrl}`);
@@ -112,15 +113,16 @@ router.get(
             [userId, eventId, token, expiresAt]
         );
 
-        const isAbsoluteUrl = event.stream_key.startsWith('http');
+        const streamKey = event.stream_key || '';
+        const isAbsoluteUrl = streamKey.startsWith('http');
         let streamUrl: string;
 
         if (isAbsoluteUrl) {
             // Already a complete URL (e.g., test stream)
-            streamUrl = event.stream_key;
+            streamUrl = streamKey;
         } else {
             // It's a Mux Playback ID - construct Mux URL
-            streamUrl = `https://stream.mux.com/${event.stream_key}.m3u8`;
+            streamUrl = `https://stream.mux.com/${streamKey}.m3u8`;
         }
 
         console.log(`[New Stream Token] Event: ${event.title}, Stream URL: ${streamUrl}`);
