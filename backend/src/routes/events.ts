@@ -27,7 +27,7 @@ const eventIdSchema = z.object({
 });
 
 const eventQuerySchema = z.object({
-    status: z.enum(['upcoming', 'live', 'finished', 'cancelled']).optional(),
+    status: z.enum(['upcoming', 'live', 'finished', 'cancelled', 'reprise']).optional(),
     featured: z.string().transform(val => val === 'true').optional(),
     upcoming: z.string().transform(val => val === 'true').optional(),
 });
@@ -295,7 +295,7 @@ router.patch(
     authenticate,
     requireAdmin,
     validateParams(eventIdSchema),
-    validateBody(z.object({ status: z.enum(['upcoming', 'live', 'finished', 'cancelled']) })),
+    validateBody(z.object({ status: z.enum(['upcoming', 'live', 'finished', 'cancelled', 'reprise']) })),
     asyncHandler(async (req: AuthRequest, res: Response) => {
         const event = await updateEventStatus(req.params.id, req.body.status);
 

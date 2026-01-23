@@ -85,6 +85,10 @@
     @apply bg-blue-500/20 text-blue-400 border border-blue-500/30;
   }
 
+  .badge-purple {
+    @apply bg-purple-500/20 text-purple-400 border border-purple-500/30;
+  }
+
   /* Container */
   .container-custom {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;

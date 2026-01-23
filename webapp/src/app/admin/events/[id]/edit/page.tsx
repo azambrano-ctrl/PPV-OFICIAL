@@ -316,6 +316,7 @@ export default function EditEventPage() {
                             <option value="live">En Vivo</option>
                             <option value="finished">Finalizado</option>
                             <option value="cancelled">Cancelado</option>
+                            <option value="reprise">Reprise</option>
                         </select>
                     </div>
 
