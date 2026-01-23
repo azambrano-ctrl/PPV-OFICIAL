@@ -14,8 +14,8 @@ router.get(
     authenticate,
     requireAdmin,
     requireAdmin,
-    asyncHandler(async (req: any, res: Response) => {
-        const authReq = req as AuthRequest;
+    asyncHandler(async (_req: any, res: Response) => {
+        // const authReq = req as AuthRequest;
         // Get total users
         const usersResult = await pool.query('SELECT COUNT(*) as count FROM users');
         const totalUsers = parseInt(usersResult.rows[0].count);

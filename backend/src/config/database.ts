@@ -1,4 +1,4 @@
-import { Pool, PoolClient } from 'pg';
+const { Pool } = require('pg');
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -40,7 +40,7 @@ export const query = async (text: string, params?: any[]) => {
 /**
  * Get a client from the pool for transactions
  */
-export const getClient = async (): Promise<PoolClient> => {
+export const getClient = async (): Promise<any> => {
     const client = await pool.connect();
     return client;
 };
@@ -49,7 +49,7 @@ export const getClient = async (): Promise<PoolClient> => {
  * Execute a transaction with automatic rollback on error
  */
 export const transaction = async <T>(
-    callback: (client: PoolClient) => Promise<T>
+    callback: (client: any) => Promise<T>
 ): Promise<T> => {
     const client = await getClient();
     try {
