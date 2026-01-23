@@ -203,11 +203,11 @@ export default function EventDetailPage() {
                     <div className="flex flex-wrap items-center gap-6 text-dark-300">
                         <div className="flex items-center gap-2">
                             <Calendar className="w-5 h-5" />
-                            <span>{formatDate(event.event_date, 'PPP', { locale: es })}</span>
+                            <span>{formatDate(event.event_date, 'PPP')}</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="w-5 h-5" />
-                            <span>{formatDate(event.event_date, 'p', { locale: es })}</span>
+                            <span>{formatDate(event.event_date, 'p')}</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <DollarSign className="w-5 h-5" />
@@ -239,7 +239,7 @@ export default function EventDetailPage() {
                                 <div className="grid md:grid-cols-2 gap-6">
                                     <div>
                                         <p className="text-dark-500 text-sm mb-1">Fecha y Hora</p>
-                                        <p className="font-semibold">{formatDate(event.event_date, 'PPPp', { locale: es })}</p>
+                                        <p className="font-semibold">{formatDate(event.event_date, 'PPPp')}</p>
                                     </div>
                                     <div>
                                         <p className="text-dark-500 text-sm mb-1">Duración Estimada</p>
