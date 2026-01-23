@@ -10,7 +10,7 @@ async function updateAllStreams() {
 
         console.log(`Found ${result.rows.length} events:\n`);
 
-        result.rows.forEach((event, index) => {
+        result.rows.forEach((event: any, index: number) => {
             console.log(`${index + 1}. "${event.title}"`);
             console.log(`   ID: ${event.id}`);
             const streamPreview = event.stream_key?.substring(0, 60) || 'NULL';

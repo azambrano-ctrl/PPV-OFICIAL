@@ -1,4 +1,4 @@
-import { query } from './src/config/database';
+import { query } from '../config/database';
 
 /**
  * Script para actualizar el evento con un stream de prueba de Mux

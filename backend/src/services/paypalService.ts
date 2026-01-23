@@ -1,4 +1,4 @@
-import paypal from '@paypal/checkout-server-sdk';
+const paypal = require('@paypal/checkout-server-sdk');
 import { query, transaction } from '../config/database';
 import logger from '../config/logger';
 
@@ -16,7 +16,7 @@ const getPayPalEnvironment = () => {
         : new paypal.core.SandboxEnvironment(clientId, clientSecret);
 };
 
-let client: paypal.core.PayPalHttpClient;
+let client: any;
 
 try {
     const environment = getPayPalEnvironment();

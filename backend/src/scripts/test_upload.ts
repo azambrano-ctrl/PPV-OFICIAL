@@ -26,7 +26,7 @@ async function testUpload() {
 
         // 2. Get Event ID
         const listRes = await fetch(`${API_URL}/events`);
-        const listData = await listRes.json();
+        const listData: any = await listRes.json();
 
         if (!listData.success || listData.data.length === 0) {
             console.error('No events found to update');
@@ -65,3 +65,4 @@ async function testUpload() {
 }
 
 testUpload();
+export { };

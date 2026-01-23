@@ -13,7 +13,7 @@ async function updateMuxStream() {
         );
 
         console.log('Eventos disponibles:\n');
-        events.rows.forEach((event, index) => {
+        events.rows.forEach((event: any, index: number) => {
             console.log(`${index + 1}. ${event.title}`);
             console.log(`   ID: ${event.id}`);
             console.log(`   Status: ${event.status}`);
