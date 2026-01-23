@@ -111,8 +111,8 @@ export default function ImageUpload({
                     onDragLeave={handleDragLeave}
                     onClick={() => fileInputRef.current?.click()}
                     className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${isDragging
-                            ? 'border-red-600 bg-red-600/10'
-                            : 'border-dark-700 hover:border-dark-600 bg-dark-800/50'
+                        ? 'border-red-600 bg-red-600/10'
+                        : 'border-dark-700 hover:border-dark-600 bg-dark-800/50'
                         }`}
                 >
                     <div className="flex flex-col items-center gap-3">
