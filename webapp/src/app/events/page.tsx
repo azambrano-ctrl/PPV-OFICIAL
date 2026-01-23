@@ -116,6 +116,7 @@ export default function EventsPage() {
                                 <option value="upcoming">Próximamente</option>
                                 <option value="live">En Vivo</option>
                                 <option value="finished">Finalizados</option>
+                                <option value="reprise">Reprise</option>
                             </select>
                         </div>
                     </div>

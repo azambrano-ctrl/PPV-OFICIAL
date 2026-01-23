@@ -51,7 +51,7 @@ export default function HomePage() {
 
             // Filter strictly for live and upcoming, ignoring finished/cancelled
             const activeEvents = allEventsRes.data.data
-                .filter((e: any) => e.status === 'live' || e.status === 'upcoming')
+                .filter((e: any) => e.status === 'live' || e.status === 'upcoming' || e.status === 'reprise')
                 .sort((a: any, b: any) => {
                     // Start with Live, then date asc
                     if (a.status === 'live' && b.status !== 'live') return -1;
@@ -262,11 +262,8 @@ export default function HomePage() {
 
                                         {/* Status Badge */}
                                         <div className="absolute top-4 left-4">
-                                            <span className={`badge-ufc ${event.status === 'live'
-                                                ? 'bg-red-600 text-white'
-                                                : 'bg-gray-900/90 text-gray-300 border border-gray-700'
-                                                }`}>
-                                                {event.status === 'live' ? 'EN VIVO' : getEventStatusText(event.status).toUpperCase()}
+                                            <span className={`badge ${getEventStatusColor(event.status)}`}>
+                                                {getEventStatusText(event.status)}
                                             </span>
                                         </div>
 
