@@ -1,6 +1,6 @@
 
 import { getAllEvents } from '../services/eventService';
-import { query } from '../config/database';
+
 
 async function main() {
     try {

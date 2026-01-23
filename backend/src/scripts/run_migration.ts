@@ -19,7 +19,7 @@ async function runMigration() {
             'SELECT title, stream_key, thumbnail_url FROM events ORDER BY created_at DESC'
         );
 
-        result.rows.forEach((event, index) => {
+        result.rows.forEach((event: any, index: number) => {
             console.log(`${index + 1}. ${event.title}`);
             console.log(`   Stream: ${event.stream_key}`);
             console.log(`   Thumbnail: ${event.thumbnail_url}`);
