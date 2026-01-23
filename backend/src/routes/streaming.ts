@@ -203,15 +203,16 @@ router.get(
         }
 
         // Build URL with token
-        const isAbsoluteUrl = event.stream_key.startsWith('http');
+        const streamKey = event.stream_key || '';
+        const isAbsoluteUrl = streamKey.startsWith('http');
         let streamUrl: string;
 
         if (isAbsoluteUrl) {
             // Already a complete URL
-            streamUrl = `${event.stream_key}${event.stream_key.includes('?') ? '&' : '?'}token=${token}`;
+            streamUrl = `${streamKey}${streamKey.includes('?') ? '&' : '?'}token=${token}`;
         } else {
             // It's a Mux Playback ID
-            streamUrl = `https://stream.mux.com/${event.stream_key}.m3u8?token=${token}`;
+            streamUrl = `https://stream.mux.com/${streamKey}.m3u8?token=${token}`;
         }
 
         res.json({
@@ -310,7 +311,8 @@ router.get(
         }
 
         // Only proxy external URLs
-        if (!event.stream_key.startsWith('http')) {
+        const streamKey = event.stream_key || '';
+        if (!streamKey.startsWith('http')) {
             res.status(400).json({
                 success: false,
                 message: 'This endpoint only proxies external streams',
@@ -320,7 +322,7 @@ router.get(
 
         try {
             // Fetch the external stream
-            const response = await axios.get(event.stream_key, {
+            const response = await axios.get(streamKey, {
                 responseType: 'stream',
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
