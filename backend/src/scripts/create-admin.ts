@@ -1,5 +1,5 @@
 import pool from '../config/database';
-import bcrypt from 'bcryptjs';
+const bcrypt = require('bcryptjs');
 
 async function createAdminUser() {
     try {
@@ -25,7 +25,7 @@ async function createAdminUser() {
         }
 
         // Create admin user
-        const result = await pool.query(
+        await pool.query(
             `INSERT INTO users (email, password_hash, full_name, role)
              VALUES ($1, $2, $3, $4)
              RETURNING id, email, full_name, role`,

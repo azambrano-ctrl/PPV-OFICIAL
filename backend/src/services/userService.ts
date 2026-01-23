@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+const bcrypt = require('bcryptjs');
 import { query } from '../config/database';
 import { generateAccessToken, generateRefreshToken, JWTPayload } from '../middleware/auth';
 

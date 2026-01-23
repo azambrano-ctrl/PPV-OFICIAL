@@ -7,7 +7,7 @@ async function checkEventImages() {
         );
 
         console.log('Found', result.rows.length, 'events\n');
-        result.rows.forEach((event, index) => {
+        result.rows.forEach((event: any, index: number) => {
             console.log(`--- Event ${index + 1} ---`);
             console.log('Title:', event.title);
             console.log('Thumbnail URL:', event.thumbnail_url);
