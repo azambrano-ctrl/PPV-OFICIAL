@@ -6,6 +6,7 @@ import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import ImageUpload from '@/components/admin/ImageUpload';
 import { eventsAPI, handleAPIError } from '@/lib/api';
+import { getImageUrl } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
 export default function EditEventPage() {
@@ -268,7 +269,7 @@ export default function EditEventPage() {
 
                     <ImageUpload
                         label="Miniatura (Thumbnail)"
-                        value={formData.thumbnail_url}
+                        value={getImageUrl(formData.thumbnail_url)}
                         onChange={(file, preview) => {
                             setThumbnailFile(file);
                             if (file === null && formData.thumbnail_url) {
@@ -284,7 +285,7 @@ export default function EditEventPage() {
 
                     <ImageUpload
                         label="Banner (Hero Image)"
-                        value={formData.banner_url}
+                        value={getImageUrl(formData.banner_url)}
                         onChange={(file, preview) => {
                             setBannerFile(file);
                             if (file === null && formData.banner_url) {
