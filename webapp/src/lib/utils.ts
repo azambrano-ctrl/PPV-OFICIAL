@@ -83,6 +83,7 @@ export const truncate = (text: string, length: number = 100): string => {
  * Get event status badge color
  */
 export const getEventStatusColor = (status: string): string => {
+    const s = (status || '').toLowerCase();
     const colors: Record<string, string> = {
         upcoming: 'badge-info',
         live: 'badge-success',
@@ -90,7 +91,7 @@ export const getEventStatusColor = (status: string): string => {
         cancelled: 'badge-danger',
         reprise: 'badge-purple',
     };
-    return colors[status] || 'badge-info';
+    return colors[s] || 'badge-info';
 };
 
 /**

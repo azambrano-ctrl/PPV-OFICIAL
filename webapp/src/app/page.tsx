@@ -130,13 +130,21 @@ export default function HomePage() {
                 {/* Content */}
                 <div className="container-custom relative z-10 py-32">
                     <div className="max-w-4xl">
-                        {/* Live Badge */}
-                        {mainEvent?.status === 'live' && (
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-600 mb-6 animate-pulse">
-                                <div className="w-2 h-2 bg-white rounded-full animate-ping" />
-                                <span className="text-sm font-bold text-white uppercase tracking-wider">
-                                    EN VIVO AHORA
-                                </span>
+                        {/* Status Badge */}
+                        {mainEvent && (
+                            <div className="mb-6">
+                                {mainEvent.status === 'live' ? (
+                                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-600 animate-pulse">
+                                        <div className="w-2 h-2 bg-white rounded-full animate-ping" />
+                                        <span className="text-sm font-bold text-white uppercase tracking-wider">
+                                            EN VIVO AHORA
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <span className={`badge ${getEventStatusColor(mainEvent.status)} px-4 py-2 text-sm uppercase tracking-wider`}>
+                                        {getEventStatusText(mainEvent.status)}
+                                    </span>
+                                )}
                             </div>
                         )}
 
