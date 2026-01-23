@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle, Loader2, AlertCircle, Play } from 'lucide-react';
@@ -8,7 +8,7 @@ import { paymentsAPI } from '@/lib/api';
 import Navbar from '@/components/Navbar';
 import toast from 'react-hot-toast';
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -50,55 +50,69 @@ export default function PaymentSuccessPage() {
     }, [searchParams]);
 
     return (
+        <div className="card max-w-md w-full p-8 text-center">
+            {status === 'loading' && (
+                <div className="flex flex-col items-center">
+                    <Loader2 className="w-16 h-16 text-primary-500 animate-spin mb-4" />
+                    <h2 className="text-2xl font-bold mb-2">Procesando Pago</h2>
+                    <p className="text-dark-400">Por favor espera un momento...</p>
+                </div>
+            )}
+
+            {status === 'success' && (
+                <div className="flex flex-col items-center">
+                    <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-6">
+                        <CheckCircle className="w-8 h-8 text-green-500" />
+                    </div>
+                    <h2 className="text-2xl font-bold mb-2 text-green-500">¡Pago Exitoso!</h2>
+                    <p className="text-dark-400 mb-8">
+                        Ya tienes acceso al evento. Disfruta del combate.
+                    </p>
+                    <Link href="/events" className="btn btn-primary w-full flex items-center justify-center gap-2">
+                        <Play className="w-5 h-5" />
+                        Ir a mis Eventos
+                    </Link>
+                </div>
+            )}
+
+            {status === 'error' && (
+                <div className="flex flex-col items-center">
+                    <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-6">
+                        <AlertCircle className="w-8 h-8 text-red-500" />
+                    </div>
+                    <h2 className="text-2xl font-bold mb-2 text-red-500">Error en el Pago</h2>
+                    <p className="text-dark-400 mb-8">
+                        {message}
+                    </p>
+                    <div className="space-y-3 w-full">
+                        <Link href="/events" className="btn btn-primary w-full">
+                            Intentar de nuevo
+                        </Link>
+                        <Link href="/" className="btn btn-secondary w-full block">
+                            Volver al Inicio
+                        </Link>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+export default function PaymentSuccessPage() {
+    return (
         <div className="min-h-screen flex flex-col bg-dark-950">
             <Navbar />
-
             <div className="flex-1 flex items-center justify-center p-4">
-                <div className="card max-w-md w-full p-8 text-center">
-                    {status === 'loading' && (
+                <Suspense fallback={
+                    <div className="card max-w-md w-full p-8 text-center">
                         <div className="flex flex-col items-center">
                             <Loader2 className="w-16 h-16 text-primary-500 animate-spin mb-4" />
-                            <h2 className="text-2xl font-bold mb-2">Procesando Pago</h2>
-                            <p className="text-dark-400">Por favor espera un momento...</p>
+                            <h2 className="text-2xl font-bold mb-2">Cargando...</h2>
                         </div>
-                    )}
-
-                    {status === 'success' && (
-                        <div className="flex flex-col items-center">
-                            <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-6">
-                                <CheckCircle className="w-8 h-8 text-green-500" />
-                            </div>
-                            <h2 className="text-2xl font-bold mb-2 text-green-500">¡Pago Exitoso!</h2>
-                            <p className="text-dark-400 mb-8">
-                                Ya tienes acceso al evento. Disfruta del combate.
-                            </p>
-                            <Link href="/events" className="btn btn-primary w-full flex items-center justify-center gap-2">
-                                <Play className="w-5 h-5" />
-                                Ir a mis Eventos
-                            </Link>
-                        </div>
-                    )}
-
-                    {status === 'error' && (
-                        <div className="flex flex-col items-center">
-                            <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-6">
-                                <AlertCircle className="w-8 h-8 text-red-500" />
-                            </div>
-                            <h2 className="text-2xl font-bold mb-2 text-red-500">Error en el Pago</h2>
-                            <p className="text-dark-400 mb-8">
-                                {message}
-                            </p>
-                            <div className="space-y-3 w-full">
-                                <Link href="/events" className="btn btn-primary w-full">
-                                    Intentar de nuevo
-                                </Link>
-                                <Link href="/" className="btn btn-secondary w-full block">
-                                    Volver al Inicio
-                                </Link>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                    </div>
+                }>
+                    <PaymentSuccessContent />
+                </Suspense>
             </div>
         </div>
     );
