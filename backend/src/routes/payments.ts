@@ -58,7 +58,6 @@ router.post(
             });
             return;
         }
-
         const paymentData = {
             userId: req.user!.userId,
             eventId,
@@ -66,6 +65,74 @@ router.post(
             currency: event.currency,
             couponCode,
         };
+
+        // Handle Free Events (Price 0)
+        if (event.price === 0) {
+            // Directly create a completed purchase
+            const { query } = require('../config/database');
+            const { generateStreamToken } = require('../middleware/auth');
+            // uuidv4 import removed as it was unused
+
+            // Check if user already has it (idempotency)
+            const existing = await query(
+                'SELECT * FROM purchases WHERE user_id = $1 AND event_id = $2 AND payment_status = \'completed\'',
+                [req.user!.userId, eventId]
+            );
+
+            if (existing.rows.length > 0) {
+                res.json({
+                    success: true,
+                    message: 'Already purchased',
+                    data: {
+                        paymentMethod: 'free',
+                        status: 'completed'
+                    }
+                });
+                return;
+            }
+
+            // purchaseId removed as it was unused
+
+            const result = await query(
+                `INSERT INTO purchases (
+                    user_id, event_id, amount, currency, payment_method,
+                    payment_status, coupon_code, discount_amount, final_amount
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+                [
+                    req.user!.userId,
+                    eventId,
+                    0,
+                    event.currency,
+                    'free',
+                    'completed',
+                    couponCode || null,
+                    0,
+                    0,
+                ]
+            );
+
+            const purchase = result.rows[0];
+
+            // Generate token
+            const streamToken = generateStreamToken(req.user!.userId, eventId);
+            const expiresAt = new Date(Date.now() + 3 * 60 * 60 * 1000); // 3 hours
+
+            await query(
+                `INSERT INTO stream_tokens (user_id, event_id, token, expires_at)
+                VALUES ($1, $2, $3, $4)`,
+                [req.user!.userId, eventId, streamToken, expiresAt]
+            );
+
+            res.json({
+                success: true,
+                data: {
+                    paymentMethod: 'free',
+                    status: 'completed',
+                    purchaseId: purchase.id
+                },
+            });
+            return;
+        }
 
         if (paymentMethod === 'stripe') {
             const paymentIntent = await createPaymentIntent(paymentData);

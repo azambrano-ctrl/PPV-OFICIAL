@@ -19,6 +19,7 @@ export default function NewEventPage() {
         currency: 'USD',
         status: 'upcoming',
         is_featured: false,
+        is_free: false,
         stream_url: '',
     });
     const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
@@ -140,7 +141,27 @@ export default function NewEventPage() {
                                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                                 className="input"
                                 placeholder="29.99"
+                                disabled={formData.is_free}
                             />
+                            <div className="mt-2 flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="is_free"
+                                    checked={formData.is_free}
+                                    onChange={(e) => {
+                                        const isFree = e.target.checked;
+                                        setFormData({
+                                            ...formData,
+                                            is_free: isFree,
+                                            price: isFree ? '0' : formData.price
+                                        });
+                                    }}
+                                    className="w-4 h-4 bg-dark-700 border-dark-600 rounded text-red-600 focus:ring-red-600"
+                                />
+                                <label htmlFor="is_free" className="text-sm text-gray-300">
+                                    Evento Gratis (Precio $0)
+                                </label>
+                            </div>
                         </div>
 
                         <div>

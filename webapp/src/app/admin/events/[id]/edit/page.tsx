@@ -23,6 +23,7 @@ export default function EditEventPage() {
         currency: 'USD',
         status: 'upcoming',
         is_featured: false,
+        is_free: false,
         stream_url: '',
         thumbnail_url: '',
         banner_url: '',
@@ -55,6 +56,7 @@ export default function EditEventPage() {
                 currency: event.currency || 'USD',
                 status: event.status || 'upcoming',
                 is_featured: event.is_featured || false,
+                is_free: event.price === '0' || event.price === 0,
                 stream_url: event.stream_url || '',
                 thumbnail_url: event.thumbnail_url || '',
                 banner_url: event.banner_url || '',
@@ -220,7 +222,27 @@ export default function EditEventPage() {
                                 value={formData.price}
                                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                                 className="input"
+                                disabled={formData.is_free}
                             />
+                            <div className="mt-2 flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="is_free"
+                                    checked={formData.is_free}
+                                    onChange={(e) => {
+                                        const isFree = e.target.checked;
+                                        setFormData({
+                                            ...formData,
+                                            is_free: isFree,
+                                            price: isFree ? '0' : formData.price
+                                        });
+                                    }}
+                                    className="w-4 h-4 bg-dark-700 border-dark-600 rounded text-red-600 focus:ring-red-600"
+                                />
+                                <label htmlFor="is_free" className="text-sm text-gray-300">
+                                    Evento Gratis (Precio $0)
+                                </label>
+                            </div>
                         </div>
 
                         <div>
