@@ -15,8 +15,9 @@ dist/
 build/
 
 # Uploads
-uploads/*
-!uploads/.gitkeep
+# Uploads
+# uploads/*
+# !uploads/.gitkeep
 
 # IDE
 .vscode/

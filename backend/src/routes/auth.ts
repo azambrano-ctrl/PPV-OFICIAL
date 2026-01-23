@@ -11,7 +11,10 @@ import {
     updateUserProfile,
     changePassword,
     getUserPurchases,
+    createPasswordResetToken,
+    resetPassword,
 } from '../services/userService';
+import { sendPasswordResetEmail } from '../services/emailService';
 import {
     authenticate,
     AuthRequest,
@@ -43,6 +46,15 @@ const updateProfileSchema = z.object({
 const changePasswordSchema = z.object({
     currentPassword: z.string().min(1, 'Current password is required'),
     newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+});
+
+const forgotPasswordSchema = z.object({
+    email: z.string().email('Invalid email address'),
+});
+
+const resetPasswordSchema = z.object({
+    token: z.string().min(1, 'Token is required'),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
 /**
@@ -218,6 +230,64 @@ router.post(
             res.status(400).json({
                 success: false,
                 message: error.message,
+            });
+        }
+    })
+);
+
+/**
+ * POST /api/auth/forgot-password
+ * Request password reset
+ */
+router.post(
+    '/forgot-password',
+    validateBody(forgotPasswordSchema),
+    asyncHandler(async (req: Request, res: Response) => {
+        const { email } = req.body;
+
+        try {
+            const token = await createPasswordResetToken(email);
+            await sendPasswordResetEmail(email, token);
+
+            res.json({
+                success: true,
+                message: 'If an account exists with this email, a password reset link has been sent.',
+            });
+        } catch (error: any) {
+            // Always return success to prevent email enumeration
+            if (error.message === 'User not found') {
+                res.json({
+                    success: true,
+                    message: 'If an account exists with this email, a password reset link has been sent.',
+                });
+                return;
+            }
+            throw error;
+        }
+    })
+);
+
+/**
+ * POST /api/auth/reset-password
+ * Reset password with token
+ */
+router.post(
+    '/reset-password',
+    validateBody(resetPasswordSchema),
+    asyncHandler(async (req: Request, res: Response) => {
+        const { token, password } = req.body;
+
+        try {
+            await resetPassword(token, password);
+
+            res.json({
+                success: true,
+                message: 'Password has been reset successfully',
+            });
+        } catch (error: any) {
+            res.status(400).json({
+                success: false,
+                message: error.message || 'Invalid or expired token',
             });
         }
     })

@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 import { query } from '../config/database';
 import { generateAccessToken, generateRefreshToken, JWTPayload } from '../middleware/auth';
+import crypto from 'crypto';
 
 export interface User {
     id: string;
@@ -205,4 +206,57 @@ export const getUserPurchases = async (userId: string) => {
     );
 
     return result.rows;
+};
+
+/**
+ * Create password reset token
+ */
+export const createPasswordResetToken = async (email: string): Promise<string> => {
+    const user = await findUserByEmail(email);
+
+    if (!user) {
+        throw new Error('User not found');
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 3600000); // 1 hour
+
+    await query(
+        'UPDATE users SET reset_password_token = $1, reset_password_expires = $2 WHERE id = $3',
+        [token, expires, user.id]
+    );
+
+    return token;
+};
+
+/**
+ * Reset password with token
+ */
+export const resetPassword = async (token: string, newPassword: string): Promise<void> => {
+    // Find user with valid token
+    const result = await query(
+        `SELECT * FROM users 
+         WHERE reset_password_token = $1 
+         AND reset_password_expires > NOW()`,
+        [token]
+    );
+
+    const user = result.rows[0];
+
+    if (!user) {
+        throw new Error('Invalid or expired password reset token');
+    }
+
+    // Hash new password
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+    // Update password and clear token
+    await query(
+        `UPDATE users 
+         SET password_hash = $1, 
+             reset_password_token = NULL, 
+             reset_password_expires = NULL 
+         WHERE id = $2`,
+        [newPasswordHash, user.id]
+    );
 };
