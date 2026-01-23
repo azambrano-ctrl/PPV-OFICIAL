@@ -25,9 +25,15 @@ const app = express();
 const httpServer = createServer(app);
 
 // Socket.io setup for real-time chat
+const allowedOrigins = [
+    process.env.WEB_URL,
+    'http://localhost:3000',
+    'http://localhost:5173'
+].filter((origin): origin is string => !!origin);
+
 const io = new Server(httpServer, {
     cors: {
-        origin: process.env.WEB_URL || 'http://localhost:3000',
+        origin: allowedOrigins,
         credentials: true,
     },
 });
@@ -44,7 +50,7 @@ app.use(helmet({
     }
 }));
 app.use(cors({
-    origin: process.env.WEB_URL || 'http://localhost:3000',
+    origin: allowedOrigins,
     credentials: true,
 }));
 
@@ -226,6 +232,7 @@ httpServer.listen(PORT, () => {
     logger.info(`🚀 Server running on port ${PORT}`);
     logger.info(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
     logger.info(`🔗 API URL: http://localhost:${PORT}`);
+    logger.info(`🛡️ Allowed Origins: ${allowedOrigins.join(', ')}`);
 });
 
 // Graceful shutdown
