@@ -133,6 +133,14 @@ router.get(
             streamUrl = `https://stream.mux.com/${streamKey}.m3u8`;
         }
 
+        // FORCE PROXY FOR INSECURE STREAMS (Mixed Content Fix)
+        if (streamUrl.startsWith('http:')) {
+            const protocol = req.protocol;
+            const host = req.get('host');
+            streamUrl = `${protocol}://${host}/api/streaming/${eventId}/proxy?token=${token}`;
+            console.log('Insecure stream detected. Wrapping in proxy:', streamUrl);
+        }
+
         console.log(`[New Stream Token] Event: ${event.title}, Stream URL: ${streamUrl}`);
 
         res.json({
