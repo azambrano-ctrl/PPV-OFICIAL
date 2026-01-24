@@ -76,7 +76,10 @@ export const sendEmail = async (to: string, subject: string, html: string) => {
  * Send password reset email
  */
 export const sendPasswordResetEmail = async (to: string, token: string) => {
-    const webUrl = process.env.WEB_URL || 'http://localhost:3000';
+    const webUrl = process.env.WEB_URL;
+    if (!webUrl) {
+        logger.error('WEB_URL no definida. El enlace de restablecimiento de contraseña puede no funcionar.');
+    }
     const resetLink = `${webUrl}/auth/reset-password?token=${token}`;
 
     const subject = 'Restablecer contraseña - PPV Streaming';

@@ -30,12 +30,13 @@ const httpServer = createServer(app);
 const allowedOrigins = [
     process.env.WEB_URL,
     'http://localhost:3000',
-    'http://localhost:5173'
-].filter((origin): origin is string => !!origin);
+    'http://localhost:5173',
+    '*' // Fallback for debugging, though specific origins are better
+];
 
 const io = new Server(httpServer, {
     cors: {
-        origin: allowedOrigins,
+        origin: true, // Allow any origin
         credentials: true,
     },
 });
@@ -48,11 +49,12 @@ app.use(helmet({
             defaultSrc: ["'self'"],
             imgSrc: ["'self'", "data:", "blob:", "*"],
             mediaSrc: ["'self'", "blob:", "*"],
+            connectSrc: ["'self'", "*"], // Allow connections to everywhere (for API/Socket)
         }
     }
 }));
 app.use(cors({
-    origin: allowedOrigins,
+    origin: true, // Reflects the request origin, effectively allowing all
     credentials: true,
 }));
 

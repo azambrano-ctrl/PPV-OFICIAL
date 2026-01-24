@@ -17,14 +17,14 @@ const isGoogleOAuthConfigured = !!(googleClientId && googleClientSecret);
 
 // Helper to get base URLs with debug logging
 const getApiUrl = () => {
-    const url = process.env.API_URL || 'http://localhost:5000';
-    console.log('OAuth using API_URL:', url);
-    return url;
+    const url = process.env.API_URL;
+    if (!url) console.warn('⚠️ API_URL no está configurada en variables de entorno');
+    return url || '';
 };
 const getWebUrl = () => {
-    const url = process.env.WEB_URL || 'http://localhost:3000';
-    console.log('OAuth using WEB_URL:', url);
-    return url;
+    const url = process.env.WEB_URL;
+    if (!url) console.warn('⚠️ WEB_URL no está configurada en variables de entorno');
+    return url || '';
 };
 
 if (isGoogleOAuthConfigured) {
