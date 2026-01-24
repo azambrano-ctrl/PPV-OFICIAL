@@ -60,4 +60,32 @@ router.get('/fix-images', async (_req: Request, res: Response) => {
     }
 });
 
+router.get('/restore-images', async (_req: Request, res: Response) => {
+    try {
+        console.log('Restoring images to public placeholders...');
+
+        // Use a reliable public image (Fight/MMA themed if possible, or generic)
+        const placeholderThumb = 'https://images.unsplash.com/photo-1555597673-b21d5c935865?auto=format&fit=crop&w=600&q=80';
+        const placeholderBanner = 'https://images.unsplash.com/photo-1555597673-b21d5c935865?auto=format&fit=crop&w=1200&q=80';
+
+        // Update all events that have local upload paths (starting with /uploads)
+        await query(
+            `UPDATE events 
+             SET thumbnail_url = $1, banner_url = $2 
+             WHERE thumbnail_url LIKE '/uploads/%' OR banner_url LIKE '/uploads/%'`,
+            [placeholderThumb, placeholderBanner]
+        );
+
+        res.json({
+            success: true,
+            message: 'All local image paths have been reset to public placeholders. You should now see images.',
+            placeholder: placeholderThumb
+        });
+
+    } catch (error) {
+        console.error('Error restoring images:', error);
+        res.status(500).json({ success: false, error: 'Internal Server Error' });
+    }
+});
+
 export default router;
