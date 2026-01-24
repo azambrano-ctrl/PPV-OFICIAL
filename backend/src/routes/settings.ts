@@ -39,7 +39,7 @@ router.put(
         if (req.files && typeof req.files === 'object' && 'homepage_background' in req.files) {
             const files = req.files as { [fieldname: string]: any[] };
             if (files.homepage_background && files.homepage_background[0]) {
-                updates.homepage_background = `/uploads/${files.homepage_background[0].filename}`;
+                updates.homepage_background = files.homepage_background[0].path;
             }
         }
 

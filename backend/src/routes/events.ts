@@ -100,8 +100,8 @@ router.post(
             status: req.body.status || 'upcoming',
             is_featured: req.body.is_featured === 'true',
             stream_url: req.body.stream_url || null,
-            thumbnail_url: files?.thumbnail ? `/uploads/${files.thumbnail[0].filename}` : undefined,
-            banner_url: files?.banner ? `/uploads/${files.banner[0].filename}` : undefined,
+            thumbnail_url: files?.thumbnail ? files.thumbnail[0].path : undefined,
+            banner_url: files?.banner ? files.banner[0].path : undefined,
             created_by: req.user!.userId,
         };
 
@@ -185,14 +185,14 @@ router.put(
 
             // Handle thumbnail
             if (files?.thumbnail) {
-                updates.thumbnail_url = `/uploads/${files.thumbnail[0].filename}`;
+                updates.thumbnail_url = files.thumbnail[0].path;
             } else if (req.body.remove_thumbnail === 'true') {
                 updates.thumbnail_url = null;
             }
 
             // Handle banner
             if (files?.banner) {
-                updates.banner_url = `/uploads/${files.banner[0].filename}`;
+                updates.banner_url = files.banner[0].path;
             } else if (req.body.remove_banner === 'true') {
                 updates.banner_url = null;
             }

@@ -25,6 +25,7 @@
   "dependencies": {
     "@mux/mux-node": "^12.8.1",
     "@paypal/checkout-server-sdk": "^1.0.3",
+    "@supabase/supabase-js": "^2.91.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/nodemailer": "^6.4.21",
     "@types/passport": "^1.0.17",

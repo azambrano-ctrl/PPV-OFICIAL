@@ -1,31 +1,10 @@
-const multer = require('multer');
+import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
+import { Request, Response, NextFunction } from 'express';
+import { supabase, BUCKET_NAME } from '../config/supabase';
 
-// Ensure uploads directory exists
-const uploadsDir = process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads');
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Configure storage
-const storage = multer.diskStorage({
-    destination: (_req: any, _file: any, cb: any) => {
-        cb(null, uploadsDir);
-    },
-    filename: (_req: any, file: any, cb: any) => {
-        // Generate unique filename
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = path.extname(file.originalname);
-        // Sanitize filename: remove spaces, keep only nice chars
-        const nameWithoutExt = path.basename(file.originalname, ext)
-            .replace(/[^a-zA-Z0-9]/g, '-') // Replace non-alphanumeric with hyphen
-            .replace(/-+/g, '-') // Replace multiple hyphens with single one
-            .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
-
-        cb(null, `${nameWithoutExt}-${uniqueSuffix}${ext}`);
-    }
-});
+// Configure multer to store files in memory
+const storage = multer.memoryStorage();
 
 // File filter - only allow images
 const fileFilter = (_req: any, file: any, cb: any) => {
@@ -47,13 +26,102 @@ export const upload = multer({
     }
 });
 
+// Helper function to upload file to Supabase
+const uploadToSupabase = async (file: Express.Multer.File): Promise<{ publicUrl: string; filename: string }> => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    const nameWithoutExt = path.basename(file.originalname, ext)
+        .replace(/[^a-zA-Z0-9]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+
+    const filename = `${nameWithoutExt}-${uniqueSuffix}${ext}`;
+
+    // Upload to Supabase
+    const { data: _data, error } = await supabase.storage
+        .from(BUCKET_NAME)
+        .upload(filename, file.buffer, {
+            contentType: file.mimetype,
+            upsert: false
+        });
+
+    if (error) {
+        throw new Error(`Supabase upload failed: ${error.message}`);
+    }
+
+    // Get public URL
+    const { data: publicUrlData } = supabase.storage
+        .from(BUCKET_NAME)
+        .getPublicUrl(filename);
+
+    return { publicUrl: publicUrlData.publicUrl, filename };
+};
+
+// Middleware wrapper to handle uploads and Supabase transfer
+export const handleUploads = (fields: multer.Field[]) => {
+    const multerUpload = upload.fields(fields);
+
+    return (req: Request, res: Response, next: NextFunction) => {
+        multerUpload(req, res, async (err: any) => {
+            if (err) {
+                return res.status(500).json({
+                    success: false,
+                    message: 'File upload error',
+                    error: err.message
+                });
+            }
+
+            // If no files, skip
+            if (!req.files || Object.keys(req.files).length === 0) {
+                return next();
+            }
+
+            try {
+                const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+                // Iterate over all files and upload to Supabase
+                const uploadPromises = Object.keys(files).flatMap(fieldName => {
+                    return files[fieldName].map(async (file) => {
+                        const { publicUrl, filename } = await uploadToSupabase(file);
+                        // Modify the file object to include the public URL as path/filename
+                        // We use 'filename' property to store the simple name if needed, 
+                        // but ideally we want the FULL URL to be easily accessible.
+                        // Existing code uses /uploads/${filename}. 
+
+                        // Let's attach the URL to a new property 'publicUrl' AND hacks 'filename' to be usable.
+                        // Strategy: Store the full URL in 'path' (usually local path) and 'destination'.
+                        // And for compatibility with existing routes that might prepend /uploads/, 
+                        // we'll need to update the routes to NOT prepend it.
+
+                        file.filename = filename; // Set filename for compatibility
+                        file.path = publicUrl;
+                        file.destination = BUCKET_NAME;
+                        (file as any).location = publicUrl; // Common in S3 multer
+                        return file;
+                    });
+                });
+
+                await Promise.all(uploadPromises);
+                next();
+            } catch (uploadError: any) {
+                console.error('Supabase upload error:', uploadError);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to upload files to storage',
+                    error: uploadError.message
+                });
+            }
+        });
+    };
+};
+
 // Middleware for event images (thumbnail and banner)
-export const uploadEventImages = upload.fields([
+export const uploadEventImages = handleUploads([
     { name: 'thumbnail', maxCount: 1 },
     { name: 'banner', maxCount: 1 }
 ]);
 
-// Middleware for settings images (homepage background)
-export const uploadSettingsImages = upload.fields([
+// Middleware for settings images (homepage_background)
+export const uploadSettingsImages = handleUploads([
     { name: 'homepage_background', maxCount: 1 }
 ]);
