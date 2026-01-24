@@ -58,7 +58,7 @@ const uploadToSupabase = async (file: any): Promise<{ publicUrl: string; filenam
 };
 
 // Middleware wrapper to handle uploads and Supabase transfer
-export const handleUploads = (fields: multer.Field[]) => {
+export const handleUploads = (fields: { name: string; maxCount?: number }[]) => {
     const multerUpload = upload.fields(fields);
 
     return (req: Request, res: Response, next: NextFunction) => {
