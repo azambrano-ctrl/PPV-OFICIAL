@@ -12,6 +12,7 @@ export interface Event {
     banner_url?: string;
     status: 'upcoming' | 'live' | 'finished' | 'cancelled' | 'reprise';
     stream_key?: string;
+    stream_url?: string;
     max_viewers?: number;
     is_featured: boolean;
     created_by?: string;
