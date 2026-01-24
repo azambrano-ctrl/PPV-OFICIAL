@@ -83,7 +83,19 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         };
 
         // Check if HLS is supported
-        if (Hls.isSupported()) {
+        // SPECIAL CASE: If it's an MP4 file, play natively, do NOT use HLS.js
+        if (finalUrl.includes('.mp4')) {
+            console.log('MP4 detected, using native playback');
+            video.src = finalUrl;
+            video.addEventListener('loadedmetadata', handleManifestParsed);
+            video.addEventListener('error', (e) => handleError(null, { fatal: true, type: 'native', details: e }));
+
+            return () => {
+                video.removeEventListener('loadedmetadata', handleManifestParsed);
+                video.removeEventListener('error', () => { });
+            };
+        }
+        else if (Hls.isSupported()) {
             const hls = new Hls({
                 debug: false,
                 enableWorker: true,
