@@ -134,9 +134,13 @@ router.get(
         }
 
         // FORCE PROXY FOR INSECURE STREAMS (Mixed Content Fix)
+        // FORCE PROXY FOR INSECURE STREAMS (Mixed Content Fix)
+        // If the stream URL is http:// (not https), we MUST proxy it through our backend
         if (streamUrl.startsWith('http:')) {
-            const protocol = req.protocol;
-            const host = req.get('host');
+            // Render/Proxies use x-forwarded-proto. Default to https if undefined in production likely
+            const protocol = (req.headers['x-forwarded-proto'] as string) || 'https';
+            const host = req.get('host'); // domain.com
+
             streamUrl = `${protocol}://${host}/api/streaming/${eventId}/proxy?token=${token}`;
             console.log('Insecure stream detected. Wrapping in proxy:', streamUrl);
         }
