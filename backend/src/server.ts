@@ -74,7 +74,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded files
-app.use('/uploads', express.static('uploads'));
+import path from 'path';
+const uploadsDir = process.env.UPLOAD_DIR || path.join(__dirname, '../uploads');
+app.use('/uploads', express.static(uploadsDir));
 
 // Initialize Passport
 app.use(passport.initialize());
