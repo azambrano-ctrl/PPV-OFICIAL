@@ -123,7 +123,9 @@ router.get(
         const isAbsoluteUrl = streamKey.startsWith('http');
         let streamUrl: string;
 
-        if (isAbsoluteUrl) {
+        if (event.stream_url && event.stream_url.startsWith('http')) {
+            streamUrl = event.stream_url;
+        } else if (isAbsoluteUrl) {
             // Already a complete URL (e.g., test stream)
             streamUrl = streamKey;
         } else {
@@ -319,8 +321,19 @@ router.get(
         }
 
         // Only proxy external URLs
-        const streamKey = event.stream_key || '';
-        if (!streamKey.startsWith('http')) {
+        // PRIORITY: Check event.stream_url first (custom URL set by admin)
+        let streamTargetUrl = '';
+
+        if (event.stream_url && event.stream_url.startsWith('http')) {
+            streamTargetUrl = event.stream_url;
+        } else {
+            const streamKey = event.stream_key || '';
+            if (streamKey.startsWith('http')) {
+                streamTargetUrl = streamKey;
+            }
+        }
+
+        if (!streamTargetUrl) {
             res.status(400).json({
                 success: false,
                 message: 'This endpoint only proxies external streams',
@@ -329,12 +342,20 @@ router.get(
         }
 
         try {
+            // Forward Range header if present (crucial for seeking)
+            const headers: any = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            };
+
+            if (req.headers.range) {
+                headers['Range'] = req.headers.range;
+            }
+
             // Fetch the external stream
-            const response = await axios.get(streamKey, {
+            const response = await axios.get(streamTargetUrl, {
                 responseType: 'stream',
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                },
+                headers,
+                validateStatus: (status) => status >= 200 && status < 300 || status === 206 // Accept 206 Partial Content
             });
 
             // Set CORS headers to allow frontend access
