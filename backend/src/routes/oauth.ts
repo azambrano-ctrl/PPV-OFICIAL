@@ -121,21 +121,36 @@ router.get('/google/callback',
 
 // Initiate Facebook OAuth
 router.get('/facebook', (req: Request, res: Response, next) => {
+    console.log('🔵 [Facebook Auth] Starting request...');
+    console.log('🔵 [Facebook Auth] Config Check:', {
+        hasAppID: !!facebookAppId,
+        hasAppSecret: !!facebookAppSecret,
+        apiUrl: getApiUrl(),
+        webUrl: getWebUrl()
+    });
+
     if (!isFacebookOAuthConfigured) {
+        console.error('🔴 [Facebook Auth] Missing configuration!');
         return res.redirect(`${getWebUrl()}/auth/login?error=oauth_not_configured_facebook`);
     }
+
+    console.log('🔵 [Facebook Auth] Configuration OK. Delegating to Passport...');
     passport.authenticate('facebook', { scope: ['email', 'public_profile'], session: false })(req, res, next);
 });
 
 // Facebook OAuth callback
 router.get('/facebook/callback',
     (req, res, next) => {
+        console.log('🔵 [Facebook Auth] Callback received.');
         passport.authenticate('facebook', {
             session: false,
             failureRedirect: `${getWebUrl()}/auth/login?error=facebook_auth_failed`
         })(req, res, next);
     },
-    (req, res) => handleAuthSuccess(req, res)
+    (req, res) => {
+        console.log('🟢 [Facebook Auth] Authentication successful. Generating tokens...');
+        handleAuthSuccess(req, res);
+    }
 );
 
 // Shared auth success handler
