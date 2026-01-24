@@ -155,7 +155,7 @@ export default function EventDetailPage() {
     const isUpcoming = event.status === 'upcoming';
     const isFinished = event.status === 'finished';
 
-    const canWatch = hasPurchased || (isClient && user?.role === 'admin');
+    const canWatch = hasPurchased || (isClient && user?.role === 'admin') || Number(event.price) === 0;
 
     return (
         <div className="min-h-screen flex flex-col bg-dark-950">

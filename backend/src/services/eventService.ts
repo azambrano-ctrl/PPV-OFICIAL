@@ -197,6 +197,13 @@ export const userHasAccessToEvent = async (
     userId: string,
     eventId: string
 ): Promise<boolean> => {
+
+    // Check if event is free
+    const event = await getEventById(eventId);
+    if (event && (event.price === 0 || Number(event.price) === 0)) {
+        return true;
+    }
+
     const result = await query(
         `SELECT COUNT(*) as count FROM purchases
      WHERE user_id = $1 AND event_id = $2 AND payment_status = 'completed'`,
