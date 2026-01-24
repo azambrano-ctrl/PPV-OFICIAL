@@ -49,14 +49,29 @@ app.use(helmet({
             defaultSrc: ["'self'"],
             imgSrc: ["'self'", "data:", "blob:", "*"],
             mediaSrc: ["'self'", "blob:", "*"],
-            connectSrc: ["'self'", "*"], // Allow connections to everywhere (for API/Socket)
+            connectSrc: ["'self'", "*"],
         }
     }
 }));
-app.use(cors({
-    origin: true, // Reflects the request origin, effectively allowing all
-    credentials: true,
-}));
+
+// Manual CORS to fix persistent issues
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    } else {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+    }
+
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type,authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
+});
 
 // Rate limiting
 const limiter = rateLimit({
