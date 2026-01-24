@@ -8,17 +8,19 @@ export interface Settings {
     about_mission_title: string;
     about_mission_text: string;
     about_values: any; // JSONB
+    about_slider_images: any; // JSONB
     created_at: Date;
     updated_at: Date;
 }
 
 export interface UpdateSettingsDTO {
-    homepage_background?: string;
+    homepage_background?: string | null;
     about_hero_title?: string;
     about_hero_subtitle?: string;
     about_mission_title?: string;
     about_mission_text?: string;
     about_values?: any;
+    about_slider_images?: any;
 }
 
 /**
