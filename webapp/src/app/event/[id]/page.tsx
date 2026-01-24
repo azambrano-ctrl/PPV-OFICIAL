@@ -284,7 +284,11 @@ export default function EventDetailPage() {
                                     <div className="space-y-4">
                                         <div className="flex items-center gap-2 text-green-500 mb-4">
                                             <CheckCircle className="w-6 h-6" />
-                                            <span className="font-semibold">Ya compraste este evento</span>
+                                            <span className="font-semibold">
+                                                {Number(event.price) === 0 ? 'Tienes Acceso (Evento Gratuito)' :
+                                                    user?.role === 'admin' ? 'Acceso de Administrador' :
+                                                        'Ya compraste este evento'}
+                                            </span>
                                         </div>
                                         {isLive || isPast(eventDate) || isFinished ? (
                                             <button
