@@ -15,6 +15,7 @@ import streamingRoutes from './routes/streaming';
 import oauthRoutes from './routes/oauth';
 import adminRoutes from './routes/admin';
 import settingsRoutes from './routes/settings';
+import cleanupRoutes from './routes/cleanup';
 import { query } from './config/database';
 import { verifyAccessToken } from './middleware/auth';
 
@@ -102,6 +103,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/streaming', streamingRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/cleanup', cleanupRoutes); // Temporary cleanup route
 
 // Socket.io authentication middleware
 io.use((socket, next) => {
