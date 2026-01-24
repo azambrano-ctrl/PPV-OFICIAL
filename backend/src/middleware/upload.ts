@@ -27,7 +27,7 @@ export const upload = multer({
 });
 
 // Helper function to upload file to Supabase
-const uploadToSupabase = async (file: Express.Multer.File): Promise<{ publicUrl: string; filename: string }> => {
+const uploadToSupabase = async (file: any): Promise<{ publicUrl: string; filename: string }> => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(file.originalname);
     const nameWithoutExt = path.basename(file.originalname, ext)
@@ -71,13 +71,16 @@ export const handleUploads = (fields: multer.Field[]) => {
                 });
             }
 
+            // Cast req to any to access files without TS errors
+            const request = req as any;
+
             // If no files, skip
-            if (!req.files || Object.keys(req.files).length === 0) {
+            if (!request.files || Object.keys(request.files).length === 0) {
                 return next();
             }
 
             try {
-                const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+                const files = request.files as { [fieldname: string]: any[] };
 
                 // Iterate over all files and upload to Supabase
                 const uploadPromises = Object.keys(files).flatMap(fieldName => {
