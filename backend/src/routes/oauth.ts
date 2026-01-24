@@ -15,6 +15,18 @@ const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 const isGoogleOAuthConfigured = !!(googleClientId && googleClientSecret);
 
+// Helper to get base URLs with debug logging
+const getApiUrl = () => {
+    const url = process.env.API_URL || 'http://localhost:5000';
+    console.log('OAuth using API_URL:', url);
+    return url;
+};
+const getWebUrl = () => {
+    const url = process.env.WEB_URL || 'http://localhost:3000';
+    console.log('OAuth using WEB_URL:', url);
+    return url;
+};
+
 if (isGoogleOAuthConfigured) {
     // Configure Google OAuth Strategy
     passport.use(
@@ -22,7 +34,7 @@ if (isGoogleOAuthConfigured) {
             {
                 clientID: googleClientId!,
                 clientSecret: googleClientSecret!,
-                callbackURL: `${process.env.API_URL || 'http://localhost:5000'}/api/auth/google/callback`,
+                callbackURL: `${getApiUrl()}/api/auth/google/callback`,
             },
             async (_accessToken, _refreshToken, profile, done) => {
                 try {
@@ -74,12 +86,12 @@ router.get(
     '/google/callback',
     (req: Request, res: Response, next) => {
         if (!isGoogleOAuthConfigured) {
-            return res.redirect(`${process.env.WEB_URL || 'http://localhost:3000'}/login?error=oauth_not_configured`);
+            return res.redirect(`${getWebUrl()}/auth/login?error=oauth_not_configured`);
         }
 
         passport.authenticate('google', {
             session: false,
-            failureRedirect: `${process.env.WEB_URL || 'http://localhost:3000'}/login?error=google_auth_failed`
+            failureRedirect: `${getWebUrl()}/auth/login?error=google_auth_failed`
         })(req, res, next);
     },
     (req: Request, res: Response) => {
@@ -103,7 +115,7 @@ router.get(
             );
 
             // Redirect to frontend with tokens
-            const webUrl = process.env.WEB_URL || 'http://localhost:3000';
+            const webUrl = getWebUrl();
             const redirectUrl = `${webUrl}/auth/callback?token=${accessToken}&refresh=${refreshToken}&user=${encodeURIComponent(JSON.stringify({
                 id: user.id,
                 email: user.email,
@@ -114,8 +126,8 @@ router.get(
             res.redirect(redirectUrl);
         } catch (error) {
             console.error('Google OAuth callback error:', error);
-            const webUrl = process.env.WEB_URL || 'http://localhost:3000';
-            res.redirect(`${webUrl}/login?error=auth_failed`);
+            const webUrl = getWebUrl();
+            res.redirect(`${webUrl}/auth/login?error=auth_failed`);
             return;
         }
     }

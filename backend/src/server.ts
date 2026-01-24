@@ -25,6 +25,7 @@ const app = express();
 const httpServer = createServer(app);
 
 // Socket.io setup for real-time chat
+// Socket.io setup for real-time chat
 const allowedOrigins = [
     process.env.WEB_URL,
     'http://localhost:3000',
@@ -231,7 +232,7 @@ const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {
     logger.info(`🚀 Server running on port ${PORT}`);
     logger.info(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-    logger.info(`🔗 API URL: http://localhost:${PORT}`);
+    logger.info(`🔗 API URL: ${process.env.API_URL || `http://localhost:${PORT}`}`);
     logger.info(`🛡️ Allowed Origins: ${allowedOrigins.join(', ')}`);
 });
 
