@@ -173,6 +173,18 @@ export const streamingAPI = {
         api.post(`/streaming/${eventId}/revoke`, { userId }),
 };
 
+export const settingsAPI = {
+    get: () => api.get('/settings'),
+    update: (data: any) => {
+        const config = data instanceof FormData ? {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        } : {};
+        return api.put('/settings', data, config);
+    }
+};
+
 // Error handler helper
 export const handleAPIError = (error: any): string => {
     if (axios.isAxiosError(error)) {
