@@ -9,7 +9,9 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 export function getImageUrl(relativePath?: string | null): string | undefined {
     if (!relativePath) return undefined;
     if (relativePath.startsWith('http')) return relativePath;
-    return `${API_URL}${relativePath}`;
+    const url = `${API_URL}${relativePath}`;
+    // console.log('Generating Image URL:', { API_URL, relativePath, result: url });
+    return url;
 }
 
 /**
