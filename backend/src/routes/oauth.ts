@@ -74,7 +74,7 @@ if (isFacebookOAuthConfigured) {
                 callbackURL: `${getApiUrl()}/api/auth/facebook/callback`,
                 profileFields: ['id', 'emails', 'name', 'displayName'] // Request email specifically
             },
-            async (_accessToken, _refreshToken, profile, done) => {
+            async (_accessToken: any, _refreshToken: any, profile: any, done: any) => {
                 try {
                     const email = profile.emails?.[0]?.value;
                     if (!email) {
