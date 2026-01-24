@@ -319,7 +319,7 @@ export default function EventDetailPage() {
                                             {event.price > 0 && (isFinished || isPast(eventDate))
                                                 ? 'Evento Finalizado'
                                                 : event.price === 0
-                                                    ? 'Obtener Acceso Gratis'
+                                                    ? 'Ver Ahora'
                                                     : 'Comprar Acceso'}
                                         </button>
                                         <ul className="space-y-2 text-sm text-dark-400">
