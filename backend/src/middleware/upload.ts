@@ -126,5 +126,6 @@ export const uploadEventImages = handleUploads([
 
 // Middleware for settings images (homepage_background)
 export const uploadSettingsImages = handleUploads([
-    { name: 'homepage_background', maxCount: 1 }
+    { name: 'homepage_background', maxCount: 1 },
+    { name: 'about_gallery', maxCount: 10 }
 ]);

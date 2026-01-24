@@ -3,12 +3,22 @@ import { query } from '../config/database';
 export interface Settings {
     id: string;
     homepage_background: string | null;
+    about_hero_title: string;
+    about_hero_subtitle: string;
+    about_mission_title: string;
+    about_mission_text: string;
+    about_values: any; // JSONB
     created_at: Date;
     updated_at: Date;
 }
 
 export interface UpdateSettingsDTO {
     homepage_background?: string;
+    about_hero_title?: string;
+    about_hero_subtitle?: string;
+    about_mission_title?: string;
+    about_mission_text?: string;
+    about_values?: any;
 }
 
 /**
@@ -35,10 +45,22 @@ export const updateSettings = async (updates: UpdateSettingsDTO): Promise<Settin
     const values: any[] = [];
     let paramCount = 1;
 
-    if (updates.homepage_background !== undefined) {
-        fields.push(`homepage_background = $${paramCount}`);
-        values.push(updates.homepage_background);
-        paramCount++;
+    const keys: (keyof UpdateSettingsDTO)[] = [
+        'homepage_background',
+        'about_hero_title',
+        'about_hero_subtitle',
+        'about_mission_title',
+        'about_mission_text',
+        'about_values',
+        'about_slider_images'
+    ];
+
+    for (const key of keys) {
+        if (updates[key] !== undefined) {
+            fields.push(`${key} = $${paramCount}`);
+            values.push(updates[key]);
+            paramCount++;
+        }
     }
 
     if (fields.length === 0) {

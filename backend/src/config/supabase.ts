@@ -10,7 +10,11 @@ if (!supabaseUrl || !supabaseKey) {
     console.warn('⚠️ Supabase credentials not found. File uploads to Supabase will fail.');
 }
 
-export const supabase = createClient(supabaseUrl || '', supabaseKey || '', {
+// Prevent crash if variables are missing (common during build or initial deploy)
+const fallbackUrl = 'https://placeholder.supabase.co';
+const fallbackKey = 'placeholder-key';
+
+export const supabase = createClient(supabaseUrl || fallbackUrl, supabaseKey || fallbackKey, {
     auth: {
         persistSession: false, // No session needed for backend
     }
