@@ -95,6 +95,11 @@ router.put(
                     updates.homepage_background = files.homepage_background[0].path;
                 }
 
+                if (files.about_background && files.about_background[0]) {
+                    console.log('🖼️ Updating about_background:', files.about_background[0].path);
+                    updates.about_background = files.about_background[0].path;
+                }
+
                 // About Slider Gallery - Append new uploads
                 if (files.about_gallery && files.about_gallery.length > 0) {
                     const newImages = files.about_gallery.map(f => f.path);

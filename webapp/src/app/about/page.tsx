@@ -85,7 +85,7 @@ export default function AboutPage() {
                 <div className="absolute inset-0 z-0">
                     <div className="absolute inset-0 bg-gradient-to-br from-dark-950 via-dark-950/80 to-primary-950/40 z-10"></div>
                     <img
-                        src="https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=2000&auto=format&fit=crop"
+                        src={settings?.about_background ? settings.about_background : "https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=2000&auto=format&fit=crop"}
                         className="w-full h-full object-cover scale-105 animate-slow-zoom opacity-40 mix-blend-overlay"
                         alt="Hero Background"
                     />

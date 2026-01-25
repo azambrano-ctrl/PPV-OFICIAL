@@ -16,6 +16,7 @@ export default function AdminSettingsPage() {
     // To hold actual File objects
     const [fileState, setFileState] = useState({
         homepage_background: null as File | null,
+        about_background: null as File | null,
         about_gallery: [] as File[]
     });
 
@@ -30,6 +31,7 @@ export default function AdminSettingsPage() {
         // About
         about_hero_title: '',
         about_hero_subtitle: '',
+        about_background: '',
         about_mission_title: '',
         about_mission_text: '',
         about_values: [] as any[],
@@ -64,6 +66,7 @@ export default function AdminSettingsPage() {
 
                 about_hero_title: d.about_hero_title || '',
                 about_hero_subtitle: d.about_hero_subtitle || '',
+                about_background: d.about_background || '',
                 about_mission_title: d.about_mission_title || '',
                 about_mission_text: d.about_mission_text || '',
                 about_values: typeof d.about_values === 'string' ? JSON.parse(d.about_values) : (d.about_values || []),
@@ -97,6 +100,12 @@ export default function AdminSettingsPage() {
                 formData.append('homepage_background', fileState.homepage_background);
             } else if (form.homepage_background) {
                 formData.append('homepage_background', form.homepage_background);
+            }
+
+            if (fileState.about_background) {
+                formData.append('about_background', fileState.about_background);
+            } else if (form.about_background) {
+                formData.append('about_background', form.about_background);
             }
 
             fileState.about_gallery.forEach((file) => {
@@ -298,7 +307,7 @@ export default function AdminSettingsPage() {
                         {/* Sección Hero */}
                         <div className="bg-dark-900 p-6 rounded-xl border border-dark-800">
                             <h2 className="text-xl font-bold mb-4 text-white">Página "Nosotros" - Hero</h2>
-                            <div className="grid md:grid-cols-2 gap-6">
+                            <div className="grid md:grid-cols-2 gap-6 mb-6">
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-dark-300">Título Principal</label>
                                     <input
@@ -317,6 +326,20 @@ export default function AdminSettingsPage() {
                                         onChange={(e) => setForm({ ...form, about_hero_subtitle: e.target.value })}
                                     />
                                 </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <ImageUpload
+                                    label="Imagen de Fondo (Nosotros)"
+                                    value={form.about_background}
+                                    maxSize={50}
+                                    onChange={(file, previewUrl) => {
+                                        if (file) {
+                                            setFileState(prev => ({ ...prev, about_background: file }));
+                                        }
+                                        setForm({ ...form, about_background: previewUrl || '' });
+                                    }}
+                                />
                             </div>
                         </div>
 

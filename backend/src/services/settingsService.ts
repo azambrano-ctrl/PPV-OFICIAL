@@ -5,6 +5,7 @@ export interface Settings {
     homepage_background: string | null;
     about_hero_title: string;
     about_hero_subtitle: string;
+    about_background: string | null;
     about_mission_title: string;
     about_mission_text: string;
     about_values: any; // JSONB
@@ -29,11 +30,12 @@ export interface Settings {
 }
 
 export interface UpdateSettingsDTO {
-    homepage_background?: string | null;
-    about_hero_title?: string;
-    about_hero_subtitle?: string;
-    about_mission_title?: string;
-    about_mission_text?: string;
+    homepage_background: string | null;
+    about_hero_title: string;
+    about_hero_subtitle: string;
+    about_background: string | null;
+    about_mission_title: string;
+    about_mission_text: string;
     about_values?: any;
     about_slider_images?: any;
 
@@ -80,6 +82,7 @@ export const updateSettings = async (updates: UpdateSettingsDTO): Promise<Settin
         'homepage_background',
         'about_hero_title',
         'about_hero_subtitle',
+        'about_background',
         'about_mission_title',
         'about_mission_text',
         'about_values',
