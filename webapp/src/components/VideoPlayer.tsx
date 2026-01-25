@@ -20,7 +20,40 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     const [isPlaying, setIsPlaying] = useState(false);
     const [showPlayButton, setShowPlayButton] = useState(false);
     const [showUI, setShowUI] = useState(true);
+    const [canCast, setCanCast] = useState(false);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Detect if browser supports casting/remote playback
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        // Check for Remote Playback API (Chrome/Safari)
+        if ('remote' in video) {
+            const remote = (video as any).remote;
+            if (remote.state !== 'disabled') {
+                setCanCast(true);
+            }
+        }
+    }, []);
+
+    const handleCast = () => {
+        const video = videoRef.current;
+        if (video && 'remote' in video) {
+            (video as any).remote.prompt().catch((err: any) => {
+                console.error('Remote playback prompt failed:', err);
+            });
+        } else {
+            alert('Tu navegador no soporta transmisiones nativas (Chromecast/AirPlay). Prueba usando Google Chrome.');
+        }
+    };
+
+    // Listen for global cast trigger
+    useEffect(() => {
+        const handleGlobalCast = () => handleCast();
+        window.addEventListener('trigger-cast', handleGlobalCast);
+        return () => window.removeEventListener('trigger-cast', handleGlobalCast);
+    }, [canCast]); // Re-bind if canCast changes
 
     const handleMouseMove = () => {
         setShowUI(true);
@@ -242,10 +275,27 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
 
             {/* Live Indicator */}
             {status === 'live' && (
-                <div className="absolute top-4 left-4 z-20 flex items-center gap-2 px-3 py-1 bg-red-600/90 rounded text-white text-xs font-bold uppercase tracking-wider shadow-sm">
+                <div className={`absolute top-4 left-4 z-20 flex items-center gap-2 px-3 py-1 bg-red-600/90 rounded text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-opacity duration-500 ${showUI ? 'opacity-100' : 'opacity-0'}`}>
                     <div className={`w-2 h-2 rounded-full bg-white ${isPlaying ? 'animate-pulse' : ''}`}></div>
                     EN VIVO
                 </div>
+            )}
+
+            {/* Cast Button Overlay */}
+            {!isLoading && !error && canCast && (
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleCast();
+                    }}
+                    className={`absolute top-4 right-4 z-20 p-2.5 bg-black/50 hover:bg-black/80 text-white rounded-full backdrop-blur-md transition-all duration-500 border border-white/10 ${showUI ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}
+                    title="Enviar a TV"
+                >
+                    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M2 16.1A5 5 0 0 1 5.9 20M2 12.05A9 9 0 0 1 9.95 20M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6" />
+                        <line x1="2" y1="20" x2="2.01" y2="20" />
+                    </svg>
+                </button>
             )}
 
             {/* Event Title Overlay */}

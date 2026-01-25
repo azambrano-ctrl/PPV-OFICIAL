@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft, MessageSquare, Info, Calendar, Clock, Share2 } from 'lucide-react';
+import { ChevronLeft, MessageSquare, Info, Share2, Tv } from 'lucide-react';
 import VideoPlayer from '@/components/VideoPlayer';
 import ChatBox from '@/components/ChatBox';
 
@@ -160,9 +160,18 @@ export default function WatchPage() {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 md:gap-3">
                     <button
-                        className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/5 text-sm font-medium"
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/5 text-sm font-medium text-white/90"
+                        onClick={() => window.dispatchEvent(new CustomEvent('trigger-cast'))}
+                        title="Enviar a TV / Chromecast"
+                    >
+                        <Tv className="w-4 h-4" />
+                        <span className="hidden sm:inline">Transmitir</span>
+                    </button>
+
+                    <button
+                        className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/5 text-sm font-medium text-white/90"
                         onClick={() => {
                             navigator.clipboard.writeText(window.location.href);
                             alert('Enlace copiado al portapapeles');
@@ -171,6 +180,7 @@ export default function WatchPage() {
                         <Share2 className="w-4 h-4" />
                         <span>Compartir</span>
                     </button>
+
                     <button
                         onClick={() => setShowChat(!showChat)}
                         className={`p-2 rounded-full transition-colors md:hidden ${showChat ? 'bg-primary-600 text-white' : 'bg-white/10 text-white/70'}`}
