@@ -9,6 +9,21 @@ export interface Settings {
     about_mission_text: string;
     about_values: any; // JSONB
     about_slider_images: any; // JSONB
+
+    // General
+    site_name: string;
+    site_description: string;
+    contact_email: string;
+    social_links: any; // JSONB
+
+    // Payments
+    stripe_enabled: boolean;
+    stripe_public_key: string;
+    stripe_secret_key: string;
+    paypal_enabled: boolean;
+    paypal_client_id: string;
+    paypal_secret_key: string;
+
     created_at: Date;
     updated_at: Date;
 }
@@ -21,6 +36,20 @@ export interface UpdateSettingsDTO {
     about_mission_text?: string;
     about_values?: any;
     about_slider_images?: any;
+
+    // General
+    site_name?: string;
+    site_description?: string;
+    contact_email?: string;
+    social_links?: any;
+
+    // Payments
+    stripe_enabled?: boolean;
+    stripe_public_key?: string;
+    stripe_secret_key?: string;
+    paypal_enabled?: boolean;
+    paypal_client_id?: string;
+    paypal_secret_key?: string;
 }
 
 /**
@@ -54,7 +83,17 @@ export const updateSettings = async (updates: UpdateSettingsDTO): Promise<Settin
         'about_mission_title',
         'about_mission_text',
         'about_values',
-        'about_slider_images'
+        'about_slider_images',
+        'site_name',
+        'site_description',
+        'contact_email',
+        'social_links',
+        'stripe_enabled',
+        'stripe_public_key',
+        'stripe_secret_key',
+        'paypal_enabled',
+        'paypal_client_id',
+        'paypal_secret_key'
     ];
 
     for (const key of keys) {
