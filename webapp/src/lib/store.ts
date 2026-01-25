@@ -153,14 +153,28 @@ interface SettingsState {
     settings: Settings | null;
     loading: boolean;
     initialized: boolean;
+    hasHydrated: boolean;
     setSettings: (settings: Settings) => void;
     setLoading: (loading: boolean) => void;
+    setHasHydrated: (state: boolean) => void;
 }
 
-export const useSettingsStore = create<SettingsState>((set) => ({
-    settings: null,
-    loading: false,
-    initialized: false,
-    setSettings: (settings) => set({ settings, initialized: true }),
-    setLoading: (loading) => set({ loading }),
-}));
+export const useSettingsStore = create<SettingsState>()(
+    persist(
+        (set) => ({
+            settings: null,
+            loading: false,
+            initialized: false,
+            hasHydrated: false,
+            setSettings: (settings) => set({ settings, initialized: true }),
+            setLoading: (loading) => set({ loading }),
+            setHasHydrated: (state) => set({ hasHydrated: state }),
+        }),
+        {
+            name: 'settings-storage',
+            onRehydrateStorage: () => (state) => {
+                state?.setHasHydrated(true);
+            },
+        }
+    )
+);

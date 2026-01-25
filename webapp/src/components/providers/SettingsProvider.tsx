@@ -8,24 +8,23 @@ export default function SettingsProvider({ children }: { children: React.ReactNo
     const { initialized, setSettings, setLoading } = useSettingsStore();
 
     useEffect(() => {
-        if (!initialized) {
-            const fetchSettings = async () => {
-                setLoading(true);
-                try {
-                    const { data } = await settingsAPI.get();
-                    if (data.success) {
-                        setSettings(data.data);
-                    }
-                } catch (error) {
-                    console.error('Failed to load global settings:', error);
-                } finally {
-                    setLoading(false);
+        const fetchSettings = async () => {
+            // If already initialized (from cache), maybe don't show loading UI
+            // unless we want a very strict freshness.
+            try {
+                const { data } = await settingsAPI.get();
+                if (data.success) {
+                    setSettings(data.data);
                 }
-            };
+            } catch (error) {
+                console.error('Failed to load global settings:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-            fetchSettings();
-        }
-    }, [initialized, setSettings, setLoading]);
+        fetchSettings();
+    }, [setSettings, setLoading]);
 
     return <>{children}</>;
 }

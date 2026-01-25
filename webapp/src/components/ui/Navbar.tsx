@@ -13,7 +13,7 @@ export default function Navbar() {
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const pathname = usePathname();
     const { user, isAuthenticated, logout } = useAuthStore();
-    const { settings } = useSettingsStore();
+    const { settings, hasHydrated } = useSettingsStore();
 
     // Handle scroll effect
     useEffect(() => {
@@ -50,7 +50,9 @@ export default function Navbar() {
                 <div className="flex items-center justify-between h-20">
                     {/* Brand / Logo - Production Style */}
                     <Link href="/" className="flex items-center gap-3 group">
-                        {settings?.site_logo ? (
+                        {!hasHydrated ? (
+                            <div className="w-10 h-10 bg-dark-800 rounded-lg animate-pulse" />
+                        ) : settings?.site_logo ? (
                             <div
                                 className="relative transition-transform group-hover:scale-105 flex items-center justify-center"
                                 style={{
@@ -71,9 +73,11 @@ export default function Navbar() {
                                 </span>
                             </div>
                         )}
-                        <span className="text-2xl font-bold text-primary-600 tracking-tight group-hover:text-primary-500 transition-colors">
-                            {settings?.site_name || 'PPV Streaming'}
-                        </span>
+                        {hasHydrated && (
+                            <span className="text-2xl font-bold text-primary-600 tracking-tight group-hover:text-primary-500 transition-colors">
+                                {settings?.site_name || 'PPV Streaming'}
+                            </span>
+                        )}
                     </Link>
 
                     {/* Desktop Navigation - Centered like reference */}

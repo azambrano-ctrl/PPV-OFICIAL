@@ -4,7 +4,7 @@ import { useSettingsStore } from '@/lib/store';
 
 export default function Footer() {
     const currentYear = new Date().getFullYear();
-    const { settings } = useSettingsStore();
+    const { settings, hasHydrated } = useSettingsStore();
 
     const footerLinks = {
         company: [
@@ -38,7 +38,9 @@ export default function Footer() {
                     {/* Brand */}
                     <div className="lg:col-span-2">
                         <Link href="/" className="flex items-center space-x-2 mb-4 group">
-                            {settings?.site_logo ? (
+                            {!hasHydrated ? (
+                                <div className="w-10 h-10 bg-dark-800 rounded-lg animate-pulse" />
+                            ) : settings?.site_logo ? (
                                 <div
                                     className="transition-transform group-hover:scale-105 flex items-center justify-center"
                                     style={{
@@ -59,9 +61,11 @@ export default function Footer() {
                                     </span>
                                 </div>
                             )}
-                            <span className="font-display font-bold text-xl gradient-text">
-                                {settings?.site_name || 'PPV Streaming'}
-                            </span>
+                            {hasHydrated && (
+                                <span className="font-display font-bold text-xl gradient-text">
+                                    {settings?.site_name || 'PPV Streaming'}
+                                </span>
+                            )}
                         </Link>
                         <p className="text-dark-400 mb-6 max-w-sm">
                             {settings?.site_description || 'La mejor plataforma para ver peleas en vivo. Acceso exclusivo a los eventos más emocionantes del deporte.'}
@@ -159,7 +163,7 @@ export default function Footer() {
                 {/* Bottom */}
                 <div className="mt-8 pt-8 border-t border-dark-800 flex flex-col md:flex-row justify-between items-center gap-4">
                     <p className="text-dark-400 text-sm">
-                        © {currentYear} {settings?.site_name || 'PPV Streaming'}. Todos los derechos reservados.
+                        © {currentYear} {hasHydrated ? (settings?.site_name || 'PPV Streaming') : ''}. Todos los derechos reservados.
                     </p>
                     <div className="flex items-center gap-4 text-sm text-dark-400">
                         <span>Pagos seguros con</span>
