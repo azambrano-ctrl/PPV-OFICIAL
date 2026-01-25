@@ -69,29 +69,6 @@ export default function RegisterPage() {
             <div className="max-w-md w-full relative z-10">
                 {/* Logo */}
                 <div className="text-center mb-8">
-                    <Link href="/" className="inline-flex items-center space-x-2 mb-6 group">
-                        {settings?.site_logo ? (
-                            <div
-                                className="transition-transform group-hover:scale-105 flex items-center justify-center"
-                                style={{ width: settings.site_logo_width ? `${settings.site_logo_width}px` : '48px' }}
-                            >
-                                <img
-                                    src={settings.site_logo}
-                                    alt={settings?.site_name || 'Logo'}
-                                    className="max-w-full h-auto object-contain"
-                                />
-                            </div>
-                        ) : (
-                            <div className="w-12 h-12 bg-gradient-to-br from-primary-600 to-primary-700 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
-                                <span className="text-white font-bold text-2xl">
-                                    {settings?.site_name?.charAt(0) || 'P'}
-                                </span>
-                            </div>
-                        )}
-                        <span className="font-display font-bold text-2xl gradient-text">
-                            {settings?.site_name || 'PPV Streaming'}
-                        </span>
-                    </Link>
                     <h2 className="text-3xl font-display font-bold text-white mb-2">
                         Crear Cuenta
                     </h2>
