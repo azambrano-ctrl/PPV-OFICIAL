@@ -41,7 +41,11 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         const video = videoRef.current;
         if (video && 'remote' in video) {
             (video as any).remote.prompt().catch((err: any) => {
-                console.error('Remote playback prompt failed:', err);
+                if (err.name === 'NotFoundError') {
+                    alert('No se encontraron dispositivos de transmisión (TV o Chromecast) en tu red. Asegúrate de que tu TV esté encendida y conectada a la misma red Wi-Fi.');
+                } else {
+                    console.error('Remote playback prompt failed:', err);
+                }
             });
         } else {
             alert('Tu navegador no soporta transmisiones nativas (Chromecast/AirPlay). Prueba usando Google Chrome.');
