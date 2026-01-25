@@ -137,7 +137,7 @@ export default function AdminSettingsPage() {
             await settingsAPI.update(formData);
             setMessage({ type: 'success', text: 'Configuración guardada correctamente' });
 
-            setFileState({ homepage_background: null, about_gallery: [] });
+            setFileState({ homepage_background: null, about_background: null, about_gallery: [] });
             await loadSettings();
         } catch (error) {
             console.error('Error saving settings:', error);
