@@ -18,6 +18,7 @@ interface ImageUploadProps {
     onChange: (file: File | null, previewUrl: string | null) => void;
     accept?: string;
     maxSize?: number; // in MB
+    aspect?: number; // 0 for free form
 }
 
 export default function ImageUpload({
@@ -26,6 +27,7 @@ export default function ImageUpload({
     onChange,
     accept = 'image/*',
     maxSize = 50,
+    aspect = 16 / 9,
 }: ImageUploadProps) {
     const [preview, setPreview] = useState<string | null>(value || null);
     const [isDragging, setIsDragging] = useState(false);
@@ -80,6 +82,7 @@ export default function ImageUpload({
             pixelCrop.height
         );
 
+        const mimeType = originalFile?.type || 'image/png';
         return new Promise((resolve) => {
             canvas.toBlob((blob) => {
                 if (!blob) {
@@ -87,9 +90,9 @@ export default function ImageUpload({
                     resolve(null);
                     return;
                 }
-                const file = new File([blob], fileName, { type: 'image/jpeg' });
+                const file = new File([blob], fileName, { type: mimeType });
                 resolve(file);
-            }, 'image/jpeg');
+            }, mimeType);
         });
     };
 
@@ -190,11 +193,11 @@ export default function ImageUpload({
             </label>
 
             {preview ? (
-                <div className="relative group">
+                <div className="relative group bg-[url('https://www.transparenttextures.com/patterns/checkerboard.png')] bg-gray-200 rounded-lg">
                     <img
                         src={preview}
                         alt="Preview"
-                        className="w-full h-48 object-cover rounded-lg"
+                        className="w-full h-48 object-contain rounded-lg"
                     />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
                         <button
@@ -261,7 +264,7 @@ export default function ImageUpload({
                                 image={imageSrc}
                                 crop={crop}
                                 zoom={zoom}
-                                aspect={16 / 9} // Default aspect ratio, maybe make prop?
+                                aspect={aspect === 0 ? undefined : aspect}
                                 onCropChange={setCrop}
                                 onCropComplete={onCropComplete}
                                 onZoomChange={setZoom}

@@ -314,6 +314,7 @@ export default function AdminSettingsPage() {
                                 label="Logo del Sitio"
                                 value={form.site_logo}
                                 maxSize={50}
+                                aspect={0}
                                 onChange={(file, previewUrl) => {
                                     if (file) {
                                         setFileState(prev => ({ ...prev, site_logo: file }));
