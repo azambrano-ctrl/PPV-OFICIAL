@@ -38,7 +38,7 @@ export interface CreatePayPalOrderInput {
  */
 export const createPayPalOrder = async (
     input: CreatePayPalOrderInput
-): Promise<{ orderId: string; amount: number }> => {
+): Promise<{ orderId: string; amount: number; approvalUrl: string }> => {
     if (!client) {
         throw new Error('PayPal client is not initialized. Please check credentials.');
     }
@@ -107,6 +107,11 @@ export const createPayPalOrder = async (
 
         const response = await client.execute(request);
         const orderId = response.result.id;
+        const approvalUrl = response.result.links.find((link: any) => link.rel === 'approve')?.href;
+
+        if (!approvalUrl) {
+            throw new Error('PayPal approval URL not found in response');
+        }
 
         // Create purchase record
         await query(
@@ -135,7 +140,7 @@ export const createPayPalOrder = async (
             amount: finalAmount,
         });
 
-        return { orderId, amount: finalAmount };
+        return { orderId, amount: finalAmount, approvalUrl };
     } catch (error) {
         logger.error('Error creating PayPal order:', error);
         throw error;

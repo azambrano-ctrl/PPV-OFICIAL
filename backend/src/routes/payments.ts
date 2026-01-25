@@ -154,6 +154,7 @@ router.post(
                     paymentMethod: 'paypal',
                     orderId: paypalOrder.orderId,
                     amount: paypalOrder.amount,
+                    approvalUrl: paypalOrder.approvalUrl,
                 },
             });
         }
