@@ -137,25 +137,64 @@ export const createPayPalOrder = async (
             throw new Error('PayPal approval URL not found in response');
         }
 
-        // Create purchase record
-        await query(
-            `INSERT INTO purchases (
-        user_id, event_id, amount, currency, payment_method,
-        payment_intent_id, payment_status, coupon_code, discount_amount, final_amount
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-            [
-                input.userId,
-                input.eventId,
-                input.amount,
-                input.currency || 'USD',
-                'paypal',
-                orderId,
-                'pending',
-                input.couponCode || null,
-                discountAmount,
-                finalAmount,
-            ]
+        // Create or update purchase record
+        const existingPurchase = await query(
+            'SELECT id, payment_status FROM purchases WHERE user_id = $1 AND event_id = $2',
+            [input.userId, input.eventId]
         );
+
+        if (existingPurchase.rows.length > 0) {
+            const purchase = existingPurchase.rows[0];
+
+            if (purchase.payment_status === 'completed') {
+                logger.warn('User attempted to buy an already purchased event', { userId: input.userId, eventId: input.eventId });
+                throw new Error('This event has already been purchased successfully.');
+            }
+
+            logger.info('Updating existing pending purchase', { purchaseId: purchase.id, oldStatus: purchase.payment_status, newOrderId: orderId });
+
+            await query(
+                `UPDATE purchases 
+                 SET payment_intent_id = $1, 
+                     payment_method = 'paypal', 
+                     payment_status = 'pending',
+                     amount = $2, 
+                     discount_amount = $3, 
+                     final_amount = $4,
+                     coupon_code = $5,
+                     currency = $6
+                 WHERE id = $7`,
+                [
+                    orderId,
+                    input.amount,
+                    discountAmount,
+                    finalAmount,
+                    input.couponCode || null,
+                    input.currency || 'USD',
+                    purchase.id
+                ]
+            );
+        } else {
+            logger.info('Creating new purchase record', { userId: input.userId, eventId: input.eventId, orderId });
+            await query(
+                `INSERT INTO purchases (
+            user_id, event_id, amount, currency, payment_method,
+            payment_intent_id, payment_status, coupon_code, discount_amount, final_amount
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+                [
+                    input.userId,
+                    input.eventId,
+                    input.amount,
+                    input.currency || 'USD',
+                    'paypal',
+                    orderId,
+                    'pending',
+                    input.couponCode || null,
+                    discountAmount,
+                    finalAmount,
+                ]
+            );
+        }
 
         logger.info('PayPal order created successfully', {
             orderId,
