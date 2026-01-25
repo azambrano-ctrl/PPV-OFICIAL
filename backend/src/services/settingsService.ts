@@ -100,7 +100,7 @@ export const updateSettings = async (updates: UpdateSettingsDTO): Promise<Settin
         if (updates[key] !== undefined) {
             fields.push(`${key} = $${paramCount}`);
 
-            const val = updates[key];
+            let val = updates[key];
             // Debug logging for JSON fields
             if (['about_values', 'about_slider_images', 'social_links'].includes(key)) {
                 console.log(`🔍 [Service] Preparing ${key}:`, {
@@ -108,6 +108,15 @@ export const updateSettings = async (updates: UpdateSettingsDTO): Promise<Settin
                     isArray: Array.isArray(val),
                     valuePreview: JSON.stringify(val).substring(0, 100)
                 });
+
+                // CRITICAL FIX: explicitly stringify objects/arrays for JSONB columns
+                // logic: pg driver converts JS Arrays to Postgres Array syntax "{a,b}", 
+                // but JSONB columns expect JSON syntax "[a,b]". 
+                // We must send it as a JSON string.
+                if (val !== null && typeof val === 'object') {
+                    console.log(`🔄 [Service] Stringifying ${key} for JSONB compatibility`);
+                    val = JSON.stringify(val);
+                }
             }
 
             values.push(val);
