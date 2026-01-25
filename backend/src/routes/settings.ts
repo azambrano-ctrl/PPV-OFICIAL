@@ -104,6 +104,31 @@ router.put(
             }
         }
 
+        // Handle General Settings
+        if (req.body.site_name) updates.site_name = req.body.site_name;
+        if (req.body.site_description) updates.site_description = req.body.site_description;
+        if (req.body.contact_email) updates.contact_email = req.body.contact_email;
+
+        if (req.body.social_links) {
+            try {
+                updates.social_links = typeof req.body.social_links === 'string'
+                    ? JSON.parse(req.body.social_links)
+                    : req.body.social_links;
+            } catch (e) {
+                console.warn('Failed to parse social_links', e);
+            }
+        }
+
+        // Handle Payment Settings
+        // Note: FormData sends booleans as 'true'/'false' strings
+        if (req.body.stripe_enabled !== undefined) updates.stripe_enabled = String(req.body.stripe_enabled) === 'true';
+        if (req.body.stripe_public_key) updates.stripe_public_key = req.body.stripe_public_key;
+        if (req.body.stripe_secret_key) updates.stripe_secret_key = req.body.stripe_secret_key;
+
+        if (req.body.paypal_enabled !== undefined) updates.paypal_enabled = String(req.body.paypal_enabled) === 'true';
+        if (req.body.paypal_client_id) updates.paypal_client_id = req.body.paypal_client_id;
+        if (req.body.paypal_secret_key) updates.paypal_secret_key = req.body.paypal_secret_key;
+
         const settings = await settingsService.updateSettings(updates);
 
         res.json({
