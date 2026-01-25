@@ -99,7 +99,18 @@ export const updateSettings = async (updates: UpdateSettingsDTO): Promise<Settin
     for (const key of keys) {
         if (updates[key] !== undefined) {
             fields.push(`${key} = $${paramCount}`);
-            values.push(updates[key]);
+
+            const val = updates[key];
+            // Debug logging for JSON fields
+            if (['about_values', 'about_slider_images', 'social_links'].includes(key)) {
+                console.log(`🔍 [Service] Preparing ${key}:`, {
+                    type: typeof val,
+                    isArray: Array.isArray(val),
+                    valuePreview: JSON.stringify(val).substring(0, 100)
+                });
+            }
+
+            values.push(val);
             paramCount++;
         }
     }
@@ -109,6 +120,8 @@ export const updateSettings = async (updates: UpdateSettingsDTO): Promise<Settin
     }
 
     values.push('00000000-0000-0000-0000-000000000001');
+
+    console.log('🚀 [Service] Executing SQL Update with params:', JSON.stringify(values));
 
     const result = await query(
         `UPDATE settings SET ${fields.join(', ')} WHERE id = $${paramCount} RETURNING *`,
