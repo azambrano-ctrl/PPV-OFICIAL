@@ -28,7 +28,7 @@ export default function AboutPage() {
 
     // Default values if API data is missing
     const heroTitle = settings?.about_hero_title || 'Llevando el MMA';
-    const heroSubtitle = settings?.about_hero_subtitle || 'Ecuatoriano al Mundo';
+    const heroSubtitle = settings?.about_hero_subtitle ?? 'Ecuatoriano al Mundo';
     const missionTitle = settings?.about_mission_title || 'Nuestra Misión';
     const missionText = settings?.about_mission_text || 'Nacimos con un objetivo claro: romper las barreras que limitan a nuestros atletas. Ecuador es tierra de guerreros, pero el talento necesita visibilidad para brillar.';
 
@@ -107,9 +107,11 @@ export default function AboutPage() {
 
                     <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl lg:text-8xl font-black font-display tracking-tight mb-8 leading-tight">
                         <span className="block text-white drop-shadow-2xl">{heroTitle}</span>
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary-500 to-primary-700 filter drop-shadow-lg">
-                            {heroSubtitle}
-                        </span>
+                        {heroSubtitle && (
+                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary-500 to-primary-700 filter drop-shadow-lg block">
+                                {heroSubtitle}
+                            </span>
+                        )}
                     </motion.h1>
 
                     <motion.p variants={itemVariants} className="text-xl md:text-2xl text-dark-200 max-w-3xl mx-auto font-light leading-relaxed mb-10">
