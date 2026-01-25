@@ -47,7 +47,7 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
             setError(null);
 
             // Auto-play for live streams
-            if (status === 'live') {
+            if (status === 'live' || status === 'reprise') {
                 const playPromise = video.play();
                 if (playPromise !== undefined) {
                     playPromise.catch(error => {

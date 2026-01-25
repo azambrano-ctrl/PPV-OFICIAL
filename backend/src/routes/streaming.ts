@@ -54,7 +54,7 @@ router.get(
         }
 
         // Check if event is live or finished (for recordings), allow admins to preview
-        if (req.user!.role !== 'admin' && event.status !== 'live' && event.status !== 'finished') {
+        if (req.user!.role !== 'admin' && event.status !== 'live' && event.status !== 'finished' && event.status !== 'reprise') {
             res.status(400).json({
                 success: false,
                 message: 'Event is not currently available for streaming',
