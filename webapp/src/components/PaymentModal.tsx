@@ -203,7 +203,7 @@ function CheckoutForm({ event, onClose }: PaymentModalProps) {
                 </button>
                 <button
                     type="submit"
-                    disabled={loading || !stripe}
+                    disabled={loading || (paymentMethod === 'stripe' && !stripe)}
                     className="flex-1 btn btn-primary"
                 >
                     {loading ? (
