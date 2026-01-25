@@ -131,7 +131,7 @@ export default function ChatBox({ eventId, eventTitle, eventStatus }: ChatBoxPro
         const fetchHistory = async () => {
             try {
                 const token = localStorage.getItem('accessToken');
-                if (!token) return;
+                if (!token || eventStatus !== 'live') return;
 
                 const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events/${eventId}/chat`, {
                     headers: {
@@ -212,7 +212,16 @@ export default function ChatBox({ eventId, eventTitle, eventStatus }: ChatBoxPro
                 className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent"
                 onScroll={handleScroll}
             >
-                {messages.length === 0 ? (
+                {eventStatus !== 'live' ? (
+                    <div className="h-full flex flex-col items-center justify-center text-white/20 space-y-4 p-8">
+                        <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center">
+                            <MessageSquare className="w-8 h-8 opacity-20" />
+                        </div>
+                        <p className="text-sm text-center font-medium leading-relaxed">
+                            El historial de chat solo está disponible durante las transmisiones en vivo.
+                        </p>
+                    </div>
+                ) : messages.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-white/30 space-y-2">
                         <Info className="w-8 h-8" />
                         <p className="text-sm px-10 text-center">¡Sé el primero en comentar! Mantén el respeto en la comunidad.</p>
