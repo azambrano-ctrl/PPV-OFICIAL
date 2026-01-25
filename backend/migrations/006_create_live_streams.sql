@@ -1,4 +1,4 @@
-CREATE TABLE live_streams (
+CREATE TABLE IF NOT EXISTS live_streams (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     event_id UUID REFERENCES events(id) UNIQUE,
     mux_live_stream_id VARCHAR(255) NOT NULL,
@@ -10,4 +10,4 @@ CREATE TABLE live_streams (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_live_streams_event ON live_streams(event_id);
+CREATE INDEX IF NOT EXISTS idx_live_streams_event ON live_streams(event_id);
