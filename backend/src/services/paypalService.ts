@@ -15,14 +15,25 @@ const getPayPalEnvironment = () => {
         ? new paypal.core.LiveEnvironment(clientId, clientSecret)
         : new paypal.core.SandboxEnvironment(clientId, clientSecret);
 };
-
 let client: any;
 
 try {
+    const clientId = process.env.PAYPAL_CLIENT_ID;
+    const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+    const mode = process.env.PAYPAL_MODE;
+    const webUrl = process.env.WEB_URL;
+
+    logger.info('Initializing PayPal with:', {
+        clientId: clientId ? `${clientId.substring(0, 5)}...` : 'not set',
+        hasSecret: !!clientSecret,
+        mode,
+        webUrl: webUrl || 'NOT SET'
+    });
+
     const environment = getPayPalEnvironment();
     client = new paypal.core.PayPalHttpClient(environment);
-} catch (error) {
-    logger.error('Failed to initialize PayPal client:', error);
+} catch (error: any) {
+    logger.error('Failed to initialize PayPal client:', error.message);
 }
 
 export interface CreatePayPalOrderInput {
@@ -40,8 +51,11 @@ export const createPayPalOrder = async (
     input: CreatePayPalOrderInput
 ): Promise<{ orderId: string; amount: number; approvalUrl: string }> => {
     if (!client) {
+        logger.error('PayPal client is NULL. Environment variables might not be loaded correctly.');
         throw new Error('PayPal client is not initialized. Please check credentials.');
     }
+
+    logger.info('Starting createPayPalOrder', { input });
 
     try {
         let finalAmount = input.amount;
@@ -106,10 +120,16 @@ export const createPayPalOrder = async (
         });
 
         const response = await client.execute(request);
+        logger.info('PayPal response received', {
+            status: response.statusCode,
+            orderId: response.result.id
+        });
+
         const orderId = response.result.id;
         const approvalUrl = response.result.links.find((link: any) => link.rel === 'approve')?.href;
 
         if (!approvalUrl) {
+            logger.error('Approval URL not found in PayPal response', { links: response.result.links });
             throw new Error('PayPal approval URL not found in response');
         }
 
@@ -133,7 +153,7 @@ export const createPayPalOrder = async (
             ]
         );
 
-        logger.info('PayPal order created', {
+        logger.info('PayPal order created successfully', {
             orderId,
             userId: input.userId,
             eventId: input.eventId,
@@ -141,8 +161,12 @@ export const createPayPalOrder = async (
         });
 
         return { orderId, amount: finalAmount, approvalUrl };
-    } catch (error) {
-        logger.error('Error creating PayPal order:', error);
+    } catch (error: any) {
+        logger.error('Error creating PayPal order:', {
+            message: error.message,
+            stack: error.stack,
+            details: error.debug_id || 'no debug id'
+        });
         throw error;
     }
 };
