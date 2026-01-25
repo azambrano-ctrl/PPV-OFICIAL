@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { settingsAPI } from '@/lib/api';
-import { Save, AlertCircle, Layout, FileText, Image as ImageIcon } from 'lucide-react';
+import { Save, AlertCircle, Layout, FileText, Image as ImageIcon, X, CreditCard, Facebook, Instagram, Twitter } from 'lucide-react';
 import ImageUpload from '@/components/admin/ImageUpload';
 
-type Tab = 'general' | 'about' | 'gallery';
+type Tab = 'general' | 'about' | 'gallery' | 'payments';
 
 export default function AdminSettingsPage() {
     const [loading, setLoading] = useState(true);
@@ -13,13 +13,37 @@ export default function AdminSettingsPage() {
     const [activeTab, setActiveTab] = useState<Tab>('general');
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
+    // To hold actual File objects
+    const [fileState, setFileState] = useState({
+        homepage_background: null as File | null,
+        about_gallery: [] as File[]
+    });
+
     const [form, setForm] = useState({
+        // General
+        site_name: 'PPV Streaming',
+        site_description: '',
+        contact_email: '',
         homepage_background: '',
+        social_links: { facebook: '', instagram: '', twitter: '' } as any,
+
+        // About
         about_hero_title: '',
         about_hero_subtitle: '',
         about_mission_title: '',
         about_mission_text: '',
-        about_values: [] as any[]
+        about_values: [] as any[],
+        // Stored as string array in DB JSONB, but usually parsed by API. 
+        // We handle it as array here.
+        about_slider_images: [] as string[],
+
+        // Payments
+        stripe_enabled: false,
+        stripe_public_key: '',
+        stripe_secret_key: '',
+        paypal_enabled: false,
+        paypal_client_id: '',
+        paypal_secret_key: ''
     });
 
     useEffect(() => {
@@ -29,15 +53,28 @@ export default function AdminSettingsPage() {
     const loadSettings = async () => {
         try {
             const { data } = await settingsAPI.get();
+            const d = data.data;
+
             setForm({
-                homepage_background: data.data.homepage_background || '',
-                about_hero_title: data.data.about_hero_title || '',
-                about_hero_subtitle: data.data.about_hero_subtitle || '',
-                about_mission_title: data.data.about_mission_title || '',
-                about_mission_text: data.data.about_mission_text || '',
-                about_values: typeof data.data.about_values === 'string'
-                    ? JSON.parse(data.data.about_values)
-                    : (data.data.about_values || [])
+                site_name: d.site_name || '',
+                site_description: d.site_description || '',
+                contact_email: d.contact_email || '',
+                homepage_background: d.homepage_background || '',
+                social_links: typeof d.social_links === 'string' ? JSON.parse(d.social_links) : (d.social_links || { facebook: '', instagram: '', twitter: '' }),
+
+                about_hero_title: d.about_hero_title || '',
+                about_hero_subtitle: d.about_hero_subtitle || '',
+                about_mission_title: d.about_mission_title || '',
+                about_mission_text: d.about_mission_text || '',
+                about_values: typeof d.about_values === 'string' ? JSON.parse(d.about_values) : (d.about_values || []),
+                about_slider_images: typeof d.about_slider_images === 'string' ? JSON.parse(d.about_slider_images) : (d.about_slider_images || []),
+
+                stripe_enabled: d.stripe_enabled || false,
+                stripe_public_key: d.stripe_public_key || '',
+                stripe_secret_key: d.stripe_secret_key || '',
+                paypal_enabled: d.paypal_enabled || false,
+                paypal_client_id: d.paypal_client_id || '',
+                paypal_secret_key: d.paypal_secret_key || ''
             });
         } catch (error) {
             console.error('Error loading settings:', error);
@@ -55,18 +92,43 @@ export default function AdminSettingsPage() {
         try {
             const formData = new FormData();
 
-            // Append all fields regardless of tab to save complete state
-            if (form.homepage_background) formData.append('homepage_background', form.homepage_background);
+            // Files
+            if (fileState.homepage_background) {
+                formData.append('homepage_background', fileState.homepage_background);
+            } else if (form.homepage_background) {
+                formData.append('homepage_background', form.homepage_background);
+            }
 
+            fileState.about_gallery.forEach((file) => {
+                formData.append('about_gallery', file);
+            });
+
+            // General
+            formData.append('site_name', form.site_name);
+            formData.append('site_description', form.site_description);
+            formData.append('contact_email', form.contact_email);
+            formData.append('social_links', JSON.stringify(form.social_links));
+
+            // About
             formData.append('about_hero_title', form.about_hero_title);
             formData.append('about_hero_subtitle', form.about_hero_subtitle);
             formData.append('about_mission_title', form.about_mission_title);
             formData.append('about_mission_text', form.about_mission_text);
             formData.append('about_values', JSON.stringify(form.about_values));
+            formData.append('about_slider_images', JSON.stringify(form.about_slider_images));
+
+            // Payments
+            formData.append('stripe_enabled', String(form.stripe_enabled));
+            formData.append('stripe_public_key', form.stripe_public_key);
+            formData.append('stripe_secret_key', form.stripe_secret_key);
+            formData.append('paypal_enabled', String(form.paypal_enabled));
+            formData.append('paypal_client_id', form.paypal_client_id);
+            formData.append('paypal_secret_key', form.paypal_secret_key);
 
             await settingsAPI.update(formData);
             setMessage({ type: 'success', text: 'Configuración guardada correctamente' });
 
+            setFileState({ homepage_background: null, about_gallery: [] });
             await loadSettings();
         } catch (error) {
             console.error('Error saving settings:', error);
@@ -88,6 +150,7 @@ export default function AdminSettingsPage() {
         { id: 'general', label: 'General', icon: Layout },
         { id: 'about', label: 'Página Nosotros', icon: FileText },
         { id: 'gallery', label: 'Galería', icon: ImageIcon },
+        { id: 'payments', label: 'Pagos', icon: CreditCard },
     ];
 
     return (
@@ -106,6 +169,7 @@ export default function AdminSettingsPage() {
                     return (
                         <button
                             key={tab.id}
+                            //@ts-ignore
                             onClick={() => setActiveTab(tab.id as Tab)}
                             className={`flex items-center space-x-2 px-4 py-3 border-b-2 transition-colors ${activeTab === tab.id
                                     ? 'border-primary-500 text-primary-500'
@@ -132,21 +196,97 @@ export default function AdminSettingsPage() {
                 {/* Tab: General */}
                 {activeTab === 'general' && (
                     <div className="bg-dark-900 p-6 rounded-xl border border-dark-800 space-y-6">
-                        <h2 className="text-xl font-bold mb-4 text-white">Configuración General</h2>
+                        <h2 className="text-xl font-bold mb-4 text-white">Información Básica</h2>
 
-                        <div className="space-y-4">
-                            <label className="text-sm font-medium text-dark-300">Imagen de Fondo (Inicio)</label>
-                            <div className="border-2 border-dashed border-dark-700 rounded-xl p-8 text-center hover:border-primary-500/50 transition-colors">
-                                {/* Placeholder for Image Upload Component integration - using text input for now or integrate actual component if available */}
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-dark-300">Nombre del Sitio</label>
                                 <input
                                     type="text"
                                     className="input w-full"
-                                    placeholder="URL de imagen de fondo"
-                                    value={form.homepage_background}
-                                    onChange={(e) => setForm({ ...form, homepage_background: e.target.value })}
+                                    value={form.site_name}
+                                    onChange={(e) => setForm({ ...form, site_name: e.target.value })}
                                 />
-                                <p className="text-xs text-dark-500 mt-2">Próximamente: Subida directa de archivos aquí.</p>
                             </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-dark-300">Email de Contacto</label>
+                                <input
+                                    type="email"
+                                    className="input w-full"
+                                    value={form.contact_email}
+                                    onChange={(e) => setForm({ ...form, contact_email: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2 md:col-span-2">
+                                <label className="text-sm font-medium text-dark-300">Descripción del Sitio</label>
+                                <textarea
+                                    className="input w-full h-20"
+                                    value={form.site_description}
+                                    onChange={(e) => setForm({ ...form, site_description: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        <h3 className="text-lg font-bold pt-4 text-white">Redes Sociales</h3>
+                        <div className="grid md:grid-cols-3 gap-6">
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-2 text-sm font-medium text-dark-300">
+                                    <Facebook className="w-4 h-4 text-primary-500" /> Facebook
+                                </label>
+                                <input
+                                    type="text"
+                                    className="input w-full"
+                                    placeholder="https://facebook.com/..."
+                                    value={form.social_links.facebook || ''}
+                                    onChange={(e) => setForm({
+                                        ...form,
+                                        social_links: { ...form.social_links, facebook: e.target.value }
+                                    })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-2 text-sm font-medium text-dark-300">
+                                    <Instagram className="w-4 h-4 text-primary-500" /> Instagram
+                                </label>
+                                <input
+                                    type="text"
+                                    className="input w-full"
+                                    placeholder="https://instagram.com/..."
+                                    value={form.social_links.instagram || ''}
+                                    onChange={(e) => setForm({
+                                        ...form,
+                                        social_links: { ...form.social_links, instagram: e.target.value }
+                                    })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-2 text-sm font-medium text-dark-300">
+                                    <Twitter className="w-4 h-4 text-primary-500" /> X (Twitter)
+                                </label>
+                                <input
+                                    type="text"
+                                    className="input w-full"
+                                    placeholder="https://twitter.com/..."
+                                    value={form.social_links.twitter || ''}
+                                    onChange={(e) => setForm({
+                                        ...form,
+                                        social_links: { ...form.social_links, twitter: e.target.value }
+                                    })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 pt-4 border-t border-dark-800">
+                            <ImageUpload
+                                label="Imagen de Fondo (Inicio)"
+                                value={form.homepage_background}
+                                onChange={(file, previewUrl) => {
+                                    if (file) {
+                                        setFileState(prev => ({ ...prev, homepage_background: file }));
+                                    }
+                                    setForm({ ...form, homepage_background: previewUrl || '' });
+                                }}
+                            />
                         </div>
                     </div>
                 )}
@@ -246,12 +386,165 @@ export default function AdminSettingsPage() {
 
                 {/* Tab: Galería */}
                 {activeTab === 'gallery' && (
-                    <div className="bg-dark-900 p-6 rounded-xl border border-dark-800 text-center py-12">
-                        <ImageIcon className="w-16 h-16 text-dark-700 mx-auto mb-4" />
-                        <h3 className="text-xl font-bold text-white mb-2">Galería de Imágenes</h3>
-                        <p className="text-dark-400 max-w-md mx-auto">
-                            Próximamente podrás subir múltiples imágenes aquí para el slider de la página "Nosotros".
-                        </p>
+                    <div className="bg-dark-900 p-6 rounded-xl border border-dark-800 space-y-6">
+                        <h2 className="text-xl font-bold mb-4 text-white">Galería "Nosotros"</h2>
+
+                        {/* Existing Images Grid */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                            {(form.about_slider_images || []).map((img, idx) => (
+                                <div key={idx} className="relative group aspect-video bg-dark-800 rounded-lg overflow-hidden border border-dark-700">
+                                    <img src={img} alt={`Gallery ${idx}`} className="w-full h-full object-cover" />
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const newImages = form.about_slider_images.filter((_, i) => i !== idx);
+                                            setForm({ ...form, about_slider_images: newImages });
+                                        }}
+                                        className="absolute top-2 right-2 p-1 bg-red-600 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            ))}
+
+                            {/* New Images Preview */}
+                            {fileState.about_gallery.map((file, idx) => (
+                                <div key={`new-${idx}`} className="relative group aspect-video bg-dark-800 rounded-lg overflow-hidden border border-primary-500/50">
+                                    <img src={URL.createObjectURL(file)} alt="New upload" className="w-full h-full object-cover opacity-70" />
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <span className="text-xs font-bold bg-primary-600 px-2 py-1 rounded">NUEVA</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const newFiles = fileState.about_gallery.filter((_, i) => i !== idx);
+                                            setFileState(prev => ({ ...prev, about_gallery: newFiles }));
+                                        }}
+                                        className="absolute top-2 right-2 p-1 bg-red-600 rounded-full text-white opacity-100"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Upload Area */}
+                        <div className="border-2 border-dashed border-dark-700 rounded-xl p-8 text-center hover:border-primary-500 transition-colors">
+                            <input
+                                type="file"
+                                multiple
+                                accept="image/*"
+                                className="hidden"
+                                id="gallery-upload"
+                                onChange={(e) => {
+                                    if (e.target.files && e.target.files.length > 0) {
+                                        setFileState(prev => ({
+                                            ...prev,
+                                            about_gallery: [...prev.about_gallery, ...Array.from(e.target.files || [])]
+                                        }));
+                                    }
+                                }}
+                            />
+                            <label htmlFor="gallery-upload" className="cursor-pointer flex flex-col items-center gap-3">
+                                <div className="w-12 h-12 bg-dark-800 rounded-full flex items-center justify-center">
+                                    <ImageIcon className="w-6 h-6 text-primary-500" />
+                                </div>
+                                <div>
+                                    <p className="text-white font-medium">Click para agregar fotos</p>
+                                    <p className="text-xs text-dark-400">Puedes seleccionar varias a la vez</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                )}
+
+                {/* Tab: Payments */}
+                {activeTab === 'payments' && (
+                    <div className="space-y-8">
+                        <div className="bg-dark-900 p-6 rounded-xl border border-dark-800">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                    <CreditCard className="w-6 h-6 text-primary-500" /> Stripe
+                                </h2>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={form.stripe_enabled}
+                                        onChange={(e) => setForm({ ...form, stripe_enabled: e.target.checked })}
+                                        className="sr-only peer"
+                                    />
+                                    <div className="w-11 h-6 bg-dark-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                                    <span className="ms-3 text-sm font-medium text-dark-300">
+                                        {form.stripe_enabled ? 'Activado' : 'Desactivado'}
+                                    </span>
+                                </label>
+                            </div>
+
+                            <div className={`space-y-4 ${!form.stripe_enabled && 'opacity-50 pointer-events-none'}`}>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-dark-300">Public Key</label>
+                                    <input
+                                        type="text"
+                                        className="input w-full"
+                                        placeholder="pk_test_..."
+                                        value={form.stripe_public_key}
+                                        onChange={(e) => setForm({ ...form, stripe_public_key: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-dark-300">Secret Key</label>
+                                    <input
+                                        type="password"
+                                        className="input w-full"
+                                        placeholder="sk_test_..."
+                                        value={form.stripe_secret_key}
+                                        onChange={(e) => setForm({ ...form, stripe_secret_key: e.target.value })}
+                                    />
+                                    <p className="text-xs text-yellow-600">Esta clave es secreta y nunca se enviará al frontend.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-dark-900 p-6 rounded-xl border border-dark-800">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                    <span className="text-blue-500 font-bold italic">PayPal</span>
+                                </h2>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={form.paypal_enabled}
+                                        onChange={(e) => setForm({ ...form, paypal_enabled: e.target.checked })}
+                                        className="sr-only peer"
+                                    />
+                                    <div className="w-11 h-6 bg-dark-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                                    <span className="ms-3 text-sm font-medium text-dark-300">
+                                        {form.paypal_enabled ? 'Activado' : 'Desactivado'}
+                                    </span>
+                                </label>
+                            </div>
+
+                            <div className={`space-y-4 ${!form.paypal_enabled && 'opacity-50 pointer-events-none'}`}>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-dark-300">Client ID</label>
+                                    <input
+                                        type="text"
+                                        className="input w-full"
+                                        value={form.paypal_client_id}
+                                        onChange={(e) => setForm({ ...form, paypal_client_id: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-dark-300">Secret Key</label>
+                                    <input
+                                        type="password"
+                                        className="input w-full"
+                                        value={form.paypal_secret_key}
+                                        onChange={(e) => setForm({ ...form, paypal_secret_key: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
 

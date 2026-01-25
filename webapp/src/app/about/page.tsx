@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowRight, Globe, Trophy, Zap } from 'lucide-react';
+import ImageSlider from '@/components/ui/ImageSlider';
 
 import { useState, useEffect } from 'react';
 import { settingsAPI } from '@/lib/api';
@@ -93,16 +94,22 @@ export default function AboutPage() {
                             </div>
                         </div>
                         <div className="relative h-96 rounded-2xl overflow-hidden shadow-2xl shadow-primary-900/20 border border-dark-700 group">
-                            <div className="absolute inset-0 bg-gradient-to-t from-dark-950/80 to-transparent z-10"></div>
-                            <img
-                                src="https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?q=80&w=1000&auto=format&fit=crop"
-                                alt="MMA Training"
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                            />
-                            <div className="absolute bottom-6 left-6 z-20">
-                                <p className="font-bold text-white text-xl">Pasión y Disciplina</p>
-                                <p className="text-primary-400">El camino del guerrero</p>
-                            </div>
+                            {settings?.about_slider_images && settings.about_slider_images.length > 0 ? (
+                                <ImageSlider images={typeof settings.about_slider_images === 'string' ? JSON.parse(settings.about_slider_images) : settings.about_slider_images} />
+                            ) : (
+                                <>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-dark-950/80 to-transparent z-10"></div>
+                                    <img
+                                        src="https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?q=80&w=1000&auto=format&fit=crop"
+                                        alt="MMA Training"
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                    />
+                                    <div className="absolute bottom-6 left-6 z-20">
+                                        <p className="font-bold text-white text-xl">Pasión y Disciplina</p>
+                                        <p className="text-primary-400">El camino del guerrero</p>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
