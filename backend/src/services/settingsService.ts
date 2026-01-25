@@ -30,12 +30,12 @@ export interface Settings {
 }
 
 export interface UpdateSettingsDTO {
-    homepage_background: string | null;
-    about_hero_title: string;
-    about_hero_subtitle: string;
-    about_background: string | null;
-    about_mission_title: string;
-    about_mission_text: string;
+    homepage_background?: string | null;
+    about_hero_title?: string;
+    about_hero_subtitle?: string;
+    about_background?: string | null;
+    about_mission_title?: string;
+    about_mission_text?: string;
     about_values?: any;
     about_slider_images?: any;
 
