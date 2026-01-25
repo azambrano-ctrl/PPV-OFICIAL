@@ -157,7 +157,7 @@ export default function Navbar() {
                                 href="/auth/login"
                                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-500 border border-primary-500/50 transition-all group"
                             >
-                                <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white text-xs font-bold">
+                                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-primary-600 text-xs font-bold">
                                     <User className="w-4 h-4" />
                                 </div>
                                 <span className="text-white font-medium text-sm pr-2">Ingresar</span>
