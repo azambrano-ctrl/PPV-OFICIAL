@@ -25,7 +25,7 @@ export default function ImageUpload({
     value,
     onChange,
     accept = 'image/*',
-    maxSize = 5,
+    maxSize = 50,
 }: ImageUploadProps) {
     const [preview, setPreview] = useState<string | null>(value || null);
     const [isDragging, setIsDragging] = useState(false);

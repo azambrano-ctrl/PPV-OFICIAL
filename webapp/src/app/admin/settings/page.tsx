@@ -172,8 +172,8 @@ export default function AdminSettingsPage() {
                             //@ts-ignore
                             onClick={() => setActiveTab(tab.id as Tab)}
                             className={`flex items-center space-x-2 px-4 py-3 border-b-2 transition-colors ${activeTab === tab.id
-                                    ? 'border-primary-500 text-primary-500'
-                                    : 'border-transparent text-dark-400 hover:text-white'
+                                ? 'border-primary-500 text-primary-500'
+                                : 'border-transparent text-dark-400 hover:text-white'
                                 }`}
                         >
                             <Icon className="w-4 h-4" />
@@ -280,6 +280,7 @@ export default function AdminSettingsPage() {
                             <ImageUpload
                                 label="Imagen de Fondo (Inicio)"
                                 value={form.homepage_background}
+                                maxSize={50}
                                 onChange={(file, previewUrl) => {
                                     if (file) {
                                         setFileState(prev => ({ ...prev, homepage_background: file }));
