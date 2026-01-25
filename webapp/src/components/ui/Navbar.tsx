@@ -43,7 +43,7 @@ export default function Navbar() {
 
     return (
         <nav
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled || isOpen ? 'bg-dark-950/90 backdrop-blur-md border-b border-white/5' : 'bg-transparent'
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled || isOpen ? 'bg-dark-950/80 backdrop-blur-xl shadow-2xl shadow-black/50' : 'bg-transparent'
                 }`}
         >
             <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
@@ -75,7 +75,7 @@ export default function Navbar() {
                         )}
                         {hasHydrated && (
                             <span className="text-2xl font-bold text-primary-600 tracking-tight group-hover:text-primary-500 transition-colors">
-                                {settings?.site_name || 'PPV Streaming'}
+                                {settings?.site_name || ''}
                             </span>
                         )}
                     </Link>
