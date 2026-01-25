@@ -26,7 +26,7 @@ router.get(
 
         // Get total revenue
         const revenueResult = await pool.query(
-            `SELECT COALESCE(SUM(amount), 0) as total FROM purchases WHERE status = 'completed'`
+            `SELECT COALESCE(SUM(amount), 0) as total FROM purchases WHERE payment_status = 'completed'`
         );
         const totalRevenue = parseFloat(revenueResult.rows[0].total);
 
@@ -70,7 +70,7 @@ router.get(
             FROM purchases p
             JOIN users u ON p.user_id = u.id
             JOIN events e ON p.event_id = e.id
-            WHERE p.status = 'completed'
+            WHERE p.payment_status = 'completed'
             ORDER BY p.purchased_at DESC
             LIMIT $1`,
             [limit]
