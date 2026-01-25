@@ -35,6 +35,9 @@ router.put(
     async (req: any, res: express.Response) => {
         try {
             console.log('📝 Processing Settings Update Request');
+            console.log('Raw about_values type:', typeof req.body.about_values);
+            console.log('Raw about_values value:', req.body.about_values);
+
             const updates: settingsService.UpdateSettingsDTO = {};
 
             const currentSettings = await settingsService.getSettings();
@@ -92,11 +95,22 @@ router.put(
             if (req.body.about_values) {
                 try {
                     // If it's a string (from FormData), parse it. If already object, use as is.
-                    updates.about_values = typeof req.body.about_values === 'string'
+                    const parsed = typeof req.body.about_values === 'string'
                         ? JSON.parse(req.body.about_values)
                         : req.body.about_values;
+
+                    console.log('Parsed about_values:', parsed);
+
+                    // Extra safety check: ensure it is object/array, not a string
+                    if (typeof parsed === 'string') {
+                        console.warn('about_values parsed to string (double encoded?), re-parsing...');
+                        updates.about_values = JSON.parse(parsed);
+                    } else {
+                        updates.about_values = parsed;
+                    }
                 } catch (e) {
                     console.warn('Failed to parse about_values', e);
+                    console.log('Value that failed parse:', req.body.about_values);
                 }
             }
 
@@ -107,9 +121,11 @@ router.put(
 
             if (req.body.social_links) {
                 try {
-                    updates.social_links = typeof req.body.social_links === 'string'
+                    const parsed = typeof req.body.social_links === 'string'
                         ? JSON.parse(req.body.social_links)
                         : req.body.social_links;
+
+                    updates.social_links = parsed;
                 } catch (e) {
                     console.warn('Failed to parse social_links', e);
                 }
@@ -124,6 +140,8 @@ router.put(
             if (req.body.paypal_enabled !== undefined) updates.paypal_enabled = String(req.body.paypal_enabled) === 'true';
             if (req.body.paypal_client_id) updates.paypal_client_id = req.body.paypal_client_id;
             if (req.body.paypal_secret_key) updates.paypal_secret_key = req.body.paypal_secret_key;
+
+            console.log('Updates object prepared:', JSON.stringify(updates, null, 2));
 
             const settings = await settingsService.updateSettings(updates);
 
