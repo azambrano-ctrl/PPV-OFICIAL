@@ -35,6 +35,11 @@ export default function Navbar() {
         window.location.href = '/';
     };
 
+    // Hide Navbar on Admin pages (Admin has its own sidebar layout)
+    if (pathname?.startsWith('/admin')) {
+        return null;
+    }
+
     return (
         <nav
             className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled || isOpen ? 'bg-dark-950/90 backdrop-blur-md border-b border-white/5' : 'bg-transparent'
