@@ -250,11 +250,16 @@ app.use(errorHandler);
 // Start server
 const PORT = process.env.PORT || 5000;
 
-httpServer.listen(PORT, () => {
-    logger.info(`🚀 Server running on port ${PORT}`);
-    logger.info(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-    logger.info(`🔗 API URL: ${process.env.API_URL || `http://localhost:${PORT}`}`);
-    logger.info(`🛡️ Allowed Origins: ${allowedOrigins.join(', ')}`);
+import { repairSchema } from './scripts/repairSchema';
+
+// Run repair then listen
+repairSchema().then(() => {
+    httpServer.listen(PORT, () => {
+        logger.info(`🚀 Server running on port ${PORT}`);
+        logger.info(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+        logger.info(`🔗 API URL: ${process.env.API_URL || `http://localhost:${PORT}`}`);
+        logger.info(`🛡️ Allowed Origins: ${allowedOrigins.join(', ')}`);
+    });
 });
 
 // Graceful shutdown
