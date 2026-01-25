@@ -14,6 +14,7 @@ import {
     userHasAccessToEvent,
     updateEventStatus,
 } from '../services/eventService';
+import { getChatMessages } from '../services/chatService';
 
 const router = Router();
 
@@ -282,6 +283,38 @@ router.get(
         res.json({
             success: true,
             data: { hasAccess },
+        });
+    })
+);
+
+/**
+ * GET /api/events/:id/chat
+ * Get chat history for an event
+ */
+router.get(
+    '/:id/chat',
+    authenticate,
+    validateParams(eventIdSchema),
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        // Verify user has access to event
+        const hasAccess = await userHasAccessToEvent(
+            req.user!.userId,
+            req.params.id
+        );
+
+        if (!hasAccess) {
+            res.status(403).json({
+                success: false,
+                message: 'No tienes acceso al chat de este evento',
+            });
+            return;
+        }
+
+        const messages = await getChatMessages(req.params.id);
+
+        res.json({
+            success: true,
+            data: messages,
         });
     })
 );

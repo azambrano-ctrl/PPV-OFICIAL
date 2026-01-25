@@ -52,10 +52,10 @@ export default function ChatBox({ eventId, eventTitle }: ChatBoxProps) {
         setIsAutoScroll(isBottom);
     };
 
+    // Socket.io connection and listeners
     useEffect(() => {
         if (typeof window === 'undefined') return;
 
-        // Get user info from localStorage
         const token = localStorage.getItem('accessToken');
         const userStr = localStorage.getItem('user');
 
@@ -71,22 +71,17 @@ export default function ChatBox({ eventId, eventTitle }: ChatBoxProps) {
 
         if (!token) return;
 
-        // Connect to Socket.io
         const socketInstance = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000', {
-            auth: {
-                token,
-            },
+            auth: { token },
         });
 
         socketInstance.on('connect', () => {
             setIsConnected(true);
-            console.log('Connected to chat');
             socketInstance.emit('join_event', eventId);
         });
 
         socketInstance.on('disconnect', () => {
             setIsConnected(false);
-            console.log('Disconnected from chat');
         });
 
         socketInstance.on('new_message', (messageData: any) => {
@@ -101,7 +96,7 @@ export default function ChatBox({ eventId, eventTitle }: ChatBoxProps) {
             };
             setMessages((prev) => {
                 const updated = [...prev, message];
-                return updated.slice(-100); // Only keep the last 100 messages
+                return updated.slice(-100);
             });
         });
 
@@ -122,7 +117,6 @@ export default function ChatBox({ eventId, eventTitle }: ChatBoxProps) {
                     color: '#fff',
                 },
             });
-            // If the local user is the one banned, we could do more here
         });
 
         socketInstance.on('error', (err: any) => {
@@ -135,6 +129,42 @@ export default function ChatBox({ eventId, eventTitle }: ChatBoxProps) {
             socketInstance.emit('leave_event', eventId);
             socketInstance.disconnect();
         };
+    }, [eventId]);
+
+    // Fetch initial chat history
+    useEffect(() => {
+        const fetchHistory = async () => {
+            try {
+                const token = localStorage.getItem('accessToken');
+                if (!token) return;
+
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events/${eventId}/chat`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (res.ok) {
+                    const result = await res.json();
+                    if (result.success) {
+                        const history: Message[] = result.data.map((msg: any) => ({
+                            id: msg.id,
+                            user: msg.user_name,
+                            userId: msg.user_id,
+                            message: msg.message,
+                            timestamp: new Date(msg.created_at),
+                            isAdmin: msg.role === 'admin',
+                            isDeleted: msg.is_deleted
+                        }));
+                        setMessages(history);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching chat history:', error);
+            }
+        };
+
+        fetchHistory();
     }, [eventId]);
 
     const sendMessage = (e: React.FormEvent) => {
@@ -171,7 +201,6 @@ export default function ChatBox({ eventId, eventTitle }: ChatBoxProps) {
 
     return (
         <div className="flex flex-col h-full bg-black/40 backdrop-blur-md border border-white/10 rounded-lg overflow-hidden shadow-2xl relative">
-            {/* Header */}
             <div className="p-4 border-b border-white/10 bg-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'}`} />
@@ -182,7 +211,6 @@ export default function ChatBox({ eventId, eventTitle }: ChatBoxProps) {
                 )}
             </div>
 
-            {/* Messages Area */}
             <div
                 className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent"
                 onScroll={handleScroll}
@@ -232,13 +260,13 @@ export default function ChatBox({ eventId, eventTitle }: ChatBoxProps) {
                                         </div>
                                     )}
                                 </div>
-                                <p className="text-sm text-white/80 break-words leading-relaxed">
+                                <div className="text-sm text-white/80 break-words leading-relaxed">
                                     {msg.isDeleted ? (
                                         <span className="italic">Este mensaje fue eliminado por un moderador.</span>
                                     ) : (
                                         msg.message
                                     )}
-                                </p>
+                                </div>
                             </div>
                         </div>
                     ))
@@ -246,7 +274,6 @@ export default function ChatBox({ eventId, eventTitle }: ChatBoxProps) {
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* Emoji Quick Picker */}
             <AnimatePresence>
                 {showEmojiPicker && (
                     <motion.div
@@ -268,7 +295,6 @@ export default function ChatBox({ eventId, eventTitle }: ChatBoxProps) {
                 )}
             </AnimatePresence>
 
-            {/* Input Area */}
             <div className="p-4 bg-white/5 border-t border-white/10">
                 <form onSubmit={sendMessage} className="relative">
                     <button
