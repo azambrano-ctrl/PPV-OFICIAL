@@ -151,7 +151,7 @@ export default function HomePage() {
                                 <span className="block text-white">{mainEvent.title}</span>
                             ) : (
                                 <>
-                                    <span className="block text-white">VIVA LOS</span>
+                                    <span className="block text-white">VIVE LOS</span>
                                     <span className="block text-red-600">DEPORTES DE COMBATE</span>
                                 </>
                             )}
