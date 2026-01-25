@@ -17,6 +17,7 @@ import settingsRoutes from './routes/settings';
 import cleanupRoutes from './routes/cleanup';
 import { query } from './config/database';
 import { verifyAccessToken } from './middleware/auth';
+import { userHasAccessToEvent } from './services/eventService';
 
 // Load environment variables
 dotenv.config();
@@ -151,33 +152,36 @@ io.on('connection', (socket) => {
     // Join event room
     socket.on('join_event', async (eventId: string) => {
         try {
+            logger.info('[CHAT] Join attempt', { userId: socket.data.user.userId, eventId });
+
             // Check if user is admin or has purchased the event
             const isAdmin = socket.data.user.role === 'admin';
 
             if (!isAdmin) {
-                // Verify user has access to event
-                const result = await query(
-                    `SELECT COUNT(*) as count FROM purchases
-         WHERE user_id = $1 AND event_id = $2 AND payment_status = 'completed'`,
-                    [socket.data.user.userId, eventId]
+                // Verify user has access to event (purchased or free)
+                const hasAccess = await userHasAccessToEvent(
+                    socket.data.user.userId,
+                    eventId
                 );
 
-                if (parseInt(result.rows[0].count) === 0) {
-                    socket.emit('error', { message: 'Access denied to this event' });
+                if (!hasAccess) {
+                    logger.warn('[CHAT] Access denied', { userId: socket.data.user.userId, eventId });
+                    socket.emit('error', { message: 'Access denied to this event chat' });
                     return;
                 }
             }
 
-            socket.join(`event_${eventId}`);
-            logger.info('User joined event room', {
+            const roomName = `event_${eventId}`;
+            socket.join(roomName);
+            logger.info('[CHAT] User joined room', {
                 userId: socket.data.user.userId,
-                eventId,
+                room: roomName,
                 isAdmin,
             });
 
             socket.emit('joined_event', { eventId });
         } catch (error) {
-            logger.error('Error joining event:', error);
+            logger.error('[CHAT] Error in join_event:', error);
             socket.emit('error', { message: 'Failed to join event' });
         }
     });
@@ -186,17 +190,35 @@ io.on('connection', (socket) => {
     socket.on('send_message', async (data: { eventId: string; message: string }) => {
         try {
             const { eventId, message } = data;
+            const userId = socket.data.user.userId;
+
+            logger.info('[CHAT] New message attempt', { userId, eventId });
 
             if (!message || message.trim().length === 0) {
                 return;
+            }
+
+            // Verify if user is in the room (optional check for security)
+            const roomName = `event_${eventId}`;
+            if (!socket.rooms.has(roomName)) {
+                logger.warn('[CHAT] User not in room but trying to send message', { userId, roomName });
+                // Re-join them if they have access
+                const hasAccess = socket.data.user.role === 'admin' || await userHasAccessToEvent(userId, eventId);
+                if (hasAccess) {
+                    socket.join(roomName);
+                    logger.info('[CHAT] Auto-rejoined user to room', { userId, roomName });
+                } else {
+                    socket.emit('error', { message: 'Not authorized for this chat' });
+                    return;
+                }
             }
 
             // Save message to database
             const result = await query(
                 `INSERT INTO chat_messages (event_id, user_id, message)
          VALUES ($1, $2, $3)
-         RETURNING id, event_id, user_id, message, created_at`,
-                [eventId, socket.data.user.userId, message.trim()]
+         RETURNING id, event_id, user_id, message, created_at, is_deleted`,
+                [eventId, userId, message.trim()]
             );
 
             const chatMessage = result.rows[0];
@@ -204,14 +226,10 @@ io.on('connection', (socket) => {
             // Get user info and check if banned
             const userResult = await query(
                 'SELECT full_name, role FROM users WHERE id = $1',
-                [socket.data.user.userId]
+                [userId]
             );
 
             const user = userResult.rows[0];
-
-            // TODO: Check if user is banned for this event
-            // const banCheck = await query('SELECT 1 FROM chat_bans WHERE user_id = $1 AND event_id = $2', [socket.data.user.userId, eventId]);
-            // if (banCheck.rows.length > 0) { socket.emit('error', { message: 'You are banned from this chat' }); return; }
 
             const messageData = {
                 ...chatMessage,
@@ -220,14 +238,15 @@ io.on('connection', (socket) => {
             };
 
             // Broadcast to event room
-            io.to(`event_${eventId}`).emit('new_message', messageData);
+            io.to(roomName).emit('new_message', messageData);
 
-            logger.info('Chat message sent', {
-                userId: socket.data.user.userId,
+            logger.info('[CHAT] Message broadcasted', {
+                userId,
                 eventId,
+                room: roomName
             });
         } catch (error) {
-            logger.error('Error sending message:', error);
+            logger.error('[CHAT] Error sending message:', error);
             socket.emit('error', { message: 'Failed to send message' });
         }
     });

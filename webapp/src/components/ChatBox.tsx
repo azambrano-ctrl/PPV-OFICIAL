@@ -5,6 +5,7 @@ import { io, Socket } from 'socket.io-client';
 import { Send, User, Shield, Info, X, UserMinus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { useAuthStore } from '@/lib/store';
 
 interface Message {
     id: string;
@@ -24,12 +25,11 @@ interface ChatBoxProps {
 const COMMON_EMOJIS = ['🔥', '🥊', '👏', '🙌', '💪', '🤩', '🎯', '⚡', '💣', '😎', '👑', '💯', '💀', '👽', '😤', '🍿'];
 
 export default function ChatBox({ eventId, eventTitle }: ChatBoxProps) {
+    const { user, isAdmin, accessToken } = useAuthStore();
     const [socket, setSocket] = useState<Socket | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [isConnected, setIsConnected] = useState(false);
-    const [username, setUsername] = useState('');
-    const [isAdmin, setIsAdmin] = useState(false);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [isAutoScroll, setIsAutoScroll] = useState(true);
@@ -56,35 +56,29 @@ export default function ChatBox({ eventId, eventTitle }: ChatBoxProps) {
     useEffect(() => {
         if (typeof window === 'undefined') return;
 
-        const token = localStorage.getItem('accessToken');
-        const userStr = localStorage.getItem('user');
-
-        if (userStr) {
-            try {
-                const user = JSON.parse(userStr);
-                setUsername(user.full_name || user.email || 'Anonymous');
-                setIsAdmin(user.role === 'admin');
-            } catch (e) {
-                setUsername('Anonymous');
-            }
-        }
-
-        if (!token) return;
+        if (!accessToken) return;
 
         const socketInstance = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000', {
-            auth: { token },
+            auth: { token: accessToken },
         });
 
         socketInstance.on('connect', () => {
             setIsConnected(true);
+            console.log('[CHAT] Connected to Socket.io');
             socketInstance.emit('join_event', eventId);
+        });
+
+        socketInstance.on('joined_event', ({ eventId }: any) => {
+            console.log('[CHAT] Successfully joined event room:', eventId);
         });
 
         socketInstance.on('disconnect', () => {
             setIsConnected(false);
+            console.log('[CHAT] Disconnected from Socket.io');
         });
 
         socketInstance.on('new_message', (messageData: any) => {
+            console.log('[CHAT] New message received:', messageData);
             const message: Message = {
                 id: messageData.id,
                 user: messageData.user_name,
