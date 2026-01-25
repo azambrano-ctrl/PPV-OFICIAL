@@ -13,9 +13,7 @@ router.get(
     '/stats',
     authenticate,
     requireAdmin,
-    requireAdmin,
     asyncHandler(async (_req: any, res: Response) => {
-        // const authReq = req as AuthRequest;
         // Get total users
         const usersResult = await pool.query('SELECT COUNT(*) as count FROM users');
         const totalUsers = parseInt(usersResult.rows[0].count);
@@ -26,15 +24,54 @@ router.get(
 
         // Get total revenue
         const revenueResult = await pool.query(
-            `SELECT COALESCE(SUM(amount), 0) as total FROM purchases WHERE payment_status = 'completed'`
+            `SELECT COALESCE(SUM(final_amount), 0) as total FROM purchases WHERE payment_status = 'completed'`
         );
         const totalRevenue = parseFloat(revenueResult.rows[0].total);
 
-        // Get active streams (events that are currently live)
-        const activeStreamsResult = await pool.query(
+        // Get active viewers (sum of all max_viewers of live events as a proxy or just count live events)
+        const liveEventsResult = await pool.query(
             `SELECT COUNT(*) as count FROM events WHERE status = 'live'`
         );
-        const activeStreams = parseInt(activeStreamsResult.rows[0].count);
+        const activeStreams = parseInt(liveEventsResult.rows[0].count);
+
+        // Current month stats
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+        const newUsersMonthResult = await pool.query(
+            'SELECT COUNT(*) as count FROM users WHERE created_at >= $1',
+            [startOfMonth]
+        );
+        const newUsersThisMonth = parseInt(newUsersMonthResult.rows[0].count);
+
+        const eventsMonthResult = await pool.query(
+            'SELECT COUNT(*) as count FROM events WHERE created_at >= $1',
+            [startOfMonth]
+        );
+        const eventsThisMonth = parseInt(eventsMonthResult.rows[0].count);
+
+        // Monthly Revenue (Last 6 months)
+        const monthlyRevenueResult = await pool.query(`
+            SELECT 
+                TO_CHAR(purchased_at, 'Mon') as month,
+                SUM(final_amount) as total
+            FROM purchases
+            WHERE payment_status = 'completed' 
+              AND purchased_at >= NOW() - INTERVAL '6 months'
+            GROUP BY TO_CHAR(purchased_at, 'Mon'), DATE_TRUNC('month', purchased_at)
+            ORDER BY DATE_TRUNC('month', purchased_at) ASC
+        `);
+
+        // Monthly User Growth (Last 6 months)
+        const monthlyUsersResult = await pool.query(`
+            SELECT 
+                TO_CHAR(created_at, 'Mon') as month,
+                COUNT(*) as count
+            FROM users
+            WHERE created_at >= NOW() - INTERVAL '6 months'
+            GROUP BY TO_CHAR(created_at, 'Mon'), DATE_TRUNC('month', created_at)
+            ORDER BY DATE_TRUNC('month', created_at) ASC
+        `);
 
         res.json({
             success: true,
@@ -43,6 +80,12 @@ router.get(
                 totalEvents,
                 totalRevenue,
                 activeStreams,
+                newUsersThisMonth,
+                eventsThisMonth,
+                charts: {
+                    revenue: monthlyRevenueResult.rows,
+                    users: monthlyUsersResult.rows
+                }
             },
         });
     })

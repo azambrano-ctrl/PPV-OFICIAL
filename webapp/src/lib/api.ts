@@ -185,6 +185,14 @@ export const settingsAPI = {
     }
 };
 
+export const adminAPI = {
+    getStats: () =>
+        api.get('/admin/stats'),
+
+    getRecentPurchases: (limit?: number) =>
+        api.get('/admin/purchases/recent', { params: { limit } }),
+};
+
 // Error handler helper
 export const handleAPIError = (error: any): string => {
     if (axios.isAxiosError(error)) {
