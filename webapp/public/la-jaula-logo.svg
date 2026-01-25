@@ -1,0 +1,13 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Octagon (The Cage) -->
+  <path d="M150 50H362L462 150V362L362 462H150L50 362V150L150 50Z" stroke="#E11D48" stroke-width="20" stroke-linejoin="round"/>
+  
+  <!-- INNER GLOW / HIGHLIGHT -->
+  <path d="M160 70H352L440 158V354L352 442H160L72 354V158L160 70Z" fill="#E11D48" fill-opacity="0.1"/>
+
+  <!-- CENTRAL PLAY BUTTON -->
+  <path d="M210 170V342L360 256L210 170Z" fill="#E11D48"/>
+
+  <!-- BRAND NAME TEXT (OPTIONAL IN ICON) -->
+  <text x="256" y="495" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="40" fill="white" letter-spacing="2">LA JAULA</text>
+</svg>

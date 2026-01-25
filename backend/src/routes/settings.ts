@@ -138,6 +138,10 @@ router.put(
                 updates.social_links = safeParseJSON(req.body.social_links, { facebook: "", instagram: "", twitter: "" });
             }
 
+            if (req.body.site_logo_width !== undefined) {
+                updates.site_logo_width = parseInt(req.body.site_logo_width);
+            }
+
             // Handle Payment Settings
             // Note: FormData sends booleans as 'true'/'false' strings
             if (req.body.stripe_enabled !== undefined) updates.stripe_enabled = String(req.body.stripe_enabled) === 'true';

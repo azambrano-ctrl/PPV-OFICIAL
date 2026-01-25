@@ -51,11 +51,14 @@ export default function Navbar() {
                     {/* Brand / Logo - Production Style */}
                     <Link href="/" className="flex items-center gap-3 group">
                         {settings?.site_logo ? (
-                            <div className="relative w-10 h-10 transition-transform group-hover:scale-105">
+                            <div
+                                className="relative transition-transform group-hover:scale-105 flex items-center justify-center"
+                                style={{ width: settings.site_logo_width ? `${settings.site_logo_width}px` : '40px' }}
+                            >
                                 <img
                                     src={settings.site_logo}
                                     alt={settings?.site_name || 'Logo'}
-                                    className="w-full h-full object-contain"
+                                    className="max-w-full h-auto object-contain"
                                 />
                             </div>
                         ) : (

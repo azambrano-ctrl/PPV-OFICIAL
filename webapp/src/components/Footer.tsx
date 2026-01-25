@@ -39,11 +39,14 @@ export default function Footer() {
                     <div className="lg:col-span-2">
                         <Link href="/" className="flex items-center space-x-2 mb-4 group">
                             {settings?.site_logo ? (
-                                <div className="w-10 h-10 transition-transform group-hover:scale-105">
+                                <div
+                                    className="transition-transform group-hover:scale-105 flex items-center justify-center"
+                                    style={{ width: settings.site_logo_width ? `${settings.site_logo_width}px` : '40px' }}
+                                >
                                     <img
                                         src={settings.site_logo}
                                         alt={settings?.site_name || 'Logo'}
-                                        className="w-full h-full object-contain"
+                                        className="max-w-full h-auto object-contain"
                                     />
                                 </div>
                             ) : (

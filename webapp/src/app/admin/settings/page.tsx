@@ -28,6 +28,7 @@ export default function AdminSettingsPage() {
         contact_email: '',
         homepage_background: '',
         site_logo: '',
+        site_logo_width: 40,
         social_links: { facebook: '', instagram: '', twitter: '' } as any,
 
         // About
@@ -65,6 +66,7 @@ export default function AdminSettingsPage() {
                 contact_email: d.contact_email || '',
                 homepage_background: d.homepage_background || '',
                 site_logo: d.site_logo || '',
+                site_logo_width: d.site_logo_width || 40,
                 social_links: typeof d.social_links === 'string' ? JSON.parse(d.social_links) : (d.social_links || { facebook: '', instagram: '', twitter: '' }),
 
                 about_hero_title: d.about_hero_title || '',
@@ -126,6 +128,7 @@ export default function AdminSettingsPage() {
             formData.append('site_description', form.site_description);
             formData.append('contact_email', form.contact_email);
             formData.append('social_links', JSON.stringify(form.social_links));
+            formData.append('site_logo_width', String(form.site_logo_width));
 
             // About
             formData.append('about_hero_title', form.about_hero_title);
@@ -318,6 +321,27 @@ export default function AdminSettingsPage() {
                                     setForm({ ...form, site_logo: previewUrl || '' });
                                 }}
                             />
+
+                            <div className="space-y-4 pt-2">
+                                <div className="flex justify-between items-center">
+                                    <label className="text-sm font-medium text-dark-300">Ancho del Logo (px)</label>
+                                    <span className="text-xs font-bold text-primary-500 bg-primary-500/10 px-2 py-1 rounded">{form.site_logo_width}px</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    min="20"
+                                    max="300"
+                                    step="1"
+                                    className="w-full accent-primary-500 bg-dark-800 rounded-lg h-2"
+                                    value={form.site_logo_width}
+                                    onChange={(e) => setForm({ ...form, site_logo_width: parseInt(e.target.value) })}
+                                />
+                                <div className="flex justify-between text-[10px] text-dark-500">
+                                    <span>20px</span>
+                                    <span>150px</span>
+                                    <span>300px</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}

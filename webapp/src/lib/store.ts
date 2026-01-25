@@ -135,6 +135,7 @@ export const useUIStore = create<UIState>((set) => ({
 interface Settings {
     site_name: string;
     site_logo: string | null;
+    site_logo_width: number;
     site_description: string;
     contact_email: string;
     homepage_background: string | null;

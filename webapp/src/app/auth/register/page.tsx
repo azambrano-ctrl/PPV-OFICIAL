@@ -71,11 +71,14 @@ export default function RegisterPage() {
                 <div className="text-center mb-8">
                     <Link href="/" className="inline-flex items-center space-x-2 mb-6 group">
                         {settings?.site_logo ? (
-                            <div className="w-12 h-12 transition-transform group-hover:scale-105">
+                            <div
+                                className="transition-transform group-hover:scale-105 flex items-center justify-center"
+                                style={{ width: settings.site_logo_width ? `${settings.site_logo_width}px` : '48px' }}
+                            >
                                 <img
                                     src={settings.site_logo}
                                     alt={settings?.site_name || 'Logo'}
-                                    className="w-full h-full object-contain"
+                                    className="max-w-full h-auto object-contain"
                                 />
                             </div>
                         ) : (
