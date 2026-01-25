@@ -58,8 +58,12 @@ export const createPayPalOrder = async (
     logger.info('Starting createPayPalOrder', { input });
 
     try {
-        let finalAmount = input.amount;
+        let finalAmount = Number(input.amount);
         let discountAmount = 0;
+
+        if (isNaN(finalAmount)) {
+            throw new Error(`Invalid amount provided: ${input.amount}`);
+        }
 
         // Apply coupon if provided
         if (input.couponCode) {
