@@ -123,7 +123,6 @@ export default function EventDetailPage() {
     if (loading) {
         return (
             <div className="min-h-screen flex flex-col bg-dark-950">
-                <Navbar />
                 <div className="flex-1 flex items-center justify-center">
                     <div className="spinner w-12 h-12" />
                 </div>
@@ -134,7 +133,6 @@ export default function EventDetailPage() {
     if (!event) {
         return (
             <div className="min-h-screen flex flex-col bg-dark-950">
-                <Navbar />
                 <div className="flex-1 flex items-center justify-center">
                     <div className="text-center">
                         <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
