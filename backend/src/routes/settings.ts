@@ -6,6 +6,31 @@ import { uploadSettingsImages } from '../middleware/upload';
 
 const router = express.Router();
 
+// Helper to safely parse JSON, handling double/triple encoding
+const safeParseJSON = (input: any, fallback: any = []): any => {
+    if (input === null || input === undefined) return fallback;
+
+    // If it's already an object/array, return it
+    if (typeof input === 'object') return input;
+
+    // If it's a string, try to parse it
+    if (typeof input === 'string') {
+        try {
+            const parsed = JSON.parse(input);
+            // Recursively parse if the result is still a string
+            if (typeof parsed === 'string') {
+                return safeParseJSON(parsed, fallback);
+            }
+            return parsed;
+        } catch (e) {
+            console.warn('JSON parse failed for input:', input.substring(0, 50) + '...', e);
+            return fallback;
+        }
+    }
+
+    return fallback;
+};
+
 /**
  * @route   GET /api/settings
  * @desc    Get application settings (public)
@@ -45,30 +70,18 @@ router.put(
             // Initialize about_slider_images logic
             let currentSliderImages: any[] = [];
 
-            // 1. First take what's in the body (this represents the user's intent for existing images, e.g. after deletions)
+            // 1. Handle about_slider_images with safe parser
             if (req.body.about_slider_images) {
-                try {
-                    const parsed = typeof req.body.about_slider_images === 'string'
-                        ? JSON.parse(req.body.about_slider_images)
-                        : req.body.about_slider_images;
+                currentSliderImages = safeParseJSON(
+                    req.body.about_slider_images,
+                    currentSettings.about_slider_images || []
+                );
 
-                    // Extra safety check for double encoding
-                    if (typeof parsed === 'string') {
-                        console.warn('about_slider_images parsed to string (double encoded?), re-parsing...');
-                        const doubleParsed = JSON.parse(parsed);
-                        if (Array.isArray(doubleParsed)) {
-                            currentSliderImages = doubleParsed;
-                        }
-                    } else if (Array.isArray(parsed)) {
-                        currentSliderImages = parsed;
-                    }
-                } catch (e) {
-                    console.warn('Failed to parse about_slider_images', e);
-                    // If parsing fails, fall back to current DB state to be safe
+                // Ensure it's an array
+                if (!Array.isArray(currentSliderImages)) {
                     currentSliderImages = currentSettings.about_slider_images || [];
                 }
             } else {
-                // If field not present in body, we assume we start with existing DB state
                 currentSliderImages = currentSettings.about_slider_images || [];
             }
 
@@ -102,25 +115,7 @@ router.put(
             if (req.body.about_mission_text) updates.about_mission_text = req.body.about_mission_text;
 
             if (req.body.about_values) {
-                try {
-                    // If it's a string (from FormData), parse it. If already object, use as is.
-                    const parsed = typeof req.body.about_values === 'string'
-                        ? JSON.parse(req.body.about_values)
-                        : req.body.about_values;
-
-                    console.log('Parsed about_values:', parsed);
-
-                    // Extra safety check: ensure it is object/array, not a string
-                    if (typeof parsed === 'string') {
-                        console.warn('about_values parsed to string (double encoded?), re-parsing...');
-                        updates.about_values = JSON.parse(parsed);
-                    } else {
-                        updates.about_values = parsed;
-                    }
-                } catch (e) {
-                    console.warn('Failed to parse about_values', e);
-                    console.log('Value that failed parse:', req.body.about_values);
-                }
+                updates.about_values = safeParseJSON(req.body.about_values, []);
             }
 
             // Handle General Settings
@@ -129,21 +124,7 @@ router.put(
             if (req.body.contact_email) updates.contact_email = req.body.contact_email;
 
             if (req.body.social_links) {
-                try {
-                    const parsed = typeof req.body.social_links === 'string'
-                        ? JSON.parse(req.body.social_links)
-                        : req.body.social_links;
-
-                    // Extra safety check: ensure it is object/array, not a string
-                    if (typeof parsed === 'string') {
-                        console.warn('social_links parsed to string (double encoded?), re-parsing...');
-                        updates.social_links = JSON.parse(parsed);
-                    } else {
-                        updates.social_links = parsed;
-                    }
-                } catch (e) {
-                    console.warn('Failed to parse social_links', e);
-                }
+                updates.social_links = safeParseJSON(req.body.social_links, { facebook: "", instagram: "", twitter: "" });
             }
 
             // Handle Payment Settings
