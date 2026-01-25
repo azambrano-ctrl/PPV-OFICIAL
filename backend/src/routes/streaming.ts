@@ -94,7 +94,18 @@ router.get(
                 }
             }
 
-            console.log(`[Stream Token] Event: ${event.title}, Stream URL: ${streamUrl}`);
+            // Detect if it's an MP4 stream (explicitly or by extension)
+            const isMp4 = streamUrl.toLowerCase().includes('.mp4');
+
+            // FORCE PROXY FOR INSECURE STREAMS (Mixed Content Fix)
+            if (streamUrl.startsWith('http:')) {
+                const protocol = (req.headers['x-forwarded-proto'] as string) || 'https';
+                const host = req.get('host');
+                streamUrl = `${protocol}://${host}/api/streaming/${eventId}/proxy?token=${existingToken.token}`;
+                console.log('[Token Existente] Stream inseguro. Usando proxy:', streamUrl);
+            }
+
+            console.log(`[Stream Token] Event: ${event.title}, Stream URL: ${streamUrl}, isMp4: ${isMp4}`);
 
             res.json({
                 success: true,
@@ -102,6 +113,7 @@ router.get(
                     token: existingToken.token,
                     expiresAt: existingToken.expires_at,
                     streamUrl,
+                    isMp4,
                 },
             });
             return;
@@ -133,7 +145,9 @@ router.get(
             streamUrl = `https://stream.mux.com/${streamKey}.m3u8`;
         }
 
-        // FORCE PROXY FOR INSECURE STREAMS (Mixed Content Fix)
+        // Detect if it's an MP4 stream (explicitly or by extension)
+        const isMp4 = streamUrl.toLowerCase().includes('.mp4');
+
         // FORCE PROXY FOR INSECURE STREAMS (Mixed Content Fix)
         // If the stream URL is http:// (not https), we MUST proxy it through our backend
         if (streamUrl.startsWith('http:')) {
@@ -145,7 +159,7 @@ router.get(
             console.log('Insecure stream detected. Wrapping in proxy:', streamUrl);
         }
 
-        console.log(`[New Stream Token] Event: ${event.title}, Stream URL: ${streamUrl}`);
+        console.log(`[New Stream Token] Event: ${event.title}, Stream URL: ${streamUrl}, isMp4: ${isMp4}`);
 
         res.json({
             success: true,
@@ -153,6 +167,7 @@ router.get(
                 token,
                 expiresAt,
                 streamUrl,
+                isMp4,
             },
         });
     })

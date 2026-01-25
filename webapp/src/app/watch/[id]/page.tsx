@@ -11,6 +11,7 @@ interface StreamData {
     token: string;
     streamUrl: string;
     expiresAt: string;
+    isMp4?: boolean;
 }
 
 interface Event {
@@ -190,6 +191,7 @@ export default function WatchPage() {
                             eventTitle={event.title}
                             status={event.status}
                             poster={event.thumbnail_url}
+                            isMp4={streamData.isMp4}
                         />
                     </div>
 

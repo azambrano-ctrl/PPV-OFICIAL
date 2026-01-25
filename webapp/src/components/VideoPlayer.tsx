@@ -9,9 +9,10 @@ interface VideoPlayerProps {
     eventTitle: string;
     status: string;
     poster?: string;
+    isMp4?: boolean;
 }
 
-export default function VideoPlayer({ streamUrl, token, eventTitle, status, poster }: VideoPlayerProps) {
+export default function VideoPlayer({ streamUrl, token, eventTitle, status, poster, isMp4 }: VideoPlayerProps) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const hlsRef = useRef<Hls | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -24,18 +25,20 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
 
         const video = videoRef.current;
 
-        // LOGIN INTELIGENTE DE URL:
-        // Si es Mux (stream.mux.com), NO debemos enviar nuestro token interno 
-        // porque Mux lo interpretará como una firma inválida si el stream es público.
+        // SMART URL LOGIC:
+        // 1. If it's a proxy link from our API, it already has the token.
+        // 2. If it's a Mux link, we DON'T add our internal token (it's public or signed by Mux).
+        // 3. Otherwise, append the token.
         let finalUrl = streamUrl;
 
-        if (streamUrl.includes('stream.mux.com')) {
-            // Limpiar token interno para streams de Mux
+        if (streamUrl.includes('/api/streaming/') && streamUrl.includes('token=')) {
+            // Already proxied with token
+            console.log('Proxy URL detected - Using as is');
+        } else if (streamUrl.includes('stream.mux.com')) {
             const parts = streamUrl.split('?');
             finalUrl = parts[0];
-            console.log('Mux Stream detectado - Token limpiado:', finalUrl);
+            console.log('Mux Stream detected - Token cleaned:', finalUrl);
         } else {
-            // Para otros streams (proxy interno), SÍ necesitamos el token
             finalUrl = `${streamUrl}${streamUrl.includes('?') ? '&' : '?'}token=${token}`;
         }
 
@@ -83,9 +86,9 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         };
 
         // Check if HLS is supported
-        // SPECIAL CASE: If it's an MP4 file, play natively, do NOT use HLS.js
-        if (finalUrl.includes('.mp4')) {
-            console.log('MP4 detected, using native playback');
+        // SPECIAL CASE: If it's an MP4 file (detected by flag or extension), play natively, do NOT use HLS.js
+        if (isMp4 || finalUrl.includes('.mp4')) {
+            console.log('MP4 detected (forced or by extension), using native playback');
             video.src = finalUrl;
             video.addEventListener('loadedmetadata', handleManifestParsed);
             video.addEventListener('error', (e) => handleError(null, { fatal: true, type: 'native', details: e }));
