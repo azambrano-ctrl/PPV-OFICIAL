@@ -36,6 +36,8 @@ export default function Navbar() {
         window.location.href = '/';
     };
 
+    const isAuthPage = pathname?.startsWith('/auth');
+
     // Hide Navbar on Admin pages and Watch pages (Immersive mode)
     if (pathname?.startsWith('/admin') || pathname?.startsWith('/watch')) {
         return null;
@@ -82,7 +84,7 @@ export default function Navbar() {
 
                     {/* Desktop Navigation - Centered like reference */}
                     <div className="hidden md:flex items-center space-x-10">
-                        {navLinks.map((link) => (
+                        {!isAuthPage && navLinks.map((link) => (
                             <Link
                                 key={link.name}
                                 href={link.href}
@@ -176,26 +178,30 @@ export default function Navbar() {
                                 )}
                             </div>
                         ) : (
-                            <Link
-                                href="/auth/login"
-                                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-500 border border-primary-500/50 transition-all group"
-                            >
-                                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-primary-600 text-xs font-bold">
-                                    <User className="w-4 h-4" />
-                                </div>
-                                <span className="text-white font-medium text-sm pr-2">Ingresar</span>
-                            </Link>
+                            !isAuthPage && (
+                                <Link
+                                    href="/auth/login"
+                                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-500 border border-primary-500/50 transition-all group"
+                                >
+                                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-primary-600 text-xs font-bold">
+                                        <User className="w-4 h-4" />
+                                    </div>
+                                    <span className="text-white font-medium text-sm pr-2">Ingresar</span>
+                                </Link>
+                            )
                         )}
                     </div>
 
                     {/* Mobile Menu Button */}
                     <div className="md:hidden">
-                        <button
-                            onClick={() => setIsOpen(!isOpen)}
-                            className="text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
-                        >
-                            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                        </button>
+                        {!isAuthPage && (
+                            <button
+                                onClick={() => setIsOpen(!isOpen)}
+                                className="text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
+                            >
+                                {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -210,7 +216,7 @@ export default function Navbar() {
                         className="md:hidden bg-dark-950 overflow-hidden shadow-2xl"
                     >
                         <div className="px-4 pt-2 pb-6 space-y-2">
-                            {navLinks.map((link) => (
+                            {!isAuthPage && navLinks.map((link) => (
                                 <Link
                                     key={link.name}
                                     href={link.name === 'Inicio' ? '/events' : link.href} // UX tweak: Redirect 'Inicio' to events for better flow
@@ -263,14 +269,16 @@ export default function Navbar() {
                                         </button>
                                     </>
                                 ) : (
-                                    <Link
-                                        href="/auth/login"
-                                        onClick={() => setIsOpen(false)}
-                                        className="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary-600 text-white font-bold hover:bg-primary-500"
-                                    >
-                                        <User className="w-5 h-5" />
-                                        <span>Ingresar / Registro</span>
-                                    </Link>
+                                    !isAuthPage && (
+                                        <Link
+                                            href="/auth/login"
+                                            onClick={() => setIsOpen(false)}
+                                            className="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary-600 text-white font-bold hover:bg-primary-500"
+                                        >
+                                            <User className="w-5 h-5" />
+                                            <span>Ingresar / Registro</span>
+                                        </Link>
+                                    )
                                 )}
                             </div>
                         </div>
