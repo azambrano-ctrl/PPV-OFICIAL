@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { Send, User, Shield, Info, X, UserMinus } from 'lucide-react';
+import { Send, User, Shield, Info, X, UserMinus, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/lib/store';
