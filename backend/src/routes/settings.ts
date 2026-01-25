@@ -32,111 +32,117 @@ router.put(
     authenticate,
     requireAdmin,
     uploadSettingsImages,
-    asyncHandler(async (req: any, res: express.Response) => {
-        const updates: settingsService.UpdateSettingsDTO = {};
+    async (req: any, res: express.Response) => {
+        try {
+            console.log('📝 Processing Settings Update Request');
+            const updates: settingsService.UpdateSettingsDTO = {};
 
-        const currentSettings = await settingsService.getSettings();
+            const currentSettings = await settingsService.getSettings();
 
-        // Initialize about_slider_images logic
-        let currentSliderImages: any[] = [];
+            // Initialize about_slider_images logic
+            let currentSliderImages: any[] = [];
 
-        // 1. First take what's in the body (this represents the user's intent for existing images, e.g. after deletions)
-        if (req.body.about_slider_images) {
-            try {
-                const parsed = typeof req.body.about_slider_images === 'string'
-                    ? JSON.parse(req.body.about_slider_images)
-                    : req.body.about_slider_images;
+            // 1. First take what's in the body (this represents the user's intent for existing images, e.g. after deletions)
+            if (req.body.about_slider_images) {
+                try {
+                    const parsed = typeof req.body.about_slider_images === 'string'
+                        ? JSON.parse(req.body.about_slider_images)
+                        : req.body.about_slider_images;
 
-                if (Array.isArray(parsed)) {
-                    currentSliderImages = parsed;
+                    if (Array.isArray(parsed)) {
+                        currentSliderImages = parsed;
+                    }
+                } catch (e) {
+                    console.warn('Failed to parse about_slider_images', e);
+                    // If parsing fails, fall back to current DB state to be safe
+                    currentSliderImages = currentSettings.about_slider_images || [];
                 }
-            } catch (e) {
-                console.warn('Failed to parse about_slider_images', e);
-                // If parsing fails, fall back to current DB state to be safe, or start empty?
-                // Using currentSettings as fallback seems safer than emptying the gallery on error.
+            } else {
+                // If field not present in body, we assume we start with existing DB state
                 currentSliderImages = currentSettings.about_slider_images || [];
             }
-        } else {
-            // If field not present in body, we assume we start with existing DB state
-            // (Only if not replacing everything, but for PATCH-like behavior this is fine)
-            currentSliderImages = currentSettings.about_slider_images || [];
-        }
 
-        // 2. Handle file uploads and append to the list
-        if (req.files && typeof req.files === 'object') {
-            const files = req.files as { [fieldname: string]: any[] };
+            // 2. Handle file uploads and append to the list
+            if (req.files && typeof req.files === 'object') {
+                const files = req.files as { [fieldname: string]: any[] };
 
-            // Homepage Background
-            if (files.homepage_background && files.homepage_background[0]) {
-                updates.homepage_background = files.homepage_background[0].path;
+                // Homepage Background
+                if (files.homepage_background && files.homepage_background[0]) {
+                    updates.homepage_background = files.homepage_background[0].path;
+                }
+
+                // About Slider Gallery - Append new uploads
+                if (files.about_gallery && files.about_gallery.length > 0) {
+                    const newImages = files.about_gallery.map(f => f.path);
+                    currentSliderImages = [...currentSliderImages, ...newImages];
+                }
             }
 
-            // About Slider Gallery - Append new uploads
-            if (files.about_gallery && files.about_gallery.length > 0) {
-                const newImages = files.about_gallery.map(f => f.path);
-                currentSliderImages = [...currentSliderImages, ...newImages];
+            // 3. Assign final merged list to updates
+            if (req.body.about_slider_images || (req.files && req.files['about_gallery'])) {
+                updates.about_slider_images = currentSliderImages;
             }
-        }
 
-        // 3. Assign final merged list to updates
-        // Only update if we actually have changes (uploaded files OR body data sent)
-        // If body didn't send it AND no files uploaded, currentSliderImages is same as DB, 
-        // but it doesn't hurt to re-save it if we want to be sure.
-        // However, we should only set it if req.body.about_slider_images WAS sent OR files were uploaded.
-        if (req.body.about_slider_images || (req.files && req.files['about_gallery'])) {
-            updates.about_slider_images = currentSliderImages;
-        }
+            // Handle About Page fields
+            if (req.body.about_hero_title) updates.about_hero_title = req.body.about_hero_title;
+            if (req.body.about_hero_subtitle) updates.about_hero_subtitle = req.body.about_hero_subtitle;
+            if (req.body.about_mission_title) updates.about_mission_title = req.body.about_mission_title;
+            if (req.body.about_mission_text) updates.about_mission_text = req.body.about_mission_text;
 
-        // Handle About Page fields
-        if (req.body.about_hero_title) updates.about_hero_title = req.body.about_hero_title;
-        if (req.body.about_hero_subtitle) updates.about_hero_subtitle = req.body.about_hero_subtitle;
-        if (req.body.about_mission_title) updates.about_mission_title = req.body.about_mission_title;
-        if (req.body.about_mission_text) updates.about_mission_text = req.body.about_mission_text;
-
-        if (req.body.about_values) {
-            try {
-                // If it's a string (from FormData), parse it. If already object, use as is.
-                updates.about_values = typeof req.body.about_values === 'string'
-                    ? JSON.parse(req.body.about_values)
-                    : req.body.about_values;
-            } catch (e) {
-                console.warn('Failed to parse about_values', e);
+            if (req.body.about_values) {
+                try {
+                    // If it's a string (from FormData), parse it. If already object, use as is.
+                    updates.about_values = typeof req.body.about_values === 'string'
+                        ? JSON.parse(req.body.about_values)
+                        : req.body.about_values;
+                } catch (e) {
+                    console.warn('Failed to parse about_values', e);
+                }
             }
-        }
 
-        // Handle General Settings
-        if (req.body.site_name) updates.site_name = req.body.site_name;
-        if (req.body.site_description) updates.site_description = req.body.site_description;
-        if (req.body.contact_email) updates.contact_email = req.body.contact_email;
+            // Handle General Settings
+            if (req.body.site_name) updates.site_name = req.body.site_name;
+            if (req.body.site_description) updates.site_description = req.body.site_description;
+            if (req.body.contact_email) updates.contact_email = req.body.contact_email;
 
-        if (req.body.social_links) {
-            try {
-                updates.social_links = typeof req.body.social_links === 'string'
-                    ? JSON.parse(req.body.social_links)
-                    : req.body.social_links;
-            } catch (e) {
-                console.warn('Failed to parse social_links', e);
+            if (req.body.social_links) {
+                try {
+                    updates.social_links = typeof req.body.social_links === 'string'
+                        ? JSON.parse(req.body.social_links)
+                        : req.body.social_links;
+                } catch (e) {
+                    console.warn('Failed to parse social_links', e);
+                }
             }
+
+            // Handle Payment Settings
+            // Note: FormData sends booleans as 'true'/'false' strings
+            if (req.body.stripe_enabled !== undefined) updates.stripe_enabled = String(req.body.stripe_enabled) === 'true';
+            if (req.body.stripe_public_key) updates.stripe_public_key = req.body.stripe_public_key;
+            if (req.body.stripe_secret_key) updates.stripe_secret_key = req.body.stripe_secret_key;
+
+            if (req.body.paypal_enabled !== undefined) updates.paypal_enabled = String(req.body.paypal_enabled) === 'true';
+            if (req.body.paypal_client_id) updates.paypal_client_id = req.body.paypal_client_id;
+            if (req.body.paypal_secret_key) updates.paypal_secret_key = req.body.paypal_secret_key;
+
+            const settings = await settingsService.updateSettings(updates);
+
+            res.json({
+                success: true,
+                data: settings,
+                message: 'Settings updated successfully',
+            });
+        } catch (error: any) {
+            console.error('❌ Error updating settings:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to update settings',
+                error: error.message,
+                stack: error.stack, // Return stack trace for debugging
+                details: error.detail // Postgres error details
+            });
         }
-
-        // Handle Payment Settings
-        // Note: FormData sends booleans as 'true'/'false' strings
-        if (req.body.stripe_enabled !== undefined) updates.stripe_enabled = String(req.body.stripe_enabled) === 'true';
-        if (req.body.stripe_public_key) updates.stripe_public_key = req.body.stripe_public_key;
-        if (req.body.stripe_secret_key) updates.stripe_secret_key = req.body.stripe_secret_key;
-
-        if (req.body.paypal_enabled !== undefined) updates.paypal_enabled = String(req.body.paypal_enabled) === 'true';
-        if (req.body.paypal_client_id) updates.paypal_client_id = req.body.paypal_client_id;
-        if (req.body.paypal_secret_key) updates.paypal_secret_key = req.body.paypal_secret_key;
-
-        const settings = await settingsService.updateSettings(updates);
-
-        res.json({
-            success: true,
-            data: settings,
-            message: 'Settings updated successfully',
-        });
-    })
+    }
 );
 
 export default router;
