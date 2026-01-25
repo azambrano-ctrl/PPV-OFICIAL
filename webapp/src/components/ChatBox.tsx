@@ -20,11 +20,12 @@ interface Message {
 interface ChatBoxProps {
     eventId: string;
     eventTitle: string;
+    eventStatus?: string;
 }
 
 const COMMON_EMOJIS = ['🔥', '🥊', '👏', '🙌', '💪', '🤩', '🎯', '⚡', '💣', '😎', '👑', '💯', '💀', '👽', '😤', '🍿'];
 
-export default function ChatBox({ eventId, eventTitle }: ChatBoxProps) {
+export default function ChatBox({ eventId, eventTitle, eventStatus }: ChatBoxProps) {
     const { user, isAdmin, accessToken } = useAuthStore();
     const [socket, setSocket] = useState<Socket | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -198,7 +199,9 @@ export default function ChatBox({ eventId, eventTitle }: ChatBoxProps) {
             <div className="p-4 border-b border-white/10 bg-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'}`} />
-                    <span className="font-semibold text-white tracking-wide">CHAT EN VIVO</span>
+                    <span className="font-semibold text-white tracking-wide">
+                        {eventStatus === 'live' ? 'CHAT EN VIVO' : 'CHAT DE REPETICIÓN'}
+                    </span>
                 </div>
                 {!isConnected && (
                     <span className="text-xs text-red-400 font-medium">Desconectado</span>
@@ -291,29 +294,37 @@ export default function ChatBox({ eventId, eventTitle }: ChatBoxProps) {
 
             <div className="p-4 bg-white/5 border-t border-white/10">
                 <form onSubmit={sendMessage} className="relative">
-                    <button
-                        type="button"
-                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                        className={`absolute left-3 top-1/2 -translate-y-1/2 text-xl hover:scale-110 transition-transform ${showEmojiPicker ? 'grayscale-0' : 'grayscale opacity-70'}`}
-                    >
-                        😊
-                    </button>
-                    <input
-                        type="text"
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder={isConnected ? "Escribe un mensaje..." : "Conectando..."}
-                        disabled={!isConnected}
-                        maxLength={200}
-                        className="w-full bg-black/40 border border-white/10 rounded-full py-3 pl-12 pr-12 text-white placeholder-white/30 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/50 transition-all disabled:opacity-50"
-                    />
-                    <button
-                        type="submit"
-                        disabled={!isConnected || !newMessage.trim()}
-                        className="absolute right-1.5 top-1.5 p-1.5 bg-primary-600 rounded-full text-white hover:bg-primary-500 disabled:opacity-0 disabled:pointer-events-none transition-all"
-                    >
-                        <Send className="w-4 h-4" />
-                    </button>
+                    {eventStatus === 'live' ? (
+                        <>
+                            <button
+                                type="button"
+                                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                className={`absolute left-3 top-1/2 -translate-y-1/2 text-xl hover:scale-110 transition-transform ${showEmojiPicker ? 'grayscale-0' : 'grayscale opacity-70'}`}
+                            >
+                                😊
+                            </button>
+                            <input
+                                type="text"
+                                value={newMessage}
+                                onChange={(e) => setNewMessage(e.target.value)}
+                                placeholder={isConnected ? "Escribe un mensaje..." : "Conectando..."}
+                                disabled={!isConnected}
+                                maxLength={200}
+                                className="w-full bg-black/40 border border-white/10 rounded-full py-3 pl-12 pr-12 text-white placeholder-white/30 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/50 transition-all disabled:opacity-50"
+                            />
+                            <button
+                                type="submit"
+                                disabled={!isConnected || !newMessage.trim()}
+                                className="absolute right-1.5 top-1.5 p-1.5 bg-primary-600 rounded-full text-white hover:bg-primary-500 disabled:opacity-0 disabled:pointer-events-none transition-all"
+                            >
+                                <Send className="w-4 h-4" />
+                            </button>
+                        </>
+                    ) : (
+                        <div className="w-full bg-black/20 border border-white/5 rounded-lg py-3 px-4 text-center text-white/40 text-sm italic">
+                            El chat solo está disponible durante peleas en vivo.
+                        </div>
+                    )}
                 </form>
             </div>
         </div>

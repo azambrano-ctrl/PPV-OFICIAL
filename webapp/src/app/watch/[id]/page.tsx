@@ -228,7 +228,11 @@ export default function WatchPage() {
                     `}
                 >
                     <div className="h-full flex flex-col">
-                        <ChatBox eventId={eventId} eventTitle={event.title} />
+                        <ChatBox
+                            eventId={eventId}
+                            eventTitle={event.title}
+                            eventStatus={event.status}
+                        />
                     </div>
                 </div>
             </div>
