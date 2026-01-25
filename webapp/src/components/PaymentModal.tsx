@@ -124,20 +124,18 @@ function CheckoutForm({ event, onClose }: PaymentModalProps) {
                 <label className="block text-sm font-medium text-dark-300 mb-3">
                     Método de Pago
                 </label>
-                <div className={`grid gap-3 ${stripePromise ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                    {stripePromise && (
-                        <button
-                            type="button"
-                            onClick={() => setPaymentMethod('stripe')}
-                            className={`p-4 rounded-lg border-2 transition-all ${paymentMethod === 'stripe'
-                                ? 'border-primary-500 bg-primary-500/10'
-                                : 'border-dark-700 hover:border-dark-600'
-                                }`}
-                        >
-                            <CreditCard className="w-6 h-6 mx-auto mb-2" />
-                            <span className="text-sm font-medium">Tarjeta</span>
-                        </button>
-                    )}
+                <div className="grid grid-cols-2 gap-3">
+                    <button
+                        type="button"
+                        onClick={() => setPaymentMethod('stripe')}
+                        className={`p-4 rounded-lg border-2 transition-all ${paymentMethod === 'stripe'
+                            ? 'border-primary-500 bg-primary-500/10'
+                            : 'border-dark-700 hover:border-dark-600'
+                            }`}
+                    >
+                        <CreditCard className="w-6 h-6 mx-auto mb-2" />
+                        <span className="text-sm font-medium">Tarjeta</span>
+                    </button>
                     <button
                         type="button"
                         onClick={() => setPaymentMethod('paypal')}
