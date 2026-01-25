@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import { Facebook, Twitter, Instagram, Youtube, Mail } from 'lucide-react';
+import { useSettingsStore } from '@/lib/store';
 
 export default function Footer() {
     const currentYear = new Date().getFullYear();
+    const { settings } = useSettingsStore();
 
     const footerLinks = {
         company: [
@@ -35,16 +37,28 @@ export default function Footer() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
                     {/* Brand */}
                     <div className="lg:col-span-2">
-                        <Link href="/" className="flex items-center space-x-2 mb-4">
-                            <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-primary-700 rounded-lg flex items-center justify-center">
-                                <span className="text-white font-bold text-xl">P</span>
-                            </div>
+                        <Link href="/" className="flex items-center space-x-2 mb-4 group">
+                            {settings?.site_logo ? (
+                                <div className="w-10 h-10 transition-transform group-hover:scale-105">
+                                    <img
+                                        src={settings.site_logo}
+                                        alt={settings?.site_name || 'Logo'}
+                                        className="w-full h-full object-contain"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-primary-700 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
+                                    <span className="text-white font-bold text-xl">
+                                        {settings?.site_name?.charAt(0) || 'P'}
+                                    </span>
+                                </div>
+                            )}
                             <span className="font-display font-bold text-xl gradient-text">
-                                PPV Streaming
+                                {settings?.site_name || 'PPV Streaming'}
                             </span>
                         </Link>
                         <p className="text-dark-400 mb-6 max-w-sm">
-                            La mejor plataforma para ver peleas en vivo. Acceso exclusivo a los eventos más emocionantes del deporte.
+                            {settings?.site_description || 'La mejor plataforma para ver peleas en vivo. Acceso exclusivo a los eventos más emocionantes del deporte.'}
                         </p>
                         <div className="flex space-x-4">
                             {socialLinks.map((social) => (
@@ -139,7 +153,7 @@ export default function Footer() {
                 {/* Bottom */}
                 <div className="mt-8 pt-8 border-t border-dark-800 flex flex-col md:flex-row justify-between items-center gap-4">
                     <p className="text-dark-400 text-sm">
-                        © {currentYear} PPV Streaming. Todos los derechos reservados.
+                        © {currentYear} {settings?.site_name || 'PPV Streaming'}. Todos los derechos reservados.
                     </p>
                     <div className="flex items-center gap-4 text-sm text-dark-400">
                         <span>Pagos seguros con</span>

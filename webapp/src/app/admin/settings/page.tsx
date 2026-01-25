@@ -17,7 +17,8 @@ export default function AdminSettingsPage() {
     const [fileState, setFileState] = useState({
         homepage_background: null as File | null,
         about_background: null as File | null,
-        about_gallery: [] as File[]
+        about_gallery: [] as File[],
+        site_logo: null as File | null
     });
 
     const [form, setForm] = useState({
@@ -26,6 +27,7 @@ export default function AdminSettingsPage() {
         site_description: '',
         contact_email: '',
         homepage_background: '',
+        site_logo: '',
         social_links: { facebook: '', instagram: '', twitter: '' } as any,
 
         // About
@@ -62,6 +64,7 @@ export default function AdminSettingsPage() {
                 site_description: d.site_description || '',
                 contact_email: d.contact_email || '',
                 homepage_background: d.homepage_background || '',
+                site_logo: d.site_logo || '',
                 social_links: typeof d.social_links === 'string' ? JSON.parse(d.social_links) : (d.social_links || { facebook: '', instagram: '', twitter: '' }),
 
                 about_hero_title: d.about_hero_title || '',
@@ -112,6 +115,12 @@ export default function AdminSettingsPage() {
                 formData.append('about_gallery', file);
             });
 
+            if (fileState.site_logo) {
+                formData.append('site_logo', fileState.site_logo);
+            } else if (form.site_logo) {
+                formData.append('site_logo', form.site_logo);
+            }
+
             // General
             formData.append('site_name', form.site_name);
             formData.append('site_description', form.site_description);
@@ -137,7 +146,7 @@ export default function AdminSettingsPage() {
             await settingsAPI.update(formData);
             setMessage({ type: 'success', text: 'Configuración guardada correctamente' });
 
-            setFileState({ homepage_background: null, about_background: null, about_gallery: [] });
+            setFileState({ homepage_background: null, about_background: null, about_gallery: [], site_logo: null });
             await loadSettings();
         } catch (error) {
             console.error('Error saving settings:', error);
@@ -295,6 +304,18 @@ export default function AdminSettingsPage() {
                                         setFileState(prev => ({ ...prev, homepage_background: file }));
                                     }
                                     setForm({ ...form, homepage_background: previewUrl || '' });
+                                }}
+                            />
+
+                            <ImageUpload
+                                label="Logo del Sitio"
+                                value={form.site_logo}
+                                maxSize={5}
+                                onChange={(file, previewUrl) => {
+                                    if (file) {
+                                        setFileState(prev => ({ ...prev, site_logo: file }));
+                                    }
+                                    setForm({ ...form, site_logo: previewUrl || '' });
                                 }}
                             />
                         </div>

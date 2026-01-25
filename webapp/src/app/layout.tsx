@@ -26,6 +26,7 @@ export const metadata: Metadata = {
 };
 
 import Navbar from '@/components/ui/Navbar';
+import SettingsProvider from '@/components/providers/SettingsProvider';
 
 // ... imports ...
 
@@ -37,8 +38,10 @@ export default function RootLayout({
     return (
         <html lang="es" className={`${inter.variable} ${outfit.variable}`}>
             <body className="font-sans">
-                <Navbar />
-                {children}
+                <SettingsProvider>
+                    <Navbar />
+                    {children}
+                </SettingsProvider>
                 <Toaster
                     position="top-right"
                     toastOptions={{

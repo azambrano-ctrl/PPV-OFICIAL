@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Mail, Lock, User, Phone, Eye, EyeOff, UserPlus } from 'lucide-react';
 import { authAPI, handleAPIError } from '@/lib/api';
-import { useAuthStore } from '@/lib/store';
+import { useAuthStore, useSettingsStore } from '@/lib/store';
 import toast from 'react-hot-toast';
 
 const registerSchema = z.object({
@@ -27,6 +27,7 @@ type RegisterForm = z.infer<typeof registerSchema>;
 export default function RegisterPage() {
     const router = useRouter();
     const { setAuth } = useAuthStore();
+    const { settings } = useSettingsStore();
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -68,12 +69,24 @@ export default function RegisterPage() {
             <div className="max-w-md w-full relative z-10">
                 {/* Logo */}
                 <div className="text-center mb-8">
-                    <Link href="/" className="inline-flex items-center space-x-2 mb-6">
-                        <div className="w-12 h-12 bg-gradient-to-br from-primary-600 to-primary-700 rounded-lg flex items-center justify-center">
-                            <span className="text-white font-bold text-2xl">P</span>
-                        </div>
+                    <Link href="/" className="inline-flex items-center space-x-2 mb-6 group">
+                        {settings?.site_logo ? (
+                            <div className="w-12 h-12 transition-transform group-hover:scale-105">
+                                <img
+                                    src={settings.site_logo}
+                                    alt={settings?.site_name || 'Logo'}
+                                    className="w-full h-full object-contain"
+                                />
+                            </div>
+                        ) : (
+                            <div className="w-12 h-12 bg-gradient-to-br from-primary-600 to-primary-700 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
+                                <span className="text-white font-bold text-2xl">
+                                    {settings?.site_name?.charAt(0) || 'P'}
+                                </span>
+                            </div>
+                        )}
                         <span className="font-display font-bold text-2xl gradient-text">
-                            PPV Streaming
+                            {settings?.site_name || 'PPV Streaming'}
                         </span>
                     </Link>
                     <h2 className="text-3xl font-display font-bold text-white mb-2">

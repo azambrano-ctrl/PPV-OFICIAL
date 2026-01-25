@@ -16,6 +16,7 @@ export interface Settings {
     site_description: string;
     contact_email: string;
     social_links: any; // JSONB
+    site_logo: string | null;
 
     // Payments
     stripe_enabled: boolean;
@@ -44,6 +45,7 @@ export interface UpdateSettingsDTO {
     site_description?: string;
     contact_email?: string;
     social_links?: any;
+    site_logo?: string | null;
 
     // Payments
     stripe_enabled?: boolean;
@@ -96,7 +98,8 @@ export const updateSettings = async (updates: UpdateSettingsDTO): Promise<Settin
         'stripe_secret_key',
         'paypal_enabled',
         'paypal_client_id',
-        'paypal_secret_key'
+        'paypal_secret_key',
+        'site_logo'
     ];
 
     for (const key of keys) {

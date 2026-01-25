@@ -130,3 +130,34 @@ export const useUIStore = create<UIState>((set) => ({
     toggleMobileMenu: () => set((state) => ({ mobileMenuOpen: !state.mobileMenuOpen })),
     closeMobileMenu: () => set({ mobileMenuOpen: false }),
 }));
+
+// Settings Store
+interface Settings {
+    site_name: string;
+    site_logo: string | null;
+    site_description: string;
+    contact_email: string;
+    homepage_background: string | null;
+    social_links: {
+        facebook: string;
+        instagram: string;
+        twitter: string;
+    };
+    [key: string]: any;
+}
+
+interface SettingsState {
+    settings: Settings | null;
+    loading: boolean;
+    initialized: boolean;
+    setSettings: (settings: Settings) => void;
+    setLoading: (loading: boolean) => void;
+}
+
+export const useSettingsStore = create<SettingsState>((set) => ({
+    settings: null,
+    loading: false,
+    initialized: false,
+    setSettings: (settings) => set({ settings, initialized: true }),
+    setLoading: (loading) => set({ loading }),
+}));
