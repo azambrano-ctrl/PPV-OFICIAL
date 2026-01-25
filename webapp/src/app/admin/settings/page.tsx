@@ -29,6 +29,8 @@ export default function AdminSettingsPage() {
         homepage_background: '',
         site_logo: '',
         site_logo_width: 40,
+        site_logo_offset_x: 0,
+        site_logo_offset_y: 0,
         social_links: { facebook: '', instagram: '', twitter: '' } as any,
 
         // About
@@ -67,6 +69,8 @@ export default function AdminSettingsPage() {
                 homepage_background: d.homepage_background || '',
                 site_logo: d.site_logo || '',
                 site_logo_width: d.site_logo_width || 40,
+                site_logo_offset_x: d.site_logo_offset_x || 0,
+                site_logo_offset_y: d.site_logo_offset_y || 0,
                 social_links: typeof d.social_links === 'string' ? JSON.parse(d.social_links) : (d.social_links || { facebook: '', instagram: '', twitter: '' }),
 
                 about_hero_title: d.about_hero_title || '',
@@ -129,6 +133,8 @@ export default function AdminSettingsPage() {
             formData.append('contact_email', form.contact_email);
             formData.append('social_links', JSON.stringify(form.social_links));
             formData.append('site_logo_width', String(form.site_logo_width));
+            formData.append('site_logo_offset_x', String(form.site_logo_offset_x));
+            formData.append('site_logo_offset_y', String(form.site_logo_offset_y));
 
             // About
             formData.append('about_hero_title', form.about_hero_title);
@@ -341,6 +347,39 @@ export default function AdminSettingsPage() {
                                     <span>20px</span>
                                     <span>150px</span>
                                     <span>300px</span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 pt-2">
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <label className="text-sm font-medium text-dark-300">Desplazamiento X</label>
+                                        <span className="text-xs font-bold text-primary-500 bg-primary-500/10 px-2 py-1 rounded">{form.site_logo_offset_x}px</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="-100"
+                                        max="100"
+                                        step="1"
+                                        className="w-full accent-primary-500 bg-dark-800 rounded-lg h-2"
+                                        value={form.site_logo_offset_x}
+                                        onChange={(e) => setForm({ ...form, site_logo_offset_x: parseInt(e.target.value) })}
+                                    />
+                                </div>
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <label className="text-sm font-medium text-dark-300">Desplazamiento Y</label>
+                                        <span className="text-xs font-bold text-primary-500 bg-primary-500/10 px-2 py-1 rounded">{form.site_logo_offset_y}px</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="-100"
+                                        max="100"
+                                        step="1"
+                                        className="w-full accent-primary-500 bg-dark-800 rounded-lg h-2"
+                                        value={form.site_logo_offset_y}
+                                        onChange={(e) => setForm({ ...form, site_logo_offset_y: parseInt(e.target.value) })}
+                                    />
                                 </div>
                             </div>
                         </div>

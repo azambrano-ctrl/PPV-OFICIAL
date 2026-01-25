@@ -41,7 +41,10 @@ export default function Footer() {
                             {settings?.site_logo ? (
                                 <div
                                     className="transition-transform group-hover:scale-105 flex items-center justify-center"
-                                    style={{ width: settings.site_logo_width ? `${settings.site_logo_width}px` : '40px' }}
+                                    style={{
+                                        width: settings.site_logo_width ? `${settings.site_logo_width}px` : '40px',
+                                        transform: `translate(${settings.site_logo_offset_x || 0}px, ${settings.site_logo_offset_y || 0}px)`
+                                    }}
                                 >
                                     <img
                                         src={settings.site_logo}

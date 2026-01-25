@@ -142,6 +142,14 @@ router.put(
                 updates.site_logo_width = parseInt(req.body.site_logo_width);
             }
 
+            if (req.body.site_logo_offset_x !== undefined) {
+                updates.site_logo_offset_x = parseInt(req.body.site_logo_offset_x);
+            }
+
+            if (req.body.site_logo_offset_y !== undefined) {
+                updates.site_logo_offset_y = parseInt(req.body.site_logo_offset_y);
+            }
+
             // Handle Payment Settings
             // Note: FormData sends booleans as 'true'/'false' strings
             if (req.body.stripe_enabled !== undefined) updates.stripe_enabled = String(req.body.stripe_enabled) === 'true';

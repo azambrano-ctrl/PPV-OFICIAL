@@ -136,6 +136,8 @@ interface Settings {
     site_name: string;
     site_logo: string | null;
     site_logo_width: number;
+    site_logo_offset_x: number;
+    site_logo_offset_y: number;
     site_description: string;
     contact_email: string;
     homepage_background: string | null;

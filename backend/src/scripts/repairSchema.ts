@@ -37,7 +37,9 @@ export const repairSchema = async () => {
             ADD COLUMN IF NOT EXISTS paypal_client_id TEXT DEFAULT '',
             ADD COLUMN IF NOT EXISTS paypal_secret_key TEXT DEFAULT '',
             ADD COLUMN IF NOT EXISTS site_logo TEXT DEFAULT '',
-            ADD COLUMN IF NOT EXISTS site_logo_width INTEGER DEFAULT 40;
+            ADD COLUMN IF NOT EXISTS site_logo_width INTEGER DEFAULT 40,
+            ADD COLUMN IF NOT EXISTS site_logo_offset_x INTEGER DEFAULT 0,
+            ADD COLUMN IF NOT EXISTS site_logo_offset_y INTEGER DEFAULT 0;
         `;
 
         await query(sql);
