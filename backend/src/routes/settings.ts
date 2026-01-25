@@ -52,7 +52,14 @@ router.put(
                         ? JSON.parse(req.body.about_slider_images)
                         : req.body.about_slider_images;
 
-                    if (Array.isArray(parsed)) {
+                    // Extra safety check for double encoding
+                    if (typeof parsed === 'string') {
+                        console.warn('about_slider_images parsed to string (double encoded?), re-parsing...');
+                        const doubleParsed = JSON.parse(parsed);
+                        if (Array.isArray(doubleParsed)) {
+                            currentSliderImages = doubleParsed;
+                        }
+                    } else if (Array.isArray(parsed)) {
                         currentSliderImages = parsed;
                     }
                 } catch (e) {
@@ -71,12 +78,14 @@ router.put(
 
                 // Homepage Background
                 if (files.homepage_background && files.homepage_background[0]) {
+                    console.log('🖼️ Updating homepage_background:', files.homepage_background[0].path);
                     updates.homepage_background = files.homepage_background[0].path;
                 }
 
                 // About Slider Gallery - Append new uploads
                 if (files.about_gallery && files.about_gallery.length > 0) {
                     const newImages = files.about_gallery.map(f => f.path);
+                    console.log('🖼️ Appending new slider images:', newImages);
                     currentSliderImages = [...currentSliderImages, ...newImages];
                 }
             }
@@ -125,7 +134,13 @@ router.put(
                         ? JSON.parse(req.body.social_links)
                         : req.body.social_links;
 
-                    updates.social_links = parsed;
+                    // Extra safety check: ensure it is object/array, not a string
+                    if (typeof parsed === 'string') {
+                        console.warn('social_links parsed to string (double encoded?), re-parsing...');
+                        updates.social_links = JSON.parse(parsed);
+                    } else {
+                        updates.social_links = parsed;
+                    }
                 } catch (e) {
                     console.warn('Failed to parse social_links', e);
                 }
