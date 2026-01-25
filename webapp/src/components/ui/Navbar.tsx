@@ -155,7 +155,7 @@ export default function Navbar() {
                         ) : (
                             <Link
                                 href="/auth/login"
-                                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-black hover:bg-gray-900 border border-dark-700 transition-all group"
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-500 border border-primary-500/50 transition-all group"
                             >
                                 <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white text-xs font-bold">
                                     <User className="w-4 h-4" />
