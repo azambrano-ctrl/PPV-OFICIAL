@@ -243,13 +243,9 @@ export default function PaymentModal({ event, onClose }: PaymentModalProps) {
                 </div>
 
                 {/* Stripe Elements Provider */}
-                {stripePromise ? (
-                    <Elements stripe={stripePromise}>
-                        <CheckoutForm event={event} onClose={onClose} />
-                    </Elements>
-                ) : (
+                <Elements stripe={stripePromise}>
                     <CheckoutForm event={event} onClose={onClose} />
-                )}
+                </Elements>
             </div>
         </div>
     );
