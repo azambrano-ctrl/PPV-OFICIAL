@@ -8,7 +8,6 @@ import { Calendar, Clock, DollarSign, Play, ArrowLeft, Users, CheckCircle, Alert
 import { eventsAPI, paymentsAPI, handleAPIError } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import { formatDate, formatCurrency, getEventStatusColor, getEventStatusText, getImageUrl } from '@/lib/utils';
-import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PaymentModal from '@/components/PaymentModal';
 import toast from 'react-hot-toast';
@@ -159,7 +158,6 @@ export default function EventDetailPage() {
 
     return (
         <div className="min-h-screen flex flex-col bg-dark-950">
-            <Navbar />
 
             {/* Banner */}
             <div className="relative h-96 bg-dark-900">

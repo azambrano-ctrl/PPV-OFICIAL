@@ -9,7 +9,6 @@ import { eventsAPI } from '@/lib/api';
 import { settingsAPI } from '@/lib/api/settings';
 import { formatDate, formatCurrency, getEventStatusColor, getEventStatusText, getImageUrl } from '@/lib/utils';
 import { useAuthStore } from '@/lib/store';
-import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import toast from 'react-hot-toast';
 import AuthenticatedHome from '@/components/home/AuthenticatedHome';
@@ -93,8 +92,6 @@ export default function HomePage() {
 
     return (
         <div className="min-h-screen flex flex-col bg-black">
-            <Navbar />
-
             {/* Hero Section - UFC Style */}
             <section className="relative h-screen flex items-center justify-center overflow-hidden">
                 {/* Background Image/Video */}

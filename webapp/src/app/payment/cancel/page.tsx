@@ -2,12 +2,10 @@
 
 import Link from 'next/link';
 import { XCircle } from 'lucide-react';
-import Navbar from '@/components/Navbar';
 
 export default function PaymentCancelPage() {
     return (
         <div className="min-h-screen flex flex-col bg-dark-950">
-            <Navbar />
 
             <div className="flex-1 flex items-center justify-center p-4">
                 <div className="card max-w-md w-full p-8 text-center">

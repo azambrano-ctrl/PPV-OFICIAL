@@ -5,7 +5,6 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle, Loader2, AlertCircle, Play } from 'lucide-react';
 import { paymentsAPI } from '@/lib/api';
-import Navbar from '@/components/Navbar';
 import toast from 'react-hot-toast';
 
 function PaymentSuccessContent() {
@@ -101,7 +100,6 @@ function PaymentSuccessContent() {
 export default function PaymentSuccessPage() {
     return (
         <div className="min-h-screen flex flex-col bg-dark-950">
-            <Navbar />
             <div className="flex-1 flex items-center justify-center p-4">
                 <Suspense fallback={
                     <div className="card max-w-md w-full p-8 text-center">

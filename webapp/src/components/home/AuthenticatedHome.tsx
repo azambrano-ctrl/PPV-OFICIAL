@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { Calendar, Clock, DollarSign, Play, ArrowRight, Zap, Shield, Users, Star, TrendingUp, LogOut, Settings, User } from 'lucide-react';
 import { formatDate, formatCurrency, getEventStatusColor, getEventStatusText, getImageUrl } from '@/lib/utils';
-import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
 interface AuthenticatedHomeProps {
@@ -32,7 +31,6 @@ export default function AuthenticatedHome({ user, featuredEvents, upcomingEvents
             )}
 
             <div className="relative z-10 flex flex-col min-h-screen">
-                <Navbar />
 
                 <main className="flex-grow container-custom py-8 mt-20">
                     {/* Welcome Section */}

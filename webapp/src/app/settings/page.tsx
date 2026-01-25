@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 import { authAPI, handleAPIError } from '@/lib/api';
-import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import toast from 'react-hot-toast';
 import {
@@ -94,7 +93,6 @@ export default function SettingsPage() {
 
     return (
         <div className="min-h-screen flex flex-col bg-dark-950">
-            <Navbar />
 
             <div className="flex-1 py-12 pt-32">
                 <div className="container-custom">

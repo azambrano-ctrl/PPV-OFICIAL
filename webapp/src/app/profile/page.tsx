@@ -8,7 +8,6 @@ import { User, Mail, Phone, Calendar, CreditCard, LogOut, Play, Clock, CheckCirc
 import { authAPI, handleAPIError } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import { formatDate, formatCurrency } from '@/lib/utils';
-import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import toast from 'react-hot-toast';
 
@@ -65,7 +64,6 @@ export default function ProfilePage() {
 
     return (
         <div className="min-h-screen flex flex-col bg-dark-950">
-            <Navbar />
 
             <div className="flex-1 py-12 pt-32">
                 <div className="container-custom">

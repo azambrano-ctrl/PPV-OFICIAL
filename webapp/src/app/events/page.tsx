@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { Calendar, Clock, DollarSign, Search, Filter, Play, ArrowRight } from 'lucide-react';
 import { eventsAPI } from '@/lib/api';
 import { formatDate, formatCurrency, getEventStatusColor, getEventStatusText, getImageUrl } from '@/lib/utils';
-import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import toast from 'react-hot-toast';
 
@@ -70,8 +69,6 @@ export default function EventsPage() {
 
     return (
         <div className="min-h-screen flex flex-col bg-dark-950">
-            <Navbar />
-
             {/* Header */}
             <section className="pt-32 pb-12 bg-gradient-to-b from-dark-900 to-dark-950">
                 <div className="container-custom">
