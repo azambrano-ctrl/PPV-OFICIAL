@@ -207,7 +207,7 @@ export default function Navbar() {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden bg-dark-950 border-b border-white/5 overflow-hidden shadow-xl"
+                        className="md:hidden bg-dark-950 overflow-hidden shadow-2xl"
                     >
                         <div className="px-4 pt-2 pb-6 space-y-2">
                             {navLinks.map((link) => (
@@ -224,7 +224,7 @@ export default function Navbar() {
                                 </Link>
                             ))}
 
-                            <div className="pt-4 border-t border-white/5 mt-4 space-y-3">
+                            <div className="pt-4 mt-4 space-y-3">
                                 {isAuthenticated && user ? (
                                     <>
                                         <div className="px-4 py-2 flex items-center gap-3">

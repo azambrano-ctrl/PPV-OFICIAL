@@ -193,6 +193,7 @@ export const getUserPurchases = async (userId: string) => {
       p.final_amount,
       p.payment_status,
       p.purchased_at,
+      p.seat_number,
       e.id as event_id,
       e.title,
       e.event_date,

@@ -181,13 +181,48 @@ const handlePaymentSuccess = async (paymentIntent: Stripe.PaymentIntent) => {
             [purchase.user_id, purchase.event_id, streamToken, expiresAt]
         );
 
+        // Generate virtual seat number (random between 1 and 5000)
+        const seatNumber = Math.floor(Math.random() * 5000) + 1;
+
+        // Update purchase with seat number
+        await client.query(
+            'UPDATE purchases SET seat_number = $1 WHERE id = $2',
+            [seatNumber, purchase.id]
+        );
+
         logger.info('Payment successful', {
             purchaseId: purchase.id,
             userId: purchase.user_id,
             eventId: purchase.event_id,
+            seatNumber
         });
 
-        // TODO: Send confirmation email
+        // Send confirmation email
+        try {
+            const { sendTicketEmail } = await import('./emailService');
+
+            // Get user and event details for the email
+            const userResult = await client.query('SELECT email, full_name FROM users WHERE id = $1', [purchase.user_id]);
+            const eventResult = await client.query('SELECT title, event_date, price, currency FROM events WHERE id = $1', [purchase.event_id]);
+
+            if (userResult.rows.length > 0 && eventResult.rows.length > 0) {
+                const user = userResult.rows[0];
+                const event = eventResult.rows[0];
+
+                await sendTicketEmail(
+                    user.email,
+                    user.full_name,
+                    event.title,
+                    event.event_date,
+                    `${event.currency} $${event.price}`,
+                    seatNumber
+                );
+                logger.info('Ticket email sent successfully');
+            }
+        } catch (emailError) {
+            logger.error('Error sending ticket email:', emailError);
+            // Don't throw here to avoid rolling back the transaction for an email failure
+        }
     });
 };
 

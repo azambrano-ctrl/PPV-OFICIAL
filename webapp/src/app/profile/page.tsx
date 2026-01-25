@@ -22,6 +22,7 @@ interface Purchase {
     payment_method: string;
     payment_status: string;
     purchased_at: string;
+    seat_number?: number;
 }
 
 export default function ProfilePage() {
@@ -278,6 +279,11 @@ export default function ProfilePage() {
                                                                             <span className="text-sm text-dark-500">
                                                                                 Pagado: {formatCurrency(purchase.amount, purchase.currency)}
                                                                             </span>
+                                                                            {purchase.seat_number && (
+                                                                                <span className="text-sm px-2 py-0.5 bg-dark-800 text-primary-400 border border-primary-500/20 rounded font-mono font-bold">
+                                                                                    ASIENTO: #{purchase.seat_number.toString().padStart(5, '0')}
+                                                                                </span>
+                                                                            )}
                                                                             <span className={`badge ${purchase.event_status === 'live'
                                                                                 ? 'bg-red-500/20 text-red-400 border-red-500/30'
                                                                                 : 'bg-blue-500/20 text-blue-400 border-blue-500/30'
