@@ -30,11 +30,10 @@ function CheckoutForm({ event, onClose }: PaymentModalProps) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!stripe || !elements) {
-            return;
-        }
-
         if (paymentMethod === 'stripe') {
+            if (!stripe || !elements) {
+                return;
+            }
             await handleStripePayment();
         } else {
             await handlePayPalPayment();
