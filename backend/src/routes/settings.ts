@@ -37,7 +37,32 @@ router.put(
 
         const currentSettings = await settingsService.getSettings();
 
-        // Handle file uploads
+        // Initialize about_slider_images logic
+        let currentSliderImages: any[] = [];
+
+        // 1. First take what's in the body (this represents the user's intent for existing images, e.g. after deletions)
+        if (req.body.about_slider_images) {
+            try {
+                const parsed = typeof req.body.about_slider_images === 'string'
+                    ? JSON.parse(req.body.about_slider_images)
+                    : req.body.about_slider_images;
+
+                if (Array.isArray(parsed)) {
+                    currentSliderImages = parsed;
+                }
+            } catch (e) {
+                console.warn('Failed to parse about_slider_images', e);
+                // If parsing fails, fall back to current DB state to be safe, or start empty?
+                // Using currentSettings as fallback seems safer than emptying the gallery on error.
+                currentSliderImages = currentSettings.about_slider_images || [];
+            }
+        } else {
+            // If field not present in body, we assume we start with existing DB state
+            // (Only if not replacing everything, but for PATCH-like behavior this is fine)
+            currentSliderImages = currentSettings.about_slider_images || [];
+        }
+
+        // 2. Handle file uploads and append to the list
         if (req.files && typeof req.files === 'object') {
             const files = req.files as { [fieldname: string]: any[] };
 
@@ -46,35 +71,20 @@ router.put(
                 updates.homepage_background = files.homepage_background[0].path;
             }
 
-            // About Slider Gallery
+            // About Slider Gallery - Append new uploads
             if (files.about_gallery && files.about_gallery.length > 0) {
                 const newImages = files.about_gallery.map(f => f.path);
-                // Append to existing images
-                const existingImages = currentSettings.about_slider_images || [];
-                // Ensure it is an array
-                const currentArray = Array.isArray(existingImages) ? existingImages : [];
-                updates.about_slider_images = [...currentArray, ...newImages];
+                currentSliderImages = [...currentSliderImages, ...newImages];
             }
         }
 
-        // Handle text field (for clearing the background)
-        if (req.body.homepage_background !== undefined) {
-            // Only if explicitly sent as empty string or specific value, otherwise keep existing if file not uploaded
-            if (req.body.homepage_background === '' || req.body.homepage_background === null) {
-                updates.homepage_background = null;
-            }
-        }
-
-        // Handle gallery update via JSON (e.g. for deleting images)
-        if (req.body.about_slider_images) {
-            try {
-                const images = typeof req.body.about_slider_images === 'string'
-                    ? JSON.parse(req.body.about_slider_images)
-                    : req.body.about_slider_images;
-                updates.about_slider_images = images;
-            } catch (e) {
-                console.warn('Failed to parse about_slider_images', e);
-            }
+        // 3. Assign final merged list to updates
+        // Only update if we actually have changes (uploaded files OR body data sent)
+        // If body didn't send it AND no files uploaded, currentSliderImages is same as DB, 
+        // but it doesn't hurt to re-save it if we want to be sure.
+        // However, we should only set it if req.body.about_slider_images WAS sent OR files were uploaded.
+        if (req.body.about_slider_images || (req.files && req.files['about_gallery'])) {
+            updates.about_slider_images = currentSliderImages;
         }
 
         // Handle About Page fields
