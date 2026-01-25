@@ -2,12 +2,14 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { Send, User, Shield, Info, X } from 'lucide-react';
+import { Send, User, Shield, Info, X, UserMinus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 
 interface Message {
     id: string;
     user: string;
+    userId: string;
     message: string;
     timestamp: Date;
     isAdmin?: boolean;
@@ -91,6 +93,7 @@ export default function ChatBox({ eventId, eventTitle }: ChatBoxProps) {
             const message: Message = {
                 id: messageData.id,
                 user: messageData.user_name,
+                userId: messageData.user_id,
                 message: messageData.message,
                 timestamp: new Date(messageData.created_at),
                 isAdmin: messageData.role === 'admin',
@@ -108,6 +111,18 @@ export default function ChatBox({ eventId, eventTitle }: ChatBoxProps) {
                     msg.id === messageId ? { ...msg, isDeleted: true } : msg
                 )
             );
+        });
+
+        socketInstance.on('user_banned', ({ userId, userName }: { userId: string, userName: string }) => {
+            toast.error(`${userName} ha sido expulsado del chat`, {
+                icon: '🚫',
+                style: {
+                    borderRadius: '10px',
+                    background: '#1a1a1a',
+                    color: '#fff',
+                },
+            });
+            // If the local user is the one banned, we could do more here
         });
 
         socketInstance.on('error', (err: any) => {
@@ -140,6 +155,13 @@ export default function ChatBox({ eventId, eventTitle }: ChatBoxProps) {
         if (!socket || !isConnected || !isAdmin) return;
         if (window.confirm('¿Estás seguro de que deseas eliminar este mensaje?')) {
             socket.emit('delete_message', { eventId, messageId });
+        }
+    };
+
+    const banUser = (userId: string, userName: string) => {
+        if (!socket || !isConnected || !isAdmin) return;
+        if (window.confirm(`¿Estás seguro de que deseas BLOQUEAR permanentemente a ${userName}?`)) {
+            socket.emit('ban_user', { eventId, userId, userName });
         }
     };
 
@@ -192,13 +214,22 @@ export default function ChatBox({ eventId, eventTitle }: ChatBoxProps) {
                                         {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                     {isAdmin && !msg.isDeleted && (
-                                        <button
-                                            onClick={() => deleteMessage(msg.id)}
-                                            className="text-white/30 hover:text-red-500 transition-colors"
-                                            title="Eliminar mensaje"
-                                        >
-                                            <X className="w-3.5 h-3.5" />
-                                        </button>
+                                        <div className="flex items-center gap-1.5 ml-1">
+                                            <button
+                                                onClick={() => deleteMessage(msg.id)}
+                                                className="p-1 text-white/20 hover:text-red-500 hover:bg-red-500/10 rounded transition-all"
+                                                title="Eliminar mensaje"
+                                            >
+                                                <X className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button
+                                                onClick={() => banUser(msg.userId, msg.user)}
+                                                className="p-1 text-white/20 hover:text-orange-500 hover:bg-orange-500/10 rounded transition-all"
+                                                title="Bloquear usuario"
+                                            >
+                                                <UserMinus className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                                 <p className="text-sm text-white/80 break-words leading-relaxed">

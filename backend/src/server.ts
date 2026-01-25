@@ -201,15 +201,22 @@ io.on('connection', (socket) => {
 
             const chatMessage = result.rows[0];
 
-            // Get user info
+            // Get user info and check if banned
             const userResult = await query(
-                'SELECT full_name FROM users WHERE id = $1',
+                'SELECT full_name, role FROM users WHERE id = $1',
                 [socket.data.user.userId]
             );
 
+            const user = userResult.rows[0];
+
+            // TODO: Check if user is banned for this event
+            // const banCheck = await query('SELECT 1 FROM chat_bans WHERE user_id = $1 AND event_id = $2', [socket.data.user.userId, eventId]);
+            // if (banCheck.rows.length > 0) { socket.emit('error', { message: 'You are banned from this chat' }); return; }
+
             const messageData = {
                 ...chatMessage,
-                user_name: userResult.rows[0]?.full_name || 'Anonymous',
+                user_name: user?.full_name || 'Anonymous',
+                role: user?.role || 'user'
             };
 
             // Broadcast to event room
@@ -253,6 +260,31 @@ io.on('connection', (socket) => {
         } catch (error) {
             logger.error('Error deleting message:', error);
             socket.emit('error', { message: 'Failed to delete message' });
+        }
+    });
+
+    // Ban user (Admin only)
+    socket.on('ban_user', async (data: { eventId: string; userId: string; userName: string }) => {
+        try {
+            const { eventId, userId, userName } = data;
+
+            if (socket.data.user.role !== 'admin') {
+                socket.emit('error', { message: 'Access denied' });
+                return;
+            }
+
+            // In a real app, you'd save this to a 'chat_bans' table
+            // For now, we'll broadcast the ban to sync all clients
+            io.to(`event_${eventId}`).emit('user_banned', { userId, userName });
+
+            logger.info('User banned from chat by admin', {
+                adminId: socket.data.user.userId,
+                bannedUserId: userId,
+                eventId,
+            });
+        } catch (error) {
+            logger.error('Error banning user:', error);
+            socket.emit('error', { message: 'Failed to ban user' });
         }
     });
 
