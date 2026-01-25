@@ -25,6 +25,10 @@ export const metadata: Metadata = {
     },
 };
 
+import Navbar from '@/components/ui/Navbar';
+
+// ... imports ...
+
 export default function RootLayout({
     children,
 }: {
@@ -33,6 +37,7 @@ export default function RootLayout({
     return (
         <html lang="es" className={`${inter.variable} ${outfit.variable}`}>
             <body className="font-sans">
+                <Navbar />
                 {children}
                 <Toaster
                     position="top-right"
