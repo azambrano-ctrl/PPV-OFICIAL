@@ -96,7 +96,10 @@ export default function ChatBox({ eventId, eventTitle }: ChatBoxProps) {
                 isAdmin: messageData.role === 'admin',
                 isDeleted: messageData.is_deleted || false,
             };
-            setMessages((prev) => [...prev, message]);
+            setMessages((prev) => {
+                const updated = [...prev, message];
+                return updated.slice(-100); // Only keep the last 100 messages
+            });
         });
 
         socketInstance.on('message_deleted', ({ messageId }: { messageId: string }) => {
