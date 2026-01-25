@@ -35,8 +35,8 @@ export default function Navbar() {
         window.location.href = '/';
     };
 
-    // Hide Navbar on Admin pages (Admin has its own sidebar layout)
-    if (pathname?.startsWith('/admin')) {
+    // Hide Navbar on Admin pages and Watch pages (Immersive mode)
+    if (pathname?.startsWith('/admin') || pathname?.startsWith('/watch')) {
         return null;
     }
 
