@@ -193,7 +193,13 @@ export default function ImageUpload({
             </label>
 
             {preview ? (
-                <div className="relative group bg-[url('https://www.transparenttextures.com/patterns/checkerboard.png')] bg-gray-200 rounded-lg">
+                <div
+                    className="relative group rounded-lg"
+                    style={{
+                        backgroundImage: 'conic-gradient(#f3f4f6 90deg, #e5e7eb 90deg 180deg, #f3f4f6 180deg 270deg, #e5e7eb 270deg)',
+                        backgroundSize: '20px 20px'
+                    }}
+                >
                     <img
                         src={preview}
                         alt="Preview"
