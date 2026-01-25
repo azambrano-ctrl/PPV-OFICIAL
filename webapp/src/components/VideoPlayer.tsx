@@ -19,6 +19,23 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     const [error, setError] = useState<string | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [showPlayButton, setShowPlayButton] = useState(false);
+    const [showUI, setShowUI] = useState(true);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    const handleMouseMove = () => {
+        setShowUI(true);
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(() => {
+            if (isPlaying) setShowUI(false);
+        }, 3000);
+    };
+
+    const handleMouseLeave = () => {
+        if (isPlaying) {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            setShowUI(false);
+        }
+    };
 
     useEffect(() => {
         if (!videoRef.current || !streamUrl) return;
@@ -168,7 +185,11 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     };
 
     return (
-        <div className="relative w-full h-full bg-black group overflow-hidden">
+        <div
+            className="relative w-full h-full bg-black group overflow-hidden"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+        >
             {/* Video Element */}
             <video
                 ref={videoRef}
@@ -229,9 +250,13 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
 
             {/* Event Title Overlay */}
             {!isLoading && !error && (
-                <div className="absolute bottom-20 left-4 right-4 md:left-6 md:right-6 pointer-events-none">
-                    <div className="bg-gradient-to-t from-black/80 to-transparent p-4 rounded-lg">
-                        <h2 className="text-white text-xl md:text-2xl font-bold">{eventTitle}</h2>
+                <div
+                    className={`absolute bottom-20 left-4 right-4 md:left-6 md:right-6 pointer-events-none transition-opacity duration-700 ${showUI ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                >
+                    <div className="bg-gradient-to-t from-black/90 to-transparent p-4 rounded-lg">
+                        <h2 className="text-white text-xl md:text-2xl font-bold border-l-4 border-red-600 pl-4">
+                            {eventTitle}
+                        </h2>
                     </div>
                 </div>
             )}
