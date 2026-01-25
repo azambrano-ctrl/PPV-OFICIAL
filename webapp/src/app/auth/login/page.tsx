@@ -66,14 +66,6 @@ export default function LoginPage() {
             <div className="max-w-md w-full relative z-10">
                 {/* Logo */}
                 <div className="text-center mb-8">
-                    <Link href="/" className="inline-flex items-center space-x-2 mb-6">
-                        <div className="w-12 h-12 bg-gradient-to-br from-primary-600 to-primary-700 rounded-lg flex items-center justify-center">
-                            <span className="text-white font-bold text-2xl">P</span>
-                        </div>
-                        <span className="font-display font-bold text-2xl gradient-text">
-                            PPV Streaming
-                        </span>
-                    </Link>
                     <h2 className="text-3xl font-display font-bold text-white mb-2">
                         Iniciar Sesión
                     </h2>
