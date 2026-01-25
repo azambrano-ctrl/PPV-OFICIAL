@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function PrivacyPage() {
     return (
-        <div className="min-h-screen bg-dark-950 py-12 px-4 sm:px-6 lg:px-8 text-dark-200">
+        <div className="min-h-screen bg-dark-950 pt-32 pb-12 px-4 sm:px-6 lg:px-8 text-dark-200">
             <div className="max-w-3xl mx-auto bg-dark-900 shadow-xl rounded-lg p-8 border border-dark-800">
                 <h1 className="text-3xl font-display font-bold text-white mb-6">Política de Privacidad</h1>
 
