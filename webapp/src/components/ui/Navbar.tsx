@@ -63,7 +63,7 @@ export default function Navbar() {
                             <Link
                                 key={link.name}
                                 href={link.href}
-                                className={`text-base font-bold transition-colors ${pathname === link.href
+                                className={`text-lg font-bold transition-colors ${pathname === link.href
                                     ? 'text-primary-500'
                                     : 'text-gray-300 hover:text-white'
                                     }`}
@@ -155,7 +155,7 @@ export default function Navbar() {
                         ) : (
                             <Link
                                 href="/auth/login"
-                                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-dark-800 hover:bg-dark-700 border border-dark-700 transition-all group"
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-black hover:bg-gray-900 border border-dark-700 transition-all group"
                             >
                                 <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white text-xs font-bold">
                                     <User className="w-4 h-4" />
