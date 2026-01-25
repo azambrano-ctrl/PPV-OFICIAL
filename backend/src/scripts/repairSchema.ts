@@ -40,6 +40,10 @@ export const repairSchema = async () => {
             ADD COLUMN IF NOT EXISTS site_logo_width INTEGER DEFAULT 40,
             ADD COLUMN IF NOT EXISTS site_logo_offset_x INTEGER DEFAULT 0,
             ADD COLUMN IF NOT EXISTS site_logo_offset_y INTEGER DEFAULT 0;
+
+            -- Chat moderation
+            ALTER TABLE chat_messages 
+            ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT false;
         `;
 
         await query(sql);

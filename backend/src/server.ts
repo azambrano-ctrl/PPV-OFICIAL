@@ -225,6 +225,37 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Delete chat message (Admin only)
+    socket.on('delete_message', async (data: { eventId: string; messageId: string }) => {
+        try {
+            const { eventId, messageId } = data;
+
+            // Check if user is admin
+            if (socket.data.user.role !== 'admin') {
+                socket.emit('error', { message: 'Access denied' });
+                return;
+            }
+
+            // Update message in database
+            await query(
+                'UPDATE chat_messages SET is_deleted = true WHERE id = $1 AND event_id = $2',
+                [messageId, eventId]
+            );
+
+            // Broadcast to event room
+            io.to(`event_${eventId}`).emit('message_deleted', { messageId });
+
+            logger.info('Chat message deleted by admin', {
+                adminId: socket.data.user.userId,
+                messageId,
+                eventId,
+            });
+        } catch (error) {
+            logger.error('Error deleting message:', error);
+            socket.emit('error', { message: 'Failed to delete message' });
+        }
+    });
+
     // Leave event room
     socket.on('leave_event', (eventId: string) => {
         socket.leave(`event_${eventId}`);
