@@ -8,7 +8,8 @@ import { paymentsAPI, handleAPIError } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
+const STRIPE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = STRIPE_KEY ? loadStripe(STRIPE_KEY) : null;
 
 interface PaymentModalProps {
     event: {
@@ -123,25 +124,27 @@ function CheckoutForm({ event, onClose }: PaymentModalProps) {
                 <label className="block text-sm font-medium text-dark-300 mb-3">
                     Método de Pago
                 </label>
-                <div className="grid grid-cols-2 gap-3">
-                    <button
-                        type="button"
-                        onClick={() => setPaymentMethod('stripe')}
-                        className={`p-4 rounded-lg border-2 transition-all ${paymentMethod === 'stripe'
-                            ? 'border-primary-500 bg-primary-500/10'
-                            : 'border-dark-700 hover:border-dark-600'
-                            }`}
-                    >
-                        <CreditCard className="w-6 h-6 mx-auto mb-2" />
-                        <span className="text-sm font-medium">Tarjeta</span>
-                    </button>
+                <div className={`grid gap-3 ${stripePromise ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                    {stripePromise && (
+                        <button
+                            type="button"
+                            onClick={() => setPaymentMethod('stripe')}
+                            className={`p-4 rounded-lg border-2 transition-all ${paymentMethod === 'stripe'
+                                ? 'border-primary-500 bg-primary-500/10'
+                                : 'border-dark-700 hover:border-dark-600'
+                                }`}
+                        >
+                            <CreditCard className="w-6 h-6 mx-auto mb-2" />
+                            <span className="text-sm font-medium">Tarjeta</span>
+                        </button>
+                    )}
                     <button
                         type="button"
                         onClick={() => setPaymentMethod('paypal')}
                         className={`p-4 rounded-lg border-2 transition-all ${paymentMethod === 'paypal'
                             ? 'border-primary-500 bg-primary-500/10'
                             : 'border-dark-700 hover:border-dark-600'
-                            }`}
+                            } ${!stripePromise ? 'col-span-1' : ''}`}
                     >
                         <svg className="w-6 h-6 mx-auto mb-2" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 4.47a.77.77 0 0 1 .758-.631h6.3c2.325 0 4.122.58 5.338 1.724 1.087 1.023 1.629 2.496 1.629 4.415 0 3.306-1.686 5.64-5.078 7.027l-.199.066c-1.444.48-2.812.72-4.078.72H7.076z" />
@@ -215,7 +218,7 @@ function CheckoutForm({ event, onClose }: PaymentModalProps) {
                     )}
                 </button>
             </div>
-        </form>
+        </form >
     );
 }
 
@@ -240,9 +243,13 @@ export default function PaymentModal({ event, onClose }: PaymentModalProps) {
                 </div>
 
                 {/* Stripe Elements Provider */}
-                <Elements stripe={stripePromise}>
+                {stripePromise ? (
+                    <Elements stripe={stripePromise}>
+                        <CheckoutForm event={event} onClose={onClose} />
+                    </Elements>
+                ) : (
                     <CheckoutForm event={event} onClose={onClose} />
-                </Elements>
+                )}
             </div>
         </div>
     );
