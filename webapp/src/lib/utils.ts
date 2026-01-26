@@ -91,7 +91,7 @@ export const getEventStatusColor = (status: string): string => {
         live: 'badge-success',
         finished: 'badge-warning',
         cancelled: 'badge-danger',
-        reprise: 'badge-info',
+        reprise: 'badge-purple',
     };
     return colors[s] || 'badge-info';
 };
@@ -105,7 +105,7 @@ export const getEventStatusText = (status: string): string => {
         live: 'En Vivo',
         finished: 'Finalizado',
         cancelled: 'Cancelado',
-        reprise: 'Próximamente',
+        reprise: 'Reprise',
     };
     return texts[status] || status;
 };

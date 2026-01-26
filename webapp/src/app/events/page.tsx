@@ -53,11 +53,7 @@ export default function EventsPage() {
 
         // Filter by status
         if (statusFilter !== 'all') {
-            if (statusFilter === 'upcoming') {
-                filtered = filtered.filter((event) => event.status === 'upcoming' || event.status === 'reprise');
-            } else {
-                filtered = filtered.filter((event) => event.status === statusFilter);
-            }
+            filtered = filtered.filter((event) => event.status === statusFilter);
         }
 
         // Filter by search term
@@ -117,6 +113,7 @@ export default function EventsPage() {
                                 <option value="upcoming">Próximamente</option>
                                 <option value="live">En Vivo</option>
                                 <option value="finished">Finalizados</option>
+                                <option value="reprise">Reprise</option>
                             </select>
                         </div>
                     </div>
