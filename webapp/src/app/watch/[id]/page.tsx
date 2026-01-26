@@ -183,7 +183,7 @@ export default function WatchPage() {
 
                     <button
                         onClick={() => setShowChat(!showChat)}
-                        className={`p-2 rounded-full transition-colors md:hidden ${showChat ? 'bg-primary-600 text-white' : 'bg-white/10 text-white/70'}`}
+                        className={`p-2 rounded-full transition-colors md:hidden ${showChat ? 'bg-red-600 text-white' : 'bg-white/10 text-white/70'}`}
                     >
                         <MessageSquare className="w-5 h-5" />
                     </button>
@@ -194,7 +194,7 @@ export default function WatchPage() {
             <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
                 {/* Video Area */}
                 <div className="flex-1 relative flex flex-col bg-black overflow-hidden">
-                    <div className="relative aspect-video md:flex-1 w-full bg-black flex items-center justify-center">
+                    <div className="relative w-full h-full bg-black flex items-center justify-center">
                         <VideoPlayer
                             streamUrl={streamData.streamUrl}
                             token={streamData.token}
@@ -223,7 +223,7 @@ export default function WatchPage() {
                     className={`
                         w-full md:w-96 bg-dark-950 border-t md:border-t-0 md:border-l border-white/10 
                         transition-all duration-300 z-30 flex flex-col
-                        ${showChat ? 'h-[40vh] md:h-full opacity-100' : 'h-0 md:w-0 overflow-hidden opacity-0 invisible'}
+                        ${showChat ? 'h-[40vh] md:h-full opacity-100 flex' : 'hidden'}
                         md:relative
                     `}
                 >
