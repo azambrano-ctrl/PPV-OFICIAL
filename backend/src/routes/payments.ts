@@ -41,7 +41,6 @@ router.post(
         const { eventId, purchaseType, paymentMethod, couponCode } = req.body;
         let amount = 0;
         let currency = 'USD';
-        let title = '';
 
         if (purchaseType === 'season_pass') {
             const { getSettings } = require('../services/settingsService');
@@ -52,7 +51,6 @@ router.post(
                 return;
             }
             amount = settings.season_pass_price;
-            title = settings.season_pass_title;
         } else {
             if (!eventId) {
                 res.status(400).json({ success: false, message: 'Event ID is required' });
@@ -79,7 +77,6 @@ router.post(
             }
             amount = event.price;
             currency = event.currency;
-            title = event.title;
         }
 
         const paymentData = {
