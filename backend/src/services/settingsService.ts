@@ -29,6 +29,13 @@ export interface Settings {
     paypal_client_id: string;
     paypal_secret_key: string;
 
+    // Season Pass
+    season_pass_enabled: boolean;
+    season_pass_title: string;
+    season_pass_description: string;
+    season_pass_price: number;
+    season_pass_button_text: string;
+
     created_at: Date;
     updated_at: Date;
 }
@@ -60,6 +67,13 @@ export interface UpdateSettingsDTO {
     paypal_enabled?: boolean;
     paypal_client_id?: string;
     paypal_secret_key?: string;
+
+    // Season Pass
+    season_pass_enabled?: boolean;
+    season_pass_title?: string;
+    season_pass_description?: string;
+    season_pass_price?: number;
+    season_pass_button_text?: string;
 }
 
 /**
@@ -108,7 +122,12 @@ export const updateSettings = async (updates: UpdateSettingsDTO): Promise<Settin
         'site_logo',
         'site_logo_width',
         'site_logo_offset_x',
-        'site_logo_offset_y'
+        'site_logo_offset_y',
+        'season_pass_enabled',
+        'season_pass_title',
+        'season_pass_description',
+        'season_pass_price',
+        'season_pass_button_text'
     ];
 
     for (const key of keys) {

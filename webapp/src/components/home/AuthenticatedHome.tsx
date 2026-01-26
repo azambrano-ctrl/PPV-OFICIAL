@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Calendar, Clock, DollarSign, Play, ArrowRight, Zap, Shield, Users, Star, TrendingUp, LogOut, Settings, User } from 'lucide-react';
 import { formatDate, formatCurrency, getEventStatusColor, getEventStatusText, getImageUrl } from '@/lib/utils';
+import { useSettingsStore } from '@/lib/store';
 import Footer from '@/components/Footer';
 
 interface AuthenticatedHomeProps {
@@ -13,6 +14,7 @@ interface AuthenticatedHomeProps {
 }
 
 export default function AuthenticatedHome({ user, featuredEvents, upcomingEvents, homepageBackground }: AuthenticatedHomeProps) {
+    const { settings } = useSettingsStore();
     const nextEvent = featuredEvents[0];
 
     return (
@@ -149,15 +151,17 @@ export default function AuthenticatedHome({ user, featuredEvents, upcomingEvents
                             </div>
 
                             {/* Promo/Upsell */}
-                            <div className="bg-gradient-to-br from-primary-900/50 to-dark-800/80 backdrop-blur-sm rounded-2xl p-6 border border-primary-500/20">
-                                <h4 className="font-bold text-lg mb-2 text-white">Pase de Temporada</h4>
-                                <p className="text-sm text-gray-400 mb-4">
-                                    Obtén acceso a todos los eventos del año por un precio especial.
-                                </p>
-                                <button className="w-full py-2 bg-white text-black font-bold rounded-lg text-sm hover:bg-gray-200 transition-colors">
-                                    Próximamente
-                                </button>
-                            </div>
+                            {settings?.season_pass_enabled && (
+                                <div className="bg-gradient-to-br from-primary-900/50 to-dark-800/80 backdrop-blur-sm rounded-2xl p-6 border border-primary-500/20">
+                                    <h4 className="font-bold text-lg mb-2 text-white">{settings.season_pass_title || 'Pase de Temporada'}</h4>
+                                    <p className="text-sm text-gray-400 mb-4">
+                                        {settings.season_pass_description}
+                                    </p>
+                                    <button className="w-full py-2 bg-white text-black font-bold rounded-lg text-sm hover:bg-gray-200 transition-colors">
+                                        {settings.season_pass_button_text || 'Comprar Pase'}
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                     </div>

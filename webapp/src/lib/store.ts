@@ -146,6 +146,11 @@ interface Settings {
         instagram: string;
         twitter: string;
     };
+    season_pass_enabled: boolean;
+    season_pass_title: string;
+    season_pass_description: string;
+    season_pass_price: number;
+    season_pass_button_text: string;
     [key: string]: any;
 }
 

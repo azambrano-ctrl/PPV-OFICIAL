@@ -160,6 +160,13 @@ router.put(
             if (req.body.paypal_client_id) updates.paypal_client_id = req.body.paypal_client_id;
             if (req.body.paypal_secret_key) updates.paypal_secret_key = req.body.paypal_secret_key;
 
+            // Handle Season Pass Settings
+            if (req.body.season_pass_enabled !== undefined) updates.season_pass_enabled = String(req.body.season_pass_enabled) === 'true';
+            if (req.body.season_pass_title) updates.season_pass_title = req.body.season_pass_title;
+            if (req.body.season_pass_description) updates.season_pass_description = req.body.season_pass_description;
+            if (req.body.season_pass_price !== undefined) updates.season_pass_price = parseFloat(req.body.season_pass_price);
+            if (req.body.season_pass_button_text) updates.season_pass_button_text = req.body.season_pass_button_text;
+
             console.log('Updates object prepared:', JSON.stringify(updates, null, 2));
 
             const settings = await settingsService.updateSettings(updates);

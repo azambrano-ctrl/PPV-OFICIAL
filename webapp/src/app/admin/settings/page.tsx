@@ -5,7 +5,7 @@ import { settingsAPI } from '@/lib/api';
 import { Save, AlertCircle, Layout, FileText, Image as ImageIcon, X, CreditCard, Facebook, Instagram, Twitter } from 'lucide-react';
 import ImageUpload from '@/components/admin/ImageUpload';
 
-type Tab = 'general' | 'about' | 'gallery' | 'payments';
+type Tab = 'general' | 'about' | 'gallery' | 'payments' | 'season-pass';
 
 export default function AdminSettingsPage() {
     const [loading, setLoading] = useState(true);
@@ -50,7 +50,14 @@ export default function AdminSettingsPage() {
         stripe_secret_key: '',
         paypal_enabled: false,
         paypal_client_id: '',
-        paypal_secret_key: ''
+        paypal_secret_key: '',
+
+        // Season Pass
+        season_pass_enabled: false,
+        season_pass_title: '',
+        season_pass_description: '',
+        season_pass_price: 0,
+        season_pass_button_text: ''
     });
 
     useEffect(() => {
@@ -86,7 +93,13 @@ export default function AdminSettingsPage() {
                 stripe_secret_key: d.stripe_secret_key || '',
                 paypal_enabled: d.paypal_enabled || false,
                 paypal_client_id: d.paypal_client_id || '',
-                paypal_secret_key: d.paypal_secret_key || ''
+                paypal_secret_key: d.paypal_secret_key || '',
+
+                season_pass_enabled: d.season_pass_enabled || false,
+                season_pass_title: d.season_pass_title || '',
+                season_pass_description: d.season_pass_description || '',
+                season_pass_price: d.season_pass_price || 0,
+                season_pass_button_text: d.season_pass_button_text || ''
             });
         } catch (error) {
             console.error('Error loading settings:', error);
@@ -152,6 +165,13 @@ export default function AdminSettingsPage() {
             formData.append('paypal_client_id', form.paypal_client_id);
             formData.append('paypal_secret_key', form.paypal_secret_key);
 
+            // Season Pass
+            formData.append('season_pass_enabled', String(form.season_pass_enabled));
+            formData.append('season_pass_title', form.season_pass_title);
+            formData.append('season_pass_description', form.season_pass_description);
+            formData.append('season_pass_price', String(form.season_pass_price));
+            formData.append('season_pass_button_text', form.season_pass_button_text);
+
             await settingsAPI.update(formData);
             setMessage({ type: 'success', text: 'Configuración guardada correctamente' });
 
@@ -178,6 +198,7 @@ export default function AdminSettingsPage() {
         { id: 'about', label: 'Página Nosotros', icon: FileText },
         { id: 'gallery', label: 'Galería', icon: ImageIcon },
         { id: 'payments', label: 'Pagos', icon: CreditCard },
+        { id: 'season-pass', label: 'Pase de Temporada', icon: Save },
     ];
 
     return (
@@ -652,6 +673,75 @@ export default function AdminSettingsPage() {
                                         onChange={(e) => setForm({ ...form, paypal_secret_key: e.target.value })}
                                     />
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Tab: Season Pass */}
+                {activeTab === 'season-pass' && (
+                    <div className="bg-dark-900 p-6 rounded-xl border border-dark-800 space-y-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                <Save className="w-6 h-6 text-primary-500" /> Pase de Temporada
+                            </h2>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={form.season_pass_enabled}
+                                    onChange={(e) => setForm({ ...form, season_pass_enabled: e.target.checked })}
+                                    className="sr-only peer"
+                                />
+                                <div className="w-11 h-6 bg-dark-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                                <span className="ms-3 text-sm font-medium text-dark-300">
+                                    {form.season_pass_enabled ? 'Activado' : 'Desactivado'}
+                                </span>
+                            </label>
+                        </div>
+
+                        <div className={`space-y-4 ${!form.season_pass_enabled && 'opacity-50 pointer-events-none'}`}>
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-dark-300">Título del Pase</label>
+                                    <input
+                                        type="text"
+                                        className="input w-full"
+                                        value={form.season_pass_title}
+                                        onChange={(e) => setForm({ ...form, season_pass_title: e.target.value })}
+                                        placeholder="Pase de Temporada"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-dark-300">Precio del Pase ($)</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        className="input w-full"
+                                        value={form.season_pass_price}
+                                        onChange={(e) => setForm({ ...form, season_pass_price: parseFloat(e.target.value) || 0 })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-dark-300">Descripción</label>
+                                <textarea
+                                    className="input w-full h-24"
+                                    value={form.season_pass_description}
+                                    onChange={(e) => setForm({ ...form, season_pass_description: e.target.value })}
+                                    placeholder="Obtén acceso a todos los eventos..."
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-dark-300">Texto del Botón</label>
+                                <input
+                                    type="text"
+                                    className="input w-full"
+                                    value={form.season_pass_button_text}
+                                    onChange={(e) => setForm({ ...form, season_pass_button_text: e.target.value })}
+                                    placeholder="Comprar Pase"
+                                />
                             </div>
                         </div>
                     </div>
