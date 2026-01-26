@@ -21,6 +21,7 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     const [showPlayButton, setShowPlayButton] = useState(false);
     const [showUI, setShowUI] = useState(true);
     const [canCast, setCanCast] = useState(false);
+    const [lastStreamUrl, setLastStreamUrl] = useState<string>('');
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Detect if browser supports casting/remote playback
@@ -37,16 +38,44 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         }
     }, []);
 
-    const handleCast = () => {
+    const handleCast = async () => {
         const video = videoRef.current;
-        if (video && 'remote' in video) {
-            (video as any).remote.prompt().catch((err: any) => {
+        if (!video) return;
+
+        if ('remote' in video) {
+            try {
+                // If we are using HLS.js, video.src is a blob. 
+                // We briefly set the src to the actual stream URL so the browser 
+                // knows what it's supposed to cast.
+                const originalSrc = video.src;
+                const isBlob = originalSrc.startsWith('blob:');
+
+                if (isBlob && lastStreamUrl) {
+                    console.log('Temporarily switching to real URL for casting');
+                    video.src = lastStreamUrl;
+                }
+
+                await (video as any).remote.prompt();
+
+                // If we switched, we might need to restore or just let it be if it started casting
+                // Usually, the prompt is async and the user picks a device.
+            } catch (err: any) {
                 if (err.name === 'NotFoundError') {
-                    alert('No se encontraron dispositivos de transmisión (TV o Chromecast) en tu red. Asegúrate de que tu TV esté encendida y conectada a la misma red Wi-Fi.');
+                    const message = `No se detectaron dispositivos de transmisión (TV o Chromecast).
+                    
+Pasos para solucionar:
+1. Asegúrate de que el TV esté en la misma red Wi-Fi.
+2. Si usas Chrome en PC, verifica que el navegador tenga permisos de "Red Local".
+3. Reinicia el Wi-Fi de tu dispositivo si el problema persiste.`;
+                    alert(message);
+                } else if (err.name === 'NotAllowedError') {
+                    // User cancelled or browser blocked it
+                    console.log('Casting prompt cancelled or blocked');
                 } else {
                     console.error('Remote playback prompt failed:', err);
+                    alert('Hubo un error al intentar conectar con el TV. Intenta recargar la página.');
                 }
-            });
+            }
         } else {
             alert('Tu navegador no soporta transmisiones nativas (Chromecast/AirPlay). Prueba usando Google Chrome.');
         }
@@ -97,6 +126,7 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         }
 
         console.log('Loading stream:', finalUrl);
+        setLastStreamUrl(finalUrl);
 
         const handleManifestParsed = () => {
             console.log('HLS manifest parsed successfully');
