@@ -29,55 +29,100 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         const video = videoRef.current;
         if (!video) return;
 
-        // Check for Remote Playback API (Chrome/Safari)
+        // 1. Check for native Remote Playback API (Safari/AirPlay)
         if ('remote' in video) {
             const remote = (video as any).remote;
             if (remote.state !== 'disabled') {
                 setCanCast(true);
             }
         }
+
+        // 2. Check for Google Cast SDK (Chrome/Chromecast)
+        // We check if the script we added to layout.tsx has loaded
+        const checkCastSDK = setInterval(() => {
+            if ((window as any).chrome && (window as any).chrome.cast && (window as any).chrome.cast.isAvailable) {
+                setCanCast(true);
+                clearInterval(checkCastSDK);
+                console.log('Google Cast SDK detected and available');
+            }
+        }, 1000);
+
+        // Max check 10 seconds
+        setTimeout(() => clearInterval(checkCastSDK), 10000);
+
+        return () => clearInterval(checkCastSDK);
     }, []);
 
     const handleCast = async () => {
         const video = videoRef.current;
         if (!video) return;
 
+        // Try Google Cast SDK first (more reliable for Chrome)
+        const cast = (window as any).cast;
+        const chrome = (window as any).chrome;
+
+        if (cast && cast.framework && chrome && chrome.cast) {
+            console.log('Starting Google Cast SDK session...');
+            const castContext = cast.framework.CastContext.getInstance();
+
+            // Set options if not already set
+            castContext.setOptions({
+                receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+                autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+            });
+
+            try {
+                await castContext.requestSession();
+                const session = castContext.getCurrentSession();
+                if (session) {
+                    const mediaInfo = new chrome.cast.media.MediaInfo(lastStreamUrl, 'application/x-mpegurl');
+                    mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+                    mediaInfo.metadata.title = eventTitle;
+                    if (poster) mediaInfo.metadata.images = [{ url: poster }];
+
+                    const request = new chrome.cast.media.LoadRequest(mediaInfo);
+                    await session.loadMedia(request);
+                    console.log('Media loaded to Chromecast successfully');
+                    return; // Success!
+                }
+            } catch (err: any) {
+                console.log('Cast SDK failed or cancelled:', err);
+                // Fallback to Remote Playback if SDK fails but didn't error out completely
+                if (err === 'cancel') return;
+            }
+        }
+
+        // Fallback or Native Remote Playback (Safari/Legacy)
         if ('remote' in video) {
             try {
-                // If we are using HLS.js, video.src is a blob. 
-                // We briefly set the src to the actual stream URL so the browser 
-                // knows what it's supposed to cast.
                 const originalSrc = video.src;
                 const isBlob = originalSrc.startsWith('blob:');
 
-                if (isBlob && lastStreamUrl) {
-                    console.log('Temporarily switching to real URL for casting');
+                // If on Safari (native HLS support), swapping works. 
+                // If on Chrome (no native HLS), swapping to HLS URL might fail, 
+                // but we already tried SDK above.
+                if (isBlob && lastStreamUrl && video.canPlayType('application/vnd.apple.mpegurl')) {
                     video.src = lastStreamUrl;
                 }
 
                 await (video as any).remote.prompt();
-
-                // If we switched, we might need to restore or just let it be if it started casting
-                // Usually, the prompt is async and the user picks a device.
             } catch (err: any) {
                 if (err.name === 'NotFoundError') {
                     const message = `No se detectaron dispositivos de transmisión (TV o Chromecast).
                     
 Pasos para solucionar:
 1. Asegúrate de que el TV esté en la misma red Wi-Fi.
-2. Si usas Chrome en PC, verifica que el navegador tenga permisos de "Red Local".
+2. Si usas PC, verifica que Chrome esté actualizado.
 3. Reinicia el Wi-Fi de tu dispositivo si el problema persiste.`;
                     alert(message);
                 } else if (err.name === 'NotAllowedError') {
-                    // User cancelled or browser blocked it
                     console.log('Casting prompt cancelled or blocked');
                 } else {
                     console.error('Remote playback prompt failed:', err);
-                    alert('Hubo un error al intentar conectar con el TV. Intenta recargar la página.');
                 }
             }
         } else {
-            alert('Tu navegador no soporta transmisiones nativas (Chromecast/AirPlay). Prueba usando Google Chrome.');
+            alert('Tu navegador no soporta transmisiones nativas. Prueba usando Google Chrome en PC o Safari en iPhone.');
         }
     };
 
