@@ -133,8 +133,8 @@ export default function WatchPage() {
 
     return (
         <div className="fixed inset-0 bg-black flex flex-col overflow-hidden text-white font-sans">
-            {/* Minimal Header */}
-            <header className="flex-shrink-0 h-16 px-4 md:px-6 flex items-center justify-between bg-black/50 backdrop-blur-sm border-b border-white/5 z-20">
+            {/* Minimal Header - Hidden in mobile landscape to maximize video space */}
+            <header className="flex-shrink-0 h-16 px-4 md:px-6 flex items-center justify-between bg-black/50 backdrop-blur-sm border-b border-white/5 z-20 landscape:max-md:hidden">
                 <div className="flex items-center gap-4">
                     <Link
                         href="/events"
