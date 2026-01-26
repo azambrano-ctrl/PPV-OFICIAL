@@ -377,18 +377,6 @@ Pasos para solucionar:
                 </button>
             )}
 
-            {/* Event Title Overlay */}
-            {!isLoading && !error && (
-                <div
-                    className={`absolute bottom-20 left-4 right-4 md:left-6 md:right-6 pointer-events-none transition-opacity duration-700 ${showUI ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-                >
-                    <div className="bg-gradient-to-t from-black/90 to-transparent p-4 rounded-lg">
-                        <h2 className="text-white text-xl md:text-2xl font-bold border-l-4 border-red-600 pl-4">
-                            {eventTitle}
-                        </h2>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

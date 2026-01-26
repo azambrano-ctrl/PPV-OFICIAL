@@ -222,18 +222,36 @@ export default function WatchPage() {
                 <div
                     className={`
                         w-full md:w-96 bg-dark-950 border-t md:border-t-0 md:border-l border-white/10 
-                        transition-all duration-300 z-30
-                        ${showChat ? 'h-[40vh] md:h-full block' : 'h-0 md:hidden invisible'}
+                        transition-all duration-300 z-30 flex flex-col
+                        ${showChat ? 'h-[40vh] md:h-full opacity-100' : 'h-0 md:w-0 overflow-hidden opacity-0 invisible'}
                         md:relative
                     `}
                 >
-                    <div className="h-full flex flex-col">
+                    <div className="flex-shrink-0 p-3 flex items-center justify-between border-b border-white/5 md:hidden">
+                        <span className="text-sm font-bold text-white/50 uppercase tracking-widest">Chat del Evento</span>
+                        <button
+                            onClick={() => setShowChat(false)}
+                            className="p-1 hover:bg-white/10 rounded-full text-white/70"
+                        >
+                            <ChevronLeft className="w-5 h-5 rotate-[270deg]" />
+                        </button>
+                    </div>
+
+                    <div className="flex-1 min-h-0 bg-dark-950">
                         <ChatBox
                             eventId={eventId}
                             eventTitle={event.title}
                             eventStatus={event.status}
                         />
                     </div>
+
+                    <button
+                        onClick={() => setShowChat(false)}
+                        className="hidden md:flex absolute -left-10 top-1/2 -translate-y-1/2 bg-dark-900 border border-white/10 border-r-0 p-2 rounded-l-xl text-white/50 hover:text-white transition-colors"
+                        title="Ocultar Chat"
+                    >
+                        <ChevronLeft className="w-5 h-5 rotate-180" />
+                    </button>
                 </div>
             </div>
         </div>
