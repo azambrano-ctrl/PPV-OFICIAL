@@ -205,6 +205,17 @@ export const userHasAccessToEvent = async (
         return true;
     }
 
+    // Check if user has a Season Pass
+    const seasonPassResult = await query(
+        `SELECT COUNT(*) as count FROM purchases
+     WHERE user_id = $1 AND purchase_type = 'season_pass' AND payment_status = 'completed'`,
+        [userId]
+    );
+
+    if (parseInt(seasonPassResult.rows[0].count) > 0) {
+        return true;
+    }
+
     const result = await query(
         `SELECT COUNT(*) as count FROM purchases
      WHERE user_id = $1 AND event_id = $2 AND payment_status = 'completed'`,

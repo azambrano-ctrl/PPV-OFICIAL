@@ -12,16 +12,17 @@ const STRIPE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = STRIPE_KEY ? loadStripe(STRIPE_KEY) : null;
 
 interface PaymentModalProps {
-    event: {
-        id: string;
+    event?: {
+        id?: string;
         title: string;
         price: number;
         currency: string;
     };
+    purchaseType?: 'event' | 'season_pass';
     onClose: () => void;
 }
 
-function CheckoutForm({ event, onClose }: PaymentModalProps) {
+function CheckoutForm({ event, purchaseType = 'event', onClose }: PaymentModalProps) {
     const stripe = useStripe();
     const elements = useElements();
     const router = useRouter();
@@ -49,7 +50,8 @@ function CheckoutForm({ event, onClose }: PaymentModalProps) {
         try {
             // Create payment intent
             const response = await paymentsAPI.createPayment({
-                eventId: event.id,
+                eventId: event?.id,
+                purchaseType,
                 paymentMethod: 'stripe',
             });
 
@@ -75,7 +77,13 @@ function CheckoutForm({ event, onClose }: PaymentModalProps) {
             if (paymentIntent.status === 'succeeded') {
                 toast.success('¡Pago exitoso! Redirigiendo...');
                 setTimeout(() => {
-                    router.push(`/watch/${event.id}`);
+                    if (purchaseType === 'season_pass') {
+                        window.location.reload();
+                    } else if (event?.id) {
+                        router.push(`/watch/${event.id}`);
+                    } else {
+                        onClose();
+                    }
                 }, 1500);
             }
         } catch (error) {
@@ -91,7 +99,8 @@ function CheckoutForm({ event, onClose }: PaymentModalProps) {
 
         try {
             const response = await paymentsAPI.createPayment({
-                eventId: event.id,
+                eventId: event?.id,
+                purchaseType,
                 paymentMethod: 'paypal',
             });
 
@@ -110,11 +119,11 @@ function CheckoutForm({ event, onClose }: PaymentModalProps) {
         <form onSubmit={handleSubmit} className="space-y-6">
             {/* Event Summary */}
             <div className="bg-dark-800 rounded-lg p-4">
-                <h3 className="font-semibold mb-2">{event.title}</h3>
+                <h3 className="font-semibold mb-2">{event?.title || 'Pase de Temporada'}</h3>
                 <div className="flex items-center justify-between">
                     <span className="text-dark-400">Total a pagar:</span>
                     <span className="text-2xl font-bold gradient-text">
-                        ${Number(event.price).toFixed(2)} {event.currency}
+                        ${Number(event?.price || 0).toFixed(2)} {event?.currency || 'USD'}
                     </span>
                 </div>
             </div>
@@ -212,7 +221,7 @@ function CheckoutForm({ event, onClose }: PaymentModalProps) {
                             <span>Procesando...</span>
                         </div>
                     ) : (
-                        `Pagar ${event.currency} $${Number(event.price).toFixed(2)}`
+                        `Pagar ${event?.currency || 'USD'} $${Number(event?.price || 0).toFixed(2)}`
                     )}
                 </button>
             </div>
@@ -220,7 +229,7 @@ function CheckoutForm({ event, onClose }: PaymentModalProps) {
     );
 }
 
-export default function PaymentModal({ event, onClose }: PaymentModalProps) {
+export default function PaymentModal({ event, purchaseType = 'event', onClose }: PaymentModalProps) {
     return (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
             <div className="card max-w-lg w-full p-8 relative">
@@ -242,7 +251,7 @@ export default function PaymentModal({ event, onClose }: PaymentModalProps) {
 
                 {/* Stripe Elements Provider */}
                 <Elements stripe={stripePromise}>
-                    <CheckoutForm event={event} onClose={onClose} />
+                    <CheckoutForm event={event} purchaseType={purchaseType} onClose={onClose} />
                 </Elements>
             </div>
         </div>

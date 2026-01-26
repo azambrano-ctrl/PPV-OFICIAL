@@ -26,7 +26,8 @@ try {
 
 export interface CreatePayPalOrderInput {
     userId: string;
-    eventId: string;
+    eventId?: string; // Optional for season pass
+    purchaseType?: 'event' | 'season_pass';
     amount: number;
     currency?: string;
     couponCode?: string;
@@ -73,12 +74,14 @@ export const createPayPalOrder = async (
             }
         }
 
-        // Get event details
-        const eventResult = await query('SELECT title FROM events WHERE id = $1', [
-            input.eventId,
-        ]);
-
-        const eventTitle = eventResult.rows[0]?.title || 'PPV Event';
+        let eventTitle = 'Pase de Temporada';
+        if (input.purchaseType !== 'season_pass' && input.eventId) {
+            // Get event details
+            const eventResult = await query('SELECT title FROM events WHERE id = $1', [
+                input.eventId,
+            ]);
+            eventTitle = eventResult.rows[0]?.title || 'PPV Event';
+        }
 
         // Create PayPal order
         const request = new paypal.orders.OrdersCreateRequest();
@@ -94,7 +97,8 @@ export const createPayPalOrder = async (
                     description: `Access to ${eventTitle}`,
                     custom_id: JSON.stringify({
                         userId: input.userId,
-                        eventId: input.eventId,
+                        eventId: input.eventId || '',
+                        purchaseType: input.purchaseType || 'event',
                         couponCode: input.couponCode || '',
                     }),
                 },
@@ -157,12 +161,13 @@ export const createPayPalOrder = async (
             logger.info('Creating new purchase record', { userId: input.userId, eventId: input.eventId, orderId });
             await query(
                 `INSERT INTO purchases (
-            user_id, event_id, amount, currency, payment_method,
+            user_id, event_id, purchase_type, amount, currency, payment_method,
             payment_intent_id, payment_status, coupon_code, discount_amount, final_amount
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
                 [
                     input.userId,
-                    input.eventId,
+                    input.eventId || null,
+                    input.purchaseType || 'event',
                     input.amount,
                     input.currency || 'USD',
                     'paypal',
@@ -239,15 +244,18 @@ const handlePayPalSuccess = async (orderId: string, _orderDetails: any) => {
         }
 
         // Create stream token for user
-        const { generateStreamToken } = await import('../middleware/auth');
-        const streamToken = generateStreamToken(purchase.user_id, purchase.event_id);
-        const expiresAt = new Date(Date.now() + 3 * 60 * 60 * 1000); // 3 hours
+        // Create stream token for user (ONLY for direct event purchases)
+        if (purchase.purchase_type === 'event' && purchase.event_id) {
+            const { generateStreamToken } = await import('../middleware/auth');
+            const streamToken = generateStreamToken(purchase.user_id, purchase.event_id);
+            const expiresAt = new Date(Date.now() + 3 * 60 * 60 * 1000); // 3 hours
 
-        await client.query(
-            `INSERT INTO stream_tokens (user_id, event_id, token, expires_at)
-       VALUES ($1, $2, $3, $4)`,
-            [purchase.user_id, purchase.event_id, streamToken, expiresAt]
-        );
+            await client.query(
+                `INSERT INTO stream_tokens (user_id, event_id, token, expires_at)
+           VALUES ($1, $2, $3, $4)`,
+                [purchase.user_id, purchase.event_id, streamToken, expiresAt]
+            );
+        }
 
         // Generate virtual seat number (random between 1 and 5000)
         const seatNumber = Math.floor(Math.random() * 5000) + 1;
@@ -269,20 +277,31 @@ const handlePayPalSuccess = async (orderId: string, _orderDetails: any) => {
         try {
             const { sendTicketEmail } = await import('./emailService');
 
-            // Get user and event details for the email
+            let eventTitle = 'Pase de Temporada';
+            let eventDate = new Date();
+            let eventPrice = `${purchase.currency} $${purchase.amount}`;
+
+            if (purchase.purchase_type === 'event' && purchase.event_id) {
+                const eventResult = await client.query('SELECT title, event_date, price, currency FROM events WHERE id = $1', [purchase.event_id]);
+                if (eventResult.rows.length > 0) {
+                    const event = eventResult.rows[0];
+                    eventTitle = event.title;
+                    eventDate = event.event_date;
+                    eventPrice = `${event.currency} $${event.price}`;
+                }
+            }
+
+            // Get user details
             const userResult = await client.query('SELECT email, full_name FROM users WHERE id = $1', [purchase.user_id]);
-            const eventResult = await client.query('SELECT title, event_date, price, currency FROM events WHERE id = $1', [purchase.event_id]);
 
-            if (userResult.rows.length > 0 && eventResult.rows.length > 0) {
+            if (userResult.rows.length > 0) {
                 const user = userResult.rows[0];
-                const event = eventResult.rows[0];
-
                 await sendTicketEmail(
                     user.email,
                     user.full_name,
-                    event.title,
-                    event.event_date,
-                    `${event.currency} $${event.price}`,
+                    eventTitle,
+                    eventDate.toISOString(),
+                    eventPrice,
                     seatNumber
                 );
                 logger.info('Ticket email sent successfully (PayPal)');

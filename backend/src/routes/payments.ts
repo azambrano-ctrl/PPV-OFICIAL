@@ -19,7 +19,8 @@ const router = Router();
 
 // Validation schemas
 const createPaymentSchema = z.object({
-    eventId: z.string().uuid('Invalid event ID'),
+    eventId: z.string().uuid('Invalid event ID').optional(),
+    purchaseType: z.enum(['event', 'season_pass']).default('event'),
     paymentMethod: z.enum(['stripe', 'paypal']),
     couponCode: z.string().optional(),
 });
@@ -37,47 +38,75 @@ router.post(
     authenticate,
     validateBody(createPaymentSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { eventId, paymentMethod, couponCode } = req.body;
+        const { eventId, purchaseType, paymentMethod, couponCode } = req.body;
+        let amount = 0;
+        let currency = 'USD';
+        let title = '';
 
-        // Get event details
-        const event = await getEventById(eventId);
+        if (purchaseType === 'season_pass') {
+            const { getSettings } = require('../services/settingsService');
+            const settings = await getSettings();
 
-        if (!event) {
-            res.status(404).json({
-                success: false,
-                message: 'Event not found',
-            });
-            return;
+            if (!settings.season_pass_enabled) {
+                res.status(400).json({ success: false, message: 'Season Pass is not enabled' });
+                return;
+            }
+            amount = settings.season_pass_price;
+            title = settings.season_pass_title;
+        } else {
+            if (!eventId) {
+                res.status(400).json({ success: false, message: 'Event ID is required' });
+                return;
+            }
+            // Get event details
+            const event = await getEventById(eventId);
+
+            if (!event) {
+                res.status(404).json({
+                    success: false,
+                    message: 'Event not found',
+                });
+                return;
+            }
+
+            // Check if event is available for purchase
+            if (event.status === 'cancelled' || event.status === 'finished') {
+                res.status(400).json({
+                    success: false,
+                    message: 'Event is not available for purchase',
+                });
+                return;
+            }
+            amount = event.price;
+            currency = event.currency;
+            title = event.title;
         }
 
-        // Check if event is available for purchase
-        if (event.status === 'cancelled' || event.status === 'finished') {
-            res.status(400).json({
-                success: false,
-                message: 'Event is not available for purchase',
-            });
-            return;
-        }
         const paymentData = {
             userId: req.user!.userId,
             eventId,
-            amount: event.price,
-            currency: event.currency,
+            purchaseType,
+            amount,
+            currency,
             couponCode,
         };
 
-        // Handle Free Events (Price 0)
-        if (event.price === 0) {
+        // Handle Free Items (Price 0)
+        if (amount === 0) {
             // Directly create a completed purchase
             const { query } = require('../config/database');
             const { generateStreamToken } = require('../middleware/auth');
-            // uuidv4 import removed as it was unused
 
             // Check if user already has it (idempotency)
-            const existing = await query(
-                'SELECT * FROM purchases WHERE user_id = $1 AND event_id = $2 AND payment_status = \'completed\'',
-                [req.user!.userId, eventId]
-            );
+            let existingQuery = 'SELECT * FROM purchases WHERE user_id = $1 AND event_id = $2 AND payment_status = \'completed\'';
+            let existingParams = [req.user!.userId, eventId];
+
+            if (purchaseType === 'season_pass') {
+                existingQuery = 'SELECT * FROM purchases WHERE user_id = $1 AND purchase_type = \'season_pass\' AND payment_status = \'completed\'';
+                existingParams = [req.user!.userId];
+            }
+
+            const existing = await query(existingQuery, existingParams);
 
             if (existing.rows.length > 0) {
                 res.json({
@@ -91,18 +120,17 @@ router.post(
                 return;
             }
 
-            // purchaseId removed as it was unused
-
             const result = await query(
                 `INSERT INTO purchases (
-                    user_id, event_id, amount, currency, payment_method,
+                    user_id, event_id, purchase_type, amount, currency, payment_method,
                     payment_status, coupon_code, discount_amount, final_amount
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
                 [
                     req.user!.userId,
-                    eventId,
+                    eventId || null,
+                    purchaseType,
                     0,
-                    event.currency,
+                    currency,
                     'free',
                     'completed',
                     couponCode || null,

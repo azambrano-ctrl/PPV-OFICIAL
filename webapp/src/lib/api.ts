@@ -152,7 +152,7 @@ export const eventsAPI = {
 };
 
 export const paymentsAPI = {
-    createPayment: (data: { eventId: string; paymentMethod: 'stripe' | 'paypal'; couponCode?: string }) =>
+    createPayment: (data: { eventId?: string; purchaseType?: 'event' | 'season_pass'; paymentMethod: 'stripe' | 'paypal'; couponCode?: string }) =>
         api.post('/payments/create', data),
 
     capturePayPal: (orderId: string) =>

@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Calendar, Clock, DollarSign, Play, ArrowRight, Zap, Shield, Users, Star, TrendingUp, LogOut, Settings, User } from 'lucide-react';
 import { formatDate, formatCurrency, getEventStatusColor, getEventStatusText, getImageUrl } from '@/lib/utils';
 import { useSettingsStore } from '@/lib/store';
 import Footer from '@/components/Footer';
+import PaymentModal from '@/components/PaymentModal';
 
 interface AuthenticatedHomeProps {
     user: any;
@@ -15,7 +17,12 @@ interface AuthenticatedHomeProps {
 
 export default function AuthenticatedHome({ user, featuredEvents, upcomingEvents, homepageBackground }: AuthenticatedHomeProps) {
     const { settings } = useSettingsStore();
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
     const nextEvent = featuredEvents[0];
+
+    const handleBuySeasonPass = () => {
+        setShowPaymentModal(true);
+    };
 
     return (
         <div className="min-h-screen flex flex-col bg-black text-white relative">
@@ -157,7 +164,10 @@ export default function AuthenticatedHome({ user, featuredEvents, upcomingEvents
                                     <p className="text-sm text-gray-400 mb-4">
                                         {settings.season_pass_description}
                                     </p>
-                                    <button className="w-full py-2 bg-white text-black font-bold rounded-lg text-sm hover:bg-gray-200 transition-colors">
+                                    <button
+                                        onClick={handleBuySeasonPass}
+                                        className="w-full py-2 bg-white text-black font-bold rounded-lg text-sm hover:bg-gray-200 transition-colors"
+                                    >
                                         {settings.season_pass_button_text || 'Comprar Pase'}
                                     </button>
                                 </div>
@@ -168,6 +178,18 @@ export default function AuthenticatedHome({ user, featuredEvents, upcomingEvents
                 </main>
                 <Footer />
             </div>
+
+            {showPaymentModal && (
+                <PaymentModal
+                    purchaseType="season_pass"
+                    event={{
+                        title: settings?.season_pass_title || 'Pase de Temporada',
+                        price: settings?.season_pass_price || 0,
+                        currency: 'USD'
+                    }}
+                    onClose={() => setShowPaymentModal(false)}
+                />
+            )}
         </div>
     );
 }

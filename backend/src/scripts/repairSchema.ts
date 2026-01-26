@@ -56,6 +56,22 @@ export const repairSchema = async () => {
                 email TEXT UNIQUE NOT NULL,
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
+
+            -- Purchases table updates for Season Pass
+            ALTER TABLE purchases ALTER COLUMN event_id DROP NOT NULL;
+            
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'purchase_type_enum') THEN
+                    CREATE TYPE purchase_type_enum AS ENUM ('event', 'season_pass');
+                END IF;
+            END $$;
+
+            ALTER TABLE purchases ADD COLUMN IF NOT EXISTS purchase_type purchase_type_enum DEFAULT 'event';
+            
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_one_season_pass_per_user 
+            ON purchases (user_id) 
+            WHERE purchase_type = 'season_pass' AND payment_status = 'completed';
         `;
 
         await query(sql);
