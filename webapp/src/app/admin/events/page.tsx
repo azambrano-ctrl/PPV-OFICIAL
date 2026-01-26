@@ -129,6 +129,7 @@ export default function AdminEventsPage() {
                             <option value="live">En Vivo</option>
                             <option value="finished">Finalizados</option>
                             <option value="cancelled">Cancelados</option>
+                            <option value="reprise">Reprise</option>
                         </select>
                     </div>
                 </div>

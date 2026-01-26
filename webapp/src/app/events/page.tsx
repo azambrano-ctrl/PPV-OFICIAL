@@ -115,6 +115,7 @@ export default function EventsPage() {
                             >
                                 <option value="all">Todos los Estados</option>
                                 <option value="upcoming">Próximamente</option>
+                                <option value="reprise">Reprise</option>
                                 <option value="live">En Vivo</option>
                                 <option value="finished">Finalizados</option>
                             </select>
