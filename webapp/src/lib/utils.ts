@@ -67,7 +67,7 @@ export const isEventFinished = (eventDate: string, durationMinutes: number = 180
  * Format currency
  */
 export const formatCurrency = (amount: number, currency: string = 'USD'): string => {
-    return new Intl.NumberFormat('es-ES', {
+    return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency,
     }).format(amount);
