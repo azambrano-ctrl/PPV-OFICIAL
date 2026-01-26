@@ -1,10 +1,32 @@
 import Link from 'next/link';
+import { useState } from 'react';
 import { Facebook, Twitter, Instagram, Youtube, Mail } from 'lucide-react';
 import { useSettingsStore } from '@/lib/store';
+import { newsletterAPI, handleAPIError } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 export default function Footer() {
     const currentYear = new Date().getFullYear();
     const { settings, hasHydrated } = useSettingsStore();
+    const [email, setEmail] = useState('');
+    const [subscribing, setSubscribing] = useState(false);
+
+    const handleSubscribe = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!email) return;
+
+        setSubscribing(true);
+        try {
+            const response = await newsletterAPI.subscribe(email);
+            toast.success(response.data.message || '¡Gracias por suscribirte!');
+            setEmail('');
+        } catch (error) {
+            const message = handleAPIError(error);
+            toast.error(message);
+        } finally {
+            setSubscribing(false);
+        }
+    };
 
     const footerLinks = {
         company: [
@@ -147,14 +169,26 @@ export default function Footer() {
                         <p className="text-dark-400 text-sm mb-4">
                             Recibe notificaciones sobre próximos eventos y ofertas especiales.
                         </p>
-                        <form className="flex gap-2">
+                        <form onSubmit={handleSubscribe} className="flex gap-2">
                             <input
                                 type="email"
                                 placeholder="tu@email.com"
+                                required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                                 className="input flex-1"
+                                disabled={subscribing}
                             />
-                            <button type="submit" className="btn-primary">
-                                <Mail className="w-5 h-5" />
+                            <button
+                                type="submit"
+                                className="btn-primary"
+                                disabled={subscribing}
+                            >
+                                {subscribing ? (
+                                    <div className="spinner w-5 h-5" />
+                                ) : (
+                                    <Mail className="w-5 h-5" />
+                                )}
                             </button>
                         </form>
                     </div>

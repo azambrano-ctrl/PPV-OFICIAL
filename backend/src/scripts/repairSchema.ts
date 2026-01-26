@@ -44,6 +44,13 @@ export const repairSchema = async () => {
             -- Chat moderation
             ALTER TABLE chat_messages 
             ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT false;
+
+            -- Newsletter subscribers
+            CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                email TEXT UNIQUE NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
         `;
 
         await query(sql);

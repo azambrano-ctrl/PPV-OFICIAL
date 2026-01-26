@@ -193,6 +193,11 @@ export const adminAPI = {
         api.get('/admin/purchases/recent', { params: { limit } }),
 };
 
+export const newsletterAPI = {
+    subscribe: (email: string) =>
+        api.post('/newsletter/subscribe', { email }),
+};
+
 // Error handler helper
 export const handleAPIError = (error: any): string => {
     if (axios.isAxiosError(error)) {
