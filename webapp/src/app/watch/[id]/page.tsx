@@ -206,7 +206,7 @@ export default function WatchPage() {
                     </div>
 
                     {!showChat && (
-                        <div className="absolute bottom-6 right-6 z-20 hidden md:block">
+                        <div className="absolute bottom-24 right-6 z-20">
                             <button
                                 onClick={() => setShowChat(true)}
                                 className="bg-dark-900/90 hover:bg-dark-800 text-white px-4 py-3 rounded-full shadow-lg border border-white/10 flex items-center gap-2 transition-all transform hover:scale-105"
