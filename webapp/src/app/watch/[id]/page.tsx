@@ -191,10 +191,10 @@ export default function WatchPage() {
             </header>
 
             {/* Main Content Area */}
-            <div className="flex-1 flex overflow-hidden relative">
+            <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
                 {/* Video Area */}
-                <div className={`flex-1 relative flex flex-col transition-all duration-300 ${showChat ? 'mr-0 md:mr-0' : 'mr-0'}`}>
-                    <div className="flex-1 bg-black relative flex items-center justify-center">
+                <div className="flex-1 relative flex flex-col bg-black overflow-hidden">
+                    <div className="relative aspect-video md:flex-1 w-full bg-black flex items-center justify-center">
                         <VideoPlayer
                             streamUrl={streamData.streamUrl}
                             token={streamData.token}
@@ -221,10 +221,10 @@ export default function WatchPage() {
                 {/* Chat / Sidebar Area */}
                 <div
                     className={`
-                        fixed inset-y-0 right-0 w-80 bg-dark-950 border-l border-white/10 transform transition-transform duration-300 z-30
-                        md:relative md:translate-x-0 md:w-96
-                        ${showChat ? 'translate-x-0' : 'translate-x-full md:hidden'}
-                        top-16 md:top-0
+                        w-full md:w-96 bg-dark-950 border-t md:border-t-0 md:border-l border-white/10 
+                        transition-all duration-300 z-30
+                        ${showChat ? 'h-[40vh] md:h-full block' : 'h-0 md:hidden invisible'}
+                        md:relative
                     `}
                 >
                     <div className="h-full flex flex-col">
