@@ -158,6 +158,9 @@ export const paymentsAPI = {
     capturePayPal: (orderId: string) =>
         api.post('/payments/paypal/capture', { orderId }),
 
+    checkSeasonPass: () =>
+        api.get('/payments/check-season-pass'),
+
     refund: (purchaseId: string) =>
         api.post(`/payments/refund/${purchaseId}`),
 };

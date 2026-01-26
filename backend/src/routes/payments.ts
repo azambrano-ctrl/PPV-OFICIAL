@@ -187,6 +187,32 @@ router.post(
 );
 
 /**
+ * GET /api/payments/check-season-pass
+ * Check if user has an active season pass
+ */
+router.get(
+    '/check-season-pass',
+    authenticate,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { query } = require('../config/database');
+        const result = await query(
+            `SELECT * FROM purchases 
+             WHERE user_id = $1 AND purchase_type = 'season_pass' AND payment_status = 'completed'
+             LIMIT 1`,
+            [req.user!.userId]
+        );
+
+        res.json({
+            success: true,
+            data: {
+                hasSeasonPass: result.rows.length > 0,
+                purchase: result.rows[0] || null
+            }
+        });
+    })
+);
+
+/**
  * POST /api/payments/paypal/capture
  * Capture PayPal order
  */

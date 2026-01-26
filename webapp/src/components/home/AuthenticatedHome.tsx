@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Calendar, Clock, DollarSign, Play, ArrowRight, Zap, Shield, Users, Star, TrendingUp, LogOut, Settings, User } from 'lucide-react';
 import { formatDate, formatCurrency, getEventStatusColor, getEventStatusText, getImageUrl } from '@/lib/utils';
 import { useSettingsStore } from '@/lib/store';
+import { paymentsAPI } from '@/lib/api';
 import Footer from '@/components/Footer';
 import PaymentModal from '@/components/PaymentModal';
 
@@ -18,7 +19,23 @@ interface AuthenticatedHomeProps {
 export default function AuthenticatedHome({ user, featuredEvents, upcomingEvents, homepageBackground }: AuthenticatedHomeProps) {
     const { settings } = useSettingsStore();
     const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [hasSeasonPass, setHasSeasonPass] = useState(false);
+    const [checkingPass, setCheckingPass] = useState(true);
     const nextEvent = featuredEvents[0];
+
+    useEffect(() => {
+        const checkPass = async () => {
+            try {
+                const { data } = await paymentsAPI.checkSeasonPass();
+                setHasSeasonPass(data.data.hasSeasonPass);
+            } catch (error) {
+                console.error('Error checking season pass:', error);
+            } finally {
+                setCheckingPass(false);
+            }
+        };
+        checkPass();
+    }, []);
 
     const handleBuySeasonPass = () => {
         setShowPaymentModal(true);
@@ -158,7 +175,7 @@ export default function AuthenticatedHome({ user, featuredEvents, upcomingEvents
                             </div>
 
                             {/* Promo/Upsell */}
-                            {settings?.season_pass_enabled && (
+                            {settings?.season_pass_enabled && !hasSeasonPass && !checkingPass && (
                                 <div className="bg-gradient-to-br from-primary-900/50 to-dark-800/80 backdrop-blur-sm rounded-2xl p-6 border border-primary-500/20">
                                     <h4 className="font-bold text-lg mb-2 text-white">{settings.season_pass_title || 'Pase de Temporada'}</h4>
                                     <p className="text-sm text-gray-400 mb-4">

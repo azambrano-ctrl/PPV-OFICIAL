@@ -7,9 +7,12 @@ import { Elements, CardElement, useStripe, useElements } from '@stripe/react-str
 import { paymentsAPI, handleAPIError } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import { useSettingsStore } from '@/lib/store';
 
-const STRIPE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-const stripePromise = STRIPE_KEY ? loadStripe(STRIPE_KEY) : null;
+const getStripePromise = (settings: any) => {
+    const key = settings?.stripe_public_key || process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+    return key ? loadStripe(key) : null;
+};
 
 interface PaymentModalProps {
     event?: {
@@ -23,11 +26,14 @@ interface PaymentModalProps {
 }
 
 function CheckoutForm({ event, purchaseType = 'event', onClose }: PaymentModalProps) {
+    const { settings } = useSettingsStore();
     const stripe = useStripe();
     const elements = useElements();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'paypal'>('stripe');
+    const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'paypal'>(
+        settings?.stripe_enabled ? 'stripe' : 'paypal'
+    );
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -133,32 +139,43 @@ function CheckoutForm({ event, purchaseType = 'event', onClose }: PaymentModalPr
                 <label className="block text-sm font-medium text-dark-300 mb-3">
                     Método de Pago
                 </label>
-                <div className="grid grid-cols-2 gap-3">
-                    <button
-                        type="button"
-                        onClick={() => setPaymentMethod('stripe')}
-                        className={`p-4 rounded-lg border-2 transition-all ${paymentMethod === 'stripe'
-                            ? 'border-primary-500 bg-primary-500/10'
-                            : 'border-dark-700 hover:border-dark-600'
-                            }`}
-                    >
-                        <CreditCard className="w-6 h-6 mx-auto mb-2" />
-                        <span className="text-sm font-medium">Tarjeta</span>
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setPaymentMethod('paypal')}
-                        className={`p-4 rounded-lg border-2 transition-all ${paymentMethod === 'paypal'
-                            ? 'border-primary-500 bg-primary-500/10'
-                            : 'border-dark-700 hover:border-dark-600'
-                            } ${!stripePromise ? 'col-span-1' : ''}`}
-                    >
-                        <svg className="w-6 h-6 mx-auto mb-2" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 4.47a.77.77 0 0 1 .758-.631h6.3c2.325 0 4.122.58 5.338 1.724 1.087 1.023 1.629 2.496 1.629 4.415 0 3.306-1.686 5.64-5.078 7.027l-.199.066c-1.444.48-2.812.72-4.078.72H7.076z" />
-                        </svg>
-                        <span className="text-sm font-medium">PayPal</span>
-                    </button>
+                <div className={`grid gap-3 ${settings?.stripe_enabled && settings?.paypal_enabled ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                    {settings?.stripe_enabled && (
+                        <button
+                            type="button"
+                            onClick={() => setPaymentMethod('stripe')}
+                            className={`p-4 rounded-lg border-2 transition-all ${paymentMethod === 'stripe'
+                                ? 'border-primary-500 bg-primary-500/10'
+                                : 'border-dark-700 hover:border-dark-600'
+                                }`}
+                        >
+                            <CreditCard className="w-6 h-6 mx-auto mb-2" />
+                            <span className="text-sm font-medium">Tarjeta</span>
+                        </button>
+                    )}
+                    {settings?.paypal_enabled && (
+                        <button
+                            type="button"
+                            onClick={() => setPaymentMethod('paypal')}
+                            className={`p-4 rounded-lg border-2 transition-all ${paymentMethod === 'paypal'
+                                ? 'border-primary-500 bg-primary-500/10'
+                                : 'border-dark-700 hover:border-dark-600'
+                                }`}
+                        >
+                            <svg className="w-6 h-6 mx-auto mb-2" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 4.47a.77.77 0 0 1 .758-.631h6.3c2.325 0 4.122.58 5.338 1.724 1.087 1.023 1.629 2.496 1.629 4.415 0 3.306-1.686 5.64-5.078 7.027l-.199.066c-1.444.48-2.812.72-4.078.72H7.076z" />
+                            </svg>
+                            <span className="text-sm font-medium">PayPal</span>
+                        </button>
+                    )}
                 </div>
+                {!settings?.stripe_enabled && !settings?.paypal_enabled && (
+                    <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mt-2">
+                        <p className="text-sm text-red-500">
+                            No hay métodos de pago habilitados. Por favor contacta con soporte.
+                        </p>
+                    </div>
+                )}
             </div>
 
             {/* Stripe Card Element */}
@@ -230,6 +247,9 @@ function CheckoutForm({ event, purchaseType = 'event', onClose }: PaymentModalPr
 }
 
 export default function PaymentModal({ event, purchaseType = 'event', onClose }: PaymentModalProps) {
+    const { settings } = useSettingsStore();
+    const stripePromise = getStripePromise(settings);
+
     return (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
             <div className="card max-w-lg w-full p-8 relative">
@@ -250,9 +270,13 @@ export default function PaymentModal({ event, purchaseType = 'event', onClose }:
                 </div>
 
                 {/* Stripe Elements Provider */}
-                <Elements stripe={stripePromise}>
+                {stripePromise ? (
+                    <Elements stripe={stripePromise}>
+                        <CheckoutForm event={event} purchaseType={purchaseType} onClose={onClose} />
+                    </Elements>
+                ) : (
                     <CheckoutForm event={event} purchaseType={purchaseType} onClose={onClose} />
-                </Elements>
+                )}
             </div>
         </div>
     );
