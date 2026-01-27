@@ -25,6 +25,9 @@ export const metadata: Metadata = {
     },
 };
 
+// Client Component wrapper for Dynamic Favicon
+import Favicon from '@/components/ui/Favicon';
+
 import Navbar from '@/components/ui/Navbar';
 import SettingsProvider from '@/components/providers/SettingsProvider';
 import Script from 'next/script';
@@ -36,6 +39,9 @@ export default function RootLayout({
 }) {
     return (
         <html lang="es" className={`${inter.variable} ${outfit.variable}`}>
+            <head>
+                <Favicon />
+            </head>
             <body className="font-sans">
                 <Script
                     src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"

@@ -106,6 +106,12 @@ router.put(
                     updates.site_logo = files.site_logo[0].path;
                 }
 
+                // Site Favicon
+                if (files.site_favicon && files.site_favicon[0]) {
+                    console.log('🖼️ Updating site_favicon:', files.site_favicon[0].path);
+                    updates.site_favicon = files.site_favicon[0].path;
+                }
+
                 // About Slider Gallery - Append new uploads
                 if (files.about_gallery && files.about_gallery.length > 0) {
                     const newImages = files.about_gallery.map(f => f.path);

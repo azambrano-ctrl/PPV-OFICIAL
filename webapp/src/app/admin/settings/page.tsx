@@ -18,7 +18,8 @@ export default function AdminSettingsPage() {
         homepage_background: null as File | null,
         about_background: null as File | null,
         about_gallery: [] as File[],
-        site_logo: null as File | null
+        site_logo: null as File | null,
+        site_favicon: null as File | null
     });
 
     const [form, setForm] = useState({
@@ -31,6 +32,7 @@ export default function AdminSettingsPage() {
         site_logo_width: 40,
         site_logo_offset_x: 0,
         site_logo_offset_y: 0,
+        site_favicon: '',
         social_links: { facebook: '', instagram: '', twitter: '' } as any,
 
         // About
@@ -80,6 +82,7 @@ export default function AdminSettingsPage() {
                 site_logo_width: d.site_logo_width || 40,
                 site_logo_offset_x: d.site_logo_offset_x || 0,
                 site_logo_offset_y: d.site_logo_offset_y || 0,
+                site_favicon: d.site_favicon || '',
                 social_links: typeof d.social_links === 'string' ? JSON.parse(d.social_links) : (d.social_links || { facebook: '', instagram: '', twitter: '' }),
 
                 about_hero_title: d.about_hero_title || '',
@@ -144,6 +147,12 @@ export default function AdminSettingsPage() {
                 formData.append('site_logo', form.site_logo);
             }
 
+            if (fileState.site_favicon) {
+                formData.append('site_favicon', fileState.site_favicon);
+            } else if (form.site_favicon) {
+                formData.append('site_favicon', form.site_favicon);
+            }
+
             // General
             formData.append('site_name', form.site_name);
             formData.append('site_description', form.site_description);
@@ -181,7 +190,7 @@ export default function AdminSettingsPage() {
             await settingsAPI.update(formData);
             setMessage({ type: 'success', text: 'Configuración guardada correctamente' });
 
-            setFileState({ homepage_background: null, about_background: null, about_gallery: [], site_logo: null });
+            setFileState({ homepage_background: null, about_background: null, about_gallery: [], site_logo: null, site_favicon: null });
             await loadSettings();
         } catch (error) {
             console.error('Error saving settings:', error);
@@ -376,6 +385,20 @@ export default function AdminSettingsPage() {
                                     <span>300px</span>
                                 </div>
                             </div>
+
+                            <ImageUpload
+                                label="Favicon (Icono de Pestaña)"
+                                value={form.site_favicon}
+                                maxSize={5}
+                                aspect={1}
+                                onChange={(file, previewUrl) => {
+                                    if (file) {
+                                        setFileState(prev => ({ ...prev, site_favicon: file }));
+                                    }
+                                    setForm({ ...form, site_favicon: previewUrl || '' });
+                                }}
+                            />
+                            <p className="text-xs text-dark-500">- Recomendado: Cuadrado, min 32x32px .png o .ico</p>
 
                             <div className="grid grid-cols-2 gap-4 pt-2">
                                 <div className="space-y-4">

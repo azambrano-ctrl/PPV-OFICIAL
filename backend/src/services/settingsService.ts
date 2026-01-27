@@ -22,6 +22,7 @@ export interface Settings {
     site_logo_width: number;
     site_logo_offset_x: number;
     site_logo_offset_y: number;
+    site_favicon: string | null;
 
     // Payments
     stripe_enabled: boolean;
@@ -63,6 +64,7 @@ export interface UpdateSettingsDTO {
     site_logo_width?: number;
     site_logo_offset_x?: number;
     site_logo_offset_y?: number;
+    site_favicon?: string | null;
 
     // Payments
     stripe_enabled?: boolean;
@@ -129,6 +131,7 @@ export const updateSettings = async (updates: UpdateSettingsDTO): Promise<Settin
         'site_logo_width',
         'site_logo_offset_x',
         'site_logo_offset_y',
+        'site_favicon',
         'season_pass_enabled',
         'season_pass_title',
         'season_pass_description',

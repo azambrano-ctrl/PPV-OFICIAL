@@ -129,5 +129,6 @@ export const uploadSettingsImages = handleUploads([
     { name: 'homepage_background', maxCount: 1 },
     { name: 'about_background', maxCount: 1 },
     { name: 'about_gallery', maxCount: 10 },
-    { name: 'site_logo', maxCount: 1 }
+    { name: 'site_logo', maxCount: 1 },
+    { name: 'site_favicon', maxCount: 1 }
 ]);
