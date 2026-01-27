@@ -82,16 +82,23 @@ router.get(
 
 /**
  * POST /api/events
- * Create new event (admin only)
+ * Create new event (admin or promoter)
  */
 router.post(
     '/',
     authenticate,
-    requireAdmin,
     uploadEventImages,
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        // Parse form data
+        const user = req.user!;
         const files = (req as any).files;
+
+        // Security check: Only admin or approved promoter
+        if (user.role !== 'admin' && user.role !== 'promoter') {
+            res.status(403).json({ success: false, message: 'No tienes permisos para crear eventos' });
+            return;
+        }
+
+        const isPromoter = user.role === 'promoter';
 
         const eventData = {
             title: req.body.title,
@@ -99,13 +106,13 @@ router.post(
             event_date: new Date(req.body.event_date),
             price: parseFloat(req.body.price),
             currency: req.body.currency || 'USD',
-            status: req.body.status || 'upcoming',
-            is_featured: req.body.is_featured === 'true',
-            stream_url: req.body.stream_url || null,
+            status: isPromoter ? 'upcoming' : (req.body.status || 'upcoming'),
+            is_featured: isPromoter ? false : (req.body.is_featured === 'true'),
+            stream_url: isPromoter ? null : (req.body.stream_url || null),
             thumbnail_url: files?.thumbnail ? files.thumbnail[0].path : undefined,
             banner_url: files?.banner ? files.banner[0].path : undefined,
-            promoter_id: req.body.promoter_id || null,
-            created_by: req.user!.userId,
+            promoter_id: isPromoter ? user.promoterId : (req.body.promoter_id || null),
+            created_by: user.userId,
         };
 
         const event = await createEvent(eventData);
@@ -120,12 +127,11 @@ router.post(
 
 /**
  * PUT /api/events/:id
- * Update event (admin only)
+ * Update event (admin or the owning promoter)
  */
 router.put(
     '/:id',
     authenticate,
-    requireAdmin,
     validateParams(eventIdSchema),
     validateParams(eventIdSchema),
     (req: Request, res: Response, next: import('express').NextFunction) => {
@@ -147,34 +153,44 @@ router.put(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             console.log(`[DEBUG] Received update for event ${req.params.id}`);
-            console.log('[DEBUG] Request body:', req.body);
-            // console.log('[DEBUG] Files:', req.files); // Careful with binary data
+            const user = req.user!;
+            const eventId = req.params.id;
+
+            // Fetch current event to check ownership
+            const currentEvent = await getEventById(eventId);
+            if (!currentEvent) {
+                res.status(404).json({ success: false, message: 'Evento no encontrado' });
+                return;
+            }
+
+            const isAdmin = user.role === 'admin';
+            const isOwner = user.role === 'promoter' && currentEvent.promoter_id === user.promoterId;
+
+            if (!isAdmin && !isOwner) {
+                res.status(403).json({ success: false, message: 'No tienes permisos para editar este evento' });
+                return;
+            }
 
             const files = (req as any).files;
             const updates: any = {};
 
-            // Only update fields that are provided
+            // Basic fields allowed for both
             if (req.body.title) updates.title = req.body.title;
             if (req.body.description !== undefined) updates.description = req.body.description;
-            if (req.body.status) updates.status = req.body.status;
-            if (req.body.is_featured !== undefined) updates.is_featured = req.body.is_featured === 'true';
 
-            // Handle optional fields
+            // Handle date
             if (req.body.event_date) {
                 const date = new Date(req.body.event_date);
                 if (!isNaN(date.getTime())) {
                     updates.event_date = date;
-                } else {
-                    console.error('[ERROR] Invalid event_date:', req.body.event_date);
                 }
             }
 
+            // Handle price
             if (req.body.price !== undefined && req.body.price !== '') {
                 const price = parseFloat(req.body.price);
                 if (!isNaN(price)) {
                     updates.price = price;
-                } else {
-                    console.error('[ERROR] Invalid price:', req.body.price);
                 }
             }
 
@@ -182,44 +198,46 @@ router.put(
                 updates.currency = req.body.currency;
             }
 
-            if (req.body.stream_url !== undefined) {
-                updates.stream_url = req.body.stream_url === '' ? null : req.body.stream_url;
+            // Admin-only fields
+            if (isAdmin) {
+                if (req.body.status) updates.status = req.body.status;
+                if (req.body.is_featured !== undefined) updates.is_featured = req.body.is_featured === 'true';
+                if (req.body.stream_url !== undefined) {
+                    updates.stream_url = req.body.stream_url === '' ? null : req.body.stream_url;
+                }
+                if (req.body.promoter_id !== undefined) {
+                    updates.promoter_id = req.body.promoter_id || null;
+                }
             }
 
-            // Handle thumbnail
+            // Handle files
             if (files?.thumbnail) {
                 updates.thumbnail_url = files.thumbnail[0].path;
             } else if (req.body.remove_thumbnail === 'true') {
                 updates.thumbnail_url = null;
             }
 
-            // Handle banner
             if (files?.banner) {
                 updates.banner_url = files.banner[0].path;
             } else if (req.body.remove_banner === 'true') {
                 updates.banner_url = null;
             }
 
-            if (req.body.promoter_id !== undefined) {
-                updates.promoter_id = req.body.promoter_id || null;
-            }
-
             console.log('[DEBUG] Updates object:', updates);
 
-            const event = await updateEvent(req.params.id, updates);
+            const event = await updateEvent(eventId, updates);
             console.log('[DEBUG] Event updated successfully');
 
             res.json({
                 success: true,
-                message: 'Event updated successfully',
+                message: 'Evento actualizado exitosamente',
                 data: event,
             });
         } catch (error) {
             console.error('[ERROR] Failed to update event:', error);
-            // Re-throw to async handler or send error response directly
             res.status(500).json({
                 success: false,
-                message: 'Failed to update event',
+                message: 'Error al actualizar el evento',
                 error: error instanceof Error ? error.message : 'Unknown error'
             });
         }
