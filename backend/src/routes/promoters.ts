@@ -4,7 +4,7 @@ import { findUserByEmail } from '../services/userService';
 import { z } from 'zod';
 import { asyncHandler } from '../middleware/errorHandler';
 import { validateBody } from '../middleware/validation';
-import { authenticate, AuthRequest, requireAdmin } from '../middleware/auth';
+import { authenticate, AuthRequest, requireAdmin, optionalAuthenticate } from '../middleware/auth';
 import * as promoterService from '../services/promoterService';
 import { uploadPromoterImages, handleUploads } from '../middleware/upload';
 import * as emailService from '../services/emailService';
@@ -33,6 +33,7 @@ const registerPromoterSchema = z.object({
  */
 router.get(
     '/',
+    optionalAuthenticate,
     asyncHandler(async (req: Request, res: Response) => {
         const promoters = await promoterService.getAllPromoters();
 

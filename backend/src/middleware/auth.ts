@@ -91,6 +91,31 @@ export const authenticate = (
 };
 
 /**
+ * Middleware to optionally authenticate requests
+ * Adds user to req if token is valid, but doesn't fail if missing
+ */
+export const optionalAuthenticate = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): void => {
+    try {
+        const authHeader = req.headers.authorization;
+
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.substring(7);
+            const decoded = verifyAccessToken(token);
+            (req as any).user = decoded;
+        }
+
+        next();
+    } catch (error) {
+        // Just proceed without user if token is invalid
+        next();
+    }
+};
+
+/**
  * Middleware to check if user is admin
  */
 export const requireAdmin = (
