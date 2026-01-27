@@ -223,6 +223,7 @@ export default function PromoterDashboard() {
                                             aspect={1}
                                             onChange={(file) => setLogoFile(file)}
                                             value={logoPreview || undefined}
+                                            compact={true}
                                         />
                                         <div className="absolute -bottom-2 -right-2 bg-primary-600 text-white p-2.5 rounded-xl shadow-xl border-4 border-dark-950 group-hover:scale-110 transition-transform">
                                             <ImageIcon className="w-4 h-4" />

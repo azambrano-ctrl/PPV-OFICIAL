@@ -28,10 +28,24 @@ export default function ImageUpload({
     accept = 'image/*',
     maxSize = 50,
     aspect = 16 / 9,
-}: ImageUploadProps) {
+    compact = false,
+}: ImageUploadProps & { compact?: boolean }) {
     const [preview, setPreview] = useState<string | null>(value || null);
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // ... (rest of the state)
+
+    // ... (existing helper functions)
+
+    // ... handleFile, saveCrop, etc.
+
+    // ... render logic
+
+    // In the return TSX, update the dropzone container:
+    // This is getting complicated to patch with just a chunk because the component is large and I need to touch multiple places (props, render).
+    // Let's just replace the component definition start and the render part.
+
 
     // Crop state
     const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -203,7 +217,7 @@ export default function ImageUpload({
                     <img
                         src={preview}
                         alt="Preview"
-                        className="w-full h-48 object-contain rounded-lg"
+                        className={`w-full ${compact ? 'h-full aspect-square' : 'h-48'} object-contain rounded-lg`}
                     />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
                         <button
@@ -221,26 +235,28 @@ export default function ImageUpload({
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onClick={() => fileInputRef.current?.click()}
-                    className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${isDragging
+                    className={`border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors flex flex-col items-center justify-center ${compact ? 'p-4 h-full aspect-square' : 'p-8'} ${isDragging
                         ? 'border-red-600 bg-red-600/10'
                         : 'border-dark-700 hover:border-dark-600 bg-dark-800/50'
                         }`}
                 >
                     <div className="flex flex-col items-center gap-3">
-                        <div className="w-12 h-12 bg-dark-700 rounded-full flex items-center justify-center">
+                        <div className={`rounded-full flex items-center justify-center ${compact ? 'w-8 h-8 bg-dark-700/50' : 'w-12 h-12 bg-dark-700'}`}>
                             {isDragging ? (
-                                <Upload className="w-6 h-6 text-red-500 animate-bounce" />
+                                <Upload className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-red-500 animate-bounce`} />
                             ) : (
-                                <ImageIcon className="w-6 h-6 text-gray-500" />
+                                <ImageIcon className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-gray-500`} />
                             )}
                         </div>
                         <div>
-                            <p className="text-white font-medium mb-1">
-                                {isDragging ? 'Suelta la imagen aquí' : 'Arrastra una imagen o haz clic'}
+                            <p className={`text-white font-medium ${compact ? 'text-xs' : 'mb-1'}`}>
+                                {compact ? (isDragging ? 'Soltar' : 'Subir Imagen') : (isDragging ? 'Suelta la imagen aquí' : 'Arrastra una imagen o haz clic')}
                             </p>
-                            <p className="text-sm text-gray-500">
-                                Recorta y ajusta tu imagen antes de subirla
-                            </p>
+                            {!compact && (
+                                <p className="text-sm text-gray-500">
+                                    Recorta y ajusta tu imagen antes de subirla
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
