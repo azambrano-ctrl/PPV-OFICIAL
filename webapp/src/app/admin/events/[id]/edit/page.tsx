@@ -5,9 +5,14 @@ import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import ImageUpload from '@/components/admin/ImageUpload';
-import { eventsAPI, handleAPIError } from '@/lib/api';
+import { eventsAPI, promotersAPI, handleAPIError } from '@/lib/api';
 import { getImageUrl } from '@/lib/utils';
 import toast from 'react-hot-toast';
+
+interface Promoter {
+    id: string;
+    name: string;
+}
 
 export default function EditEventPage() {
     const router = useRouter();
@@ -28,7 +33,9 @@ export default function EditEventPage() {
         stream_url: '',
         thumbnail_url: '',
         banner_url: '',
+        promoter_id: '',
     });
+    const [promoters, setPromoters] = useState<Promoter[]>([]);
     const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
     const [bannerFile, setBannerFile] = useState<File | null>(null);
     const [removeThumbnail, setRemoveThumbnail] = useState(false);
@@ -37,8 +44,18 @@ export default function EditEventPage() {
     useEffect(() => {
         if (eventId) {
             loadEvent();
+            loadPromoters();
         }
     }, [eventId]);
+
+    const loadPromoters = async () => {
+        try {
+            const res = await promotersAPI.getAll();
+            setPromoters(res.data.data);
+        } catch (error) {
+            console.error('Error loading promoters:', error);
+        }
+    };
 
     const loadEvent = async () => {
         try {
@@ -64,6 +81,7 @@ export default function EditEventPage() {
                 stream_url: event.stream_url || '',
                 thumbnail_url: event.thumbnail_url || '',
                 banner_url: event.banner_url || '',
+                promoter_id: event.promoter_id || '',
             });
         } catch (error) {
             const message = handleAPIError(error);
@@ -89,6 +107,9 @@ export default function EditEventPage() {
             data.append('is_featured', String(formData.is_featured));
             if (formData.stream_url) {
                 data.append('stream_url', formData.stream_url);
+            }
+            if (formData.promoter_id) {
+                data.append('promoter_id', formData.promoter_id);
             }
 
             // Handle thumbnail
@@ -322,6 +343,25 @@ export default function EditEventPage() {
                             <option value="cancelled">Cancelado</option>
                             <option value="reprise">Reprise</option>
                         </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Promotora / Organización
+                        </label>
+                        <select
+                            value={formData.promoter_id}
+                            onChange={(e) => setFormData({ ...formData, promoter_id: e.target.value })}
+                            className="input"
+                        >
+                            <option value="">Ninguna / Sin asignar</option>
+                            {promoters.map(p => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
+                        </select>
+                        <p className="text-xs text-gray-400 mt-1">
+                            Vincula este evento a una promotora específica.
+                        </p>
                     </div>
 
                     <div>

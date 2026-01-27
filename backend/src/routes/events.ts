@@ -31,6 +31,7 @@ const eventQuerySchema = z.object({
     status: z.enum(['upcoming', 'live', 'finished', 'cancelled', 'reprise']).optional(),
     featured: z.string().transform(val => val === 'true').optional(),
     upcoming: z.string().transform(val => val === 'true').optional(),
+    promoter_id: z.string().uuid().optional(),
 });
 
 /**
@@ -103,6 +104,7 @@ router.post(
             stream_url: req.body.stream_url || null,
             thumbnail_url: files?.thumbnail ? files.thumbnail[0].path : undefined,
             banner_url: files?.banner ? files.banner[0].path : undefined,
+            promoter_id: req.body.promoter_id || null,
             created_by: req.user!.userId,
         };
 
@@ -196,6 +198,10 @@ router.put(
                 updates.banner_url = files.banner[0].path;
             } else if (req.body.remove_banner === 'true') {
                 updates.banner_url = null;
+            }
+
+            if (req.body.promoter_id !== undefined) {
+                updates.promoter_id = req.body.promoter_id || null;
             }
 
             console.log('[DEBUG] Updates object:', updates);

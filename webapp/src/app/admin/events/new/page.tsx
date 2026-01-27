@@ -5,8 +5,13 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import ImageUpload from '@/components/admin/ImageUpload';
-import { eventsAPI, handleAPIError } from '@/lib/api';
+import { eventsAPI, promotersAPI, handleAPIError } from '@/lib/api';
 import toast from 'react-hot-toast';
+
+interface Promoter {
+    id: string;
+    name: string;
+}
 
 export default function NewEventPage() {
     const router = useRouter();
@@ -21,9 +26,15 @@ export default function NewEventPage() {
         is_featured: false,
         is_free: false,
         stream_url: '',
+        promoter_id: '',
     });
     const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
     const [bannerFile, setBannerFile] = useState<File | null>(null);
+    const [promoters, setPromoters] = useState<Promoter[]>([]);
+
+    useState(() => {
+        promotersAPI.getAll().then(res => setPromoters(res.data.data)).catch(console.error);
+    });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -41,6 +52,9 @@ export default function NewEventPage() {
             data.append('is_featured', String(formData.is_featured));
             if (formData.stream_url) {
                 data.append('stream_url', formData.stream_url);
+            }
+            if (formData.promoter_id) {
+                data.append('promoter_id', formData.promoter_id);
             }
 
             if (thumbnailFile) {
@@ -215,6 +229,25 @@ export default function NewEventPage() {
                             <option value="cancelled">Cancelado</option>
                             <option value="reprise">Reprise</option>
                         </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Promotora / Organización
+                        </label>
+                        <select
+                            value={formData.promoter_id}
+                            onChange={(e) => setFormData({ ...formData, promoter_id: e.target.value })}
+                            className="input"
+                        >
+                            <option value="">Ninguna / Sin asignar</option>
+                            {promoters.map(p => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
+                        </select>
+                        <p className="text-xs text-gray-400 mt-1">
+                            Vincula este evento a una promotora específica.
+                        </p>
                     </div>
 
                     <div>

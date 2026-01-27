@@ -9,7 +9,8 @@ export interface User {
     password_hash: string;
     full_name: string;
     phone?: string;
-    role: 'user' | 'admin';
+    role: 'user' | 'admin' | 'promoter';
+    promoter_id?: string;
     is_verified: boolean;
     created_at: Date;
     updated_at: Date;
@@ -107,6 +108,7 @@ export const loginUser = async (
         userId: user.id,
         email: user.email,
         role: user.role,
+        promoterId: user.promoter_id,
     };
 
     const accessToken = generateAccessToken(payload);

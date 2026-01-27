@@ -135,3 +135,10 @@ export const uploadSettingsImages = handleUploads([
     { name: 'site_logo', maxCount: 1 },
     { name: 'site_favicon', maxCount: 1 }
 ]);
+
+// Promoter image fields definition
+export const uploadPromoterImages = [
+    { name: 'logo', maxCount: 1 },
+    { name: 'banner', maxCount: 1 },
+    { name: 'gallery', maxCount: 10 }
+];

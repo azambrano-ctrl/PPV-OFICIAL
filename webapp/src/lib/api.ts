@@ -99,7 +99,7 @@ export const authAPI = {
     getAllUsers: () =>
         api.get('/auth/users'),
 
-    updateUserRole: (userId: string, role: 'user' | 'admin') =>
+    updateUserRole: (userId: string, role: 'user' | 'admin' | 'promoter') =>
         api.put(`/auth/users/${userId}/role`, { role }),
 
     forgotPassword: (email: string) =>
@@ -110,7 +110,7 @@ export const authAPI = {
 };
 
 export const eventsAPI = {
-    getAll: (params?: { status?: string; featured?: boolean; upcoming?: boolean }) =>
+    getAll: (params?: { status?: string; featured?: boolean; upcoming?: boolean; promoter_id?: string }) =>
         api.get('/events', { params }),
 
     getById: (id: string) =>
@@ -198,6 +198,35 @@ export const adminAPI = {
 export const newsletterAPI = {
     subscribe: (email: string) =>
         api.post('/newsletter/subscribe', { email }),
+};
+
+export const promotersAPI = {
+    getAll: () =>
+        api.get('/promoters'),
+
+    getById: (id: string) =>
+        api.get(`/promoters/${id}`),
+
+    create: (data: any) => {
+        const config = data instanceof FormData ? {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        } : {};
+        return api.post('/promoters', data, config);
+    },
+
+    update: (id: string, data: any) => {
+        const config = data instanceof FormData ? {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        } : {};
+        return api.put(`/promoters/${id}`, data, config);
+    },
+
+    delete: (id: string) =>
+        api.delete(`/promoters/${id}`),
 };
 
 // Error handler helper

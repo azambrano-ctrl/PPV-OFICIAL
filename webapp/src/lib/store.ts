@@ -6,7 +6,8 @@ interface User {
     email: string;
     full_name: string;
     phone?: string;
-    role: 'user' | 'admin';
+    role: 'user' | 'admin' | 'promoter';
+    promoter_id?: string;
     is_verified: boolean;
 }
 
@@ -16,6 +17,7 @@ interface AuthState {
     refreshToken: string | null;
     isAuthenticated: boolean;
     isAdmin: boolean;
+    isPromoter: boolean;
 
     setAuth: (user: User, accessToken: string, refreshToken: string) => void;
     setUser: (user: User) => void;
@@ -30,6 +32,7 @@ export const useAuthStore = create<AuthState>()(
             refreshToken: null,
             isAuthenticated: false,
             isAdmin: false,
+            isPromoter: false,
 
             setAuth: (user, accessToken, refreshToken) => {
                 // Save to localStorage for API interceptor
@@ -46,6 +49,7 @@ export const useAuthStore = create<AuthState>()(
                     refreshToken,
                     isAuthenticated: true,
                     isAdmin: user.role === 'admin',
+                    isPromoter: user.role === 'promoter',
                 });
             },
 
@@ -65,6 +69,7 @@ export const useAuthStore = create<AuthState>()(
                     refreshToken: null,
                     isAuthenticated: false,
                     isAdmin: false,
+                    isPromoter: false,
                 });
             },
         }),

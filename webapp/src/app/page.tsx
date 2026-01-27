@@ -10,6 +10,7 @@ import { settingsAPI } from '@/lib/api/settings';
 import { formatDate, formatCurrency, getEventStatusColor, getEventStatusText, getImageUrl } from '@/lib/utils';
 import { useAuthStore } from '@/lib/store';
 import Footer from '@/components/Footer';
+import EventCard from '@/components/events/EventCard';
 import toast from 'react-hot-toast';
 import AuthenticatedHome from '@/components/home/AuthenticatedHome';
 
@@ -24,6 +25,9 @@ interface Event {
     banner_url?: string;
     status: string;
     is_featured: boolean;
+    promoter_id?: string;
+    promoter_name?: string;
+    promoter_logo_url?: string;
 }
 
 export default function HomePage() {
@@ -249,69 +253,7 @@ export default function HomePage() {
                         {/* Events Grid */}
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {upcomingEvents.map((event) => (
-                                <Link
-                                    key={event.id}
-                                    href={`/event/${event.id}`}
-                                    className="group relative overflow-hidden bg-dark-950 border border-gray-900 hover:border-red-600/50 transition-all duration-300"
-                                >
-                                    {/* Image */}
-                                    <div className="relative h-64 bg-dark-900 overflow-hidden">
-                                        {event.thumbnail_url ? (
-                                            <img
-                                                src={getImageUrl(event.thumbnail_url)}
-                                                alt={event.title}
-                                                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-dark-900 to-red-950/20">
-                                                <Play className="w-16 h-16 text-gray-800" />
-                                            </div>
-                                        )}
-                                        {/* Overlay on Hover */}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-
-                                        {/* Status Badge */}
-                                        <div className="absolute top-4 left-4">
-                                            <span className={`badge ${getEventStatusColor(event.status)}`}>
-                                                {event.status === 'reprise' && parseFloat(String(event.price)) === 0 ? 'PASE LIBRE' : getEventStatusText(event.status)}
-                                            </span>
-                                        </div>
-
-                                        {/* Play Icon on Hover */}
-                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center transform group-hover:scale-110 transition-transform">
-                                                <Play className="w-8 h-8 text-white fill-white ml-1" />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Content */}
-                                    <div className="p-6">
-                                        <h3 className="font-display text-xl font-bold mb-3 text-white uppercase tracking-tight group-hover:text-red-500 transition-colors line-clamp-2">
-                                            {event.title}
-                                        </h3>
-
-                                        <div className="space-y-2 mb-4">
-                                            <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                <Calendar className="w-4 h-4" />
-                                                <span className="font-medium">{formatDate(event.event_date, 'PP')}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                <Clock className="w-4 h-4" />
-                                                <span className="font-medium">{formatDate(event.event_date, 'p')}</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center justify-between pt-4 border-t border-gray-900">
-                                            <span className="text-2xl font-black bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent uppercase tracking-tight">
-                                                {parseFloat(String(event.price)) === 0 ? 'PASE LIBRE' : formatCurrency(event.price, event.currency)}
-                                            </span>
-                                            <span className="text-red-500 group-hover:translate-x-2 transition-transform">
-                                                <ArrowRight className="w-5 h-5" />
-                                            </span>
-                                        </div>
-                                    </div>
-                                </Link>
+                                <EventCard key={event.id} event={event} />
                             ))}
                         </div>
 

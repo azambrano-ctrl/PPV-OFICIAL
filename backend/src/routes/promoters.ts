@@ -1,0 +1,150 @@
+import { Router, Response, Request } from 'express';
+import { z } from 'zod';
+import { asyncHandler } from '../middleware/errorHandler';
+import { validateBody } from '../middleware/validation';
+import { authenticate, AuthRequest, requireAdmin } from '../middleware/auth';
+import * as promoterService from '../services/promoterService';
+import { uploadPromoterImages, handleUploads } from '../middleware/upload';
+
+const router = Router();
+
+// Validation schemas
+const createPromoterSchema = z.object({
+    name: z.string().min(2, 'Name is required'),
+    description: z.string().optional(),
+    social_links: z.string().optional(), // Will be parsed from JSON
+});
+
+/**
+ * GET /api/promoters
+ * Get all promoters (Public)
+ */
+router.get(
+    '/',
+    asyncHandler(async (_req: Request, res: Response) => {
+        const promoters = await promoterService.getAllPromoters();
+        res.json({
+            success: true,
+            data: promoters,
+        });
+    })
+);
+
+/**
+ * GET /api/promoters/:id
+ * Get promoter by ID (Public)
+ */
+router.get(
+    '/:id',
+    asyncHandler(async (req: Request, res: Response) => {
+        const promoter = await promoterService.getPromoterById(req.params.id);
+        if (!promoter) {
+            res.status(404).json({ success: false, message: 'Promoter not found' });
+            return;
+        }
+        res.json({
+            success: true,
+            data: promoter,
+        });
+    })
+);
+
+/**
+ * POST /api/promoters
+ * Create a new promoter (Admin only)
+ */
+router.post(
+    '/',
+    authenticate,
+    requireAdmin,
+    handleUploads(uploadPromoterImages),
+    validateBody(createPromoterSchema),
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const body = req.body;
+        const files: any = req.files;
+
+        const logo_url = files?.logo ? files.logo[0].location : null;
+        const banner_url = files?.banner ? files.banner[0].location : null;
+
+        const promoter = await promoterService.createPromoter({
+            name: body.name,
+            description: body.description,
+            logo_url,
+            banner_url,
+            social_links: body.social_links ? JSON.parse(body.social_links) : {},
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'Promoter created successfully',
+            data: promoter,
+        });
+    })
+);
+
+/**
+ * PUT /api/promoters/:id
+ * Update promoter (Admin or specific Promoter user)
+ */
+router.put(
+    '/:id',
+    authenticate,
+    handleUploads(uploadPromoterImages),
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { id } = req.params;
+        const user = req.user!;
+
+        // Check permissions: Admin or the Promoter assigned to this profile
+        if (user.role !== 'admin' && (user.role !== 'promoter' || user.promoterId !== id)) {
+            res.status(403).json({ success: false, message: 'Access denied' });
+            return;
+        }
+
+        const body = req.body;
+        const files: any = req.files;
+
+        const updates: any = { ...body };
+
+        if (files?.logo) updates.logo_url = files.logo[0].location;
+        if (files?.banner) updates.banner_url = files.banner[0].location;
+        if (files?.gallery) {
+            const newImages = files.gallery.map((f: any) => f.location);
+            const currentPromoter = await promoterService.getPromoterById(id);
+            updates.gallery = [...(currentPromoter?.gallery || []), ...newImages];
+        }
+
+        if (body.social_links) updates.social_links = JSON.parse(body.social_links);
+        if (body.gallery_to_remove) {
+            const toRemove = JSON.parse(body.gallery_to_remove);
+            const currentPromoter = await promoterService.getPromoterById(id);
+            updates.gallery = (currentPromoter?.gallery || []).filter(img => !toRemove.includes(img));
+        }
+
+        const updatedPromoter = await promoterService.updatePromoter(id, updates);
+
+        res.json({
+            success: true,
+            message: 'Promoter updated successfully',
+            data: updatedPromoter,
+        });
+    })
+);
+
+/**
+ * DELETE /api/promoters/:id
+ * Delete promoter (Admin only)
+ */
+router.delete(
+    '/:id',
+    authenticate,
+    requireAdmin,
+    asyncHandler(async (req: Request, res: Response) => {
+        await promoterService.deletePromoter(req.params.id);
+        res.json({
+            success: true,
+            message: 'Promoter deleted successfully',
+        });
+    })
+);
+
+export default router;

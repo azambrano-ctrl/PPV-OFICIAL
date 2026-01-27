@@ -9,13 +9,15 @@ import {
     Settings,
     LogOut,
     BarChart3,
-    Film
+    Film,
+    Globe
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/store';
 
 const navigation = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { name: 'Eventos', href: '/admin/events', icon: Calendar },
+    { name: 'Promotoras', href: '/admin/promoters', icon: Globe },
     { name: 'Usuarios', href: '/admin/users', icon: Users },
     { name: 'Estadísticas', href: '/admin/stats', icon: BarChart3 },
     { name: 'Configuración', href: '/admin/settings', icon: Settings },
@@ -49,8 +51,8 @@ export default function AdminSidebar() {
                             key={item.name}
                             href={item.href}
                             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive
-                                    ? 'bg-red-600 text-white shadow-lg shadow-red-600/30'
-                                    : 'text-gray-400 hover:bg-dark-800 hover:text-white'
+                                ? 'bg-red-600 text-white shadow-lg shadow-red-600/30'
+                                : 'text-gray-400 hover:bg-dark-800 hover:text-white'
                                 }`}
                         >
                             <item.icon className="w-5 h-5" />

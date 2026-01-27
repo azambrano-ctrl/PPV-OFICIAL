@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Calendar, Clock, DollarSign, Search, Filter, Play, ArrowRight } from 'lucide-react';
+import { Calendar, Clock, Search, Filter } from 'lucide-react';
 import { eventsAPI } from '@/lib/api';
-import { formatDate, formatCurrency, getEventStatusColor, getEventStatusText, getImageUrl } from '@/lib/utils';
+import { getImageUrl } from '@/lib/utils';
 import Footer from '@/components/Footer';
+import EventCard from '@/components/events/EventCard';
 import toast from 'react-hot-toast';
 
 interface Event {
@@ -19,6 +20,9 @@ interface Event {
     thumbnail_url?: string;
     status: string;
     is_featured: boolean;
+    promoter_id?: string;
+    promoter_name?: string;
+    promoter_logo_url?: string;
 }
 
 export default function EventsPage() {
@@ -158,71 +162,7 @@ export default function EventsPage() {
                     ) : (
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {filteredEvents.map((event) => (
-                                <Link
-                                    key={event.id}
-                                    href={`/event/${event.id}`}
-                                    className="card-hover overflow-hidden group"
-                                >
-                                    {/* Image */}
-                                    <div className="relative h-48 bg-dark-800 overflow-hidden">
-                                        {event.thumbnail_url ? (
-                                            <img
-                                                src={getImageUrl(event.thumbnail_url)}
-                                                alt={event.title}
-                                                className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-300"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <Play className="w-16 h-16 text-dark-700" />
-                                            </div>
-                                        )}
-                                        <div className="absolute top-4 left-4">
-                                            <span className={`badge ${getEventStatusColor(event.status)}`}>
-                                                {event.status === 'reprise' && parseFloat(String(event.price)) === 0 ? 'PASE LIBRE' : getEventStatusText(event.status)}
-                                            </span>
-                                        </div>
-                                        {event.is_featured && (
-                                            <div className="absolute top-4 right-4">
-                                                <span className="badge bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
-                                                    Destacado
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Content */}
-                                    <div className="p-6">
-                                        <h3 className="font-semibold text-xl mb-3 group-hover:text-primary-500 transition-colors line-clamp-2">
-                                            {event.title}
-                                        </h3>
-
-                                        {event.description && (
-                                            <p className="text-dark-400 text-sm mb-4 line-clamp-2">
-                                                {event.description}
-                                            </p>
-                                        )}
-
-                                        <div className="space-y-2 mb-4">
-                                            <div className="flex items-center gap-2 text-sm text-dark-400">
-                                                <Calendar className="w-4 h-4" />
-                                                <span>{formatDate(event.event_date, 'PPP')}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-sm text-dark-400">
-                                                <Clock className="w-4 h-4" />
-                                                <span>{formatDate(event.event_date, 'p')}</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center justify-between pt-4 border-t border-dark-800">
-                                            <span className="text-2xl font-bold gradient-text uppercase tracking-tight">
-                                                {parseFloat(String(event.price)) === 0 ? 'PASE LIBRE' : formatCurrency(event.price, event.currency)}
-                                            </span>
-                                            <span className="text-primary-500 group-hover:translate-x-2 transition-transform">
-                                                <ArrowRight className="w-5 h-5" />
-                                            </span>
-                                        </div>
-                                    </div>
-                                </Link>
+                                <EventCard key={event.id} event={event} />
                             ))}
                         </div>
                     )}

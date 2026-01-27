@@ -360,10 +360,10 @@ router.put(
         const { userId } = req.params;
         const { role } = req.body;
 
-        if (!['user', 'admin'].includes(role)) {
+        if (!['user', 'admin', 'promoter'].includes(role)) {
             res.status(400).json({
                 success: false,
-                error: 'Invalid role. Must be "user" or "admin".',
+                error: 'Invalid role. Must be "user", "admin", or "promoter".',
             });
             return;
         }

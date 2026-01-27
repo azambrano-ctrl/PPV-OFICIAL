@@ -15,6 +15,7 @@ export interface Event {
     stream_url?: string;
     max_viewers?: number;
     is_featured: boolean;
+    promoter_id?: string;
     created_by?: string;
     created_at: Date;
     updated_at: Date;
@@ -31,6 +32,7 @@ export interface CreateEventInput {
     banner_url?: string;
     max_viewers?: number;
     is_featured?: boolean;
+    promoter_id?: string;
     created_by: string;
 }
 
@@ -41,26 +43,37 @@ export const getAllEvents = async (filters?: {
     status?: string;
     featured?: boolean;
     upcoming?: boolean;
+    promoter_id?: string;
 }) => {
-    let queryText = 'SELECT * FROM events WHERE 1=1';
+    let queryText = `
+        SELECT e.*, p.name as promoter_name, p.logo_url as promoter_logo_url, p.id as promoter_id
+        FROM events e
+        LEFT JOIN promoters p ON e.promoter_id = p.id
+        WHERE 1=1
+    `;
     const params: any[] = [];
     let paramCount = 1;
 
     if (filters?.status) {
-        queryText += ` AND status = $${paramCount++}`;
+        queryText += ` AND e.status = $${paramCount++}`;
         params.push(filters.status);
     }
 
     if (filters?.featured !== undefined) {
-        queryText += ` AND is_featured = $${paramCount++}`;
+        queryText += ` AND e.is_featured = $${paramCount++}`;
         params.push(filters.featured);
     }
 
-    if (filters?.upcoming) {
-        queryText += ` AND event_date > NOW() AND status = 'upcoming'`;
+    if (filters?.promoter_id) {
+        queryText += ` AND e.promoter_id = $${paramCount++}`;
+        params.push(filters.promoter_id);
     }
 
-    queryText += ' ORDER BY event_date ASC';
+    if (filters?.upcoming) {
+        queryText += ` AND e.event_date > NOW() AND e.status = 'upcoming'`;
+    }
+
+    queryText += ' ORDER BY e.event_date ASC';
 
     const result = await query(queryText, params);
     return result.rows;
@@ -71,7 +84,10 @@ export const getAllEvents = async (filters?: {
  */
 export const getEventById = async (id: string): Promise<Event | null> => {
     const result = await query(
-        'SELECT * FROM events WHERE id = $1',
+        `SELECT e.*, p.name as promoter_name, p.logo_url as promoter_logo_url
+         FROM events e
+         LEFT JOIN promoters p ON e.promoter_id = p.id
+         WHERE e.id = $1`,
         [id]
     );
 
@@ -88,8 +104,8 @@ export const createEvent = async (input: CreateEventInput): Promise<Event> => {
     const result = await query(
         `INSERT INTO events (
       title, description, event_date, duration_minutes, price, currency,
-      thumbnail_url, banner_url, max_viewers, is_featured, created_by, stream_key
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      thumbnail_url, banner_url, max_viewers, is_featured, created_by, stream_key, promoter_id
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
     RETURNING *`,
         [
             input.title,
@@ -104,6 +120,7 @@ export const createEvent = async (input: CreateEventInput): Promise<Event> => {
             input.is_featured || false,
             input.created_by,
             streamKey,
+            input.promoter_id,
         ]
     );
 
@@ -134,6 +151,7 @@ export const updateEvent = async (
         'max_viewers',
         'is_featured',
         'stream_url',
+        'promoter_id',
     ];
 
     for (const [key, value] of Object.entries(updates)) {

@@ -8,6 +8,7 @@ import { useSettingsStore } from '@/lib/store';
 import { paymentsAPI } from '@/lib/api';
 import Footer from '@/components/Footer';
 import PaymentModal from '@/components/PaymentModal';
+import EventCard from '@/components/events/EventCard';
 
 interface AuthenticatedHomeProps {
     user: any;
@@ -122,28 +123,7 @@ export default function AuthenticatedHome({ user, featuredEvents, upcomingEvents
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {upcomingEvents.slice(0, 8).map((event) => (
-                                        <Link key={event.id} href={`/event/${event.id}`} className="group">
-                                            <div className="bg-dark-800/80 backdrop-blur-sm rounded-xl p-3 flex gap-4 hover:bg-dark-750 transition-colors border border-transparent hover:border-dark-600">
-                                                <div className="w-24 h-24 flex-shrink-0 bg-dark-900 rounded-lg overflow-hidden relative">
-                                                    <img
-                                                        src={getImageUrl(event.thumbnail_url)}
-                                                        alt={event.title}
-                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                                    />
-                                                </div>
-                                                <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                                    <h4 className="font-bold text-white truncate group-hover:text-primary-400 transition-colors">
-                                                        {event.title}
-                                                    </h4>
-                                                    <p className="text-sm text-gray-400 mb-2">
-                                                        {formatDate(event.event_date)}
-                                                    </p>
-                                                    <div className="text-primary-500 font-bold text-sm uppercase">
-                                                        {parseFloat(String(event.price)) === 0 ? 'PASE LIBRE' : formatCurrency(event.price, event.currency)}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </Link>
+                                        <EventCard key={event.id} event={event} />
                                     ))}
                                 </div>
                             </section>
