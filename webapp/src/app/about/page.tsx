@@ -156,11 +156,11 @@ export default function AboutPage() {
                             <div className="pl-6 pt-4">
                                 <div className="grid grid-cols-2 gap-8">
                                     <div>
-                                        <p className="text-4xl font-bold text-white mb-1">10k+</p>
+                                        <p className="text-4xl font-bold text-white mb-1">{settings?.about_stats_users || '10k+'}</p>
                                         <p className="text-sm text-dark-400 uppercase tracking-widest">Usuarios Activos</p>
                                     </div>
                                     <div>
-                                        <p className="text-4xl font-bold text-white mb-1">50+</p>
+                                        <p className="text-4xl font-bold text-white mb-1">{settings?.about_stats_events || '50+'}</p>
                                         <p className="text-sm text-dark-400 uppercase tracking-widest">Eventos en Vivo</p>
                                     </div>
                                 </div>

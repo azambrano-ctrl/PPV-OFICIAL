@@ -190,7 +190,7 @@ export default function EventDetailPage() {
                             </span>
                         )}
                         <span className={`badge ${getEventStatusColor(event.status)}`}>
-                            {getEventStatusText(event.status)}
+                            {event.status === 'reprise' && parseFloat(String(event.price)) === 0 ? 'PASE LIBRE' : getEventStatusText(event.status)}
                         </span>
                     </div>
                     <h1 className="font-display text-4xl md:text-6xl font-bold mt-4 mb-4">
@@ -208,7 +208,7 @@ export default function EventDetailPage() {
                         <div className="flex items-center gap-2">
                             <DollarSign className="w-5 h-5" />
                             <span className="text-2xl font-bold gradient-text">
-                                {formatCurrency(event.price, event.currency)}
+                                {parseFloat(String(event.price)) === 0 ? 'PASE LIBRE' : formatCurrency(event.price, event.currency)}
                             </span>
                         </div>
                     </div>
@@ -243,7 +243,7 @@ export default function EventDetailPage() {
                                     </div>
                                     <div>
                                         <p className="text-dark-500 text-sm mb-1">Precio</p>
-                                        <p className="font-semibold text-primary-500">{formatCurrency(event.price, event.currency)}</p>
+                                        <p className="font-semibold text-primary-500">{parseFloat(String(event.price)) === 0 ? 'PASE LIBRE' : formatCurrency(event.price, event.currency)}</p>
                                     </div>
                                     {event.max_viewers && (
                                         <div>
@@ -306,8 +306,8 @@ export default function EventDetailPage() {
                                 ) : (
                                     <div className="space-y-4">
                                         <div className="text-center py-4">
-                                            <p className="text-3xl font-bold gradient-text mb-2">
-                                                {event.price === 0 ? 'Gratis' : formatCurrency(event.price, event.currency)}
+                                            <p className="text-3xl font-bold gradient-text mb-2 uppercase">
+                                                {parseFloat(String(event.price)) === 0 ? 'PASE LIBRE' : formatCurrency(event.price, event.currency)}
                                             </p>
                                             <p className="text-sm text-dark-400">Acceso completo al evento</p>
                                         </div>

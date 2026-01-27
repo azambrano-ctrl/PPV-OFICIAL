@@ -138,8 +138,8 @@ export default function AuthenticatedHome({ user, featuredEvents, upcomingEvents
                                                     <p className="text-sm text-gray-400 mb-2">
                                                         {formatDate(event.event_date)}
                                                     </p>
-                                                    <div className="text-primary-500 font-bold text-sm">
-                                                        {formatCurrency(event.price, event.currency)}
+                                                    <div className="text-primary-500 font-bold text-sm uppercase">
+                                                        {parseFloat(String(event.price)) === 0 ? 'PASE LIBRE' : formatCurrency(event.price, event.currency)}
                                                     </div>
                                                 </div>
                                             </div>

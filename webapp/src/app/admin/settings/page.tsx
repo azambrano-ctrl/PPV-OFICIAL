@@ -43,6 +43,8 @@ export default function AdminSettingsPage() {
         // Stored as string array in DB JSONB, but usually parsed by API. 
         // We handle it as array here.
         about_slider_images: [] as string[],
+        about_stats_users: '10k+',
+        about_stats_events: '50+',
 
         // Payments
         stripe_enabled: false,
@@ -87,6 +89,8 @@ export default function AdminSettingsPage() {
                 about_mission_text: d.about_mission_text || '',
                 about_values: typeof d.about_values === 'string' ? JSON.parse(d.about_values) : (d.about_values || []),
                 about_slider_images: typeof d.about_slider_images === 'string' ? JSON.parse(d.about_slider_images) : (d.about_slider_images || []),
+                about_stats_users: d.about_stats_users || '10k+',
+                about_stats_events: d.about_stats_events || '50+',
 
                 stripe_enabled: d.stripe_enabled || false,
                 stripe_public_key: d.stripe_public_key || '',
@@ -156,6 +160,8 @@ export default function AdminSettingsPage() {
             formData.append('about_mission_text', form.about_mission_text);
             formData.append('about_values', JSON.stringify(form.about_values));
             formData.append('about_slider_images', JSON.stringify(form.about_slider_images));
+            formData.append('about_stats_users', form.about_stats_users);
+            formData.append('about_stats_events', form.about_stats_events);
 
             // Payments
             formData.append('stripe_enabled', String(form.stripe_enabled));
@@ -470,6 +476,26 @@ export default function AdminSettingsPage() {
                                         onChange={(e) => setForm({ ...form, about_mission_text: e.target.value })}
                                     />
                                     <p className="text-xs text-dark-400">Acepta saltos de línea.</p>
+                                </div>
+                                <div className="grid md:grid-cols-2 gap-6 pt-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-dark-300">Contador Usuarios (ej: 10k+)</label>
+                                        <input
+                                            type="text"
+                                            className="input w-full"
+                                            value={form.about_stats_users}
+                                            onChange={(e) => setForm({ ...form, about_stats_users: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-dark-300">Contador Eventos (ej: 50+)</label>
+                                        <input
+                                            type="text"
+                                            className="input w-full"
+                                            value={form.about_stats_events}
+                                            onChange={(e) => setForm({ ...form, about_stats_events: e.target.value })}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -48,9 +48,14 @@ export default function HomePage() {
 
             setFeaturedEvents(featuredRes.data.data.slice(0, 1));
 
-            // Filter strictly for live and upcoming, ignoring finished/cancelled
+            // Filter for live, upcoming, and reprise (only if price is 0 for reprise)
             const activeEvents = allEventsRes.data.data
-                .filter((e: any) => e.status === 'live' || e.status === 'upcoming' || e.status === 'reprise')
+                .filter((e: any) => {
+                    const status = (e.status || '').toLowerCase();
+                    if (status === 'live' || status === 'upcoming') return true;
+                    if (status === 'reprise' && parseFloat(e.price) === 0) return true;
+                    return false;
+                })
                 .sort((a: any, b: any) => {
                     // Start with Live, then date asc
                     if (a.status === 'live' && b.status !== 'live') return -1;
@@ -139,7 +144,7 @@ export default function HomePage() {
                                     </div>
                                 ) : (
                                     <span className={`badge ${getEventStatusColor(mainEvent.status)} px-4 py-2 text-sm uppercase tracking-wider`}>
-                                        {getEventStatusText(mainEvent.status)}
+                                        {mainEvent.status === 'reprise' && parseFloat(String(mainEvent.price)) === 0 ? 'PASE LIBRE' : getEventStatusText(mainEvent.status)}
                                     </span>
                                 )}
                             </div>
@@ -268,7 +273,7 @@ export default function HomePage() {
                                         {/* Status Badge */}
                                         <div className="absolute top-4 left-4">
                                             <span className={`badge ${getEventStatusColor(event.status)}`}>
-                                                {getEventStatusText(event.status)}
+                                                {event.status === 'reprise' && parseFloat(String(event.price)) === 0 ? 'PASE LIBRE' : getEventStatusText(event.status)}
                                             </span>
                                         </div>
 
@@ -298,8 +303,8 @@ export default function HomePage() {
                                         </div>
 
                                         <div className="flex items-center justify-between pt-4 border-t border-gray-900">
-                                            <span className="text-2xl font-black bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
-                                                {formatCurrency(event.price, event.currency)}
+                                            <span className="text-2xl font-black bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent uppercase tracking-tight">
+                                                {parseFloat(String(event.price)) === 0 ? 'PASE LIBRE' : formatCurrency(event.price, event.currency)}
                                             </span>
                                             <span className="text-red-500 group-hover:translate-x-2 transition-transform">
                                                 <ArrowRight className="w-5 h-5" />

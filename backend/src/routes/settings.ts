@@ -124,6 +124,8 @@ router.put(
             if (req.body.about_hero_subtitle !== undefined) updates.about_hero_subtitle = req.body.about_hero_subtitle;
             if (req.body.about_mission_title) updates.about_mission_title = req.body.about_mission_title;
             if (req.body.about_mission_text) updates.about_mission_text = req.body.about_mission_text;
+            if (req.body.about_stats_users) updates.about_stats_users = req.body.about_stats_users;
+            if (req.body.about_stats_events) updates.about_stats_events = req.body.about_stats_events;
 
             if (req.body.about_values) {
                 updates.about_values = safeParseJSON(req.body.about_values, []);

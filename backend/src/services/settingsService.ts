@@ -10,6 +10,8 @@ export interface Settings {
     about_mission_text: string;
     about_values: any; // JSONB
     about_slider_images: any; // JSONB
+    about_stats_users: string;
+    about_stats_events: string;
 
     // General
     site_name: string;
@@ -49,6 +51,8 @@ export interface UpdateSettingsDTO {
     about_mission_text?: string;
     about_values?: any;
     about_slider_images?: any;
+    about_stats_users?: string;
+    about_stats_events?: string;
 
     // General
     site_name?: string;
@@ -109,6 +113,8 @@ export const updateSettings = async (updates: UpdateSettingsDTO): Promise<Settin
         'about_mission_text',
         'about_values',
         'about_slider_images',
+        'about_stats_users',
+        'about_stats_events',
         'site_name',
         'site_description',
         'contact_email',

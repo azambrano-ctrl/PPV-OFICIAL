@@ -54,7 +54,7 @@ export default function EventsPage() {
         // Filter by status
         if (statusFilter !== 'all') {
             if (statusFilter === 'upcoming') {
-                filtered = filtered.filter((event) => event.status === 'upcoming' || event.status === 'reprise');
+                filtered = filtered.filter((event) => event.status === 'upcoming' || (event.status === 'reprise' && parseFloat(String(event.price)) === 0));
             } else {
                 filtered = filtered.filter((event) => event.status === statusFilter);
             }
@@ -178,7 +178,7 @@ export default function EventsPage() {
                                         )}
                                         <div className="absolute top-4 left-4">
                                             <span className={`badge ${getEventStatusColor(event.status)}`}>
-                                                {getEventStatusText(event.status)}
+                                                {event.status === 'reprise' && parseFloat(String(event.price)) === 0 ? 'PASE LIBRE' : getEventStatusText(event.status)}
                                             </span>
                                         </div>
                                         {event.is_featured && (
@@ -214,8 +214,8 @@ export default function EventsPage() {
                                         </div>
 
                                         <div className="flex items-center justify-between pt-4 border-t border-dark-800">
-                                            <span className="text-2xl font-bold gradient-text">
-                                                {formatCurrency(event.price, event.currency)}
+                                            <span className="text-2xl font-bold gradient-text uppercase tracking-tight">
+                                                {parseFloat(String(event.price)) === 0 ? 'PASE LIBRE' : formatCurrency(event.price, event.currency)}
                                             </span>
                                             <span className="text-primary-500 group-hover:translate-x-2 transition-transform">
                                                 <ArrowRight className="w-5 h-5" />

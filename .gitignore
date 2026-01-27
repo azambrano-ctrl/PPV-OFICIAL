@@ -37,5 +37,5 @@ yarn-error.log*
 # OS
 Thumbs.db
 
-# Injected code
-ppv-streaming/
+# Backups
+webapp_backup_*.zip
