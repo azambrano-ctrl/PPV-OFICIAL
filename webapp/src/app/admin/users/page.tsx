@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Search, Filter, UserCheck, UserX, Shield, User as UserIcon } from 'lucide-react';
+import { Search, Filter, UserCheck, UserX, Shield, User as UserIcon, Trash2 } from 'lucide-react';
 import { authAPI, handleAPIError } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -63,6 +63,21 @@ export default function AdminUsersPage() {
         try {
             await authAPI.updateUserRole(userId, newRole);
             toast.success('Rol actualizado exitosamente');
+            loadUsers();
+        } catch (error) {
+            const message = handleAPIError(error);
+            toast.error(message);
+        }
+    };
+
+    const handleDelete = async (user: User) => {
+        if (!confirm(`¿Estás seguro de que deseas eliminar al usuario "${user.full_name || user.email}"? Esta acción no se puede deshacer.`)) {
+            return;
+        }
+
+        try {
+            await authAPI.deleteUser(user.id);
+            toast.success('Usuario eliminado exitosamente');
             loadUsers();
         } catch (error) {
             const message = handleAPIError(error);
@@ -211,8 +226,8 @@ export default function AdminUsersPage() {
                                         </td>
                                         <td className="py-4 px-6">
                                             <span className={`badge ${user.role === 'admin'
-                                                    ? 'bg-red-500/20 text-red-400 border-red-500/30'
-                                                    : 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                                                ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                                                : 'bg-blue-500/20 text-blue-400 border-blue-500/30'
                                                 }`}>
                                                 {user.role === 'admin' ? '🛡️ Admin' : '👤 Usuario'}
                                             </span>
@@ -241,6 +256,13 @@ export default function AdminUsersPage() {
                                                         Hacer Usuario
                                                     </button>
                                                 )}
+                                                <button
+                                                    onClick={() => handleDelete(user)}
+                                                    className="btn btn-sm bg-dark-700 hover:bg-red-600/20 text-gray-400 hover:text-red-500 border-dark-600 transition-all"
+                                                    title="Eliminar Usuario"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>

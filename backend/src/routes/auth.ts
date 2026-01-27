@@ -388,4 +388,68 @@ router.put(
     })
 );
 
+/**
+ * DELETE /api/auth/users/:userId
+ * Delete a user (Admin only)
+ */
+router.delete(
+    '/users/:userId',
+    authenticate,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        // Check if user is admin
+        if (req.user!.role !== 'admin') {
+            res.status(403).json({
+                success: false,
+                error: 'Access denied. Admin only.',
+            });
+            return;
+        }
+
+        const { userId } = req.params;
+
+        // 1. Check if user has purchases
+        const purchasesCheck = await pool.query(
+            'SELECT COUNT(*) as count FROM purchases WHERE user_id = $1',
+            [userId]
+        );
+
+        if (parseInt(purchasesCheck.rows[0].count) > 0) {
+            res.status(400).json({
+                success: false,
+                message: 'No se puede eliminar el usuario porque tiene compras registradas. Esto podría afectar los registros financieros y el acceso del cliente.',
+            });
+            return;
+        }
+
+        // 2. Prevent self-deletion
+        if (userId === req.user!.userId) {
+            res.status(400).json({
+                success: false,
+                message: 'No puedes eliminar tu propia cuenta de administrador.',
+            });
+            return;
+        }
+
+        // 3. Delete the user
+        const result = await pool.query(
+            'DELETE FROM users WHERE id = $1 RETURNING id, email',
+            [userId]
+        );
+
+        if (result.rows.length === 0) {
+            res.status(404).json({
+                success: false,
+                message: 'Usuario no encontrado.',
+            });
+            return;
+        }
+
+        res.json({
+            success: true,
+            message: 'Usuario eliminado exitosamente.',
+            data: result.rows[0],
+        });
+    })
+);
+
 export default router;
