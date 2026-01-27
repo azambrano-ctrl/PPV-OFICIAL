@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { Search, Globe, MapPin, Users, ArrowRight } from 'lucide-react';
 import { promotersAPI } from '@/lib/api';
 import { getImageUrl } from '@/lib/utils';
-import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
 export default function PromotersDirectoryPage() {
@@ -35,8 +34,6 @@ export default function PromotersDirectoryPage() {
 
     return (
         <div className="min-h-screen bg-dark-950 flex flex-col">
-            <Navbar />
-
             {/* Hero Section */}
             <section className="relative pt-32 pb-20 overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-full">

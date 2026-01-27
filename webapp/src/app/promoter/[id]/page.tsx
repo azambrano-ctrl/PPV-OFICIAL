@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { promotersAPI, eventsAPI, handleAPIError } from '@/lib/api';
 import { getImageUrl } from '@/lib/utils';
 import { Calendar, Globe, Facebook, Instagram, Twitter, Image as ImageIcon, ArrowRight } from 'lucide-react';
-import Navbar from '@/components/ui/Navbar';
 import Footer from '@/components/Footer';
 import EventCard from '@/components/events/EventCard';
 import Link from 'next/link';
@@ -63,8 +62,6 @@ export default function PromoterProfilePage() {
 
     return (
         <div className="min-h-screen bg-dark-950 flex flex-col">
-            <Navbar />
-
             {/* Hero Section with Banner */}
             <div className="relative h-[40vh] md:h-[50vh] overflow-hidden">
                 {promoter.banner_url ? (

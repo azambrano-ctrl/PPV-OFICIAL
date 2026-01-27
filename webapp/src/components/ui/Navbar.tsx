@@ -27,6 +27,7 @@ export default function Navbar() {
     const navLinks = [
         { name: 'Inicio', href: '/' },
         { name: 'Eventos', href: '/events' },
+        { name: 'Promotoras', href: '/promoters' },
         { name: 'Nosotros', href: '/about' },
     ];
 
@@ -162,6 +163,16 @@ export default function Navbar() {
                                                         <span>Panel Admin</span>
                                                     </Link>
                                                 )}
+                                                {user.role === 'promoter' && (
+                                                    <Link
+                                                        href="/promoter-dashboard"
+                                                        className="flex items-center space-x-3 px-4 py-2.5 text-sm text-blue-400 hover:bg-dark-800 hover:text-blue-300 transition-colors"
+                                                        onClick={() => setUserMenuOpen(false)}
+                                                    >
+                                                        <Settings className="w-4 h-4" />
+                                                        <span>Panel Promotora</span>
+                                                    </Link>
+                                                )}
                                             </div>
 
                                             <div className="border-t border-dark-700 py-2 bg-dark-950/30">
@@ -265,6 +276,15 @@ export default function Navbar() {
                                                 className="block px-4 py-3 rounded-xl text-primary-400 hover:bg-white/5"
                                             >
                                                 Panel de Administrador
+                                            </Link>
+                                        )}
+                                        {user.role === 'promoter' && (
+                                            <Link
+                                                href="/promoter-dashboard"
+                                                onClick={() => setIsOpen(false)}
+                                                className="block px-4 py-3 rounded-xl text-blue-400 hover:bg-white/5"
+                                            >
+                                                Panel de Promotora
                                             </Link>
                                         )}
 
