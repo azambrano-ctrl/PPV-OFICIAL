@@ -215,12 +215,20 @@ export default function LoginPage() {
                 </div>
 
                 {/* Sign Up Link */}
-                <p className="mt-6 text-center text-sm text-dark-400">
-                    ¿No tienes una cuenta?{' '}
-                    <Link href="/auth/register" className="text-primary-500 hover:text-primary-400 font-semibold">
-                        Regístrate gratis
-                    </Link>
-                </p>
+                <div className="mt-6 text-center space-y-2">
+                    <p className="text-sm text-dark-400">
+                        ¿No tienes una cuenta?{' '}
+                        <Link href="/auth/register" className="text-primary-500 hover:text-primary-400 font-semibold">
+                            Regístrate gratis
+                        </Link>
+                    </p>
+                    <p className="text-sm text-dark-500">
+                        ¿Quieres organizar eventos?{' '}
+                        <Link href="/promoter/register" className="text-blue-400 hover:text-blue-300 font-semibold uppercase italic tracking-tighter">
+                            Regístrate como Promotora
+                        </Link>
+                    </p>
+                </div>
             </div>
         </div>
     );
