@@ -1,4 +1,4 @@
-import { query } from '../config/database';
+import { query, transaction } from '../config/database';
 
 export interface Promoter {
     id: string;
@@ -82,12 +82,11 @@ export const createPromoter = async (input: CreatePromoterInput): Promise<Promot
  */
 export const registerPromoter = async (input: {
     name: string;
-    description: string;
+    description?: string;
     email: string;
     password_hash: string;
 }) => {
     const { name, description, email, password_hash } = input;
-    const { transaction } = require('../config/database');
 
     return transaction(async (client: any) => {
         // 1. Create promoter profile

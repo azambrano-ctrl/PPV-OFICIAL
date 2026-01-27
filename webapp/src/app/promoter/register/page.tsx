@@ -13,7 +13,6 @@ export default function PromoterRegisterPage() {
     const [submitted, setSubmitted] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
-        description: '',
         email: '',
         password: '',
     });
@@ -171,16 +170,6 @@ export default function PromoterRegisterPage() {
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] mb-2 ml-4">Breve Biografía / Experiencia</label>
-                                    <textarea
-                                        required
-                                        value={formData.description}
-                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                        className="w-full bg-dark-950/50 border border-dark-700 rounded-2xl px-4 py-4 text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder:text-gray-700 min-h-[120px] resize-none"
-                                        placeholder="Cuéntanos sobre tu organización y los eventos que realizas..."
-                                    />
-                                </div>
                             </div>
 
                             <button

@@ -1,4 +1,6 @@
 import { Router, Response, Request } from 'express';
+import * as bcrypt from 'bcryptjs';
+import { findUserByEmail } from '../services/userService';
 import { z } from 'zod';
 import { asyncHandler } from '../middleware/errorHandler';
 import { validateBody } from '../middleware/validation';
@@ -16,7 +18,7 @@ const createPromoterSchema = z.object({
 
 const registerPromoterSchema = z.object({
     name: z.string().min(2, 'Name is required'),
-    description: z.string().min(10, 'Description must be at least 10 characters'),
+    description: z.string().optional(),
     email: z.string().email('Invalid email'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
 });
@@ -103,11 +105,9 @@ router.post(
     '/register',
     validateBody(registerPromoterSchema),
     asyncHandler(async (req: Request, res: Response) => {
-        const bcrypt = require('bcryptjs');
         const { name, description, email, password } = req.body;
 
         // Check if email already exists
-        const { findUserByEmail } = require('../services/userService');
         const existingUser = await findUserByEmail(email);
         if (existingUser) {
             res.status(400).json({ success: false, message: 'El correo electrónico ya está registrado' });
