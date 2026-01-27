@@ -59,8 +59,15 @@ export default function ChatBox({ eventId, eventTitle, eventStatus }: ChatBoxPro
 
         if (!accessToken) return;
 
-        const socketInstance = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000', {
+        const wsUrl = (process.env.NEXT_PUBLIC_WS_URL || process.env.NEXT_PUBLIC_API_URL || '').includes('arenafightpass.com')
+            ? 'https://ppv-backend.onrender.com'
+            : (process.env.NEXT_PUBLIC_WS_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000');
+
+        console.log('[CHAT] Connecting to:', wsUrl);
+
+        const socketInstance = io(wsUrl, {
             auth: { token: accessToken },
+            transports: ['websocket', 'polling'],
         });
 
         socketInstance.on('connect', () => {
