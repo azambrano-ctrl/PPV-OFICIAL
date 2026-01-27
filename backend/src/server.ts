@@ -17,6 +17,7 @@ import settingsRoutes from './routes/settings';
 import cleanupRoutes from './routes/cleanup';
 import newsletterRoutes from './routes/newsletter';
 import promoterRoutes from './routes/promoters';
+import publicStatsRoutes from './routes/public-stats';
 import { query } from './config/database';
 import { verifyAccessToken } from './middleware/auth';
 import { userHasAccessToEvent } from './services/eventService';
@@ -129,6 +130,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/cleanup', cleanupRoutes); // Temporary cleanup route
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/promoters', promoterRoutes);
+app.use('/api/public-stats', publicStatsRoutes);
 
 // Socket.io authentication middleware
 io.use((socket, next) => {

@@ -4,27 +4,32 @@ import Link from 'next/link';
 import { ArrowRight, Globe, Trophy, Zap, PlayCircle } from 'lucide-react';
 import ImageSlider from '@/components/ui/ImageSlider';
 import { useState, useEffect } from 'react';
-import { settingsAPI } from '@/lib/api';
+import { settingsAPI, statsAPI } from '@/lib/api';
 import { motion } from 'framer-motion';
 import { getImageUrl } from '@/lib/utils';
 
 export default function AboutPage() {
     const [settings, setSettings] = useState<any>(null);
+    const [stats, setStats] = useState<{ totalUsers: number; totalEvents: number } | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchSettings = async () => {
+        const fetchData = async () => {
             try {
-                const { data } = await settingsAPI.get();
-                setSettings(data.data);
+                const [settingsRes, statsRes] = await Promise.all([
+                    settingsAPI.get(),
+                    statsAPI.getPublicStats()
+                ]);
+                setSettings(settingsRes.data.data);
+                setStats(statsRes.data.data);
             } catch (error) {
-                console.error('Failed to load settings', error);
+                console.error('Failed to load about page data', error);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchSettings();
+        fetchData();
     }, []);
 
     // Default values if API data is missing
@@ -159,11 +164,15 @@ export default function AboutPage() {
                             <div className="pl-6 pt-4">
                                 <div className="grid grid-cols-2 gap-8">
                                     <div>
-                                        <p className="text-4xl font-bold text-white mb-1">{settings?.about_stats_users || '10k+'}</p>
+                                        <p className="text-4xl font-bold text-white mb-1">
+                                            {stats?.totalUsers !== undefined ? `${stats.totalUsers}+` : (settings?.about_stats_users || '10k+')}
+                                        </p>
                                         <p className="text-sm text-dark-400 uppercase tracking-widest">Usuarios Activos</p>
                                     </div>
                                     <div>
-                                        <p className="text-4xl font-bold text-white mb-1">{settings?.about_stats_events || '50+'}</p>
+                                        <p className="text-4xl font-bold text-white mb-1">
+                                            {stats?.totalEvents !== undefined ? `${stats.totalEvents}+` : (settings?.about_stats_events || '50+')}
+                                        </p>
                                         <p className="text-sm text-dark-400 uppercase tracking-widest">Eventos en Vivo</p>
                                     </div>
                                 </div>

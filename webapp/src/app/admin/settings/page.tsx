@@ -502,22 +502,32 @@ export default function AdminSettingsPage() {
                                 </div>
                                 <div className="grid md:grid-cols-2 gap-6 pt-4">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-dark-300">Contador Usuarios (ej: 10k+)</label>
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-sm font-medium text-dark-300">Contador Usuarios (Manual)</label>
+                                            <span className="text-[10px] bg-primary-500/10 text-primary-500 px-2 py-0.5 rounded-full font-bold">Auto-Cálculo Activo</span>
+                                        </div>
                                         <input
                                             type="text"
                                             className="input w-full"
                                             value={form.about_stats_users}
                                             onChange={(e) => setForm({ ...form, about_stats_users: e.target.value })}
+                                            placeholder="Ej: 10k+"
                                         />
+                                        <p className="text-[10px] text-dark-500 italic">Este valor se usa como respaldo mientras se cargan los datos reales.</p>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-dark-300">Contador Eventos (ej: 50+)</label>
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-sm font-medium text-dark-300">Contador Eventos (Manual)</label>
+                                            <span className="text-[10px] bg-primary-500/10 text-primary-500 px-2 py-0.5 rounded-full font-bold">Auto-Cálculo Activo</span>
+                                        </div>
                                         <input
                                             type="text"
                                             className="input w-full"
                                             value={form.about_stats_events}
                                             onChange={(e) => setForm({ ...form, about_stats_events: e.target.value })}
+                                            placeholder="Ej: 50+"
                                         />
+                                        <p className="text-[10px] text-dark-500 italic">Este valor se usa como respaldo mientras se cargan los datos reales.</p>
                                     </div>
                                 </div>
                             </div>

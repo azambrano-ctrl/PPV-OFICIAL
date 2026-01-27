@@ -203,6 +203,11 @@ export const newsletterAPI = {
         api.post('/newsletter/subscribe', { email }),
 };
 
+export const statsAPI = {
+    getPublicStats: () =>
+        api.get('/public-stats'),
+};
+
 export const promotersAPI = {
     getAll: () =>
         api.get('/promoters'),
