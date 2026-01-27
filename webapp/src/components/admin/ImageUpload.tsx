@@ -257,7 +257,7 @@ export default function ImageUpload({
             {/* Crop Modal */}
             {showCropModal && imageSrc && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-                    <div className="bg-dark-900 rounded-xl overflow-hidden max-w-2xl w-full max-h-[90vh] flex flex-col border border-dark-700">
+                    <div className="bg-dark-900 rounded-xl overflow-hidden max-w-5xl w-full max-h-[95vh] flex flex-col border border-dark-700">
                         <div className="p-4 border-b border-dark-700 flex justify-between items-center">
                             <h3 className="text-lg font-bold text-white">Ajustar Imagen</h3>
                             <button onClick={cancelCrop} className="text-gray-400 hover:text-white">
@@ -265,7 +265,7 @@ export default function ImageUpload({
                             </button>
                         </div>
 
-                        <div className="relative h-[400px] w-full bg-black">
+                        <div className="relative h-[400px] md:h-[600px] w-full bg-black">
                             <Cropper
                                 image={imageSrc}
                                 crop={crop}
@@ -274,41 +274,96 @@ export default function ImageUpload({
                                 onCropChange={setCrop}
                                 onCropComplete={onCropComplete}
                                 onZoomChange={setZoom}
+                                showGrid={true}
+                                minZoom={1}
+                                maxZoom={10}
                             />
                         </div>
 
                         <div className="p-4 space-y-4">
-                            <div className="flex items-center gap-4">
-                                <ZoomOut className="w-5 h-5 text-gray-400" />
-                                <input
-                                    type="range"
-                                    value={zoom}
-                                    min={1}
-                                    max={3}
-                                    step={0.1}
-                                    aria-labelledby="Zoom"
-                                    onChange={(e) => setZoom(Number(e.target.value))}
-                                    className="w-full h-2 bg-dark-700 rounded-lg appearance-none cursor-pointer"
-                                />
-                                <ZoomIn className="w-5 h-5 text-gray-400" />
+                            <div className="flex flex-wrap items-center justify-between gap-4">
+                                <div className="flex items-center gap-4 flex-1 min-w-[300px]">
+                                    <ZoomOut className="w-5 h-5 text-gray-400" />
+                                    <input
+                                        type="range"
+                                        value={zoom}
+                                        min={1}
+                                        max={10}
+                                        step={0.1}
+                                        aria-labelledby="Zoom"
+                                        onChange={(e) => setZoom(Number(e.target.value))}
+                                        className="w-full h-2 bg-dark-700 rounded-lg appearance-none cursor-pointer accent-red-600"
+                                    />
+                                    <ZoomIn className="w-5 h-5 text-gray-400" />
+                                    <span className="text-xs font-mono text-gray-400 w-12 text-right">
+                                        {zoom.toFixed(1)}x
+                                    </span>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setZoom(1)}
+                                        className="px-2 py-1 text-xs bg-dark-800 text-gray-400 hover:text-white rounded border border-dark-700 transition-colors"
+                                    >
+                                        1x
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setZoom(2)}
+                                        className="px-2 py-1 text-xs bg-dark-800 text-gray-400 hover:text-white rounded border border-dark-700 transition-colors"
+                                    >
+                                        2x
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setZoom(5)}
+                                        className="px-2 py-1 text-xs bg-dark-800 text-gray-400 hover:text-white rounded border border-dark-700 transition-colors"
+                                    >
+                                        5x
+                                    </button>
+                                </div>
                             </div>
 
-                            <div className="flex justify-end gap-3">
-                                <button
-                                    type="button"
-                                    onClick={cancelCrop}
-                                    className="px-4 py-2 rounded-lg text-gray-300 hover:bg-dark-700 transition-colors"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={saveCrop}
-                                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2 transition-colors"
-                                >
-                                    <Save className="w-4 h-4" />
-                                    Guardar Recorte
-                                </button>
+                            <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-dark-800">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm text-gray-400 mr-2">Proporción:</span>
+                                    {/* Since aspect is passed as a prop, we can't easily change it locally without state, 
+                                        but for now we'll respect the prop's aspect or dynamic if we added state.
+                                        For this specific request, we'll keep it simple but improved.
+                                    */}
+                                    <span className="text-sm font-medium text-white bg-dark-800 px-3 py-1 rounded-full border border-dark-700">
+                                        {aspect === 16 / 9 ? '16:9 (HD)' : aspect === 1 ? '1:1 (Cuadrado)' : aspect === 4 / 3 ? '4:3' : 'Personalizado'}
+                                    </span>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setZoom(1);
+                                            setCrop({ x: 0, y: 0 });
+                                        }}
+                                        className="px-4 py-2 rounded-lg text-gray-300 hover:bg-dark-700 transition-colors text-sm"
+                                    >
+                                        Restablecer
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={cancelCrop}
+                                        className="px-4 py-2 rounded-lg text-gray-300 hover:bg-dark-700 transition-colors text-sm"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={saveCrop}
+                                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2 transition-colors font-bold shadow-lg shadow-red-600/20"
+                                    >
+                                        <Save className="w-4 h-4" />
+                                        Guardar Recorte
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

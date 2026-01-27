@@ -86,12 +86,22 @@ router.get(
                 const isAbsoluteUrl = streamKey.startsWith('http');
 
                 if (isAbsoluteUrl) {
-                    // Already a complete URL (e.g., test stream)
                     streamUrl = streamKey;
-                } else {
-                    // It's a Mux Playback ID - construct Mux URL
+                } else if (streamKey && !streamKey.startsWith('stream_')) {
+                    // It's a Mux Playback ID (external/manual) - construct Mux URL
                     streamUrl = `https://stream.mux.com/${streamKey}.m3u8`;
+                } else {
+                    // No valid stream source yet (it's either our internal placeholder or empty)
+                    streamUrl = '';
                 }
+            }
+
+            if (!streamUrl && (event.status === 'live' || event.status === 'reprise')) {
+                res.status(400).json({
+                    success: false,
+                    message: 'La transmisión aún no está configurada o la URL es inválida.',
+                });
+                return;
             }
 
             // Detect if it's an MP4 stream (explicitly or by extension)
@@ -138,11 +148,21 @@ router.get(
         if (event.stream_url && event.stream_url.startsWith('http')) {
             streamUrl = event.stream_url;
         } else if (isAbsoluteUrl) {
-            // Already a complete URL (e.g., test stream)
             streamUrl = streamKey;
-        } else {
+        } else if (streamKey && !streamKey.startsWith('stream_')) {
             // It's a Mux Playback ID - construct Mux URL
             streamUrl = `https://stream.mux.com/${streamKey}.m3u8`;
+        } else {
+            // No valid stream source
+            streamUrl = '';
+        }
+
+        if (!streamUrl && (event.status === 'live' || event.status === 'reprise')) {
+            res.status(400).json({
+                success: false,
+                message: 'No hay una dirección de transmisión configurada para este evento.',
+            });
+            return;
         }
 
         // Detect if it's an MP4 stream (explicitly or by extension)
@@ -244,12 +264,14 @@ router.get(
         const isAbsoluteUrl = streamKey.startsWith('http');
         let streamUrl: string;
 
-        if (isAbsoluteUrl) {
-            // Already a complete URL
+        if (event.stream_url && event.stream_url.startsWith('http')) {
+            streamUrl = event.stream_url;
+        } else if (isAbsoluteUrl) {
             streamUrl = `${streamKey}${streamKey.includes('?') ? '&' : '?'}token=${token}`;
-        } else {
-            // It's a Mux Playback ID
+        } else if (streamKey && !streamKey.startsWith('stream_')) {
             streamUrl = `https://stream.mux.com/${streamKey}.m3u8?token=${token}`;
+        } else {
+            streamUrl = '';
         }
 
         res.json({

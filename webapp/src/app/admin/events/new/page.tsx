@@ -228,8 +228,8 @@ export default function NewEventPage() {
                             className="input"
                             placeholder="https://stream.example.com/event.m3u8"
                         />
-                        <p className="text-xs text-gray-500 mt-1">
-                            URL del stream HLS/DASH (opcional)
+                        <p className="text-xs text-gray-400 mt-1">
+                            URL del stream HLS/DASH. <b>Requerido</b> si el estado es Reprise.
                         </p>
                     </div>
 

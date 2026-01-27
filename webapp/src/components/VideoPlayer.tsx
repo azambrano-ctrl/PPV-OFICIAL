@@ -163,9 +163,9 @@ Pasos para solucionar:
             // Already proxied with token
             console.log('Proxy URL detected - Using as is');
         } else if (streamUrl.includes('stream.mux.com')) {
-            const parts = streamUrl.split('?');
-            finalUrl = parts[0];
-            console.log('Mux Stream detected - Token cleaned:', finalUrl);
+            // Use Mux URL as provided (might be signed or have custom params)
+            finalUrl = streamUrl;
+            console.log('Mux Stream detected - Using URL:', finalUrl);
         } else {
             finalUrl = `${streamUrl}${streamUrl.includes('?') ? '&' : '?'}token=${token}`;
         }
