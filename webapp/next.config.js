@@ -23,6 +23,10 @@ const nextConfig = {
                 source: '/api/:path*',
                 destination: 'https://ppv-backend.onrender.com/api/:path*',
             },
+            {
+                source: '/uploads/:path*',
+                destination: 'https://ppv-backend.onrender.com/uploads/:path*',
+            },
         ]
     },
 }
