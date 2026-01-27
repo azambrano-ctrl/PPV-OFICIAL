@@ -19,6 +19,8 @@ const createPromoterSchema = z.object({
 const registerPromoterSchema = z.object({
     name: z.string().min(2, 'Name is required'),
     description: z.string().optional(),
+    phone: z.string().min(6, 'WhatsApp/Teléfono es requerido'),
+    city: z.string().min(2, 'Ciudad es requerida'),
     email: z.string().email('Invalid email'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
 });
@@ -105,7 +107,7 @@ router.post(
     '/register',
     validateBody(registerPromoterSchema),
     asyncHandler(async (req: Request, res: Response) => {
-        const { name, description, email, password } = req.body;
+        const { name, description, email, password, phone, city } = req.body;
 
         // Check if email already exists
         const existingUser = await findUserByEmail(email);
@@ -120,7 +122,9 @@ router.post(
             name,
             description,
             email,
-            password_hash
+            password_hash,
+            phone,
+            city
         });
 
         res.status(201).json({

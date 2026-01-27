@@ -10,6 +10,8 @@ export interface Promoter {
     gallery: string[];
     social_links: Record<string, string>;
     status: 'pending' | 'active' | 'suspended';
+    phone?: string;
+    city?: string;
     created_at: Date;
     updated_at: Date;
 }
@@ -21,6 +23,8 @@ export interface CreatePromoterInput {
     banner_url?: string;
     social_links?: Record<string, string>;
     status?: 'pending' | 'active' | 'suspended';
+    phone?: string;
+    city?: string;
 }
 
 /**
@@ -85,8 +89,10 @@ export const registerPromoter = async (input: {
     description?: string;
     email: string;
     password_hash: string;
+    phone?: string;
+    city?: string;
 }) => {
-    const { name, description, email, password_hash } = input;
+    const { name, description, email, password_hash, phone, city } = input;
 
     return transaction(async (client: any) => {
         // 1. Create promoter profile
@@ -95,10 +101,10 @@ export const registerPromoter = async (input: {
             .replace(/\s+/g, '-');
 
         const promoterRes = await client.query(
-            `INSERT INTO promoters (name, slug, description, status)
-             VALUES ($1, $2, $3, 'pending')
+            `INSERT INTO promoters (name, slug, description, status, phone, city)
+             VALUES ($1, $2, $3, 'pending', $4, $5)
              RETURNING id`,
-            [name, slug, description]
+            [name, slug, description, phone, city]
         );
 
         const promoterId = promoterRes.rows[0].id;
@@ -126,7 +132,7 @@ export const updatePromoter = async (id: string, updates: Partial<CreatePromoter
     const values: any[] = [];
     let paramCount = 1;
 
-    const allowedFields = ['name', 'description', 'logo_url', 'banner_url', 'gallery', 'social_links', 'status'];
+    const allowedFields = ['name', 'description', 'logo_url', 'banner_url', 'gallery', 'social_links', 'status', 'phone', 'city'];
 
     for (const [key, value] of Object.entries(updates)) {
         if (allowedFields.includes(key) && value !== undefined) {

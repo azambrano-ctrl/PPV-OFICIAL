@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Shield, ArrowRight, CheckCircle, Mail, Lock, Building2, Info } from 'lucide-react';
+import { Shield, ArrowRight, CheckCircle, Mail, Lock, Building2, Info, Phone, MapPin, AlignLeft } from 'lucide-react';
 import { promotersAPI, handleAPIError } from '@/lib/api';
 import Navbar from '@/components/ui/Navbar';
 import toast from 'react-hot-toast';
@@ -13,8 +13,11 @@ export default function PromoterRegisterPage() {
     const [submitted, setSubmitted] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
+        description: '',
         email: '',
         password: '',
+        phone: '',
+        city: '',
     });
 
     const handleSubmit = async (e: React.FormEvent) => {

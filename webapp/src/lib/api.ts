@@ -228,7 +228,7 @@ export const promotersAPI = {
     delete: (id: string) =>
         api.delete(`/promoters/${id}`),
 
-    register: (data: { name: string; description?: string; email: string; password: string }) =>
+    register: (data: { name: string; description?: string; email: string; password: string; phone: string; city: string }) =>
         api.post('/promoters/register', data),
 
     updateStatus: (id: string, status: 'pending' | 'active' | 'suspended') =>
