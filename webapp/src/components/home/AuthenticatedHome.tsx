@@ -121,7 +121,7 @@ export default function AuthenticatedHome({ user, featuredEvents, upcomingEvents
                                     </Link>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {upcomingEvents.slice(0, 4).map((event) => (
+                                    {upcomingEvents.slice(0, 8).map((event) => (
                                         <Link key={event.id} href={`/event/${event.id}`} className="group">
                                             <div className="bg-dark-800/80 backdrop-blur-sm rounded-xl p-3 flex gap-4 hover:bg-dark-750 transition-colors border border-transparent hover:border-dark-600">
                                                 <div className="w-24 h-24 flex-shrink-0 bg-dark-900 rounded-lg overflow-hidden relative">
