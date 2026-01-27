@@ -7,6 +7,8 @@ import { validateBody } from '../middleware/validation';
 import { authenticate, AuthRequest, requireAdmin } from '../middleware/auth';
 import * as promoterService from '../services/promoterService';
 import { uploadPromoterImages, handleUploads } from '../middleware/upload';
+import * as emailService from '../services/emailService';
+import { query } from '../config/database';
 
 const router = Router();
 
@@ -149,6 +151,20 @@ router.patch(
         const { status } = req.body;
 
         const updatedPromoter = await promoterService.updatePromoter(id, { status });
+
+        // Trigger email if approved
+        if (status === 'active') {
+            try {
+                // Get the user's email associated with this promoter
+                const userRes = await query('SELECT email FROM users WHERE promoter_id = $1', [id]);
+                if (userRes.rows.length > 0) {
+                    await emailService.sendApprovalEmail(userRes.rows[0].email, updatedPromoter.name);
+                }
+            } catch (emailErr) {
+                console.error('Failed to send approval email:', emailErr);
+                // Don't fail the request if email fails
+            }
+        }
 
         res.json({
             success: true,

@@ -177,3 +177,56 @@ export const sendTicketEmail = async (
 
     return sendEmail(to, subject, html);
 };
+
+/**
+ * Send promoter approval email
+ */
+export const sendApprovalEmail = async (to: string, promoterName: string) => {
+    const brandName = process.env.EMAIL_FROM_NAME || 'Knockout Pass';
+    const webUrl = process.env.WEB_URL || 'http://localhost:3000';
+
+    const subject = `✅ ¡Felicidades! Tu cuenta de promotora ha sido aprobada - ${brandName}`;
+    const html = `
+<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0a0a0a; color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #333;">
+    <div style="background-color: #22c55e; padding: 30px; text-align: center;">
+        <h1 style="margin: 0; font-size: 28px; text-transform: uppercase; letter-spacing: 2px;">¡CUENTA APROBADA!</h1>
+    </div>
+    
+    <div style="padding: 40px 30px;">
+        <p style="font-size: 18px; color: #aaa; margin-bottom: 30px;">Hola <strong>${promoterName}</strong>,</p>
+        <p style="font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+            Nos complace informarte que tu solicitud para unirte como promotora oficial ha sido **aprobada**.
+        </p>
+        
+        <p style="font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+            Ya puedes acceder a tu panel de control para gestionar tus eventos, ver tus ventas y personalizar tu perfil profesional.
+        </p>
+        
+        <div style="text-align: center; margin: 40px 0;">
+            <a href="${webUrl}/auth/login" style="display: inline-block; background-color: #ffffff; color: #000000; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">
+                INGRESAR AL DASHBOARD
+            </a>
+        </div>
+        
+        <div style="background-color: #111; padding: 20px; border-radius: 12px; margin-bottom: 30px;">
+            <h3 style="color: #22c55e; margin-top: 0;">Próximos pasos:</h3>
+            <ul style="color: #888; padding-left: 20px;">
+                <li>Completa tu perfil comercial (Logo y Portada).</li>
+                <li>Crea tu primer evento de combate.</li>
+                <li>Configura tus métodos de cobro.</li>
+            </ul>
+        </div>
+        
+        <p style="font-size: 14px; color: #555; text-align: center; margin-top: 40px;">
+            Si tienes dudas sobre cómo usar el panel, contacta a nuestro equipo de soporte.
+        </p>
+    </div>
+    
+    <div style="padding: 20px; text-align: center; background-color: #000; border-top: 1px solid #111;">
+        <p style="margin: 0; color: #333; font-size: 12px;">&copy; ${new Date().getFullYear()} ${brandName}. Todos los derechos reservados.</p>
+    </div>
+</div>
+`;
+
+    return sendEmail(to, subject, html);
+};
