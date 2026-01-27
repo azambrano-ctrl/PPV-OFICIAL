@@ -96,6 +96,7 @@ const uploadsDir = process.env.UPLOAD_DIR || path.join(__dirname, '../uploads');
 app.use('/uploads', express.static(uploadsDir));
 
 // Initialize Passport
+app.set('trust proxy', 1);
 app.use(passport.initialize());
 
 // Request logging

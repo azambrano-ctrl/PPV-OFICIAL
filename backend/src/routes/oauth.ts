@@ -23,14 +23,22 @@ const isFacebookOAuthConfigured = !!(facebookAppId && facebookAppSecret);
 
 // Helper to get base URLs with debug logging
 const getApiUrl = () => {
-    const url = process.env.API_URL;
-    if (!url) console.warn('⚠️ API_URL no está configurada en variables de entorno');
-    return url || '';
+    let url = process.env.API_URL;
+    if (!url) {
+        console.warn('⚠️ API_URL no está configurada en variables de entorno');
+        return '';
+    }
+    // Strip trailing slash if present
+    return url.replace(/\/$/, '');
 };
 const getWebUrl = () => {
-    const url = process.env.WEB_URL;
-    if (!url) console.warn('⚠️ WEB_URL no está configurada en variables de entorno');
-    return url || '';
+    let url = process.env.WEB_URL;
+    if (!url) {
+        console.warn('⚠️ WEB_URL no está configurada en variables de entorno');
+        return '';
+    }
+    // Strip trailing slash if present
+    return url.replace(/\/$/, '');
 };
 
 // ... Google Strategy (existing code) ...
@@ -41,6 +49,7 @@ if (isGoogleOAuthConfigured) {
                 clientID: googleClientId!,
                 clientSecret: googleClientSecret!,
                 callbackURL: `${getApiUrl()}/api/auth/google/callback`,
+                proxy: true,
             },
             async (_accessToken, _refreshToken, profile, done) => {
                 try {
@@ -72,7 +81,8 @@ if (isFacebookOAuthConfigured) {
                 clientID: facebookAppId!,
                 clientSecret: facebookAppSecret!,
                 callbackURL: `${getApiUrl()}/api/auth/facebook/callback`,
-                profileFields: ['id', 'emails', 'name', 'displayName'] // Request email specifically
+                profileFields: ['id', 'emails', 'name', 'displayName'], // Request email specifically
+                proxy: true,
             },
             async (_accessToken: any, _refreshToken: any, profile: any, done: any) => {
                 try {
