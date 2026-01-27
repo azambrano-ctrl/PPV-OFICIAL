@@ -270,7 +270,7 @@ export default function EventForm({ event, onSuccess, onCancel, isAdmin }: Event
                             ) : (
                                 <>
                                     <Save className="w-5 h-5" />
-                                    <span>{event?.id ? 'Guardar Cambios' : 'Crear Evento'}</span>
+                                    <span>{event?.id ? 'Guardar Cambios' : (isAdmin ? 'Crear Evento' : 'Enviar Solicitud')}</span>
                                 </>
                             )}
                         </button>

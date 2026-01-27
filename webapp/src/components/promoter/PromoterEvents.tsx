@@ -55,7 +55,7 @@ export default function PromoterEvents({ promoterId }: PromoterEventsProps) {
                 <div className="flex items-center justify-between">
                     <div>
                         <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter">
-                            {editingEvent ? 'Editar Evento' : 'Crear Nuevo Evento'}
+                            {editingEvent ? 'Editar Evento' : 'Solicitar Nuevo Evento'}
                         </h2>
                         <p className="text-gray-400 text-sm">Configura los detalles de tu transmisión PPV</p>
                     </div>
@@ -95,7 +95,7 @@ export default function PromoterEvents({ promoterId }: PromoterEventsProps) {
                     className="bg-primary-600 hover:bg-primary-500 text-white px-6 py-2.5 rounded-full font-bold uppercase italic text-sm transition-all flex items-center gap-2 shadow-lg shadow-primary-600/20"
                 >
                     <Plus className="w-4 h-4" />
-                    Crear Evento
+                    Solicitar Evento
                 </button>
             </div>
 
@@ -114,7 +114,7 @@ export default function PromoterEvents({ promoterId }: PromoterEventsProps) {
                         className="mt-6 text-primary-500 hover:text-primary-400 font-black uppercase italic text-sm tracking-widest flex items-center gap-2 mx-auto"
                     >
                         <Plus className="w-4 h-4" />
-                        Crear mi primer evento
+                        Solicitar mi primer evento
                     </button>
                 </div>
             ) : (

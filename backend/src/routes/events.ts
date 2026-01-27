@@ -28,7 +28,7 @@ const eventIdSchema = z.object({
 });
 
 const eventQuerySchema = z.object({
-    status: z.enum(['upcoming', 'live', 'finished', 'cancelled', 'reprise']).optional(),
+    status: z.enum(['upcoming', 'live', 'finished', 'cancelled', 'reprise', 'pending']).optional(),
     featured: z.string().transform(val => val === 'true').optional(),
     upcoming: z.string().transform(val => val === 'true').optional(),
     promoter_id: z.string().uuid().optional(),
@@ -106,7 +106,7 @@ router.post(
             event_date: new Date(req.body.event_date),
             price: parseFloat(req.body.price),
             currency: req.body.currency || 'USD',
-            status: isPromoter ? 'upcoming' : (req.body.status || 'upcoming'),
+            status: isPromoter ? 'pending' : (req.body.status || 'upcoming'),
             is_featured: isPromoter ? false : (req.body.is_featured === 'true'),
             stream_url: isPromoter ? null : (req.body.stream_url || null),
             thumbnail_url: files?.thumbnail ? files.thumbnail[0].path : undefined,
@@ -352,7 +352,7 @@ router.patch(
     authenticate,
     requireAdmin,
     validateParams(eventIdSchema),
-    validateBody(z.object({ status: z.enum(['upcoming', 'live', 'finished', 'cancelled', 'reprise']) })),
+    validateBody(z.object({ status: z.enum(['upcoming', 'live', 'finished', 'cancelled', 'reprise', 'pending']) })),
     asyncHandler(async (req: AuthRequest, res: Response) => {
         const event = await updateEventStatus(req.params.id, req.body.status);
 
