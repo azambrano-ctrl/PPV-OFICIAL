@@ -1,5 +1,5 @@
 import { Router, Response, Request } from 'express';
-import * as bcrypt from 'bcryptjs';
+const bcrypt = require('bcryptjs');
 import { findUserByEmail } from '../services/userService';
 import { z } from 'zod';
 import { asyncHandler } from '../middleware/errorHandler';
