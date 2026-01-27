@@ -24,8 +24,8 @@ const nextConfig = {
                 destination: 'https://ppv-backend.onrender.com/api/:path*',
             },
             {
-                source: '/uploads/:path*',
-                destination: 'https://ppv-backend.onrender.com/uploads/:path*',
+                source: '/socket.io/:path*',
+                destination: 'https://ppv-backend.onrender.com/socket.io/:path*',
             },
         ]
     },
