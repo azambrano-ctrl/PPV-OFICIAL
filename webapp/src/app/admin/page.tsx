@@ -275,7 +275,7 @@ export default function AdminPage() {
 
                                         <div className="flex gap-2">
                                             <Link
-                                                href={`/admin/events/${event.id}`}
+                                                href={`/admin/events/${event.id}/edit`}
                                                 className="btn-secondary flex-1 text-center"
                                             >
                                                 Edit

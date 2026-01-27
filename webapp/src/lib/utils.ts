@@ -9,9 +9,14 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 export function getImageUrl(relativePath?: string | null): string | undefined {
     if (!relativePath) return undefined;
     if (relativePath.startsWith('http')) return relativePath;
-    const url = `${API_URL}${relativePath}`;
-    // console.log('Generating Image URL:', { API_URL, relativePath, result: url });
-    return url;
+
+    // Ensure relative paths start with / to avoid relative resolution from current URL
+    const cleanPath = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
+
+    // If it's a local upload, ensure it goes through the /uploads/ proxy
+    const finalPath = cleanPath.startsWith('/uploads/') ? cleanPath : `/uploads${cleanPath}`;
+
+    return `${API_URL}${finalPath}`;
 }
 
 /**
