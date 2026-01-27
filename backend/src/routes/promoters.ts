@@ -8,11 +8,17 @@ import { uploadPromoterImages, handleUploads } from '../middleware/upload';
 
 const router = Router();
 
-// Validation schemas
 const createPromoterSchema = z.object({
     name: z.string().min(2, 'Name is required'),
     description: z.string().optional(),
     social_links: z.string().optional(), // Will be parsed from JSON
+});
+
+const registerPromoterSchema = z.object({
+    name: z.string().min(2, 'Name is required'),
+    description: z.string().min(10, 'Description must be at least 10 characters'),
+    email: z.string().email('Invalid email'),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
 /**
@@ -21,11 +27,18 @@ const createPromoterSchema = z.object({
  */
 router.get(
     '/',
-    asyncHandler(async (_req: Request, res: Response) => {
+    asyncHandler(async (req: Request, res: Response) => {
         const promoters = await promoterService.getAllPromoters();
+
+        // Filter active for non-admins
+        const user = (req as any).user;
+        const filtered = (user?.role === 'admin')
+            ? promoters
+            : promoters.filter((p: any) => p.status === 'active');
+
         res.json({
             success: true,
-            data: promoters,
+            data: filtered,
         });
     })
 );
@@ -78,6 +91,65 @@ router.post(
             success: true,
             message: 'Promoter created successfully',
             data: promoter,
+        });
+    })
+);
+
+/**
+ * POST /api/promoters/register
+ * Self-registration for promoters (Public)
+ */
+router.post(
+    '/register',
+    validateBody(registerPromoterSchema),
+    asyncHandler(async (req: Request, res: Response) => {
+        const bcrypt = require('bcryptjs');
+        const { name, description, email, password } = req.body;
+
+        // Check if email already exists
+        const { findUserByEmail } = require('../services/userService');
+        const existingUser = await findUserByEmail(email);
+        if (existingUser) {
+            res.status(400).json({ success: false, message: 'El correo electrónico ya está registrado' });
+            return;
+        }
+
+        const password_hash = await bcrypt.hash(password, 10);
+
+        const result = await promoterService.registerPromoter({
+            name,
+            description,
+            email,
+            password_hash
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'Solicitud de registro enviada correctamente. Un administrador revisará tu perfil.',
+            data: result
+        });
+    })
+);
+
+/**
+ * PATCH /api/promoters/:id/status
+ * Update promoter status (Admin only)
+ */
+router.patch(
+    '/:id/status',
+    authenticate,
+    requireAdmin,
+    validateBody(z.object({ status: z.enum(['pending', 'active', 'suspended']) })),
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { id } = req.params;
+        const { status } = req.body;
+
+        const updatedPromoter = await promoterService.updatePromoter(id, { status });
+
+        res.json({
+            success: true,
+            message: `Estado de la promotora actualizado a ${status}`,
+            data: updatedPromoter
         });
     })
 );

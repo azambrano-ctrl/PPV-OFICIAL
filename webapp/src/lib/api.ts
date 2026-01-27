@@ -227,6 +227,12 @@ export const promotersAPI = {
 
     delete: (id: string) =>
         api.delete(`/promoters/${id}`),
+
+    register: (data: { name: string; description: string; email: string; password: string }) =>
+        api.post('/promoters/register', data),
+
+    updateStatus: (id: string, status: 'pending' | 'active' | 'suspended') =>
+        api.patch(`/promoters/${id}/status`, { status }),
 };
 
 // Error handler helper

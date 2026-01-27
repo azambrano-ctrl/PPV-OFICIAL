@@ -103,6 +103,19 @@ export const loginUser = async (
         throw new Error('Invalid credentials');
     }
 
+    // Check promoter status if applicable
+    if (user.role === 'promoter' && user.promoter_id) {
+        const promoterResult = await query('SELECT status FROM promoters WHERE id = $1', [user.promoter_id]);
+        const promoter = promoterResult.rows[0];
+
+        if (!promoter || promoter.status !== 'active') {
+            const statusMsg = promoter?.status === 'pending'
+                ? 'Tu cuenta de promotora aún está pendiente de aprobación.'
+                : 'Tu cuenta de promotora ha sido suspendida.';
+            throw new Error(statusMsg);
+        }
+    }
+
     // Generate tokens
     const payload: JWTPayload = {
         userId: user.id,

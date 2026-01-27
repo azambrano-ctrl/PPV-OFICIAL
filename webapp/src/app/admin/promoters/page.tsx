@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Edit, Trash2, Globe, Users } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Globe, Users, CheckCircle, Shield } from 'lucide-react';
 import { promotersAPI, handleAPIError } from '@/lib/api';
 import { getImageUrl } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -14,6 +14,7 @@ interface Promoter {
     description?: string;
     logo_url?: string;
     banner_url?: string;
+    status: 'pending' | 'active' | 'suspended';
     created_at: string;
 }
 
@@ -43,6 +44,17 @@ export default function AdminPromotersPage() {
             toast.error('Error al cargar promotoras');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleUpdateStatus = async (id: string, newStatus: 'pending' | 'active' | 'suspended') => {
+        try {
+            await promotersAPI.updateStatus(id, newStatus);
+            toast.success(`Estado actualizado a ${newStatus}`);
+            loadPromoters();
+        } catch (error) {
+            const message = handleAPIError(error);
+            toast.error(message);
         }
     };
 
@@ -149,7 +161,15 @@ export default function AdminPromotersPage() {
                             </div>
 
                             <div className="pt-10 p-6 flex-grow flex flex-col">
-                                <h3 className="text-xl font-bold text-white mb-2">{promoter.name}</h3>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-xl font-bold text-white mb-0">{promoter.name}</h3>
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${promoter.status === 'active' ? 'bg-green-500/20 text-green-500' :
+                                        promoter.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
+                                            'bg-red-500/20 text-red-500'
+                                        }`}>
+                                        {promoter.status === 'active' ? 'Activo' : promoter.status === 'pending' ? 'Pendiente' : 'Suspendido'}
+                                    </span>
+                                </div>
                                 <p className="text-sm text-gray-400 line-clamp-2 mb-4 flex-grow">
                                     {promoter.description || 'Sin descripción disponible.'}
                                 </p>
@@ -163,6 +183,33 @@ export default function AdminPromotersPage() {
                                         Ver perfil público
                                     </Link>
                                     <div className="flex items-center gap-2">
+                                        {promoter.status === 'pending' && (
+                                            <button
+                                                onClick={() => handleUpdateStatus(promoter.id, 'active')}
+                                                className="p-2 hover:bg-green-500/10 rounded-lg transition-colors text-green-500"
+                                                title="Aprobar"
+                                            >
+                                                <CheckCircle className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                        {promoter.status === 'active' && (
+                                            <button
+                                                onClick={() => handleUpdateStatus(promoter.id, 'suspended')}
+                                                className="p-2 hover:bg-yellow-500/10 rounded-lg transition-colors text-yellow-500"
+                                                title="Suspender"
+                                            >
+                                                <Shield className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                        {promoter.status === 'suspended' && (
+                                            <button
+                                                onClick={() => handleUpdateStatus(promoter.id, 'active')}
+                                                className="p-2 hover:bg-green-500/10 rounded-lg transition-colors text-green-500"
+                                                title="Reactivar"
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                            </button>
+                                        )}
                                         <Link
                                             href={`/admin/promoters/${promoter.id}/edit`}
                                             className="p-2 hover:bg-dark-700 rounded-lg transition-colors text-blue-400"
