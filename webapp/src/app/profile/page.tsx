@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { User, Mail, Phone, Calendar, CreditCard, LogOut, Play, Clock, CheckCircle } from 'lucide-react';
@@ -31,6 +31,14 @@ export default function ProfilePage() {
     const [purchases, setPurchases] = useState<Purchase[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'info' | 'purchases'>('info');
+    const searchParams = useSearchParams();
+
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab === 'purchases') {
+            setActiveTab('purchases');
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         if (!isAuthenticated) {

@@ -145,7 +145,7 @@ export default function Navbar() {
                                                     <span>Mi Perfil</span>
                                                 </Link>
                                                 <Link
-                                                    href="/profile/purchases"
+                                                    href="/profile?tab=purchases"
                                                     className="flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-dark-800 hover:text-white transition-colors"
                                                     onClick={() => setUserMenuOpen(false)}
                                                 >
@@ -243,6 +243,13 @@ export default function Navbar() {
                                             </div>
                                         </div>
 
+                                        <Link
+                                            href="/profile?tab=purchases"
+                                            onClick={() => setIsOpen(false)}
+                                            className="block px-4 py-3 rounded-xl text-gray-300 hover:bg-white/5"
+                                        >
+                                            Mis Eventos
+                                        </Link>
                                         <Link
                                             href="/profile"
                                             onClick={() => setIsOpen(false)}
