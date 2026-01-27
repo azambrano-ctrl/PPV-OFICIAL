@@ -46,8 +46,11 @@ export default function EditEventPage() {
             const event = response.data.data;
 
             // Format date for datetime-local input
+            // Format UTC date to Local for datetime-local input
             const eventDate = new Date(event.event_date);
-            const formattedDate = eventDate.toISOString().slice(0, 16);
+            const offset = eventDate.getTimezoneOffset() * 60000;
+            const localDate = new Date(eventDate.getTime() - offset);
+            const formattedDate = localDate.toISOString().slice(0, 16);
 
             setFormData({
                 title: event.title || '',
@@ -79,7 +82,7 @@ export default function EditEventPage() {
             const data = new FormData();
             data.append('title', formData.title);
             data.append('description', formData.description);
-            data.append('event_date', formData.event_date);
+            data.append('event_date', new Date(formData.event_date).toISOString());
             data.append('price', formData.price);
             data.append('currency', formData.currency);
             data.append('status', formData.status);

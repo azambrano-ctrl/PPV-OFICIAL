@@ -34,7 +34,7 @@ export default function NewEventPage() {
             const data = new FormData();
             data.append('title', formData.title);
             data.append('description', formData.description);
-            data.append('event_date', formData.event_date);
+            data.append('event_date', new Date(formData.event_date).toISOString());
             data.append('price', formData.price);
             data.append('currency', formData.currency);
             data.append('status', formData.status);
