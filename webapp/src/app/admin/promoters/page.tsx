@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Edit, Trash2, Globe, Users, CheckCircle, Shield } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Globe, Users, CheckCircle, Shield, Phone, MapPin } from 'lucide-react';
 import { promotersAPI, handleAPIError } from '@/lib/api';
 import { getImageUrl } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -15,6 +15,8 @@ interface Promoter {
     logo_url?: string;
     banner_url?: string;
     status: 'pending' | 'active' | 'suspended';
+    phone?: string;
+    city?: string;
     created_at: string;
 }
 
@@ -170,9 +172,32 @@ export default function AdminPromotersPage() {
                                         {promoter.status === 'active' ? 'Activo' : promoter.status === 'pending' ? 'Pendiente' : 'Suspendido'}
                                     </span>
                                 </div>
-                                <p className="text-sm text-gray-400 line-clamp-2 mb-4 flex-grow">
+                                <p className="text-sm text-gray-400 line-clamp-2 mb-4">
                                     {promoter.description || 'Sin descripción disponible.'}
                                 </p>
+
+                                <div className="space-y-2 mb-4 flex-grow">
+                                    {promoter.phone && (
+                                        <div className="flex items-center text-xs text-gray-400 gap-2">
+                                            <Phone className="w-3.5 h-3.5 text-primary-500" />
+                                            <span>{promoter.phone}</span>
+                                            <a
+                                                href={`https://wa.me/${promoter.phone.replace(/\D/g, '')}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="ml-auto text-green-500 hover:text-green-400 font-medium"
+                                            >
+                                                WhatsApp
+                                            </a>
+                                        </div>
+                                    )}
+                                    {promoter.city && (
+                                        <div className="flex items-center text-xs text-gray-400 gap-2">
+                                            <MapPin className="w-3.5 h-3.5 text-primary-500" />
+                                            <span>{promoter.city}</span>
+                                        </div>
+                                    )}
+                                </div>
 
                                 <div className="flex items-center justify-between pt-4 border-t border-dark-800">
                                     <Link
