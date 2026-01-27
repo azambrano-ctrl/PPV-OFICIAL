@@ -67,7 +67,7 @@ export default function PromoterRegisterPage() {
         <div className="min-h-screen bg-dark-950 flex flex-col">
             <Navbar />
 
-            <main className="flex-1 py-16 px-4">
+            <main className="flex-1 pt-32 pb-16 px-4">
                 <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
 
                     {/* Branding / Info Left Side */}
