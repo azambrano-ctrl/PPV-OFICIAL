@@ -6,6 +6,7 @@ import ImageSlider from '@/components/ui/ImageSlider';
 import { useState, useEffect } from 'react';
 import { settingsAPI } from '@/lib/api';
 import { motion } from 'framer-motion';
+import { getImageUrl } from '@/lib/utils';
 
 export default function AboutPage() {
     const [settings, setSettings] = useState<any>(null);
@@ -84,11 +85,13 @@ export default function AboutPage() {
                 {/* Background Layer */}
                 <div className="absolute inset-0 z-0">
                     <div className="absolute inset-0 bg-gradient-to-br from-dark-950 via-dark-950/80 to-primary-950/40 z-10"></div>
-                    <img
-                        src={settings?.about_background ? settings.about_background : "https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=2000&auto=format&fit=crop"}
-                        className="w-full h-full object-cover scale-105 animate-slow-zoom opacity-40 mix-blend-overlay"
-                        alt="Hero Background"
-                    />
+                    {!loading && (
+                        <img
+                            src={getImageUrl(settings?.about_background) || "https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=2000&auto=format&fit=crop"}
+                            className="w-full h-full object-cover scale-105 animate-slow-zoom opacity-40 mix-blend-overlay transition-opacity duration-1000"
+                            alt="Hero Background"
+                        />
+                    )}
                     {/* Vignette */}
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_0%,_#020617_100%)] z-20"></div>
                 </div>
@@ -174,7 +177,7 @@ export default function AboutPage() {
                             transition={{ duration: 0.8 }}
                             className="relative h-[500px] rounded-3xl overflow-hidden shadow-2xl ring-1 ring-dark-700 group"
                         >
-                            {settings?.about_slider_images && settings.about_slider_images.length > 0 ? (
+                            {!loading && (settings?.about_slider_images && settings.about_slider_images.length > 0 ? (
                                 <ImageSlider images={typeof settings.about_slider_images === 'string' ? JSON.parse(settings.about_slider_images) : settings.about_slider_images} />
                             ) : (
                                 <>
@@ -194,7 +197,7 @@ export default function AboutPage() {
                                         <p className="font-bold text-white text-2xl leading-tight">Vive la intensidad de cada golpe, en tiempo real.</p>
                                     </div>
                                 </>
-                            )}
+                            ))}
                         </motion.div>
                     </div>
                 </div>
