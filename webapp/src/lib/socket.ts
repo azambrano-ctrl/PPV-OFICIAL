@@ -1,7 +1,18 @@
 import { io, Socket } from 'socket.io-client';
 
-// Use backend URL directly for sockets to avoid Next.js proxy upgrade issues
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'https://ppv-backend.onrender.com';
+// Force direct backend connection for Socket.io to bypass Next.js proxy limitations
+const getWsUrl = () => {
+    const envWsUrl = process.env.NEXT_PUBLIC_WS_URL;
+    const backendUrl = 'https://ppv-backend.onrender.com';
+
+    // If no env var, or if it points to the main domain, use the direct backend URL
+    if (!envWsUrl || envWsUrl.includes('arenafightpass.com')) {
+        return backendUrl;
+    }
+    return envWsUrl;
+};
+
+const WS_URL = getWsUrl();
 
 let socket: Socket | null = null;
 
