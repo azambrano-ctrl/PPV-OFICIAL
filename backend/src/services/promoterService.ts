@@ -12,6 +12,7 @@ export interface Promoter {
     status: 'pending' | 'active' | 'suspended';
     phone?: string;
     city?: string;
+    experience_links?: string;
     created_at: Date;
     updated_at: Date;
 }
@@ -25,6 +26,7 @@ export interface CreatePromoterInput {
     status?: 'pending' | 'active' | 'suspended';
     phone?: string;
     city?: string;
+    experience_links?: string;
 }
 
 /**
@@ -91,8 +93,9 @@ export const registerPromoter = async (input: {
     password_hash: string;
     phone?: string;
     city?: string;
+    experience_links?: string;
 }) => {
-    const { name, description, email, password_hash, phone, city } = input;
+    const { name, description, email, password_hash, phone, city, experience_links } = input;
 
     return transaction(async (client: any) => {
         // 1. Create promoter profile
@@ -101,10 +104,10 @@ export const registerPromoter = async (input: {
             .replace(/\s+/g, '-');
 
         const promoterRes = await client.query(
-            `INSERT INTO promoters (name, slug, description, status, phone, city)
-             VALUES ($1, $2, $3, 'pending', $4, $5)
+            `INSERT INTO promoters (name, slug, description, status, phone, city, experience_links)
+             VALUES ($1, $2, $3, 'pending', $4, $5, $6)
              RETURNING id`,
-            [name, slug, description, phone, city]
+            [name, slug, description, phone, city, experience_links]
         );
 
         const promoterId = promoterRes.rows[0].id;
@@ -132,7 +135,7 @@ export const updatePromoter = async (id: string, updates: Partial<CreatePromoter
     const values: any[] = [];
     let paramCount = 1;
 
-    const allowedFields = ['name', 'description', 'logo_url', 'banner_url', 'gallery', 'social_links', 'status', 'phone', 'city'];
+    const allowedFields = ['name', 'description', 'logo_url', 'banner_url', 'gallery', 'social_links', 'status', 'phone', 'city', 'experience_links'];
 
     for (const [key, value] of Object.entries(updates)) {
         if (allowedFields.includes(key) && value !== undefined) {

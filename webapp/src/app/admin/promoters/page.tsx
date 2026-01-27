@@ -17,6 +17,7 @@ interface Promoter {
     status: 'pending' | 'active' | 'suspended';
     phone?: string;
     city?: string;
+    experience_links?: string;
     created_at: string;
 }
 
@@ -195,6 +196,19 @@ export default function AdminPromotersPage() {
                                         <div className="flex items-center text-xs text-gray-400 gap-2">
                                             <MapPin className="w-3.5 h-3.5 text-primary-500" />
                                             <span>{promoter.city}</span>
+                                        </div>
+                                    )}
+                                    {promoter.experience_links && (
+                                        <div className="flex items-center text-xs text-gray-400 gap-2">
+                                            <Globe className="w-3.5 h-3.5 text-primary-500" />
+                                            <a
+                                                href={promoter.experience_links.startsWith('http') ? promoter.experience_links : `https://${promoter.experience_links}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-primary-400 hover:text-primary-300 font-medium truncate"
+                                            >
+                                                Ver Sherdog / Tapology
+                                            </a>
                                         </div>
                                     )}
                                 </div>

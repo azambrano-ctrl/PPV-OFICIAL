@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Shield, ArrowRight, CheckCircle, Mail, Lock, Building2, Info, Phone, MapPin, AlignLeft } from 'lucide-react';
+import { Shield, ArrowRight, CheckCircle, Mail, Lock, Building2, Info, Phone, MapPin, AlignLeft, Globe } from 'lucide-react';
 import { promotersAPI, handleAPIError } from '@/lib/api';
 import Navbar from '@/components/ui/Navbar';
 import toast from 'react-hot-toast';
@@ -18,6 +18,7 @@ export default function PromoterRegisterPage() {
         password: '',
         phone: '',
         city: '',
+        experience_links: '',
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -201,6 +202,21 @@ export default function PromoterRegisterPage() {
                                             placeholder="Ej: Guayaquil, Ecuador"
                                         />
                                     </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] mb-2 ml-4">Links de Sherdog / Tapology</label>
+                                    <div className="relative">
+                                        <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                                        <input
+                                            type="url"
+                                            value={formData.experience_links}
+                                            onChange={(e) => setFormData({ ...formData, experience_links: e.target.value })}
+                                            className="w-full bg-dark-950/50 border border-dark-700 rounded-2xl pl-12 pr-4 py-4 text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder:text-gray-700"
+                                            placeholder="https://www.sherdog.com/organizations/..."
+                                        />
+                                    </div>
+                                    <p className="text-[10px] text-gray-600 mt-2 ml-4 italic">Opcional: Ayúdanos a validar tu trayectoria.</p>
                                 </div>
 
                                 <div>
