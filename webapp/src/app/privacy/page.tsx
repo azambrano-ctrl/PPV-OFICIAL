@@ -1,58 +1,63 @@
 import React from 'react';
 
-export default function PrivacyPage() {
+export default function PrivacyPolicy() {
     return (
-        <div className="min-h-screen bg-dark-950 pt-32 pb-12 px-4 sm:px-6 lg:px-8 text-dark-200">
-            <div className="max-w-3xl mx-auto bg-dark-900 shadow-xl rounded-lg p-8 border border-dark-800">
-                <h1 className="text-3xl font-display font-bold text-white mb-6">Política de Privacidad</h1>
+        <div className="bg-dark-950 min-h-screen pt-24 pb-12">
+            <div className="container-custom max-w-4xl">
+                <h1 className="text-4xl font-display font-bold mb-8 gradient-text">Política de Privacidad</h1>
 
-                <div className="prose prose-invert max-w-none">
-                    <p className="mb-4">
-                        Bienvenido a PPV Streaming. Nos tomamos muy en serio la privacidad de sus datos personales.
-                        Esta Política de Privacidad describe cómo recopilamos, usamos y protegemos su información,
-                        en cumplimiento con la <strong>Ley Orgánica de Protección de Datos Personales (LOPDP)</strong> de la República del Ecuador.
-                    </p>
+                <div className="prose prose-invert max-w-none space-y-6 text-dark-300">
+                    <section>
+                        <h2 className="text-2xl font-semibold text-white">1. Información que recopilamos</h2>
+                        <p>
+                            En Arena Fight Pass, recopilamos información necesaria para brindarte el mejor servicio de streaming. Esto incluye:
+                        </p>
+                        <ul className="list-disc pl-6 space-y-2">
+                            <li>Información de registro (nombre, correo electrónico).</li>
+                            <li>Datos de pago (procesados de forma segura a través de Stripe y PayPal).</li>
+                            <li>Información técnica (dirección IP, tipo de dispositivo) para optimizar la calidad del streaming.</li>
+                        </ul>
+                    </section>
 
-                    <h2 className="text-xl font-bold text-white mt-6 mb-3">1. Responsable del Tratamiento</h2>
-                    <p className="mb-4">
-                        PPV Streaming (en adelante "la Plataforma") es el responsable del tratamiento de los datos personales
-                        que usted nos proporciona. Para cualquier consulta, puede contactarnos a través de nuestros canales oficiales.
-                    </p>
+                    <section>
+                        <h2 className="text-2xl font-semibold text-white">2. Uso de la información</h2>
+                        <p>
+                            Utilizamos tu información para:
+                        </p>
+                        <ul className="list-disc pl-6 space-y-2">
+                            <li>Gestionar tu acceso a los eventos en vivo.</li>
+                            <li>Procesar tus compras y suscripciones.</li>
+                            <li>Enviarte notificaciones sobre próximos eventos si así lo autorizas.</li>
+                            <li>Prevenir el fraude y asegurar la integridad de nuestra plataforma.</li>
+                        </ul>
+                    </section>
 
-                    <h2 className="text-xl font-bold text-white mt-6 mb-3">2. Datos que Recopilamos</h2>
-                    <ul className="list-disc list-inside mb-4 space-y-2">
-                        <li><strong>Datos de Identificación:</strong> Nombre, correo electrónico, imagen de perfil (a través de Facebook/Google Login).</li>
-                        <li><strong>Datos de Transacción:</strong> Historial de compras de eventos (no almacenamos números completos de tarjetas de crédito).</li>
-                        <li><strong>Datos Técnicos:</strong> Dirección IP, tipo de navegador y registros de acceso para seguridad.</li>
-                    </ul>
+                    <section>
+                        <h2 className="text-2xl font-semibold text-white">3. Protección de datos</h2>
+                        <p>
+                            Implementamos medidas de seguridad robustas para proteger tus datos personales. No vendemos ni compartimos tu información con terceros con fines comerciales. Tus datos de pago están cifrados y se manejan cumpliendo con los estándares PCI-DSS.
+                        </p>
+                    </section>
 
-                    <h2 className="text-xl font-bold text-white mt-6 mb-3">3. Finalidad del Tratamiento</h2>
-                    <p className="mb-4">
-                        Sus datos serán utilizados exclusivamente para:
-                    </p>
-                    <ul className="list-disc list-inside mb-4 space-y-2">
-                        <li>Permitir el acceso y autenticación en la plataforma.</li>
-                        <li>Procesar los pagos de los eventos PPV (Pay-Per-View).</li>
-                        <li>Enviar notificaciones relacionadas con los eventos adquiridos.</li>
-                        <li>Mejorar la seguridad y prevenir fraudes.</li>
-                    </ul>
+                    <section>
+                        <h2 className="text-2xl font-semibold text-white">4. Tus derechos</h2>
+                        <p>
+                            Tienes derecho a acceder, rectificar o eliminar tus datos personales en cualquier momento a través de la configuración de tu cuenta o contactando a nuestro equipo de soporte.
+                        </p>
+                    </section>
 
-                    <h2 className="text-xl font-bold text-white mt-6 mb-3">4. Derechos del Titular (LOPDP)</h2>
-                    <p className="mb-4">
-                        De acuerdo con la ley ecuatoriana, usted tiene derecho a: Acceso, Rectificación, Eliminación,
-                        Oposición y Portabilidad de sus datos. Para ejercer estos derechos, contáctenos mediante el formulario de soporte.
-                    </p>
+                    <section>
+                        <h2 className="text-2xl font-semibold text-white">5. Cookies</h2>
+                        <p>
+                            Utilizamos cookies para mantener tu sesión activa y recordar tus preferencias de visualización. Puedes gestionar las cookies desde la configuración de tu navegador.
+                        </p>
+                    </section>
 
-                    <h2 className="text-xl font-bold text-white mt-6 mb-3">5. Eliminación de Datos (Facebook/Google)</h2>
-                    <p className="mb-4">
-                        Si utilizó Facebook o Google para iniciar sesión y desea eliminar los datos asociados a su cuenta,
-                        puede solicitar la eliminación completa de su perfil desde la configuración de usuario de nuestra plataforma
-                        o contactando a soporte para la eliminación manual inmediata.
-                    </p>
-
-                    <p className="mt-8 text-sm text-dark-400">
-                        Última actualización: {new Date().toLocaleDateString('es-EC')}
-                    </p>
+                    <section className="pt-8 border-t border-dark-800">
+                        <p className="text-sm italic">
+                            Última actualización: 26 de enero de 2026.
+                        </p>
+                    </section>
                 </div>
             </div>
         </div>

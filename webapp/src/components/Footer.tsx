@@ -49,10 +49,10 @@ export default function Footer() {
     };
 
     const socialLinks = [
-        { icon: Facebook, href: '#', label: 'Facebook' },
-        { icon: Twitter, href: '#', label: 'Twitter' },
-        { icon: Instagram, href: '#', label: 'Instagram' },
-        { icon: Youtube, href: '#', label: 'YouTube' },
+        { icon: Facebook, href: 'https://facebook.com/arenafightpass', label: 'Facebook' },
+        { icon: Twitter, href: 'https://twitter.com/arenafightpass', label: 'Twitter' },
+        { icon: Instagram, href: 'https://instagram.com/arenafightpass', label: 'Instagram' },
+        { icon: Youtube, href: 'https://youtube.com/@arenafightpass', label: 'YouTube' },
     ];
 
     return (
