@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { TrendingUp, Users, DollarSign, Eye, Calendar, BarChart3 } from 'lucide-react';
-import { adminAPI, handleAPIError } from '@/lib/api';
-import { formatCurrency } from '@/lib/utils';
+import { adminAPI } from '@/lib/api';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
 interface ChartData {
@@ -11,6 +11,53 @@ interface ChartData {
     total?: string;
     count?: string;
 }
+
+// Simple Bar Chart Component - Moved outside to prevent remounting issues
+const BarChart = ({ data, dataKey, color }: { data: ChartData[], dataKey: 'total' | 'count', color: string }) => {
+    if (!data || data.length === 0) {
+        return (
+            <div className="h-full flex flex-col items-center justify-center text-gray-500">
+                <BarChart3 className="w-12 h-12 mb-2 opacity-20" />
+                <p className="text-sm">No hay datos suficientes</p>
+            </div>
+        );
+    }
+
+    // Convert values to numbers and ensure they are valid
+    const values = data.map(d => {
+        const val = parseFloat(String(d[dataKey] || '0'));
+        return isNaN(val) ? 0 : val;
+    });
+
+    const maxValue = Math.max(...values, 1);
+
+    return (
+        <div className="h-full flex items-end justify-around gap-2 px-2">
+            {data.map((item, i) => {
+                const value = parseFloat(String(item[dataKey] || '0'));
+                const height = (isNaN(value) ? 0 : value / maxValue) * 100;
+
+                return (
+                    <div key={i} className="flex-1 flex flex-col items-center group relative min-w-[40px]">
+                        {/* Tooltip */}
+                        <div className="absolute -top-10 scale-0 group-hover:scale-100 transition-transform bg-white text-dark-950 text-[10px] py-1 px-2 rounded font-bold whitespace-nowrap z-10 shadow-xl border border-gray-200">
+                            {dataKey === 'total'
+                                ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)
+                                : `${value} usuarios`}
+                        </div>
+                        <div
+                            className={`w-full max-w-[45px] rounded-t-sm transition-all duration-700 ease-out shadow-lg ${color}`}
+                            style={{ height: `${Math.max(height, 5)}%` }}
+                        />
+                        <span className="text-[10px] text-gray-500 mt-2 font-medium uppercase truncate w-full text-center">
+                            {item.month}
+                        </span>
+                    </div>
+                );
+            })}
+        </div>
+    );
+};
 
 export default function AdminStatsPage() {
     const [stats, setStats] = useState<any>({
@@ -56,68 +103,35 @@ export default function AdminStatsPage() {
             name: 'Total Eventos',
             value: stats.totalEvents,
             icon: Calendar,
-            color: 'blue',
+            color: '#3b82f6', // blue-500
             change: `+${stats.eventsThisMonth} este mes`,
+            colorClasses: 'bg-blue-500/20 text-blue-400'
         },
         {
             name: 'Total Usuarios',
             value: stats.totalUsers,
             icon: Users,
-            color: 'green',
+            color: '#22c55e', // green-500
             change: `+${stats.newUsersThisMonth} este mes`,
+            colorClasses: 'bg-green-500/20 text-green-400'
         },
         {
             name: 'Ingresos Totales',
             value: formatCurrency(stats.totalRevenue, 'USD'),
             icon: DollarSign,
-            color: 'yellow',
+            color: '#eab308', // yellow-500
             change: 'Actualizado ahora',
+            colorClasses: 'bg-yellow-500/20 text-yellow-400'
         },
         {
             name: 'Eventos en Vivo',
             value: stats.activeStreams,
             icon: Eye,
-            color: 'purple',
+            color: '#a855f7', // purple-500
             change: 'En tiempo real',
+            colorClasses: 'bg-purple-500/20 text-purple-400'
         },
     ];
-
-    // Simple Bar Chart Component
-    const BarChart = ({ data, dataKey, color }: { data: ChartData[], dataKey: 'total' | 'count', color: string }) => {
-        if (!data || data.length === 0) {
-            return (
-                <div className="h-full flex flex-col items-center justify-center text-gray-500">
-                    <BarChart3 className="w-12 h-12 mb-2 opacity-20" />
-                    <p>No hay datos suficientes</p>
-                </div>
-            );
-        }
-
-        const values = data.map(d => parseFloat(d[dataKey] || '0'));
-        const maxValue = Math.max(...values, 1);
-
-        return (
-            <div className="h-full flex items-end justify-between gap-2 px-2">
-                {data.map((item, i) => {
-                    const value = parseFloat(item[dataKey] || '0');
-                    const height = (value / maxValue) * 100;
-                    return (
-                        <div key={i} className="flex-1 flex flex-col items-center group relative">
-                            {/* Tooltip */}
-                            <div className="absolute -top-10 scale-0 group-hover:scale-100 transition-transform bg-white text-dark-950 text-xs py-1 px-2 rounded font-bold whitespace-nowrap z-10">
-                                {dataKey === 'total' ? formatCurrency(value, 'USD') : `${value} usuarios`}
-                            </div>
-                            <div
-                                className={`w-full rounded-t-sm transition-all duration-500 ${color}`}
-                                style={{ height: `${Math.max(height, 5)}%` }}
-                            />
-                            <span className="text-[10px] text-gray-500 mt-2 font-medium uppercase">{item.month}</span>
-                        </div>
-                    );
-                })}
-            </div>
-        );
-    };
 
     return (
         <div className="space-y-6">
@@ -140,19 +154,11 @@ export default function AdminStatsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {mainStats.map((stat) => {
                     const Icon = stat.icon;
-                    const colors: { [key: string]: string } = {
-                        blue: 'bg-blue-500/20 text-blue-400',
-                        green: 'bg-green-500/20 text-green-400',
-                        yellow: 'bg-yellow-500/20 text-yellow-400',
-                        purple: 'bg-purple-500/20 text-purple-400',
-                    };
-                    const colorClasses = colors[stat.color] || 'bg-gray-500/20 text-gray-400';
-
                     return (
-                        <div key={stat.name} className="card p-6 border-l-4 border-l-current transition-transform hover:scale-[1.02]" style={{ borderColor: stat.color }}>
+                        <div key={stat.name} className="card p-6 border-l-4 transition-transform hover:scale-[1.02]" style={{ borderLeftColor: stat.color }}>
                             <div className="flex items-center justify-between mb-4">
                                 <p className="text-sm text-gray-400">{stat.name}</p>
-                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClasses}`}>
+                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.colorClasses}`}>
                                     <Icon className="w-5 h-5" />
                                 </div>
                             </div>
@@ -185,7 +191,7 @@ export default function AdminStatsPage() {
                         <BarChart
                             data={stats.charts?.revenue || []}
                             dataKey="total"
-                            color="bg-gradient-to-t from-yellow-600 to-yellow-400 opacity-80 group-hover:opacity-100"
+                            color="bg-gradient-to-t from-yellow-600 to-yellow-400 opacity-90 group-hover:opacity-100"
                         />
                     </div>
                 </div>
@@ -205,7 +211,7 @@ export default function AdminStatsPage() {
                         <BarChart
                             data={stats.charts?.users || []}
                             dataKey="count"
-                            color="bg-gradient-to-t from-blue-600 to-blue-400 opacity-80 group-hover:opacity-100"
+                            color="bg-gradient-to-t from-blue-600 to-blue-400 opacity-90 group-hover:opacity-100"
                         />
                     </div>
                 </div>
