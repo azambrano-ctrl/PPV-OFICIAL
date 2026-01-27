@@ -25,6 +25,7 @@ export default function Navbar() {
     const navLinks = [
         { href: '/', label: 'Inicio' },
         { href: '/events', label: 'Eventos' },
+        { href: '/promoters', label: 'Promotoras' },
         { href: '/about', label: 'Nosotros' },
     ];
 
@@ -121,6 +122,16 @@ export default function Navbar() {
                                                         <span>Panel Admin</span>
                                                     </Link>
                                                 )}
+                                                {user.role === 'promoter' && (
+                                                    <Link
+                                                        href="/promoter-dashboard"
+                                                        className="flex items-center space-x-2 px-4 py-2 text-sm hover:bg-dark-800 transition-colors text-blue-400"
+                                                        onClick={() => setUserMenuOpen(false)}
+                                                    >
+                                                        <Settings className="w-4 h-4" />
+                                                        <span>Panel Promotora</span>
+                                                    </Link>
+                                                )}
                                             </div>
                                             <div className="border-t border-dark-800 py-2">
                                                 <button
@@ -203,6 +214,15 @@ export default function Navbar() {
                                             className="block px-4 py-2 rounded-lg text-primary-500 hover:bg-dark-800"
                                         >
                                             Panel Admin
+                                        </Link>
+                                    )}
+                                    {user.role === 'promoter' && (
+                                        <Link
+                                            href="/promoter-dashboard"
+                                            onClick={closeMobileMenu}
+                                            className="block px-4 py-2 rounded-lg text-blue-400 hover:bg-dark-800"
+                                        >
+                                            Panel Promotora
                                         </Link>
                                     )}
                                     <button
