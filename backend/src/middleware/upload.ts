@@ -81,6 +81,9 @@ export const handleUploads = (fields: { name: string; maxCount?: number }[]) => 
 
             try {
                 const files = request.files as { [fieldname: string]: any[] };
+                console.log('📂 [Middleware] Processing files for fields:', Object.keys(files));
+                const totalFiles = Object.values(files).reduce((acc, val) => acc + val.length, 0);
+                console.log(`📂 [Middleware] Total files to upload to Supabase: ${totalFiles}`);
 
                 // Iterate over all files and upload to Supabase
                 const uploadPromises = Object.keys(files).flatMap(fieldName => {

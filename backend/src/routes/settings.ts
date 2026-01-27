@@ -139,8 +139,11 @@ router.put(
 
             // Handle General Settings
             if (req.body.site_name) updates.site_name = req.body.site_name;
-            if (req.body.site_description) updates.site_description = req.body.site_description;
+            if (req.body.site_description !== undefined) updates.site_description = req.body.site_description;
             if (req.body.contact_email) updates.contact_email = req.body.contact_email;
+            if (req.body.site_favicon && !updates.site_favicon) {
+                updates.site_favicon = req.body.site_favicon;
+            }
 
             if (req.body.social_links) {
                 updates.social_links = safeParseJSON(req.body.social_links, { facebook: "", instagram: "", twitter: "" });
@@ -172,7 +175,10 @@ router.put(
             if (req.body.season_pass_enabled !== undefined) updates.season_pass_enabled = String(req.body.season_pass_enabled) === 'true';
             if (req.body.season_pass_title) updates.season_pass_title = req.body.season_pass_title;
             if (req.body.season_pass_description) updates.season_pass_description = req.body.season_pass_description;
-            if (req.body.season_pass_price !== undefined) updates.season_pass_price = parseFloat(req.body.season_pass_price);
+            if (req.body.season_pass_price !== undefined) {
+                const price = parseFloat(req.body.season_pass_price);
+                if (!isNaN(price)) updates.season_pass_price = price;
+            }
             if (req.body.season_pass_button_text) updates.season_pass_button_text = req.body.season_pass_button_text;
 
             console.log('Updates object prepared:', JSON.stringify(updates, null, 2));
