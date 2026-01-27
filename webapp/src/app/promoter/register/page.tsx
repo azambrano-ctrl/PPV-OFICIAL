@@ -173,6 +173,49 @@ export default function PromoterRegisterPage() {
                                     </div>
                                 </div>
 
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] mb-2 ml-4">WhatsApp / Teléfono</label>
+                                    <div className="relative">
+                                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                                        <input
+                                            type="tel"
+                                            required
+                                            value={formData.phone}
+                                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                            className="w-full bg-dark-950/50 border border-dark-700 rounded-2xl pl-12 pr-4 py-4 text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder:text-gray-700"
+                                            placeholder="Ej: +593 99 999 9999"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] mb-2 ml-4">Ciudad / Ubicación</label>
+                                    <div className="relative">
+                                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                                        <input
+                                            type="text"
+                                            required
+                                            value={formData.city}
+                                            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                            className="w-full bg-dark-950/50 border border-dark-700 rounded-2xl pl-12 pr-4 py-4 text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder:text-gray-700"
+                                            placeholder="Ej: Guayaquil, Ecuador"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] mb-2 ml-4">Breve Biografía / Experiencia</label>
+                                    <div className="relative">
+                                        <AlignLeft className="absolute left-4 top-6 w-5 h-5 text-gray-500" />
+                                        <textarea
+                                            required
+                                            value={formData.description}
+                                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                            className="w-full bg-dark-950/50 border border-dark-700 rounded-2xl pl-12 pr-4 py-4 text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder:text-gray-700 min-h-[120px] resize-none"
+                                            placeholder="Cuéntanos un poco sobre tu organización..."
+                                        />
+                                    </div>
+                                </div>
                             </div>
 
                             <button
