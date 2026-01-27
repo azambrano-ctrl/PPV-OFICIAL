@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
+import { useAuthStore } from './store';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -64,9 +65,7 @@ api.interceptors.response.use(
             } catch (refreshError) {
                 // Refresh failed - logout user
                 if (typeof window !== 'undefined') {
-                    localStorage.removeItem('accessToken');
-                    localStorage.removeItem('refreshToken');
-                    localStorage.removeItem('user');
+                    useAuthStore.getState().logout();
                     window.location.href = '/auth/login';
                 }
                 return Promise.reject(refreshError);
