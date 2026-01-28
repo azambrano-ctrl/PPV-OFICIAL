@@ -63,63 +63,61 @@ export const verifyRefreshToken = (token: string): JWTPayload => {
 /**
  * Middleware to authenticate requests
  */
-export const authenticate = async (
+export const authenticate = (
     req: Request,
     res: Response,
     next: NextFunction
-): Promise<void> => {
+): void => {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        res.status(401).json({
+            success: false,
+            message: 'No token provided',
+        });
+        return;
+    }
+
     try {
-        const authHeader = req.headers.authorization;
-
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            res.status(401).json({
-                success: false,
-                message: 'No token provided',
-            });
-            return;
-        }
-
         const token = authHeader.substring(7);
         const decoded = verifyAccessToken(token);
 
         // Session Control: Verify session ID matches DB
         if (!decoded.sessionId) {
-            console.log('[AUTH] Token missing sessionId (Legacy Token). Rejecting.');
             res.status(401).json({
                 success: false,
-                message: 'Token inválido (Falta SessionID). Por favor re-inicia sesión.',
+                message: 'Sesión inválida. Por favor, re-inicia sesión.',
             });
             return;
         }
 
-        const userResult = await query(
-            'SELECT current_session_id FROM users WHERE id = $1',
-            [decoded.userId]
-        );
+        query('SELECT current_session_id FROM users WHERE id = $1', [decoded.userId])
+            .then(userResult => {
+                const user = userResult.rows[0];
 
-        const user = userResult.rows[0];
+                if (!user || user.current_session_id !== decoded.sessionId) {
+                    res.status(401).json({
+                        success: false,
+                        message: 'Tu sesión ha expirado o se ha iniciado en otro dispositivo.',
+                        code: 'SESSION_CONFLICT'
+                    });
+                    return;
+                }
 
-        console.log(`[AUTH] Checking session for user ${decoded.userId}`);
-        console.log(`[AUTH] Token Session: ${decoded.sessionId}`);
-        console.log(`[AUTH] DB Session:    ${user?.current_session_id}`);
-
-        if (!user || user.current_session_id !== decoded.sessionId) {
-            console.log('[AUTH] Session conflict detected! Rejecting request.');
-            res.status(401).json({
-                success: false,
-                message: 'Session expired or active on another device',
-                code: 'SESSION_CONFLICT'
+                (req as any).user = decoded;
+                next();
+            })
+            .catch(error => {
+                logger.error('Authentication DB error:', error);
+                res.status(500).json({
+                    success: false,
+                    message: 'Internal server error during authentication',
+                });
             });
-            return;
-        }
-
-        (req as any).user = decoded;
-        next();
     } catch (error) {
-        logger.error('Authentication error:', error);
         res.status(401).json({
             success: false,
-            message: 'Invalid or expired token',
+            message: 'Token inválido o expirado',
         });
     }
 };

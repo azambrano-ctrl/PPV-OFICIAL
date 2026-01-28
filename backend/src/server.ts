@@ -101,11 +101,15 @@ app.use('/uploads', express.static(uploadsDir));
 app.set('trust proxy', 1);
 app.use(passport.initialize());
 
-// Request logging
-app.use((req, _res, next) => {
-    logger.info(`${req.method} ${req.url}`, {
-        ip: req.ip,
-        userAgent: req.get('user-agent'),
+// Request/Response logging
+app.use((req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        logger.info(`${req.method} ${req.url} ${res.statusCode} - ${duration}ms`, {
+            ip: req.ip,
+            userAgent: req.get('user-agent'),
+        });
     });
     next();
 });

@@ -66,7 +66,11 @@ api.interceptors.response.use(
                 // Refresh failed - logout user
                 if (typeof window !== 'undefined') {
                     useAuthStore.getState().logout();
-                    window.location.href = '/auth/login';
+
+                    // Only redirect if not already on an auth page to prevent loops
+                    if (!window.location.pathname.startsWith('/auth') && window.location.pathname !== '/admin-auth') {
+                        window.location.href = '/auth/login';
+                    }
                 }
                 return Promise.reject(refreshError);
             }

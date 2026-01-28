@@ -138,16 +138,22 @@ router.post(
         try {
             const decoded = verifyRefreshToken(refreshToken);
 
-            // Session Control Check
-            if (decoded.sessionId) {
-                const user = await findUserById(decoded.userId);
-                if (!user || user.current_session_id !== decoded.sessionId) {
-                    res.status(401).json({
-                        success: false,
-                        message: 'Session expired',
-                    });
-                    return;
-                }
+            // Session Control Check: Strictly require sessionId for refresh
+            if (!decoded.sessionId) {
+                res.status(401).json({
+                    success: false,
+                    message: 'Session session mismatch, please login again',
+                });
+                return;
+            }
+
+            const user = await findUserById(decoded.userId);
+            if (!user || user.current_session_id !== decoded.sessionId) {
+                res.status(401).json({
+                    success: false,
+                    message: 'Session expired',
+                });
+                return;
             }
 
             // Generate new tokens

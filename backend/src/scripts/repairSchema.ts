@@ -50,6 +50,17 @@ export const repairSchema = async () => {
             ALTER TABLE chat_messages 
             ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT false;
 
+            -- Events table repairs
+            ALTER TABLE events
+            ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'upcoming',
+            ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false,
+            ADD COLUMN IF NOT EXISTS stream_key TEXT,
+            ADD COLUMN IF NOT EXISTS stream_url TEXT;
+
+            -- Users table repairs
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS current_session_id UUID;
+
             -- Newsletter subscribers
             CREATE TABLE IF NOT EXISTS newsletter_subscribers (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
