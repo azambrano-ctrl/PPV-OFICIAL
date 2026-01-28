@@ -138,6 +138,18 @@ router.post(
         try {
             const decoded = verifyRefreshToken(refreshToken);
 
+            // Session Control Check
+            if (decoded.sessionId) {
+                const user = await findUserById(decoded.userId);
+                if (!user || user.current_session_id !== decoded.sessionId) {
+                    res.status(401).json({
+                        success: false,
+                        message: 'Session expired',
+                    });
+                    return;
+                }
+            }
+
             // Generate new tokens
             const newAccessToken = generateAccessToken(decoded);
             const newRefreshToken = generateRefreshToken(decoded);

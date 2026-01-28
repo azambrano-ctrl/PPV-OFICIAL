@@ -2,11 +2,14 @@ const jwt = require('jsonwebtoken');
 import { Request, Response, NextFunction } from 'express';
 import logger from '../config/logger';
 
+import { query } from '../config/database';
+
 export interface JWTPayload {
     userId: string;
     email: string;
     role: string;
     promoterId?: string;
+    sessionId?: string;
 }
 
 export interface AuthRequest extends Request {
@@ -60,11 +63,11 @@ export const verifyRefreshToken = (token: string): JWTPayload => {
 /**
  * Middleware to authenticate requests
  */
-export const authenticate = (
+export const authenticate = async (
     req: Request,
     res: Response,
     next: NextFunction
-): void => {
+): Promise<void> => {
     try {
         const authHeader = req.headers.authorization;
 
@@ -78,6 +81,25 @@ export const authenticate = (
 
         const token = authHeader.substring(7);
         const decoded = verifyAccessToken(token);
+
+        // Session Control: Verify session ID matches DB
+        if (decoded.sessionId) {
+            const userResult = await query(
+                'SELECT current_session_id FROM users WHERE id = $1',
+                [decoded.userId]
+            );
+
+            const user = userResult.rows[0];
+
+            if (!user || user.current_session_id !== decoded.sessionId) {
+                res.status(401).json({
+                    success: false,
+                    message: 'Session expired or active on another device',
+                    code: 'SESSION_CONFLICT'
+                });
+                return;
+            }
+        }
 
         (req as any).user = decoded;
         next();

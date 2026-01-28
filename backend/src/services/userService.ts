@@ -11,6 +11,7 @@ export interface User {
     phone?: string;
     role: 'user' | 'admin' | 'promoter';
     promoter_id?: string;
+    current_session_id?: string;
     is_verified: boolean;
     created_at: Date;
     updated_at: Date;
@@ -116,12 +117,22 @@ export const loginUser = async (
         }
     }
 
+    // Generate session ID
+    const sessionId = crypto.randomUUID();
+
+    // Update user with new session ID
+    await query(
+        'UPDATE users SET current_session_id = $1 WHERE id = $2',
+        [sessionId, user.id]
+    );
+
     // Generate tokens
     const payload: JWTPayload = {
         userId: user.id,
         email: user.email,
         role: user.role,
         promoterId: user.promoter_id,
+        sessionId,
     };
 
     const accessToken = generateAccessToken(payload);
