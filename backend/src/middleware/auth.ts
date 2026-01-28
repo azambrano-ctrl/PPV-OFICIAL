@@ -83,22 +83,34 @@ export const authenticate = async (
         const decoded = verifyAccessToken(token);
 
         // Session Control: Verify session ID matches DB
-        if (decoded.sessionId) {
-            const userResult = await query(
-                'SELECT current_session_id FROM users WHERE id = $1',
-                [decoded.userId]
-            );
+        if (!decoded.sessionId) {
+            console.log('[AUTH] Token missing sessionId (Legacy Token). Rejecting.');
+            res.status(401).json({
+                success: false,
+                message: 'Token inválido (Falta SessionID). Por favor re-inicia sesión.',
+            });
+            return;
+        }
 
-            const user = userResult.rows[0];
+        const userResult = await query(
+            'SELECT current_session_id FROM users WHERE id = $1',
+            [decoded.userId]
+        );
 
-            if (!user || user.current_session_id !== decoded.sessionId) {
-                res.status(401).json({
-                    success: false,
-                    message: 'Session expired or active on another device',
-                    code: 'SESSION_CONFLICT'
-                });
-                return;
-            }
+        const user = userResult.rows[0];
+
+        console.log(`[AUTH] Checking session for user ${decoded.userId}`);
+        console.log(`[AUTH] Token Session: ${decoded.sessionId}`);
+        console.log(`[AUTH] DB Session:    ${user?.current_session_id}`);
+
+        if (!user || user.current_session_id !== decoded.sessionId) {
+            console.log('[AUTH] Session conflict detected! Rejecting request.');
+            res.status(401).json({
+                success: false,
+                message: 'Session expired or active on another device',
+                code: 'SESSION_CONFLICT'
+            });
+            return;
         }
 
         (req as any).user = decoded;
