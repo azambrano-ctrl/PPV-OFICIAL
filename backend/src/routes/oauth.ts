@@ -2,9 +2,9 @@ import { Router, Request, Response } from 'express';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as FacebookStrategy } from 'passport-facebook';
-const jwt = require('jsonwebtoken');
 import dotenv from 'dotenv';
 import { findUserByEmail, createUser } from '../services/userService';
+import { query } from '../config/database';
 
 // Ensure environment variables are loaded
 dotenv.config();
@@ -164,23 +164,26 @@ router.get('/facebook/callback',
 );
 
 // Shared auth success handler
-const handleAuthSuccess = (req: any, res: Response) => {
+import { generateAccessToken, generateRefreshToken } from '../middleware/auth';
+import { v4 as uuidv4 } from 'uuid';
+
+const handleAuthSuccess = async (req: any, res: Response) => {
     try {
         const user = req.user;
-        const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-        const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret';
 
-        const accessToken = jwt.sign(
-            { userId: user.id, email: user.email, role: user.role },
-            JWT_SECRET,
-            { expiresIn: '15m' }
-        );
+        // Generate and persist Session ID
+        const sessionId = uuidv4();
+        await query('UPDATE users SET current_session_id = $1 WHERE id = $2', [sessionId, user.id]);
 
-        const refreshToken = jwt.sign(
-            { userId: user.id },
-            JWT_REFRESH_SECRET,
-            { expiresIn: '7d' }
-        );
+        const payload = {
+            userId: user.id,
+            email: user.email,
+            role: user.role,
+            sessionId
+        };
+
+        const accessToken = generateAccessToken(payload);
+        const refreshToken = generateRefreshToken(payload);
 
         const webUrl = getWebUrl();
         const redirectUrl = `${webUrl}/auth/callback?token=${accessToken}&refresh=${refreshToken}&user=${encodeURIComponent(JSON.stringify({

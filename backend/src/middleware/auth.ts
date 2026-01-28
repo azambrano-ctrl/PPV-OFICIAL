@@ -87,6 +87,7 @@ export const authenticate = (
             res.status(401).json({
                 success: false,
                 message: 'Sesión inválida. Por favor, re-inicia sesión.',
+                code: 'SESSION_INVALID'
             });
             return;
         }
