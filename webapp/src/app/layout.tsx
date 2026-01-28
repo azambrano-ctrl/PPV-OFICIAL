@@ -30,6 +30,7 @@ import Favicon from '@/components/ui/Favicon';
 
 import Navbar from '@/components/ui/Navbar';
 import SettingsProvider from '@/components/providers/SettingsProvider';
+import SessionWatcher from '@/components/providers/SessionWatcher';
 import Script from 'next/script';
 
 export default function RootLayout({
@@ -48,6 +49,7 @@ export default function RootLayout({
                     strategy="afterInteractive"
                 />
                 <SettingsProvider>
+                    <SessionWatcher />
                     <Navbar />
                     {children}
                 </SettingsProvider>
