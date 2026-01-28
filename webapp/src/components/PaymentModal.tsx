@@ -25,10 +25,13 @@ interface PaymentModalProps {
     onClose: () => void;
 }
 
-function CheckoutForm({ event, purchaseType = 'event', onClose }: PaymentModalProps) {
+interface PaymentFormProps extends PaymentModalProps {
+    stripe: any;
+    elements: any;
+}
+
+function PaymentFormContent({ event, purchaseType = 'event', onClose, stripe, elements }: PaymentFormProps) {
     const { settings } = useSettingsStore();
-    const stripe = useStripe();
-    const elements = useElements();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'paypal'>(
@@ -40,6 +43,7 @@ function CheckoutForm({ event, purchaseType = 'event', onClose }: PaymentModalPr
 
         if (paymentMethod === 'stripe') {
             if (!stripe || !elements) {
+                toast.error('Stripe no está configurado correctamente');
                 return;
             }
             await handleStripePayment();
@@ -242,8 +246,14 @@ function CheckoutForm({ event, purchaseType = 'event', onClose }: PaymentModalPr
                     )}
                 </button>
             </div>
-        </form >
+        </form>
     );
+}
+
+function StripeFormWrapper(props: PaymentModalProps) {
+    const stripe = useStripe();
+    const elements = useElements();
+    return <PaymentFormContent {...props} stripe={stripe} elements={elements} />;
 }
 
 export default function PaymentModal({ event, purchaseType = 'event', onClose }: PaymentModalProps) {
@@ -270,12 +280,12 @@ export default function PaymentModal({ event, purchaseType = 'event', onClose }:
                 </div>
 
                 {/* Stripe Elements Provider */}
-                {stripePromise ? (
+                {settings?.stripe_enabled && stripePromise ? (
                     <Elements stripe={stripePromise}>
-                        <CheckoutForm event={event} purchaseType={purchaseType} onClose={onClose} />
+                        <StripeFormWrapper event={event} purchaseType={purchaseType} onClose={onClose} />
                     </Elements>
                 ) : (
-                    <CheckoutForm event={event} purchaseType={purchaseType} onClose={onClose} />
+                    <PaymentFormContent event={event} purchaseType={purchaseType} onClose={onClose} stripe={null} elements={null} />
                 )}
             </div>
         </div>
