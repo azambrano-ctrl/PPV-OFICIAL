@@ -5,6 +5,7 @@ import { Strategy as FacebookStrategy } from 'passport-facebook';
 import dotenv from 'dotenv';
 import { findUserByEmail, createUser } from '../services/userService';
 import { query } from '../config/database';
+import crypto from 'crypto';
 
 // Ensure environment variables are loaded
 dotenv.config();
@@ -165,14 +166,13 @@ router.get('/facebook/callback',
 
 // Shared auth success handler
 import { generateAccessToken, generateRefreshToken } from '../middleware/auth';
-import { v4 as uuidv4 } from 'uuid';
 
 const handleAuthSuccess = async (req: any, res: Response) => {
     try {
         const user = req.user;
 
         // Generate and persist Session ID
-        const sessionId = uuidv4();
+        const sessionId = crypto.randomUUID();
         await query('UPDATE users SET current_session_id = $1 WHERE id = $2', [sessionId, user.id]);
 
         const payload = {
