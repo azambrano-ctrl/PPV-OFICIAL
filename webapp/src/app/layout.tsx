@@ -30,6 +30,7 @@ import Favicon from '@/components/ui/Favicon';
 
 import Navbar from '@/components/ui/Navbar';
 import SettingsProvider from '@/components/providers/SettingsProvider';
+import { LanguageProvider } from '@/components/providers/LanguageProvider';
 import SessionWatcher from '@/components/providers/SessionWatcher';
 import Script from 'next/script';
 
@@ -48,11 +49,14 @@ export default function RootLayout({
                     src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"
                     strategy="afterInteractive"
                 />
-                <SettingsProvider>
-                    <SessionWatcher />
-                    <Navbar />
-                    {children}
-                </SettingsProvider>
+                <LanguageProvider>
+                    <SettingsProvider>
+                        <SessionWatcher />
+                        <Navbar />
+                        {children}
+                    </SettingsProvider>
+                </LanguageProvider>
+
                 <Toaster
                     position="top-right"
                     toastOptions={{

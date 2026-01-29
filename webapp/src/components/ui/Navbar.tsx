@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, User, LogOut, Settings, ShoppingBag } from 'lucide-react';
+import { Menu, X, User, LogOut, Settings, ShoppingBag, Globe } from 'lucide-react';
 import { useAuthStore, useSettingsStore } from '@/lib/store';
+import { useLanguage } from '@/components/providers/LanguageProvider';
+
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
@@ -14,6 +16,8 @@ export default function Navbar() {
     const pathname = usePathname();
     const { user, isAuthenticated, logout } = useAuthStore();
     const { settings, hasHydrated } = useSettingsStore();
+    const { language, setLanguage, t } = useLanguage();
+
 
     // Handle scroll effect
     useEffect(() => {
@@ -25,11 +29,12 @@ export default function Navbar() {
     }, []);
 
     const navLinks = [
-        { name: 'Inicio', href: '/' },
-        { name: 'Eventos', href: '/events' },
-        { name: 'Promotoras', href: '/promoters' },
-        { name: 'Nosotros', href: '/about' },
+        { name: t('nav.home'), href: '/' },
+        { name: t('nav.events'), href: '/events' },
+        { name: t('nav.promoters'), href: '/promoters' },
+        { name: t('nav.about'), href: '/about' },
     ];
+
 
     const handleLogout = () => {
         logout();
@@ -101,7 +106,24 @@ export default function Navbar() {
 
                     {/* Right Side - Auth/Profile */}
                     <div className="hidden md:flex items-center gap-4">
+                        {/* Language Switcher */}
+                        <div className="flex items-center bg-dark-800 rounded-lg p-1 mr-2 border border-dark-700">
+                            <button
+                                onClick={() => setLanguage('es')}
+                                className={`px-2 py-1 text-xs font-bold rounded ${language === 'es' ? 'bg-primary-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                            >
+                                ES
+                            </button>
+                            <button
+                                onClick={() => setLanguage('en')}
+                                className={`px-2 py-1 text-xs font-bold rounded ${language === 'en' ? 'bg-primary-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                            >
+                                EN
+                            </button>
+                        </div>
+
                         {isAuthenticated && user ? (
+
                             <div className="relative">
                                 <button
                                     onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -132,8 +154,9 @@ export default function Navbar() {
                                                 <p className="text-sm font-bold text-white">{user.full_name}</p>
                                                 <p className="text-xs text-gray-400 truncate">{user.email}</p>
                                                 <div className="mt-2 text-xs font-semibold px-2 py-0.5 rounded-md bg-primary-900/30 text-primary-400 inline-block border border-primary-500/20 uppercase tracking-wider">
-                                                    {user.role === 'admin' ? 'Administrador' : 'Miembro'}
+                                                    {user.role === 'admin' ? t('nav.admin') : t('nav.promoter')}
                                                 </div>
+
                                             </div>
 
                                             <div className="py-2">
@@ -143,16 +166,18 @@ export default function Navbar() {
                                                     onClick={() => setUserMenuOpen(false)}
                                                 >
                                                     <User className="w-4 h-4" />
-                                                    <span>Mi Perfil</span>
+                                                    <span>{t('nav.profile')}</span>
                                                 </Link>
+
                                                 <Link
                                                     href="/profile?tab=purchases"
                                                     className="flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-dark-800 hover:text-white transition-colors"
                                                     onClick={() => setUserMenuOpen(false)}
                                                 >
                                                     <ShoppingBag className="w-4 h-4" />
-                                                    <span>Mis Compras</span>
+                                                    <span>{t('nav.purchases')}</span>
                                                 </Link>
+
                                                 {user.role === 'admin' && (
                                                     <Link
                                                         href="/admin"
@@ -160,8 +185,9 @@ export default function Navbar() {
                                                         onClick={() => setUserMenuOpen(false)}
                                                     >
                                                         <Settings className="w-4 h-4" />
-                                                        <span>Panel Admin</span>
+                                                        <span>{t('nav.admin')}</span>
                                                     </Link>
+
                                                 )}
                                                 {user.role === 'promoter' && (
                                                     <Link
@@ -170,8 +196,9 @@ export default function Navbar() {
                                                         onClick={() => setUserMenuOpen(false)}
                                                     >
                                                         <Settings className="w-4 h-4" />
-                                                        <span>Panel Promotora</span>
+                                                        <span>{t('nav.promoter')}</span>
                                                     </Link>
+
                                                 )}
                                             </div>
 
@@ -181,8 +208,9 @@ export default function Navbar() {
                                                     className="flex items-center space-x-3 px-4 py-2.5 text-sm w-full text-left text-red-400 hover:bg-red-500/10 transition-colors"
                                                 >
                                                     <LogOut className="w-4 h-4" />
-                                                    <span>Cerrar Sesión</span>
+                                                    <span>{t('nav.logout')}</span>
                                                 </button>
+
                                             </div>
                                         </motion.div>
                                     </>
@@ -197,14 +225,24 @@ export default function Navbar() {
                                     <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-primary-600 text-xs font-bold">
                                         <User className="w-4 h-4" />
                                     </div>
-                                    <span className="text-white font-medium text-sm pr-2">Ingresar</span>
+                                    <span className="text-white font-medium text-sm pr-2">{t('nav.login')}</span>
                                 </Link>
+
                             )
                         )}
                     </div>
 
                     {/* Mobile Menu Button */}
-                    <div className="md:hidden">
+                    <div className="md:hidden flex items-center gap-2">
+                        {/* Mobile Language Switcher */}
+                        <div className="flex bg-dark-800 rounded-lg p-0.5 border border-dark-700">
+                            <button
+                                onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
+                                className="px-2 py-1 text-[10px] font-bold text-gray-400 uppercase"
+                            >
+                                {language}
+                            </button>
+                        </div>
                         {!isAuthPage && (
                             <button
                                 onClick={() => setIsOpen(!isOpen)}
@@ -214,6 +252,7 @@ export default function Navbar() {
                             </button>
                         )}
                     </div>
+
                 </div>
             </div>
 
@@ -259,15 +298,17 @@ export default function Navbar() {
                                             onClick={() => setIsOpen(false)}
                                             className="block px-4 py-3 rounded-xl text-gray-300 hover:bg-white/5"
                                         >
-                                            Mis Eventos
+                                            {t('nav.purchases')}
                                         </Link>
+
                                         <Link
                                             href="/profile"
                                             onClick={() => setIsOpen(false)}
                                             className="block px-4 py-3 rounded-xl text-gray-300 hover:bg-white/5"
                                         >
-                                            Mi Perfil
+                                            {t('nav.profile')}
                                         </Link>
+
 
                                         {user.role === 'admin' && (
                                             <Link
@@ -275,8 +316,9 @@ export default function Navbar() {
                                                 onClick={() => setIsOpen(false)}
                                                 className="block px-4 py-3 rounded-xl text-primary-400 hover:bg-white/5"
                                             >
-                                                Panel de Administrador
+                                                {t('nav.admin')}
                                             </Link>
+
                                         )}
                                         {user.role === 'promoter' && (
                                             <Link
@@ -284,16 +326,18 @@ export default function Navbar() {
                                                 onClick={() => setIsOpen(false)}
                                                 className="block px-4 py-3 rounded-xl text-blue-400 hover:bg-white/5"
                                             >
-                                                Panel de Promotora
+                                                {t('nav.promoter')}
                                             </Link>
+
                                         )}
 
                                         <button
                                             onClick={handleLogout}
                                             className="w-full text-left px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10"
                                         >
-                                            Cerrar Sesión
+                                            {t('nav.logout')}
                                         </button>
+
                                     </>
                                 ) : (
                                     !isAuthPage && (
@@ -303,8 +347,9 @@ export default function Navbar() {
                                             className="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary-600 text-white font-bold hover:bg-primary-500"
                                         >
                                             <User className="w-5 h-5" />
-                                            <span>Ingresar / Registro</span>
+                                            <span>{t('nav.login')}</span>
                                         </Link>
+
                                     )
                                 )}
                             </div>

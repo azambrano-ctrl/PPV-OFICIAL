@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Calendar, Clock, DollarSign, Play, ArrowRight, Zap, Shield, Users, Star, TrendingUp, LogOut, Settings, User } from 'lucide-react';
 import { formatDate, formatCurrency, getEventStatusColor, getEventStatusText, getImageUrl } from '@/lib/utils';
+import { useLanguage } from '@/components/providers/LanguageProvider';
+
 import { useSettingsStore } from '@/lib/store';
 import { paymentsAPI } from '@/lib/api';
 import Footer from '@/components/Footer';
@@ -19,6 +21,8 @@ interface AuthenticatedHomeProps {
 
 export default function AuthenticatedHome({ user, featuredEvents, upcomingEvents, homepageBackground }: AuthenticatedHomeProps) {
     const { settings } = useSettingsStore();
+    const { t } = useLanguage();
+
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [hasSeasonPass, setHasSeasonPass] = useState(false);
     const [checkingPass, setCheckingPass] = useState(true);
@@ -63,12 +67,13 @@ export default function AuthenticatedHome({ user, featuredEvents, upcomingEvents
                     {/* Welcome Section */}
                     <div className="mb-10">
                         <h1 className="text-3xl md:text-4xl font-bold mb-2">
-                            Hola, <span className="text-primary-500">{user?.full_name || 'Fanático'}</span>
+                            {t('home.welcome')}, <span className="text-primary-500">{user?.full_name || 'Fanático'}</span>
                         </h1>
                         <p className="text-gray-400">
-                            Bienvenido de nuevo a tu centro de combate.
+                            {t('home.subtitle')}
                         </p>
                     </div>
+
 
                     {/* Dashboard Grid */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -88,8 +93,9 @@ export default function AuthenticatedHome({ user, featuredEvents, upcomingEvents
                                         <div className="absolute bottom-0 left-0 p-6">
                                             <div className="flex items-center gap-2 mb-2">
                                                 <span className="bg-primary-600 text-white text-xs font-bold px-2 py-1 rounded uppercase tracking-wider">
-                                                    Destacado
+                                                    {t('home.featured')}
                                                 </span>
+
                                                 <span className="text-gray-300 text-sm flex items-center">
                                                     <Calendar className="w-3 h-3 mr-1" />
                                                     {formatDate(nextEvent.event_date)}
@@ -103,8 +109,9 @@ export default function AuthenticatedHome({ user, featuredEvents, upcomingEvents
                                                 className="btn-primary inline-flex items-center"
                                             >
                                                 <Play className="w-5 h-5 mr-2" />
-                                                {nextEvent.status === 'live' ? 'VER AHORA' : 'VER DETALLES'}
+                                                {nextEvent.status === 'live' ? t('home.watch_now') : t('home.view_details')}
                                             </Link>
+
                                         </div>
                                     </div>
                                 </section>
@@ -115,11 +122,12 @@ export default function AuthenticatedHome({ user, featuredEvents, upcomingEvents
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-xl font-bold flex items-center gap-2">
                                         <TrendingUp className="w-5 h-5 text-primary-500" />
-                                        Próximos Eventos
+                                        {t('home.upcoming_events')}
                                     </h3>
                                     <Link href="/events" className="text-sm text-gray-400 hover:text-white transition-colors">
-                                        Ver todos
+                                        {t('home.view_all')}
                                     </Link>
+
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {upcomingEvents.slice(0, 8).map((event) => (
@@ -144,14 +152,15 @@ export default function AuthenticatedHome({ user, featuredEvents, upcomingEvents
                                 </div>
                                 <div className="space-y-2">
                                     <button className="w-full text-left px-4 py-3 rounded-xl bg-dark-750 hover:bg-dark-700 transition-colors flex items-center justify-between group">
-                                        <span className="text-sm font-medium text-gray-300 group-hover:text-white">Mis Compras</span>
+                                        <span className="text-sm font-medium text-gray-300 group-hover:text-white">{t('nav.purchases')}</span>
                                         <ArrowRight className="w-4 h-4 text-dark-500 group-hover:text-white" />
                                     </button>
                                     <Link href="/settings" className="w-full text-left px-4 py-3 rounded-xl bg-dark-750 hover:bg-dark-700 transition-colors flex items-center justify-between group">
-                                        <span className="text-sm font-medium text-gray-300 group-hover:text-white">Configuración</span>
+                                        <span className="text-sm font-medium text-gray-300 group-hover:text-white">{t('home.settings')}</span>
                                         <Settings className="w-4 h-4 text-dark-500 group-hover:text-white" />
                                     </Link>
                                 </div>
+
                             </div>
 
                             {/* Promo/Upsell */}

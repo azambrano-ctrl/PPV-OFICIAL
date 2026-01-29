@@ -4,14 +4,18 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { Facebook, Twitter, Instagram, Youtube, Mail } from 'lucide-react';
 import { useSettingsStore } from '@/lib/store';
+import { useLanguage } from '@/components/providers/LanguageProvider';
 import { newsletterAPI, handleAPIError } from '@/lib/api';
+
 import toast from 'react-hot-toast';
 
 export default function Footer() {
     const currentYear = new Date().getFullYear();
     const { settings, hasHydrated } = useSettingsStore();
+    const { t } = useLanguage();
     const [email, setEmail] = useState('');
     const [subscribing, setSubscribing] = useState(false);
+
 
     const handleSubscribe = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -20,9 +24,10 @@ export default function Footer() {
         setSubscribing(true);
         try {
             const response = await newsletterAPI.subscribe(email);
-            toast.success(response.data.message || '¡Gracias por suscribirte!');
+            toast.success(response.data.message || t('footer.newsletter.success'));
             setEmail('');
         } catch (error) {
+
             const message = handleAPIError(error);
             toast.error(message);
         } finally {
@@ -32,9 +37,9 @@ export default function Footer() {
 
     const footerLinks = {
         company: [
-            { label: 'Nosotros', href: '/about' },
-            { label: 'Eventos', href: '/events' },
-            { label: 'Contacto', href: '/contact' },
+            { label: t('nav.about'), href: '/about' },
+            { label: t('nav.events'), href: '/events' },
+            { label: t('nav.promoters'), href: '/promoters' },
         ],
         legal: [
             { label: 'Términos de Servicio', href: '/terms' },
@@ -47,6 +52,7 @@ export default function Footer() {
             { label: 'Soporte Técnico', href: '/support' },
         ],
     };
+
 
     const socialLinks = [
         { icon: Facebook, href: 'https://facebook.com/arenafightpass', label: 'Facebook' },
@@ -92,8 +98,9 @@ export default function Footer() {
                             )}
                         </Link>
                         <p className="text-dark-400 mb-6 max-w-sm">
-                            {settings?.site_description || 'La mejor plataforma para ver peleas en vivo. Acceso exclusivo a los eventos más emocionantes del deporte.'}
+                            {settings?.site_description || t('footer.description')}
                         </p>
+
                         <div className="flex space-x-4">
                             {socialLinks.map((social) => (
                                 <a
@@ -112,7 +119,8 @@ export default function Footer() {
 
                     {/* Company */}
                     <div>
-                        <h3 className="font-semibold text-white mb-4">Compañía</h3>
+                        <h3 className="font-semibold text-white mb-4">{t('footer.company')}</h3>
+
                         <ul className="space-y-2">
                             {footerLinks.company.map((link) => (
                                 <li key={link.href}>
@@ -129,7 +137,8 @@ export default function Footer() {
 
                     {/* Legal */}
                     <div>
-                        <h3 className="font-semibold text-white mb-4">Legal</h3>
+                        <h3 className="font-semibold text-white mb-4">{t('footer.legal')}</h3>
+
                         <ul className="space-y-2">
                             {footerLinks.legal.map((link) => (
                                 <li key={link.href}>
@@ -146,7 +155,8 @@ export default function Footer() {
 
                     {/* Support */}
                     <div>
-                        <h3 className="font-semibold text-white mb-4">Soporte</h3>
+                        <h3 className="font-semibold text-white mb-4">{t('footer.support')}</h3>
+
                         <ul className="space-y-2">
                             {footerLinks.support.map((link) => (
                                 <li key={link.href}>
@@ -166,21 +176,23 @@ export default function Footer() {
                 <div className="mt-12 pt-8 border-t border-dark-800">
                     <div className="max-w-md">
                         <h3 className="font-semibold text-white mb-2">
-                            Suscríbete a nuestro newsletter
+                            {t('footer.newsletter.title')}
                         </h3>
                         <p className="text-dark-400 text-sm mb-4">
-                            Recibe notificaciones sobre próximos eventos y ofertas especiales.
+                            {t('footer.newsletter.description')}
                         </p>
+
                         <form onSubmit={handleSubscribe} className="flex gap-2">
                             <input
                                 type="email"
-                                placeholder="tu@email.com"
+                                placeholder={t('footer.newsletter.placeholder')}
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 className="input flex-1"
                                 disabled={subscribing}
                             />
+
                             <button
                                 type="submit"
                                 className="btn-primary"
@@ -199,10 +211,12 @@ export default function Footer() {
                 {/* Bottom */}
                 <div className="mt-8 pt-8 border-t border-dark-800 flex flex-col md:flex-row justify-between items-center gap-4">
                     <p className="text-dark-400 text-sm">
-                        © {currentYear} {hasHydrated ? (settings?.site_name || 'PPV Streaming') : ''}. Todos los derechos reservados.
+                        © {currentYear} {hasHydrated ? (settings?.site_name || 'PPV Streaming') : ''}. {t('footer.rights')}
                     </p>
+
                     <div className="flex items-center gap-4 text-sm text-dark-400">
-                        <span>Pagos seguros con</span>
+                        <span>{t('footer.secure_payments')}</span>
+
                         <div className="flex items-center gap-2">
                             <span className="px-2 py-1 bg-dark-800 rounded text-xs font-semibold">
                                 STRIPE
