@@ -24,8 +24,10 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     const [showPlayButton, setShowPlayButton] = useState(false);
     const [showUI, setShowUI] = useState(true);
     const [canCast, setCanCast] = useState(false);
-    const [lastStreamUrl, setLastStreamUrl] = useState<string>('');
+    const lastStreamUrlRef = useRef<string>('');
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const heartbeatRef = useRef<NodeJS.Timeout | null>(null);
+
     const { settings } = useSettingsStore();
 
     // Detect if browser supports casting/remote playback
@@ -85,6 +87,7 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         if (cast && cast.framework && chrome && chrome.cast) {
             console.log('Starting Google Cast SDK session...');
             const castContext = cast.framework.CastContext.getInstance();
+            const currentStreamUrl = lastStreamUrlRef.current || streamUrl;
 
             // Set options if not already set
             castContext.setOptions({
@@ -96,12 +99,13 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
                 await castContext.requestSession();
                 const session = castContext.getCurrentSession();
                 if (session) {
-                    const isMpegUrl = lastStreamUrl.toLowerCase().includes('.m3u8') || !isMp4;
-                    const contentType = isMp4 || lastStreamUrl.toLowerCase().includes('.mp4')
+                    const isMpegUrl = currentStreamUrl.toLowerCase().includes('.m3u8') || !isMp4;
+                    const contentType = isMp4 || currentStreamUrl.toLowerCase().includes('.mp4')
                         ? 'video/mp4'
                         : 'application/x-mpegurl';
 
-                    const mediaInfo = new chrome.cast.media.MediaInfo(lastStreamUrl, contentType);
+                    const mediaInfo = new chrome.cast.media.MediaInfo(currentStreamUrl, contentType);
+
 
                     // Set stream type based on event status
                     if (status === 'live') {
@@ -139,12 +143,11 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
             try {
                 const originalSrc = video.src;
                 const isBlob = originalSrc.startsWith('blob:');
+                const currentStreamUrl = lastStreamUrlRef.current || streamUrl;
 
                 // If on Safari (native HLS support), swapping works. 
-                // If on Chrome (no native HLS), swapping to HLS URL might fail, 
-                // but we already tried SDK above.
-                if (isBlob && lastStreamUrl && video.canPlayType('application/vnd.apple.mpegurl')) {
-                    video.src = lastStreamUrl;
+                if (isBlob && currentStreamUrl && video.canPlayType('application/vnd.apple.mpegurl')) {
+                    video.src = currentStreamUrl;
                 }
 
                 await (video as any).remote.prompt();
@@ -218,7 +221,8 @@ Pasos para solucionar:
         }
 
         console.log('Loading stream:', finalUrl);
-        setLastStreamUrl(finalUrl);
+        lastStreamUrlRef.current = finalUrl;
+
 
         const handleManifestParsed = () => {
             console.log('HLS manifest parsed successfully');
@@ -279,8 +283,17 @@ Pasos para solucionar:
                 debug: false,
                 enableWorker: true,
                 lowLatencyMode: true,
-                backBufferLength: 90,
+                backBufferLength: 60,
+                maxBufferLength: 30,
+                maxMaxBufferLength: 60,
+                maxBufferSize: 30 * 1000 * 1000,
+                startLevel: -1,
+                liveSyncDurationCount: 3,
+                liveMaxLatencyDurationCount: 10,
+                manifestLoadingMaxRetry: 4,
+                levelLoadingMaxRetry: 4,
             });
+
 
             hlsRef.current = hls;
 

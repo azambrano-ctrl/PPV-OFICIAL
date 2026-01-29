@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft, MessageSquare, Info, Share2, Tv } from 'lucide-react';
@@ -34,16 +35,22 @@ export default function WatchPage() {
     const [error, setError] = useState<string | null>(null);
     const [showChat, setShowChat] = useState(true);
 
+    const lastFetchedId = useRef<string | null>(null);
+
     useEffect(() => {
         const fetchEventAndStream = async () => {
+            if (lastFetchedId.current === eventId && (event || streamData)) return;
+
             try {
                 if (typeof window === 'undefined') return;
+                lastFetchedId.current = eventId;
 
                 const token = localStorage.getItem('accessToken');
                 if (!token) {
                     router.push(`/auth/login?redirect=/watch/${eventId}`);
                     return;
                 }
+                setLoading(true);
 
                 // Fetch event details
                 const eventRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events/${eventId}`, {
