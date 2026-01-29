@@ -3,8 +3,13 @@ import path from 'path';
 import { Request, Response, NextFunction } from 'express';
 import { supabase, BUCKET_NAME } from '../config/supabase';
 
-// Configure multer to store files in memory
-const storage = multer.memoryStorage();
+// Configure multer to store files in the OS temp directory
+// This prevents loading large files into RAM on memory-constrained environments like Render (512MB)
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, '/tmp');
+    }
+});
 
 // File filter - only allow images
 const fileFilter = (_req: any, file: any, cb: any) => {
@@ -26,6 +31,8 @@ export const upload = multer({
     }
 });
 
+import fs from 'fs';
+
 // Helper function to upload file to Supabase
 const uploadToSupabase = async (file: any): Promise<{ publicUrl: string; filename: string }> => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -37,24 +44,43 @@ const uploadToSupabase = async (file: any): Promise<{ publicUrl: string; filenam
 
     const filename = `${nameWithoutExt}-${uniqueSuffix}${ext}`;
 
-    // Upload to Supabase
-    const { data: _data, error } = await supabase.storage
-        .from(BUCKET_NAME)
-        .upload(filename, file.buffer, {
-            contentType: file.mimetype,
-            upsert: false
-        });
+    try {
+        // Read file from disk
+        const fileContent = fs.readFileSync(file.path);
 
-    if (error) {
-        throw new Error(`Supabase upload failed: ${error.message}`);
+        // Upload to Supabase
+        const { error } = await supabase.storage
+            .from(BUCKET_NAME)
+            .upload(filename, fileContent, {
+                contentType: file.mimetype,
+                upsert: false
+            });
+
+        if (error) {
+            throw new Error(`Supabase upload failed: ${error.message}`);
+        }
+
+        // Get public URL
+        const { data: publicUrlData } = supabase.storage
+            .from(BUCKET_NAME)
+            .getPublicUrl(filename);
+
+        // Cleanup: remove temporary file from disk
+        try {
+            fs.unlinkSync(file.path);
+            console.log(`🗑️ Temporary file deleted: ${file.path}`);
+        } catch (unlinkError) {
+            console.warn(`⚠️ Failed to delete temporary file: ${file.path}`, unlinkError);
+        }
+
+        return { publicUrl: publicUrlData.publicUrl, filename };
+    } catch (error) {
+        // Ensure cleanup even on failure
+        if (file.path && fs.existsSync(file.path)) {
+            try { fs.unlinkSync(file.path); } catch (e) { }
+        }
+        throw error;
     }
-
-    // Get public URL
-    const { data: publicUrlData } = supabase.storage
-        .from(BUCKET_NAME)
-        .getPublicUrl(filename);
-
-    return { publicUrl: publicUrlData.publicUrl, filename };
 };
 
 // Middleware wrapper to handle uploads and Supabase transfer

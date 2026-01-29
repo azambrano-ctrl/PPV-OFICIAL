@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon --exec ts-node src/server.ts",
     "build": "tsc",
-    "start": "node-pg-migrate up && node dist/server.js",
+    "start": "node-pg-migrate up && node --max-old-space-size=450 dist/server.js",
     "migrate": "node-pg-migrate up",
     "migrate:down": "node-pg-migrate down",
     "seed": "ts-node src/scripts/seed.ts",
