@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
 import { useSettingsStore } from '@/lib/store';
+import { authAPI } from '@/lib/api';
+
 
 interface VideoPlayerProps {
     streamUrl: string;
@@ -55,7 +57,24 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         return () => clearInterval(checkCastSDK);
     }, []);
 
+    // Heartbeat to keep session alive during long playback
+    useEffect(() => {
+        if (!isPlaying && !isLoading) return;
+
+        const heartbeatInterval = setInterval(async () => {
+            try {
+                await authAPI.getProfile();
+                console.log('Auth heartbeat: session active');
+            } catch (err) {
+                console.warn('Auth heartbeat failed:', err);
+            }
+        }, 5 * 60 * 1000); // Every 5 minutes
+
+        return () => clearInterval(heartbeatInterval);
+    }, [isPlaying, isLoading]);
+
     const handleCast = async () => {
+
         const video = videoRef.current;
         if (!video) return;
 
