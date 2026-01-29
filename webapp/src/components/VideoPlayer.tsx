@@ -382,16 +382,16 @@ Pasos para solucionar:
             {/* Logo Watermark */}
             {settings?.site_logo && (
                 <div
-                    className={`absolute top-4 right-14 z-20 transition-all duration-500 pointer-events-none select-none ${showUI ? 'opacity-40 scale-100' : 'opacity-20 scale-90'
+                    className={`absolute top-6 right-6 z-50 transition-all duration-500 pointer-events-none select-none ${showUI ? 'opacity-80 scale-100' : 'opacity-40 scale-95'
                         }`}
                     style={{
-                        maxWidth: '80px',
+                        maxWidth: '120px',
                     }}
                 >
                     <img
                         src={settings.site_logo}
                         alt="Watermark"
-                        className="w-full h-auto object-contain brightness-0 invert opacity-80"
+                        className="w-full h-auto object-contain drop-shadow-lg"
                         onDragStart={(e) => e.preventDefault()}
                     />
                 </div>
