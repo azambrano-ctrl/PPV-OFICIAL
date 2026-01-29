@@ -5,12 +5,16 @@ import Link from 'next/link';
 import { Search, Globe, MapPin, Users, ArrowRight } from 'lucide-react';
 import { promotersAPI } from '@/lib/api';
 import { getImageUrl } from '@/lib/utils';
+import { useLanguage } from '@/components/providers/LanguageProvider';
 import Footer from '@/components/Footer';
 
+
 export default function PromotersDirectoryPage() {
+    const { t } = useLanguage();
     const [promoters, setPromoters] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+
 
     useEffect(() => {
         loadPromoters();
@@ -43,20 +47,22 @@ export default function PromotersDirectoryPage() {
 
                 <div className="container-custom relative z-10 text-center">
                     <h1 className="text-5xl md:text-7xl font-black text-white italic uppercase tracking-tighter mb-6">
-                        Nuestras <span className="text-primary-500">Promotoras</span>
+                        {t('promoters.title_part1')} <span className="text-primary-500">{t('promoters.title_part2')}</span>
                     </h1>
                     <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-12">
-                        Descubre las organizaciones que hacen posible el crecimiento del MMA en Ecuador y Latinoamérica.
+                        {t('promoters.description')}
                     </p>
+
 
                     {/* Search Bar */}
                     <div className="max-w-xl mx-auto relative group">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-500 group-focus-within:text-primary-500 transition-colors" />
                         <input
                             type="text"
-                            placeholder="Buscar promotora por nombre..."
+                            placeholder={t('promoters.search_placeholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
+
                             className="w-full bg-dark-900 border border-dark-800 rounded-2xl pl-14 pr-6 py-5 text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all shadow-2xl"
                         />
                     </div>
@@ -68,8 +74,9 @@ export default function PromotersDirectoryPage() {
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20 space-y-4">
                         <div className="spinner w-12 h-12" />
-                        <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Cargando directorio...</p>
+                        <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">{t('promoters.loading')}</p>
                     </div>
+
                 ) : filteredPromoters.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {filteredPromoters.map((promoter) => (
@@ -115,8 +122,9 @@ export default function PromotersDirectoryPage() {
                                         </h3>
 
                                         <p className="text-gray-400 text-sm line-clamp-3 italic flex-grow">
-                                            {promoter.description || "Esta promotora es parte de la red de Arena Fight Pass, llevando el deporte al siguiente nivel."}
+                                            {promoter.description || t('promoters.default_desc')}
                                         </p>
+
 
                                         <div className="w-full pt-4 flex items-center justify-between border-t border-dark-800">
                                             <div className="flex items-center gap-2 text-dark-400">
@@ -124,9 +132,10 @@ export default function PromotersDirectoryPage() {
                                                 <span className="text-xs font-bold uppercase tracking-widest">{promoter.city || "Ecuador"}</span>
                                             </div>
                                             <div className="flex items-center gap-2 text-primary-500 font-bold text-sm uppercase italic group-hover:gap-3 transition-all">
-                                                Ver Perfil
+                                                {t('promoters.view_profile')}
                                                 <ArrowRight className="w-4 h-4" />
                                             </div>
+
                                         </div>
                                     </div>
                                 </div>
@@ -136,23 +145,25 @@ export default function PromotersDirectoryPage() {
                 ) : (
                     <div className="card p-20 text-center bg-dark-900/50 border-dashed">
                         <Users className="w-16 h-16 text-dark-800 mx-auto mb-6" />
-                        <h3 className="text-2xl font-bold text-white uppercase italic mb-2">No se encontraron promotoras</h3>
-                        <p className="text-gray-500">Intenta buscar con otro nombre o vuelve más tarde.</p>
+                        <h3 className="text-2xl font-bold text-white uppercase italic mb-2">{t('promoters.not_found')}</h3>
+                        <p className="text-gray-500">{t('promoters.not_found_desc')}</p>
                     </div>
+
                 )}
             </section>
 
             {/* CTA Section */}
             <section className="py-20 bg-dark-900/50 border-t border-dark-800">
                 <div className="container-custom text-center">
-                    <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter mb-4">¿Quieres ser parte de nuestra red?</h2>
-                    <p className="text-gray-400 mb-8 max-w-xl mx-auto">Únete a Arena Fight Pass y lleva tus eventos de MMA a una audiencia global con la mejor tecnología de streaming.</p>
+                    <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter mb-4">{t('promoters.join_title')}</h2>
+                    <p className="text-gray-400 mb-8 max-w-xl mx-auto">{t('promoters.join_desc')}</p>
                     <Link href="/promoter/register" className="btn-primary inline-flex">
-                        Registrar mi Promotora
+                        {t('promoters.register_button')}
                         <ArrowRight className="w-5 h-5 ml-2" />
                     </Link>
                 </div>
             </section>
+
 
             <Footer />
         </div>

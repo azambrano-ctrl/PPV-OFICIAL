@@ -47,6 +47,45 @@ export const translations = {
             upcoming_events: 'Próximos Eventos',
             view_all: 'Ver todos',
             settings: 'Configuración',
+        },
+        // About
+        about: {
+            official: 'PPV Streaming Oficial',
+            hero_description: 'La plataforma definitiva para descubrir, apoyar y vivir la pasión de las artes marciales mixtas en Ecuador.',
+            mission_title: 'Nuestra Misión',
+            active_users: 'Usuarios Activos',
+
+            live_events: 'Eventos en Vivo',
+            highlight_title: 'Vive la intensidad de cada golpe, en tiempo real.',
+            define_title: 'Lo Que Nos Define',
+            define_subtitle: 'Más que una plataforma de streaming, somos el hogar del MMA ecuatoriano.',
+            values: {
+                energy_title: 'Energía Pura',
+                energy_desc: 'Capturamos la adrenalina del octágono. Transmisiones fluidas y de alta definición.',
+                global_title: 'Proyección Global',
+                global_desc: 'El talento ecuatoriano no tiene fronteras. Nuestra tecnología conecta con el mundo.',
+                excellence_title: 'Excelencia',
+                excellence_desc: 'Comprometidos con elevar el estándar de los eventos deportivos.',
+            },
+            cta_title: '¿Listo para la Acción?',
+            cta_description: 'Únete hoy y sé parte de la revolución del deporte de combate en Latinoamérica.',
+            register_now: 'Registrarse Ahora',
+            view_upcoming: 'Ver Próximos Eventos',
+        },
+        // Promoters
+        promoters: {
+            title_part1: 'Nuestras',
+            title_part2: 'Promotoras',
+            description: 'Descubre las organizaciones que hacen posible el crecimiento del MMA en Ecuador y Latinoamérica.',
+            search_placeholder: 'Buscar promotora por nombre...',
+            loading: 'Cargando directorio...',
+            default_desc: 'Esta promotora es parte de la red de Arena Fight Pass, llevando el deporte al siguiente nivel.',
+            view_profile: 'Ver Perfil',
+            not_found: 'No se encontraron promotoras',
+            not_found_desc: 'Intenta buscar con otro nombre o vuelve más tarde.',
+            join_title: '¿Quieres ser parte de nuestra red?',
+            join_desc: 'Únete a Arena Fight Pass y lleva tus eventos de MMA a una audiencia global con la mejor tecnología de streaming.',
+            register_button: 'Registrar mi Promotora',
         }
     },
     en: {
@@ -95,9 +134,49 @@ export const translations = {
             upcoming_events: 'Upcoming Events',
             view_all: 'View all',
             settings: 'Settings',
+        },
+        // About
+        about: {
+            official: 'Official PPV Streaming',
+            hero_description: 'The ultimate platform to discover, support, and live the passion of mixed martial arts in Ecuador.',
+            mission_title: 'Our Mission',
+            active_users: 'Active Users',
+
+            live_events: 'Live Events',
+            highlight_title: 'Experience the intensity of every strike, in real time.',
+            define_title: 'What Defines Us',
+            define_subtitle: 'More than a streaming platform, we are the home of Ecuadorian MMA.',
+            values: {
+                energy_title: 'Pure Energy',
+                energy_desc: 'We capture the adrenaline of the octagon. Smooth and high-definition broadcasts.',
+                global_title: 'Global Projection',
+                global_desc: 'Ecuadorian talent has no borders. Our technology connects with the world.',
+                excellence_title: 'Excellence',
+                excellence_desc: 'Committed to raising the standard of sporting events.',
+            },
+            cta_title: 'Ready for Action?',
+            cta_description: 'Join today and be part of the combat sports revolution in Latin America.',
+            register_now: 'Register Now',
+            view_upcoming: 'View Upcoming Events',
+        },
+        // Promoters
+        promoters: {
+            title_part1: 'Our',
+            title_part2: 'Promoters',
+            description: 'Discover the organizations that make the growth of MMA possible in Ecuador and Latin America.',
+            search_placeholder: 'Search promoter by name...',
+            loading: 'Loading directory...',
+            default_desc: 'This promoter is part of the Arena Fight Pass network, taking the sport to the next level.',
+            view_profile: 'View Profile',
+            not_found: 'No promoters found',
+            not_found_desc: 'Try searching with another name or come back later.',
+            join_title: 'Want to be part of our network?',
+            join_desc: 'Join Arena Fight Pass and take your MMA events to a global audience with the best streaming technology.',
+            register_button: 'Register my Promoter',
         }
     }
 };
+
 
 
 export type TranslationKey = keyof typeof translations.es;

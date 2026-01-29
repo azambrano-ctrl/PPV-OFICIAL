@@ -7,9 +7,13 @@ import { useState, useEffect } from 'react';
 import { settingsAPI, statsAPI } from '@/lib/api';
 import { motion } from 'framer-motion';
 import { getImageUrl } from '@/lib/utils';
+import { useLanguage } from '@/components/providers/LanguageProvider';
+
 
 export default function AboutPage() {
+    const { t, language } = useLanguage();
     const [settings, setSettings] = useState<any>(null);
+
     const [stats, setStats] = useState<{ totalUsers: number; totalEvents: number } | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -33,10 +37,11 @@ export default function AboutPage() {
     }, []);
 
     // Default values if API data is missing
-    const heroTitle = settings?.about_hero_title || 'Llevando el MMA';
-    const heroSubtitle = settings?.about_hero_subtitle ?? 'Ecuatoriano al Mundo';
-    const missionTitle = settings?.about_mission_title || 'Nuestra Misión';
-    const missionText = settings?.about_mission_text || 'Nacimos con un objetivo claro: romper las barreras que limitan a nuestros atletas. Ecuador es tierra de guerreros, pero el talento necesita visibilidad para brillar.';
+    const heroTitle = settings?.about_hero_title || (language === 'es' ? 'Llevando el MMA' : 'Bringing MMA');
+    const heroSubtitle = settings?.about_hero_subtitle ?? (language === 'es' ? 'Ecuatoriano al Mundo' : 'Ecuadorian to the World');
+    const missionTitle = settings?.about_mission_title || t('about.mission_title'); // Note: mission_title was missed in dict, adding it now
+    const missionText = settings?.about_mission_text || t('about.hero_description');
+
 
     // Parse values if they are stored as JSON string, or use default array
     let missionValues = [];
@@ -48,11 +53,12 @@ export default function AboutPage() {
 
     if (missionValues.length === 0) {
         missionValues = [
-            { title: "Energía Pura", description: "Capturamos la adrenalina del octágono. Transmisiones fluidas y de alta definición.", icon: "Zap" },
-            { title: "Proyección Global", description: "El talento ecuatoriano no tiene fronteras. Nuestra tecnología conecta con el mundo.", icon: "Globe" },
-            { title: "Excelencia", description: "Comprometidos con elevar el estándar de los eventos deportivos.", icon: "Trophy" }
+            { title: t('about.values.energy_title'), description: t('about.values.energy_desc'), icon: "Zap" },
+            { title: t('about.values.global_title'), description: t('about.values.global_desc'), icon: "Globe" },
+            { title: t('about.values.excellence_title'), description: t('about.values.excellence_desc'), icon: "Trophy" }
         ];
     }
+
 
     // Helper to get Icon component
     const getIcon = (iconName: string) => {
@@ -110,8 +116,9 @@ export default function AboutPage() {
                 >
                     <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 backdrop-blur-md border border-white/10 mb-8 mx-auto">
                         <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse"></span>
-                        <span className="text-sm font-medium tracking-wide text-dark-200">PPV Streaming Oficial</span>
+                        <span className="text-sm font-medium tracking-wide text-dark-200">{t('about.official')}</span>
                     </motion.div>
+
 
                     <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl lg:text-8xl font-black font-display tracking-tight mb-8 leading-tight">
                         <span className="block text-white drop-shadow-2xl">{heroTitle}</span>
@@ -123,8 +130,9 @@ export default function AboutPage() {
                     </motion.h1>
 
                     <motion.p variants={itemVariants} className="text-xl md:text-2xl text-dark-200 max-w-3xl mx-auto font-light leading-relaxed mb-10">
-                        La plataforma definitiva para descubrir, apoyar y vivir la pasión de las <span className="text-white font-medium">artes marciales mixtas</span> en Ecuador.
+                        {t('about.hero_description')}
                     </motion.p>
+
                 </motion.div>
 
                 {/* Scroll Indicator */}
@@ -167,14 +175,15 @@ export default function AboutPage() {
                                         <p className="text-4xl font-bold text-white mb-1">
                                             {stats?.totalUsers !== undefined ? `${stats.totalUsers}+` : (settings?.about_stats_users || '10k+')}
                                         </p>
-                                        <p className="text-sm text-dark-400 uppercase tracking-widest">Usuarios Activos</p>
+                                        <p className="text-sm text-dark-400 uppercase tracking-widest">{t('about.active_users')}</p>
                                     </div>
                                     <div>
                                         <p className="text-4xl font-bold text-white mb-1">
                                             {stats?.totalEvents !== undefined ? `${stats.totalEvents}+` : (settings?.about_stats_events || '50+')}
                                         </p>
-                                        <p className="text-sm text-dark-400 uppercase tracking-widest">Eventos en Vivo</p>
+                                        <p className="text-sm text-dark-400 uppercase tracking-widest">{t('about.live_events')}</p>
                                     </div>
+
                                 </div>
                             </div>
                         </motion.div>
@@ -203,8 +212,9 @@ export default function AboutPage() {
                                             </span>
                                             <span className="text-sm font-semibold tracking-wider uppercase text-dark-200">Highlight Reel</span>
                                         </div>
-                                        <p className="font-bold text-white text-2xl leading-tight">Vive la intensidad de cada golpe, en tiempo real.</p>
+                                        <p className="font-bold text-white text-2xl leading-tight">{t('about.highlight_title')}</p>
                                     </div>
+
                                 </>
                             ))}
                         </motion.div>
@@ -224,11 +234,12 @@ export default function AboutPage() {
                             viewport={{ once: true }}
                         >
                             <h2 className="text-3xl md:text-5xl font-bold font-display mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-dark-400">
-                                Lo Que Nos Define
+                                {t('about.define_title')}
                             </h2>
                             <p className="text-dark-300 text-lg">
-                                Más que una plataforma de streaming, somos el hogar del MMA ecuatoriano.
+                                {t('about.define_subtitle')}
                             </p>
+
                         </motion.div>
                     </div>
 
@@ -276,26 +287,29 @@ export default function AboutPage() {
                         viewport={{ once: true }}
                     >
                         <h2 className="text-5xl md:text-7xl font-black font-display mb-8 tracking-tighter text-white">
-                            ¿Listo para la <span className="text-primary-600 italic">Acción?</span>
+                            {t('about.cta_title').split('?')[0]} <span className="text-primary-600 italic">{t('about.cta_title').split('?')[1] || '?'}</span>
                         </h2>
                         <p className="text-xl md:text-2xl text-dark-200 mb-12 max-w-2xl mx-auto font-light">
-                            Únete hoy y sé parte de la revolución del deporte de combate en Latinoamérica.
+                            {t('about.cta_description')}
                         </p>
+
                         <div className="flex flex-col sm:flex-row gap-6 justify-center">
                             <Link
                                 href="/auth/register"
                                 className="group relative bg-white text-dark-950 px-10 py-5 rounded-full font-bold text-lg transition-all hover:scale-105 flex items-center justify-center gap-3 overflow-hidden shadow-xl"
                             >
-                                <span className="relative z-10">Registrarse Ahora</span>
+                                <span className="relative z-10">{t('about.register_now')}</span>
                                 <ArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
                                 <div className="absolute inset-0 bg-primary-500 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></div>
                             </Link>
+
                             <Link
                                 href="/events"
                                 className="group px-10 py-5 rounded-full font-bold text-lg transition-all border border-dark-700 hover:bg-dark-800 hover:border-dark-600 backdrop-blur-sm text-white flex items-center justify-center"
                             >
-                                Ver Próximos Eventos
+                                {t('about.view_upcoming')}
                             </Link>
+
                         </div>
                     </motion.div>
                 </div>
