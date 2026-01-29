@@ -77,10 +77,20 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
                 await castContext.requestSession();
                 const session = castContext.getCurrentSession();
                 if (session) {
-                    const mediaInfo = new chrome.cast.media.MediaInfo(lastStreamUrl, 'application/x-mpegurl');
+                    const contentType = isMp4 || lastStreamUrl.toLowerCase().includes('.mp4')
+                        ? 'video/mp4'
+                        : 'application/vnd.apple.mpegurl';
+
+                    const mediaInfo = new chrome.cast.media.MediaInfo(lastStreamUrl, contentType);
                     mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
                     mediaInfo.metadata.title = eventTitle;
-                    if (poster) mediaInfo.metadata.images = [{ url: poster }];
+                    if (poster) {
+                        // Ensure poster URL is also absolute
+                        const absolutePoster = poster.startsWith('/')
+                            ? `${window.location.protocol}//${window.location.host}${poster}`
+                            : poster;
+                        mediaInfo.metadata.images = [{ url: absolutePoster }];
+                    }
 
                     const request = new chrome.cast.media.LoadRequest(mediaInfo);
                     await session.loadMedia(request);
@@ -156,20 +166,25 @@ Pasos para solucionar:
         const video = videoRef.current;
 
         // SMART URL LOGIC:
-        // 1. If it's a proxy link from our API, it already has the token.
-        // 2. If it's a Mux link, we DON'T add our internal token (it's public or signed by Mux).
-        // 3. Otherwise, append the token.
+        const protocol = window.location.protocol;
+        const host = window.location.host;
+        const absoluteBase = `${protocol}//${host}`;
+
         let finalUrl = streamUrl;
 
-        if (streamUrl.includes('/api/streaming/') && streamUrl.includes('token=')) {
+        // Ensure URL is absolute for casting/external players
+        if (streamUrl.startsWith('/')) {
+            finalUrl = `${absoluteBase}${streamUrl}`;
+        }
+
+        if (finalUrl.includes('/api/streaming/') && finalUrl.includes('token=')) {
             // Already proxied with token
             console.log('Proxy URL detected - Using as is');
-        } else if (streamUrl.includes('stream.mux.com')) {
+        } else if (finalUrl.includes('stream.mux.com')) {
             // Use Mux URL as provided (might be signed or have custom params)
-            finalUrl = streamUrl;
             console.log('Mux Stream detected - Using URL:', finalUrl);
         } else {
-            finalUrl = `${streamUrl}${streamUrl.includes('?') ? '&' : '?'}token=${token}`;
+            finalUrl = `${finalUrl}${finalUrl.includes('?') ? '&' : '?'}token=${token}`;
         }
 
         console.log('Loading stream:', finalUrl);
