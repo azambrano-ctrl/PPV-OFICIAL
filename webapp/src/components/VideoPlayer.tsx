@@ -77,11 +77,20 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
                 await castContext.requestSession();
                 const session = castContext.getCurrentSession();
                 if (session) {
+                    const isMpegUrl = lastStreamUrl.toLowerCase().includes('.m3u8') || !isMp4;
                     const contentType = isMp4 || lastStreamUrl.toLowerCase().includes('.mp4')
                         ? 'video/mp4'
-                        : 'application/vnd.apple.mpegurl';
+                        : 'application/x-mpegurl';
 
                     const mediaInfo = new chrome.cast.media.MediaInfo(lastStreamUrl, contentType);
+
+                    // Set stream type based on event status
+                    if (status === 'live') {
+                        mediaInfo.streamType = chrome.cast.media.StreamType.LIVE;
+                    } else {
+                        mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
+                    }
+
                     mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
                     mediaInfo.metadata.title = eventTitle;
                     if (poster) {
@@ -93,6 +102,8 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
                     }
 
                     const request = new chrome.cast.media.LoadRequest(mediaInfo);
+                    request.autoplay = true; // Force autoplay on load
+
                     await session.loadMedia(request);
                     console.log('Media loaded to Chromecast successfully');
                     return; // Success!

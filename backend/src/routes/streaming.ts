@@ -407,10 +407,17 @@ router.get(
                 validateStatus: (status) => status >= 200 && status < 300 || status === 206 // Accept 206 Partial Content
             });
 
-            // Set CORS headers to allow frontend access
+            // Set CORS headers to allow frontend and Chromecast access
             res.setHeader('Access-Control-Allow-Origin', '*');
             res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-            res.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type');
+            res.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type, Authorization, X-Requested-With');
+            res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range, Accept-Ranges, Content-Type');
+
+            // Handle preflight OPTIONS request
+            if (req.method === 'OPTIONS') {
+                res.status(200).end();
+                return;
+            }
 
             // Set content type from upstream response
             const contentType = response.headers['content-type'] || 'application/vnd.apple.mpegurl';
