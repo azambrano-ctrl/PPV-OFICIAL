@@ -106,10 +106,6 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
 
                     await session.loadMedia(request);
                     console.log('Media loaded to Chromecast successfully');
-
-                    // Pause local video if casting session started successfully
-                    if (video) video.pause();
-
                     return; // Success!
                 }
             } catch (err: any) {
