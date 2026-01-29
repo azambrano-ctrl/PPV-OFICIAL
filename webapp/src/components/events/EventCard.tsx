@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { Calendar, Clock, Play, ArrowRight, ShieldCheck } from 'lucide-react';
 import { formatDate, formatCurrency, getEventStatusColor, getEventStatusText, getImageUrl } from '@/lib/utils';
+import { useLanguage } from '@/components/providers/LanguageProvider';
+
 
 interface EventCardProps {
     event: {

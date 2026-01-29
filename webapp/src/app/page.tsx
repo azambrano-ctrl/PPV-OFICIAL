@@ -9,7 +9,9 @@ import { eventsAPI } from '@/lib/api';
 import { settingsAPI } from '@/lib/api/settings';
 import { formatDate, formatCurrency, getEventStatusColor, getEventStatusText, getImageUrl } from '@/lib/utils';
 import { useAuthStore } from '@/lib/store';
+import { useLanguage } from '@/components/providers/LanguageProvider';
 import Footer from '@/components/Footer';
+
 import EventCard from '@/components/events/EventCard';
 import toast from 'react-hot-toast';
 import AuthenticatedHome from '@/components/home/AuthenticatedHome';
@@ -32,8 +34,10 @@ interface Event {
 
 export default function HomePage() {
     const router = useRouter();
+    const { t } = useLanguage();
     const { isAuthenticated, user } = useAuthStore();
     const [featuredEvents, setFeaturedEvents] = useState<Event[]>([]);
+
     const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
     const [homepageBackground, setHomepageBackground] = useState<string | null>(null);
@@ -79,10 +83,11 @@ export default function HomePage() {
             }
         } catch (error) {
             console.error('Error loading events:', error);
-            toast.error('Error al cargar eventos');
+            toast.error(t('common.error'));
         } finally {
             setLoading(false);
         }
+
     };
 
     const mainEvent = featuredEvents[0];
@@ -143,13 +148,15 @@ export default function HomePage() {
                                     <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-600 animate-pulse">
                                         <div className="w-2 h-2 bg-white rounded-full animate-ping" />
                                         <span className="text-sm font-bold text-white uppercase tracking-wider">
-                                            EN VIVO AHORA
+                                            {t('landing.hero.live_now')}
                                         </span>
                                     </div>
+
                                 ) : (
                                     <span className={`badge ${getEventStatusColor(mainEvent.status)} px-4 py-2 text-sm uppercase tracking-wider`}>
-                                        {mainEvent.status === 'reprise' && parseFloat(String(mainEvent.price)) === 0 ? 'PASE LIBRE' : getEventStatusText(mainEvent.status)}
+                                        {mainEvent.status === 'reprise' && parseFloat(String(mainEvent.price)) === 0 ? t('landing.hero.free_pass') : getEventStatusText(mainEvent.status)}
                                     </span>
+
                                 )}
                             </div>
                         )}
@@ -160,16 +167,18 @@ export default function HomePage() {
                                 <span className="block text-white">{mainEvent.title}</span>
                             ) : (
                                 <>
-                                    <span className="block text-white">VIVE LOS</span>
-                                    <span className="block text-red-600">DEPORTES DE COMBATE</span>
+                                    <span className="block text-white">{t('landing.hero.title_part1')}</span>
+                                    <span className="block text-red-600">{t('landing.hero.title_part2')}</span>
                                 </>
                             )}
+
                         </h1>
 
                         {/* Subtitle */}
                         <p className="text-lg md:text-xl text-gray-400 mb-10 uppercase tracking-wide font-semibold">
-                            Como nunca antes
+                            {t('landing.hero.subtitle')}
                         </p>
+
 
                         {/* CTA Buttons */}
                         <div className="flex flex-wrap gap-4">
@@ -180,34 +189,37 @@ export default function HomePage() {
                                         className="btn-hero-primary"
                                     >
                                         <Play className="w-6 h-6 mr-2" />
-                                        {mainEvent.status === 'live' ? 'VER AHORA' : 'COMPRAR ACCESO'}
+                                        {mainEvent.status === 'live' ? t('home.watch_now') : t('watch.buy_access')}
                                     </Link>
                                     <Link
                                         href="/events"
                                         className="btn-hero-secondary"
                                     >
-                                        VER TODOS LOS EVENTOS
+                                        {t('landing.sections.view_all_mobile')}
                                         <ArrowRight className="w-5 h-5 ml-2" />
                                     </Link>
+
                                 </>
                             ) : (
                                 <>
                                     <Link href="/events" className="btn-hero-primary">
                                         <Play className="w-6 h-6 mr-2" />
-                                        VER EVENTOS
+                                        {t('landing.hero.view_events')}
                                     </Link>
                                     <Link href="/auth/register" className="btn-hero-secondary">
-                                        REGÍSTRATE AQUÍ
+                                        {t('landing.hero.register')}
                                         <ArrowRight className="w-5 h-5 ml-2" />
                                     </Link>
                                 </>
+
                             )}
                         </div>
 
                         {/* Price Tag */}
                         {mainEvent && (
                             <div className="mt-8 inline-flex items-baseline gap-2">
-                                <span className="text-gray-500 text-sm uppercase tracking-wider">Desde</span>
+                                <span className="text-gray-500 text-sm uppercase tracking-wider">{t('landing.hero.from')}</span>
+
                                 <span className="text-5xl font-black bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
                                     {formatCurrency(mainEvent.price, mainEvent.currency)}
                                 </span>
@@ -234,20 +246,22 @@ export default function HomePage() {
                                 <div className="flex items-center gap-3 mb-3">
                                     <div className="w-1 h-8 bg-gradient-to-b from-red-600 to-orange-500" />
                                     <h2 className="font-display text-sm font-bold uppercase tracking-widest text-gray-500">
-                                        Próximos Eventos
+                                        {t('landing.sections.upcoming_title')}
                                     </h2>
                                 </div>
                                 <h3 className="font-display text-4xl md:text-5xl font-black text-white uppercase">
-                                    NO TE LO PIERDAS
+                                    {t('landing.sections.upcoming_subtitle')}
                                 </h3>
+
                             </div>
                             <Link
                                 href="/events"
                                 className="hidden md:flex items-center gap-2 text-red-500 hover:text-red-400 transition-colors font-bold uppercase text-sm tracking-wider"
                             >
-                                VER TODO
+                                {t('landing.sections.view_all')}
                                 <ArrowRight className="w-5 h-5" />
                             </Link>
+
                         </div>
 
                         {/* Events Grid */}
@@ -260,10 +274,11 @@ export default function HomePage() {
                         {/* Mobile View All Button */}
                         <div className="mt-8 text-center md:hidden">
                             <Link href="/events" className="btn-hero-secondary">
-                                VER TODOS LOS EVENTOS
+                                {t('landing.sections.view_all_mobile')}
                                 <ArrowRight className="w-5 h-5 ml-2" />
                             </Link>
                         </div>
+
                     </div>
                 </section>
             )}
@@ -277,36 +292,39 @@ export default function HomePage() {
                                 <Zap className="w-10 h-10 text-white" />
                             </div>
                             <h3 className="font-display text-xl font-bold mb-3 text-white uppercase tracking-wide">
-                                CALIDAD 4K
+                                {t('landing.features.quality_title')}
                             </h3>
                             <p className="text-gray-500 leading-relaxed">
-                                Transmisión en ultra alta definición con tecnología adaptativa para una experiencia sin interrupciones
+                                {t('landing.features.quality_desc')}
                             </p>
                         </div>
+
 
                         <div className="text-center group">
                             <div className="w-20 h-20 bg-gradient-to-br from-red-600 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
                                 <Shield className="w-10 h-10 text-white" />
                             </div>
                             <h3 className="font-display text-xl font-bold mb-3 text-white uppercase tracking-wide">
-                                100% SEGURO
+                                {t('landing.features.secure_title')}
                             </h3>
                             <p className="text-gray-500 leading-relaxed">
-                                Pagos protegidos con encriptación bancaria. Stripe y PayPal certificados
+                                {t('landing.features.secure_desc')}
                             </p>
                         </div>
+
 
                         <div className="text-center group">
                             <div className="w-20 h-20 bg-gradient-to-br from-red-600 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
                                 <Users className="w-10 h-10 text-white" />
                             </div>
                             <h3 className="font-display text-xl font-bold mb-3 text-white uppercase tracking-wide">
-                                COMUNIDAD GLOBAL
+                                {t('landing.features.community_title')}
                             </h3>
                             <p className="text-gray-500 leading-relaxed">
-                                Chat en vivo con miles de fanáticos. Comparte la emoción en tiempo real
+                                {t('landing.features.community_desc')}
                             </p>
                         </div>
+
                     </div>
                 </div>
             </section>
@@ -319,14 +337,15 @@ export default function HomePage() {
                 <div className="container-custom relative z-10">
                     <div className="max-w-4xl mx-auto text-center">
                         <h2 className="font-display text-5xl md:text-7xl font-black mb-6 text-white uppercase leading-none">
-                            ¿LISTO PARA LA
+                            {t('landing.cta.title_part1')}
                             <span className="block bg-gradient-to-r from-red-500 via-red-600 to-orange-500 bg-clip-text text-transparent">
-                                ACCIÓN?
+                                {t('landing.cta.title_part2')}
                             </span>
                         </h2>
                         <p className="text-xl text-gray-400 mb-12 max-w-2xl mx-auto">
-                            Únete a la comunidad más grande de fanáticos del combate. No te pierdas ni un solo momento.
+                            {t('landing.cta.subtitle')}
                         </p>
+
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <Link href="/events" className="btn-hero-primary">
                                 <Play className="w-6 h-6 mr-2" />

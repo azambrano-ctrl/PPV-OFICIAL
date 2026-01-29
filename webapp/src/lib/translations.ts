@@ -37,8 +37,19 @@ export const translations = {
             close: 'Cerrar',
             save: 'Guardar',
         },
+        // Watch
+        watch: {
+            buy_access: 'COMPRAR ACCESO',
+            access_denied: 'Acceso Denegado',
+            access_denied_desc: 'No tienes permiso para ver este evento. Asegúrate de haber iniciado sesión con la cuenta correcta.',
+            preparing: 'Preparando tu asiento...',
+            verifying: 'Verificando acceso y conectando con el servidor.',
+            back_to_events: 'Volver a Eventos',
+            back_to_home: 'Volver al Inicio',
+        },
         // Home
         home: {
+
             welcome: 'Hola',
             subtitle: 'Bienvenido de nuevo a tu centro de combate.',
             featured: 'Destacado',
@@ -86,6 +97,39 @@ export const translations = {
             join_title: '¿Quieres ser parte de nuestra red?',
             join_desc: 'Únete a Arena Fight Pass y lleva tus eventos de MMA a una audiencia global con la mejor tecnología de streaming.',
             register_button: 'Registrar mi Promotora',
+        },
+        // Landing Page (Guest)
+        landing: {
+            hero: {
+                title_part1: 'VIVE LOS',
+                title_part2: 'DEPORTES DE COMBATE',
+                subtitle: 'Como nunca antes',
+                view_events: 'VER EVENTOS',
+                register: 'REGÍSTRATE AQUÍ',
+                live_now: 'EN VIVO AHORA',
+                free_pass: 'PASE LIBRE',
+                from: 'Desde',
+            },
+            sections: {
+                upcoming_title: 'Próximos Eventos',
+                upcoming_subtitle: 'NO TE LO PIERDAS',
+                view_all: 'VER TODO',
+                view_all_mobile: 'VER TODOS LOS EVENTOS',
+            },
+            features: {
+                quality_title: 'CALIDAD 4K',
+                quality_desc: 'Transmisión en ultra alta definición con tecnología adaptativa para una experiencia sin interrupciones',
+                secure_title: '100% SEGURO',
+                secure_desc: 'Pagos protegidos con encriptación bancaria. Stripe y PayPal certificados',
+                community_title: 'COMUNIDAD GLOBAL',
+                community_desc: 'Chat en vivo con miles de fanáticos. Comparte la emoción en tiempo real',
+            },
+            cta: {
+                title_part1: '¿LISTO PARA LA',
+                title_part2: 'ACCIÓN?',
+                subtitle: 'Únete a la comunidad más grande de fanáticos del combate. No te pierdas ni un solo momento.',
+                explore: 'EXPLORAR EVENTOS',
+            }
         }
     },
     en: {
@@ -124,8 +168,19 @@ export const translations = {
             close: 'Close',
             save: 'Save',
         },
+        // Watch
+        watch: {
+            buy_access: 'BUY ACCESS',
+            access_denied: 'Access Denied',
+            access_denied_desc: 'You do not have permission to view this event. Please make sure you are logged in with the correct account.',
+            preparing: 'Preparing your seat...',
+            verifying: 'Verifying access and connecting to the server.',
+            back_to_events: 'Back to Events',
+            back_to_home: 'Back to Home',
+        },
         // Home
         home: {
+
             welcome: 'Hello',
             subtitle: 'Welcome back to your fight center.',
             featured: 'Featured',
@@ -141,7 +196,6 @@ export const translations = {
             hero_description: 'The ultimate platform to discover, support, and live the passion of mixed martial arts in Ecuador.',
             mission_title: 'Our Mission',
             active_users: 'Active Users',
-
             live_events: 'Live Events',
             highlight_title: 'Experience the intensity of every strike, in real time.',
             define_title: 'What Defines Us',
@@ -173,9 +227,43 @@ export const translations = {
             join_title: 'Want to be part of our network?',
             join_desc: 'Join Arena Fight Pass and take your MMA events to a global audience with the best streaming technology.',
             register_button: 'Register my Promoter',
+        },
+        // Landing Page (Guest)
+        landing: {
+            hero: {
+                title_part1: 'EXPERIENCE',
+                title_part2: 'COMBAT SPORTS',
+                subtitle: 'Like never before',
+                view_events: 'SEE EVENTS',
+                register: 'REGISTER HERE',
+                live_now: 'LIVE NOW',
+                free_pass: 'FREE PASS',
+                from: 'From',
+            },
+            sections: {
+                upcoming_title: 'Upcoming Events',
+                upcoming_subtitle: "DON'T MISS IT",
+                view_all: 'SEE ALL',
+                view_all_mobile: 'VIEW ALL EVENTS',
+            },
+            features: {
+                quality_title: '4K QUALITY',
+                quality_desc: 'Ultra high definition streaming with adaptive technology for a seamless experience',
+                secure_title: '100% SECURE',
+                secure_desc: 'Payments protected with bank-grade encryption. Stripe and PayPal certified',
+                community_title: 'GLOBAL COMMUNITY',
+                community_desc: 'Live chat with thousands of fans. Share the excitement in real time',
+            },
+            cta: {
+                title_part1: 'READY FOR',
+                title_part2: 'ACTION?',
+                subtitle: 'Join the largest community of fight fans. Don\'t miss a single moment.',
+                explore: 'EXPLORE EVENTS',
+            }
         }
     }
 };
+
 
 
 
