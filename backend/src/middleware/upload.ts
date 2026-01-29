@@ -6,7 +6,7 @@ import { supabase, BUCKET_NAME } from '../config/supabase';
 // Configure multer to store files in the OS temp directory
 // This prevents loading large files into RAM on memory-constrained environments like Render (512MB)
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
+    destination: (_req: any, _file: any, cb: any) => {
         cb(null, '/tmp');
     }
 });
