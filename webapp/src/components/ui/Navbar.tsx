@@ -107,16 +107,16 @@ export default function Navbar() {
                     {/* Right Side - Auth/Profile */}
                     <div className="hidden md:flex items-center gap-4">
                         {/* Language Switcher */}
-                        <div className="flex items-center bg-dark-800 rounded-lg p-1 mr-2 border border-dark-700">
+                        <div className="flex items-center bg-dark-900/50 rounded-lg p-0.5 mr-2 border border-white/5">
                             <button
                                 onClick={() => setLanguage('es')}
-                                className={`px-2 py-1 text-xs font-bold rounded ${language === 'es' ? 'bg-primary-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                                className={`px-2 py-0.5 text-[10px] font-medium rounded-md transition-all ${language === 'es' ? 'bg-dark-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
                             >
                                 ES
                             </button>
                             <button
                                 onClick={() => setLanguage('en')}
-                                className={`px-2 py-1 text-xs font-bold rounded ${language === 'en' ? 'bg-primary-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                                className={`px-2 py-0.5 text-[10px] font-medium rounded-md transition-all ${language === 'en' ? 'bg-dark-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
                             >
                                 EN
                             </button>
@@ -235,10 +235,10 @@ export default function Navbar() {
                     {/* Mobile Menu Button */}
                     <div className="md:hidden flex items-center gap-2">
                         {/* Mobile Language Switcher */}
-                        <div className="flex bg-dark-800 rounded-lg p-0.5 border border-dark-700">
+                        <div className="flex bg-dark-900/50 rounded-lg p-0.5 border border-white/5">
                             <button
                                 onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
-                                className="px-2 py-1 text-[10px] font-bold text-gray-400 uppercase"
+                                className="px-2 py-0.5 text-[10px] font-medium text-gray-400 uppercase tracking-wider"
                             >
                                 {language}
                             </button>
