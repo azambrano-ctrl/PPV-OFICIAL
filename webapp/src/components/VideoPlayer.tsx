@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
+import { useSettingsStore } from '@/lib/store';
 
 interface VideoPlayerProps {
     streamUrl: string;
@@ -23,6 +24,7 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     const [canCast, setCanCast] = useState(false);
     const [lastStreamUrl, setLastStreamUrl] = useState<string>('');
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const { settings } = useSettingsStore();
 
     // Detect if browser supports casting/remote playback
     useEffect(() => {
@@ -375,6 +377,24 @@ Pasos para solucionar:
                         <line x1="2" y1="20" x2="2.01" y2="20" />
                     </svg>
                 </button>
+            )}
+
+            {/* Logo Watermark */}
+            {settings?.site_logo && (
+                <div
+                    className={`absolute top-4 right-14 z-20 transition-all duration-500 pointer-events-none select-none ${showUI ? 'opacity-40 scale-100' : 'opacity-20 scale-90'
+                        }`}
+                    style={{
+                        maxWidth: '80px',
+                    }}
+                >
+                    <img
+                        src={settings.site_logo}
+                        alt="Watermark"
+                        className="w-full h-auto object-contain brightness-0 invert opacity-80"
+                        onDragStart={(e) => e.preventDefault()}
+                    />
+                </div>
             )}
 
         </div>
