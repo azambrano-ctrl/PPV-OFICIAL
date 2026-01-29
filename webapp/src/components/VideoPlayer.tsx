@@ -380,13 +380,7 @@ Pasos para solucionar:
                 </div>
             )}
 
-            {/* Live Indicator */}
-            {status === 'live' && (
-                <div className={`absolute top-4 left-4 z-20 flex items-center gap-2 px-3 py-1 bg-red-600/90 rounded text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-opacity duration-500 ${showUI ? 'opacity-100' : 'opacity-0'}`}>
-                    <div className={`w-2 h-2 rounded-full bg-white ${isPlaying ? 'animate-pulse' : ''}`}></div>
-                    EN VIVO
-                </div>
-            )}
+
 
             {/* Cast Button Overlay */}
             {!isLoading && !error && canCast && (
