@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Calendar, Clock, DollarSign, Play, ArrowRight, Zap, Shield, Users, Star, TrendingUp, LogOut, Settings, User } from 'lucide-react';
 import { formatDate, formatCurrency, getEventStatusColor, getEventStatusText, getImageUrl } from '@/lib/utils';
 import { useLanguage } from '@/components/providers/LanguageProvider';
+import HeroBackground from './HeroBackground';
 
 import { useSettingsStore } from '@/lib/store';
 import { paymentsAPI } from '@/lib/api';
@@ -17,9 +18,18 @@ interface AuthenticatedHomeProps {
     featuredEvents: any[];
     upcomingEvents: any[];
     homepageBackground?: string | null;
+    homepageVideo?: string | null;
+    homepageSlider?: string[];
 }
 
-export default function AuthenticatedHome({ user, featuredEvents, upcomingEvents, homepageBackground }: AuthenticatedHomeProps) {
+export default function AuthenticatedHome({
+    user,
+    featuredEvents,
+    upcomingEvents,
+    homepageBackground,
+    homepageVideo,
+    homepageSlider
+}: AuthenticatedHomeProps) {
     const { settings } = useSettingsStore();
     const { t } = useLanguage();
 
@@ -48,18 +58,14 @@ export default function AuthenticatedHome({ user, featuredEvents, upcomingEvents
 
     return (
         <div className="min-h-screen flex flex-col bg-black text-white relative">
-            {/* Background Image */}
-            {homepageBackground && (
-                <div className="fixed inset-0 z-0">
-                    <img
-                        src={getImageUrl(homepageBackground)}
-                        alt="Background"
-                        className="absolute inset-0 w-full h-full object-cover opacity-30"
-                    />
-                    {/* Gradient Overlay for Readability */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/60" />
-                </div>
-            )}
+            {/* Background Media */}
+            <HeroBackground
+                videoUrl={homepageVideo}
+                sliderImages={homepageSlider}
+                staticImage={homepageBackground}
+                isFixed
+                opacity={0.3}
+            />
 
             <div className="relative z-10 flex flex-col min-h-screen">
 

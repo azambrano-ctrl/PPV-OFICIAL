@@ -3,6 +3,8 @@ import { query } from '../config/database';
 export interface Settings {
     id: string;
     homepage_background: string | null;
+    homepage_video: string | null;
+    homepage_slider: any; // JSONB
     about_hero_title: string;
     about_hero_subtitle: string;
     about_background: string | null;
@@ -45,6 +47,8 @@ export interface Settings {
 
 export interface UpdateSettingsDTO {
     homepage_background?: string | null;
+    homepage_video?: string | null;
+    homepage_slider?: any;
     about_hero_title?: string;
     about_hero_subtitle?: string;
     about_background?: string | null;
@@ -108,6 +112,8 @@ export const updateSettings = async (updates: UpdateSettingsDTO): Promise<Settin
 
     const keys: (keyof UpdateSettingsDTO)[] = [
         'homepage_background',
+        'homepage_video',
+        'homepage_slider',
         'about_hero_title',
         'about_hero_subtitle',
         'about_background',
@@ -145,7 +151,7 @@ export const updateSettings = async (updates: UpdateSettingsDTO): Promise<Settin
 
             let val = updates[key];
             // Debug logging for JSON fields
-            if (['about_values', 'about_slider_images', 'social_links'].includes(key)) {
+            if (['homepage_slider', 'about_values', 'about_slider_images', 'social_links'].includes(key)) {
                 console.log(`🔍 [Service] Preparing ${key}:`, {
                     type: typeof val,
                     isArray: Array.isArray(val),

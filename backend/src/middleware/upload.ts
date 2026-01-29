@@ -11,14 +11,15 @@ const storage = multer.diskStorage({
     }
 });
 
-// File filter - only allow images
+// File filter - allow images and videos
 const fileFilter = (_req: any, file: any, cb: any) => {
-    const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const allowedImageMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const allowedVideoMimes = ['video/mp4', 'video/webm', 'video/quicktime'];
 
-    if (allowedMimes.includes(file.mimetype)) {
+    if (allowedImageMimes.includes(file.mimetype) || allowedVideoMimes.includes(file.mimetype)) {
         cb(null, true);
     } else {
-        cb(new Error('Invalid file type. Only JPEG, PNG, GIF and WebP images are allowed.'));
+        cb(new Error('Invalid file type. Only images and MP4/WebM videos are allowed.'));
     }
 };
 
@@ -156,6 +157,8 @@ export const uploadEventImages = handleUploads([
 // Middleware for settings images (homepage_background)
 export const uploadSettingsImages = handleUploads([
     { name: 'homepage_background', maxCount: 1 },
+    { name: 'homepage_video', maxCount: 1 },
+    { name: 'homepage_slider', maxCount: 10 },
     { name: 'about_background', maxCount: 1 },
     { name: 'about_gallery', maxCount: 10 },
     { name: 'site_logo', maxCount: 1 },

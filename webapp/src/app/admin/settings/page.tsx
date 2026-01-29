@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { settingsAPI } from '@/lib/api';
-import { Save, AlertCircle, Layout, FileText, Image as ImageIcon, X, CreditCard, Facebook, Instagram, Twitter } from 'lucide-react';
+import { Save, AlertCircle, Layout, FileText, Image as ImageIcon, X, CreditCard, Facebook, Instagram, Twitter, Video, Plus, Trash2 } from 'lucide-react';
 import ImageUpload from '@/components/admin/ImageUpload';
 
 type Tab = 'general' | 'about' | 'gallery' | 'payments' | 'season-pass';
@@ -16,6 +16,8 @@ export default function AdminSettingsPage() {
     // To hold actual File objects
     const [fileState, setFileState] = useState({
         homepage_background: null as File | null,
+        homepage_video: null as File | null,
+        homepage_slider: [] as File[],
         about_background: null as File | null,
         about_gallery: [] as File[],
         site_logo: null as File | null,
@@ -28,6 +30,8 @@ export default function AdminSettingsPage() {
         site_description: '',
         contact_email: '',
         homepage_background: '',
+        homepage_video: '',
+        homepage_slider: [] as string[],
         site_logo: '',
         site_logo_width: 40,
         site_logo_offset_x: 0,
@@ -78,6 +82,8 @@ export default function AdminSettingsPage() {
                 site_description: d.site_description || '',
                 contact_email: d.contact_email || '',
                 homepage_background: d.homepage_background || '',
+                homepage_video: d.homepage_video || '',
+                homepage_slider: typeof d.homepage_slider === 'string' ? JSON.parse(d.homepage_slider) : (d.homepage_slider || []),
                 site_logo: d.site_logo || '',
                 site_logo_width: d.site_logo_width || 40,
                 site_logo_offset_x: d.site_logo_offset_x || 0,
@@ -130,6 +136,17 @@ export default function AdminSettingsPage() {
             } else if (form.homepage_background) {
                 formData.append('homepage_background', form.homepage_background);
             }
+
+            if (fileState.homepage_video) {
+                formData.append('homepage_video', fileState.homepage_video);
+            } else {
+                formData.append('homepage_video', form.homepage_video || '');
+            }
+
+            fileState.homepage_slider.forEach((file) => {
+                formData.append('homepage_slider', file);
+            });
+            formData.append('homepage_slider', JSON.stringify(form.homepage_slider));
 
             if (fileState.about_background) {
                 formData.append('about_background', fileState.about_background);
@@ -190,7 +207,15 @@ export default function AdminSettingsPage() {
             await settingsAPI.update(formData);
             setMessage({ type: 'success', text: 'Configuración guardada correctamente' });
 
-            setFileState({ homepage_background: null, about_background: null, about_gallery: [], site_logo: null, site_favicon: null });
+            setFileState({
+                homepage_background: null,
+                homepage_video: null,
+                homepage_slider: [],
+                about_background: null,
+                about_gallery: [],
+                site_logo: null,
+                site_favicon: null
+            });
             await loadSettings();
         } catch (error) {
             console.error('Error saving settings:', error);
@@ -351,6 +376,120 @@ export default function AdminSettingsPage() {
                                     setForm({ ...form, homepage_background: previewUrl || '' });
                                 }}
                             />
+
+                            {/* Video Background Section */}
+                            <div className="space-y-4 p-4 bg-dark-950 rounded-lg border border-dark-800">
+                                <div className="flex items-center gap-2 text-white font-bold">
+                                    <Video className="w-5 h-5 text-primary-500" />
+                                    <span>Video de Fondo (Opcional)</span>
+                                </div>
+                                <p className="text-xs text-dark-500">Si se sube un video, este tendrá prioridad sobre la imagen o el slider. MP4/WebM máx 50MB.</p>
+
+                                {form.homepage_video || fileState.homepage_video ? (
+                                    <div className="relative aspect-video rounded-lg overflow-hidden bg-black group">
+                                        <video
+                                            src={fileState.homepage_video ? URL.createObjectURL(fileState.homepage_video) : form.homepage_video}
+                                            className="w-full h-full object-cover"
+                                            autoPlay
+                                            muted
+                                            loop
+                                        />
+                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setFileState({ ...fileState, homepage_video: null });
+                                                    setForm({ ...form, homepage_video: '' });
+                                                }}
+                                                className="p-2 bg-red-600 rounded-full text-white hover:bg-red-700 transition-colors"
+                                            >
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="border-2 border-dashed border-dark-800 rounded-lg p-8 text-center hover:border-primary-500 transition-colors cursor-pointer relative">
+                                        <input
+                                            type="file"
+                                            accept="video/mp4,video/webm"
+                                            className="absolute inset-0 opacity-0 cursor-pointer"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    setFileState({ ...fileState, homepage_video: file });
+                                                }
+                                            }}
+                                        />
+                                        <Video className="w-8 h-8 text-dark-600 mx-auto mb-2" />
+                                        <span className="text-sm text-dark-400">Seleccionar Video</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Slider Background Section */}
+                            <div className="space-y-4 p-4 bg-dark-950 rounded-lg border border-dark-800">
+                                <div className="flex items-center gap-2 text-white font-bold">
+                                    <ImageIcon className="w-5 h-5 text-primary-500" />
+                                    <span>Slider de Imágenes (Slidephoto)</span>
+                                </div>
+                                <p className="text-xs text-dark-500">Se usará si no hay un video configurado. Las imágenes rotarán automáticamente.</p>
+
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {form.homepage_slider.map((img, idx) => (
+                                        <div key={idx} className="relative group aspect-video bg-dark-800 rounded-lg overflow-hidden border border-dark-700">
+                                            <img src={img} alt={`Slide ${idx}`} className="w-full h-full object-cover" />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const newImages = form.homepage_slider.filter((_, i) => i !== idx);
+                                                    setForm({ ...form, homepage_slider: newImages });
+                                                }}
+                                                className="absolute top-2 right-2 p-1 bg-red-600 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+
+                                    {fileState.homepage_slider.map((file, idx) => (
+                                        <div key={`new-sl-${idx}`} className="relative group aspect-video bg-dark-800 rounded-lg overflow-hidden border border-primary-500/50">
+                                            <img src={URL.createObjectURL(file)} alt="New slide" className="w-full h-full object-cover opacity-70" />
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <span className="text-[10px] font-bold bg-primary-600 px-2 py-0.5 rounded">NUEVA</span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const newFiles = fileState.homepage_slider.filter((_, i) => i !== idx);
+                                                    setFileState(prev => ({ ...prev, homepage_slider: newFiles }));
+                                                }}
+                                                className="absolute top-2 right-2 p-1 bg-red-600 rounded-full text-white opacity-100"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+
+                                    <div className="border-2 border-dashed border-dark-800 rounded-lg aspect-video flex items-center justify-center hover:border-primary-500 transition-colors cursor-pointer relative">
+                                        <input
+                                            type="file"
+                                            multiple
+                                            accept="image/*"
+                                            className="absolute inset-0 opacity-0 cursor-pointer"
+                                            onChange={(e) => {
+                                                const files = Array.from(e.target.files || []);
+                                                if (files.length > 0) {
+                                                    setFileState(prev => ({
+                                                        ...prev,
+                                                        homepage_slider: [...prev.homepage_slider, ...files]
+                                                    }));
+                                                }
+                                            }}
+                                        />
+                                        <Plus className="w-6 h-6 text-dark-600" />
+                                    </div>
+                                </div>
+                            </div>
 
                             <ImageUpload
                                 label="Logo del Sitio"

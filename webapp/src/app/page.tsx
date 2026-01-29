@@ -15,6 +15,7 @@ import Footer from '@/components/Footer';
 import EventCard from '@/components/events/EventCard';
 import toast from 'react-hot-toast';
 import AuthenticatedHome from '@/components/home/AuthenticatedHome';
+import HeroBackground from '@/components/home/HeroBackground';
 
 interface Event {
     id: string;
@@ -41,6 +42,8 @@ export default function HomePage() {
     const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
     const [homepageBackground, setHomepageBackground] = useState<string | null>(null);
+    const [homepageVideo, setHomepageVideo] = useState<string | null>(null);
+    const [homepageSlider, setHomepageSlider] = useState<string[]>([]);
 
     useEffect(() => {
         loadEvents();
@@ -78,8 +81,10 @@ export default function HomePage() {
 
             // Access nested data: response.data.data.homepage_background
             const settingsData = (settingsRes.data as any).data;
-            if (settingsData?.homepage_background) {
-                setHomepageBackground(settingsData.homepage_background);
+            if (settingsData) {
+                setHomepageBackground(settingsData.homepage_background || null);
+                setHomepageVideo(settingsData.homepage_video || null);
+                setHomepageSlider(settingsData.homepage_slider || []);
             }
         } catch (error) {
             console.error('Error loading events:', error);
@@ -100,6 +105,8 @@ export default function HomePage() {
                 featuredEvents={featuredEvents}
                 upcomingEvents={upcomingEvents}
                 homepageBackground={homepageBackground}
+                homepageVideo={homepageVideo}
+                homepageSlider={homepageSlider}
             />
         );
     }
@@ -108,32 +115,12 @@ export default function HomePage() {
         <div className="min-h-screen flex flex-col bg-black">
             {/* Hero Section - UFC Style */}
             <section className="relative h-screen flex items-center justify-center overflow-hidden">
-                {/* Background Image/Video */}
-                {homepageBackground ? (
-                    <div className="absolute inset-0">
-                        <img
-                            src={getImageUrl(homepageBackground)}
-                            alt="Background"
-                            className="absolute inset-0 w-full h-full object-cover"
-                        />
-                        {/* Dark Overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/50" />
-                    </div>
-                ) : mainEvent?.banner_url || mainEvent?.thumbnail_url ? (
-                    <div className="absolute inset-0">
-                        <img
-                            src={getImageUrl(mainEvent.banner_url || mainEvent.thumbnail_url)}
-                            alt={mainEvent.title}
-                            className="absolute inset-0 w-full h-full object-cover"
-                        />
-                        {/* Dark Overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/50" />
-                    </div>
-                ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-black via-dark-950 to-red-950/20" />
-                )}
+                <HeroBackground
+                    videoUrl={homepageVideo}
+                    sliderImages={homepageSlider}
+                    staticImage={homepageBackground}
+                    fallbackImage={mainEvent?.banner_url || mainEvent?.thumbnail_url}
+                />
 
                 {/* Animated Grid Pattern */}
                 <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5" />

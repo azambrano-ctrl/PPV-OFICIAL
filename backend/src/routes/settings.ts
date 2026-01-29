@@ -95,6 +95,11 @@ router.put(
                     updates.homepage_background = files.homepage_background[0].path;
                 }
 
+                if (files.homepage_video && files.homepage_video[0]) {
+                    console.log('🎬 Updating homepage_video:', files.homepage_video[0].path);
+                    updates.homepage_video = files.homepage_video[0].path;
+                }
+
                 if (files.about_background && files.about_background[0]) {
                     console.log('🖼️ Updating about_background:', files.about_background[0].path);
                     updates.about_background = files.about_background[0].path;
@@ -118,11 +123,27 @@ router.put(
                     console.log('🖼️ Appending new slider images:', newImages);
                     currentSliderImages = [...currentSliderImages, ...newImages];
                 }
+
+                // Homepage Slider - Merge and append
+                if (files.homepage_slider && files.homepage_slider.length > 0) {
+                    const newImages = files.homepage_slider.map(f => f.path);
+                    console.log('🖼️ Appending new homepage slider images:', newImages);
+                    const currentHPSlider = safeParseJSON(req.body.homepage_slider, []);
+                    updates.homepage_slider = [...currentHPSlider, ...newImages];
+                }
             }
 
             // 3. Assign final merged list to updates
-            if (req.body.about_slider_images || (req.files && req.files['about_gallery'])) {
+            if (req.body.about_slider_images || (req.files && (req.files as any)['about_gallery'])) {
                 updates.about_slider_images = currentSliderImages;
+            }
+
+            if (req.body.homepage_slider && !updates.homepage_slider) {
+                updates.homepage_slider = safeParseJSON(req.body.homepage_slider, []);
+            }
+
+            if (req.body.homepage_video === null || req.body.homepage_video === '') {
+                updates.homepage_video = null;
             }
 
             // Handle About Page fields

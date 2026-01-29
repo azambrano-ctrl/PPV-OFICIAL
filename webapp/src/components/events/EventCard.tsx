@@ -24,7 +24,9 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event }: EventCardProps) {
+    const { t } = useLanguage();
     const isFree = parseFloat(String(event.price)) === 0;
+
 
     return (
         <div className="group relative overflow-hidden bg-dark-900/50 border border-dark-800 hover:border-primary-500/50 transition-all duration-500 rounded-3xl flex flex-col h-full shadow-lg hover:shadow-primary-500/10">
@@ -48,8 +50,9 @@ export default function EventCard({ event }: EventCardProps) {
                 {/* Status Badges */}
                 <div className="absolute top-4 left-4 flex flex-col gap-2">
                     <span className={`badge ${getEventStatusColor(event.status)} px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg`}>
-                        {event.status === 'reprise' && isFree ? 'PASE LIBRE' : getEventStatusText(event.status)}
+                        {event.status === 'reprise' && isFree ? t('landing.hero.free_pass') : getEventStatusText(event.status)}
                     </span>
+
                     {event.is_featured && (
                         <span className="badge bg-yellow-500/20 text-yellow-400 border-yellow-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
                             Destaque
@@ -118,8 +121,9 @@ export default function EventCard({ event }: EventCardProps) {
 
                 <div className="flex items-center justify-between pt-4 border-t border-dark-800">
                     <span className="text-2xl font-black bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent uppercase tracking-tighter">
-                        {isFree ? 'PASE LIBRE' : formatCurrency(Number(event.price), event.currency)}
+                        {isFree ? t('landing.hero.free_pass') : formatCurrency(Number(event.price), event.currency)}
                     </span>
+
                     <Link
                         href={`/event/${event.id}`}
                         className="p-2 bg-dark-800 hover:bg-primary-600 text-gray-400 hover:text-white rounded-xl transition-all hover:translate-x-1"
