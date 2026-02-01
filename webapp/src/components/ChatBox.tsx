@@ -6,7 +6,6 @@ import { Send, User, Shield, Info, X, UserMinus, MessageSquare } from 'lucide-re
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/lib/store';
-import ReactionLayer from './ReactionLayer';
 
 interface Message {
     id: string;
@@ -214,7 +213,6 @@ export default function ChatBox({ eventId, eventTitle, eventStatus = 'live', soc
                 className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent"
                 onScroll={handleScroll}
             >
-                <ReactionLayer socket={socket} eventId={eventId} />
                 {eventStatus !== 'live' ? (
                     <div className="h-full flex flex-col items-center justify-center text-white/20 space-y-4 p-8">
                         <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center">
