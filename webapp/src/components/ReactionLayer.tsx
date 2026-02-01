@@ -51,7 +51,8 @@ export default function ReactionLayer({ socket, eventId }: ReactionLayerProps) {
                 {reactions.map((reaction) => (
                     <motion.div
                         key={reaction.id}
-                        initial={{ opacity: 0, y: '100%', x: `${reaction.x}%`, scale: 0.5 }}
+                        initial={{ opacity: 0, y: '100%', scale: 0.5 }}
+                        style={{ left: `${reaction.x}%` }}
                         animate={{
                             opacity: [0, 1, 1, 0],
                             y: '-10%',
