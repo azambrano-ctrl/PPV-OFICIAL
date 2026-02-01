@@ -57,7 +57,7 @@ export default function ReactionLayer({ socket, eventId }: ReactionLayerProps) {
                         initial={{ opacity: 0, scale: 0.5, y: 0 }}
                         style={{ left: `${reaction.x}%`, top: `${reaction.y}%` }}
                         animate={{
-                            opacity: [0, 1, 1, 0],
+                            opacity: [0, 1, 0, 0],
                             y: -800,
                             scale: [0.5, 1.2, 1, 0.8],
                             rotate: [0, -10, 10, 0]
@@ -65,7 +65,7 @@ export default function ReactionLayer({ socket, eventId }: ReactionLayerProps) {
                         transition={{
                             duration: 6,
                             ease: "easeOut",
-                            times: [0, 0.1, 0.8, 1]
+                            times: [0, 0.05, 0.5, 1]
                         }}
                         className="absolute text-3xl md:text-5xl select-none"
                     >
