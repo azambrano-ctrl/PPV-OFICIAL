@@ -26,10 +26,10 @@ export default function ReactionLayer({ socket, eventId }: ReactionLayerProps) {
 
         setReactions((prev) => [...prev, { id, emoji, x, y }]);
 
-        // Remove reaction after animation completes (approx 4s)
+        // Remove reaction after animation completes (approx 6s + buffer)
         setTimeout(() => {
             setReactions((prev) => prev.filter((r) => r.id !== id));
-        }, 4000);
+        }, 7000);
     }, []);
 
     useEffect(() => {
@@ -63,7 +63,7 @@ export default function ReactionLayer({ socket, eventId }: ReactionLayerProps) {
                             rotate: [0, -10, 10, 0]
                         }}
                         transition={{
-                            duration: 3.5,
+                            duration: 6,
                             ease: "easeOut",
                             times: [0, 0.1, 0.8, 1]
                         }}
