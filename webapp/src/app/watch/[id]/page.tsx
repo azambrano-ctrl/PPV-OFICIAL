@@ -223,8 +223,8 @@ export default function WatchPage() {
                             poster={event.thumbnail_url}
                             isMp4={streamData.isMp4}
                         />
-                        <ReactionLayer socket={socket} eventId={eventId} />
                     </div>
+
 
                     {!showChat && (
                         <div className="absolute bottom-24 right-6 z-20">

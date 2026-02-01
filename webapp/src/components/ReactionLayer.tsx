@@ -20,7 +20,7 @@ export default function ReactionLayer({ socket, eventId }: ReactionLayerProps) {
 
     const addReaction = useCallback((emoji: string) => {
         const id = Math.random().toString(36).substring(2, 9);
-        const x = Math.floor(Math.random() * 25) + 70; // Shifting to the right (70% - 95%)
+        const x = Math.floor(Math.random() * 80) + 10; // Rango del 10% al 90% del ancho del chat
 
         setReactions((prev) => [...prev, { id, emoji, x }]);
 
@@ -46,7 +46,7 @@ export default function ReactionLayer({ socket, eventId }: ReactionLayerProps) {
     }, [socket, addReaction]);
 
     return (
-        <div className="absolute inset-x-0 bottom-32 top-0 pointer-events-none overflow-hidden z-20">
+        <div className="absolute inset-x-0 bottom-20 top-0 pointer-events-none overflow-hidden z-20">
 
             <AnimatePresence>
                 {reactions.map((reaction) => (
