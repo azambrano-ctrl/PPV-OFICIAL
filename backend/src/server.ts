@@ -318,6 +318,30 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Send animated reaction
+    socket.on('send_reaction', (data: { eventId: string; emoji: string }) => {
+        try {
+            const { eventId, emoji } = data;
+            if (!emoji) return;
+
+            const roomName = `event_${eventId}`;
+            // Broadcast the reaction to everyone in the room (including sender)
+            io.to(roomName).emit('new_reaction', {
+                emoji,
+                userId: socket.data.user.userId,
+                timestamp: new Date()
+            });
+
+            logger.info('[CHAT] Reaction broadcasted', {
+                userId: socket.data.user.userId,
+                eventId,
+                emoji
+            });
+        } catch (error) {
+            logger.error('[CHAT] Error sending reaction:', error);
+        }
+    });
+
     // Leave event room
     socket.on('leave_event', (eventId: string) => {
         socket.leave(`event_${eventId}`);

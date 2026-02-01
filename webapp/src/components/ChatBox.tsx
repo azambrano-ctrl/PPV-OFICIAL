@@ -21,13 +21,13 @@ interface ChatBoxProps {
     eventId: string;
     eventTitle: string;
     eventStatus?: string;
+    socket: Socket | null;
 }
 
 const COMMON_EMOJIS = ['🔥', '🥊', '👏', '🙌', '💪', '🤩', '🎯', '⚡', '💣', '😎', '👑', '💯', '💀', '👽', '😤', '🍿'];
 
-export default function ChatBox({ eventId, eventTitle, eventStatus }: ChatBoxProps) {
+export default function ChatBox({ eventId, eventTitle, eventStatus = 'live', socket }: ChatBoxProps) {
     const { user, isAdmin, accessToken } = useAuthStore();
-    const [socket, setSocket] = useState<Socket | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [isConnected, setIsConnected] = useState(false);
@@ -53,40 +53,21 @@ export default function ChatBox({ eventId, eventTitle, eventStatus }: ChatBoxPro
         setIsAutoScroll(isBottom);
     };
 
-    // Socket.io connection and listeners
+    // Conexión Socket.io
     useEffect(() => {
-        if (typeof window === 'undefined') return;
+        if (!socket) return;
 
-        if (!accessToken) return;
-
-        const wsUrl = (process.env.NEXT_PUBLIC_WS_URL || process.env.NEXT_PUBLIC_API_URL || '').includes('arenafightpass.com')
-            ? 'https://ppv-backend.onrender.com'
-            : (process.env.NEXT_PUBLIC_WS_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000');
-
-        console.log('[CHAT] Connecting to:', wsUrl);
-
-        const socketInstance = io(wsUrl, {
-            auth: { token: accessToken },
-            transports: ['websocket', 'polling'],
-        });
-
-        socketInstance.on('connect', () => {
+        const handleConnect = () => {
             setIsConnected(true);
-            console.log('[CHAT] Connected to Socket.io');
-            socketInstance.emit('join_event', eventId);
-        });
+            socket.emit('join_event', eventId);
+            console.log('✅ Chat unido al evento:', eventId);
+        };
 
-        socketInstance.on('joined_event', ({ eventId }: any) => {
-            console.log('[CHAT] Successfully joined event room:', eventId);
-        });
-
-        socketInstance.on('disconnect', () => {
+        const handleDisconnect = () => {
             setIsConnected(false);
-            console.log('[CHAT] Disconnected from Socket.io');
-        });
+        };
 
-        socketInstance.on('new_message', (messageData: any) => {
-            console.log('[CHAT] New message received:', messageData);
+        const handleNewMessage = (messageData: any) => {
             const message: Message = {
                 id: messageData.id,
                 user: messageData.user_name,
@@ -97,52 +78,60 @@ export default function ChatBox({ eventId, eventTitle, eventStatus }: ChatBoxPro
                 isDeleted: messageData.is_deleted || false,
             };
             setMessages((prev) => {
+                if (prev.some(m => m.id === message.id)) return prev;
                 const updated = [...prev, message];
                 return updated.slice(-100);
             });
-        });
+        };
 
-        socketInstance.on('message_deleted', ({ messageId }: { messageId: string }) => {
+        const handleMessageDeleted = ({ messageId }: { messageId: string }) => {
             setMessages((prev) =>
                 prev.map((msg) =>
                     msg.id === messageId ? { ...msg, isDeleted: true } : msg
                 )
             );
-        });
+        };
 
-        socketInstance.on('user_banned', ({ userId, userName }: { userId: string, userName: string }) => {
-            toast.error(`${userName} ha sido expulsado del chat`, {
-                icon: '🚫',
-                style: {
-                    borderRadius: '10px',
-                    background: '#1a1a1a',
-                    color: '#fff',
-                },
-            });
-        });
+        const handleUserBanned = ({ userId, userName }: { userId: string, userName: string }) => {
+            if (user?.userId === userId) {
+                toast.error('Has sido expulsado del chat');
+            }
+            setMessages((prev) => prev.filter((m) => m.userId !== userId));
+        };
 
-        socketInstance.on('error', (err: any) => {
-            console.error('Socket error:', err);
-        });
+        const handleError = (err: any) => {
+            console.error('[CHAT] Socket error:', err);
+        };
 
-        setSocket(socketInstance);
+        // Listeners
+        if (socket.connected) handleConnect();
+
+        socket.on('connect', handleConnect);
+        socket.on('disconnect', handleDisconnect);
+        socket.on('new_message', handleNewMessage);
+        socket.on('message_deleted', handleMessageDeleted);
+        socket.on('user_banned', handleUserBanned);
+        socket.on('error', handleError);
 
         return () => {
-            socketInstance.emit('leave_event', eventId);
-            socketInstance.disconnect();
+            socket.off('connect', handleConnect);
+            socket.off('disconnect', handleDisconnect);
+            socket.off('new_message', handleNewMessage);
+            socket.off('message_deleted', handleMessageDeleted);
+            socket.off('user_banned', handleUserBanned);
+            socket.off('error', handleError);
         };
-    }, [eventId]);
+    }, [socket, eventId, user]);
 
     // Fetch initial chat history
     useEffect(() => {
         const fetchHistory = async () => {
             try {
-                const token = localStorage.getItem('accessToken');
-                if (!token || eventStatus !== 'live') return;
+                if (!accessToken || eventStatus !== 'live') return;
 
                 const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events/${eventId}/chat`, {
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${accessToken}`
                     }
                 });
 
@@ -167,7 +156,7 @@ export default function ChatBox({ eventId, eventTitle, eventStatus }: ChatBoxPro
         };
 
         fetchHistory();
-    }, [eventId]);
+    }, [eventId, accessToken, eventStatus]);
 
     const sendMessage = (e: React.FormEvent) => {
         e.preventDefault();
@@ -199,6 +188,11 @@ export default function ChatBox({ eventId, eventTitle, eventStatus }: ChatBoxPro
 
     const addEmoji = (emoji: string) => {
         setNewMessage(prev => prev + emoji);
+    };
+
+    const sendReaction = (emoji: string) => {
+        if (!socket || !isConnected) return;
+        socket.emit('send_reaction', { eventId, emoji });
     };
 
     return (
@@ -307,6 +301,20 @@ export default function ChatBox({ eventId, eventTitle, eventStatus }: ChatBoxPro
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            <div className="px-4 py-2 bg-white/5 border-t border-white/10 flex items-center justify-between gap-1 overflow-x-auto no-scrollbar">
+                {['🔥', '🥊', '👏', '💪', '🙌', '🤩'].map((emoji) => (
+                    <button
+                        key={emoji}
+                        onClick={() => sendReaction(emoji)}
+                        className="p-2 hover:bg-white/10 rounded-full transition-all hover:scale-125 text-xl"
+                        title="Reaccionar"
+                        type="button"
+                    >
+                        {emoji}
+                    </button>
+                ))}
+            </div>
 
             <div className="p-4 bg-white/5 border-t border-white/10">
                 <form onSubmit={sendMessage} className="relative">

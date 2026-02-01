@@ -7,6 +7,9 @@ import Link from 'next/link';
 import { ChevronLeft, MessageSquare, Info, Share2, Tv } from 'lucide-react';
 import VideoPlayer from '@/components/VideoPlayer';
 import ChatBox from '@/components/ChatBox';
+import ReactionLayer from '@/components/ReactionLayer';
+import { initSocket, disconnectSocket } from '@/lib/socket';
+import type { Socket } from 'socket.io-client';
 
 interface StreamData {
     token: string;
@@ -34,6 +37,7 @@ export default function WatchPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showChat, setShowChat] = useState(true);
+    const [socket, setSocket] = useState<Socket | null>(null);
 
     const lastFetchedId = useRef<string | null>(null);
 
@@ -90,6 +94,11 @@ export default function WatchPage() {
 
                 const streamResData = await streamRes.json();
                 setStreamData(streamResData.data);
+
+                // Initialize socket
+                const socketInstance = initSocket(token);
+                setSocket(socketInstance);
+
                 setLoading(false);
             } catch (err: any) {
                 console.error('Error loading stream:', err);
@@ -99,6 +108,10 @@ export default function WatchPage() {
         };
 
         fetchEventAndStream();
+
+        return () => {
+            disconnectSocket();
+        };
     }, [eventId, router]);
 
     if (loading) {
@@ -210,6 +223,7 @@ export default function WatchPage() {
                             poster={event.thumbnail_url}
                             isMp4={streamData.isMp4}
                         />
+                        <ReactionLayer socket={socket} eventId={eventId} />
                     </div>
 
                     {!showChat && (
@@ -249,6 +263,7 @@ export default function WatchPage() {
                             eventId={eventId}
                             eventTitle={event.title}
                             eventStatus={event.status}
+                            socket={socket}
                         />
                     </div>
 

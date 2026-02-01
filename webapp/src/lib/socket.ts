@@ -68,6 +68,10 @@ export const sendMessage = (eventId: string, message: string) => {
     socket?.emit('send_message', { eventId, message });
 };
 
+export const sendReaction = (eventId: string, emoji: string) => {
+    socket?.emit('send_reaction', { eventId, emoji });
+};
+
 export const onMessage = (callback: (data: any) => void) => {
     socket?.on('new_message', callback);
 };
