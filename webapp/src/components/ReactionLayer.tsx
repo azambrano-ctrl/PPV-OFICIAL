@@ -20,7 +20,7 @@ export default function ReactionLayer({ socket, eventId }: ReactionLayerProps) {
 
     const addReaction = useCallback((emoji: string) => {
         const id = Math.random().toString(36).substring(2, 9);
-        const x = Math.floor(Math.random() * 80) + 10; // Stay within 10-90% to avoid edges
+        const x = Math.floor(Math.random() * 25) + 70; // Shifting to the right (70% - 95%)
 
         setReactions((prev) => [...prev, { id, emoji, x }]);
 
