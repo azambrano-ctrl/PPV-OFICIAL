@@ -8,6 +8,7 @@ interface Reaction {
     id: string;
     emoji: string;
     x: number; // Random horizontal position (0-100%)
+    y: number; // Random vertical position (0-100%)
 }
 
 interface ReactionLayerProps {
@@ -19,11 +20,11 @@ export default function ReactionLayer({ socket, eventId }: ReactionLayerProps) {
     const [reactions, setReactions] = useState<Reaction[]>([]);
 
     const addReaction = useCallback((emoji: string) => {
-        const id = Math.random().toString(36).substring(2, 9);
-        const x = Math.floor(Math.random() * 5) + 90; // Rango 85-95% del ancho total (esquina derecha)
+        const x = Math.floor(Math.random() * 5) + 90; // Rango 90-95% del ancho total
         const y = Math.floor(Math.random() * 5) + 90; // Rango 90-95% del alto (Abajo)
+        const id = Math.random().toString(36).substring(2, 9);
 
-        setReactions((prev) => [...prev, { id, emoji, x }]);
+        setReactions((prev) => [...prev, { id, emoji, x, y }]);
 
         // Remove reaction after animation completes (approx 4s)
         setTimeout(() => {
@@ -53,8 +54,8 @@ export default function ReactionLayer({ socket, eventId }: ReactionLayerProps) {
                 {reactions.map((reaction) => (
                     <motion.div
                         key={reaction.id}
-                        initial={{ opacity: 0, y: '100%', scale: 0.5 }}
-                        style={{ left: `${reaction.x}%` }}
+                        initial={{ opacity: 0, scale: 0.5, y: 0 }}
+                        style={{ left: `${reaction.x}%`, top: `${reaction.y}%` }}
                         animate={{
                             opacity: [0, 1, 1, 0],
                             y: '-10%',
