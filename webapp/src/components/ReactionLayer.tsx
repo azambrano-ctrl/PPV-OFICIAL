@@ -20,7 +20,8 @@ export default function ReactionLayer({ socket, eventId }: ReactionLayerProps) {
 
     const addReaction = useCallback((emoji: string) => {
         const id = Math.random().toString(36).substring(2, 9);
-        const x = Math.floor(Math.random() * 10) + 85; // Rango 85-95% del ancho total (esquina derecha)
+        const x = Math.floor(Math.random() * 5) + 90; // Rango 85-95% del ancho total (esquina derecha)
+        const y = Math.floor(Math.random() * 5) + 90; // Rango 90-95% del alto (Abajo)
 
         setReactions((prev) => [...prev, { id, emoji, x }]);
 
