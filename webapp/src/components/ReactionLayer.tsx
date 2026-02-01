@@ -67,7 +67,7 @@ export default function ReactionLayer({ socket, eventId }: ReactionLayerProps) {
                             ease: "easeOut",
                             times: [0, 0.05, 0.5, 1]
                         }}
-                        className="absolute text-2xl md:text-4xl select-none"
+                        className="absolute text-xl md:text-2xl select-none"
                     >
                         {reaction.emoji}
                     </motion.div>
