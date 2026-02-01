@@ -93,7 +93,7 @@ export default function ChatBox({ eventId, eventTitle, eventStatus = 'live', soc
         };
 
         const handleUserBanned = ({ userId, userName }: { userId: string, userName: string }) => {
-            if (user?.userId === userId) {
+            if (user?.id === userId) {
                 toast.error('Has sido expulsado del chat');
             }
             setMessages((prev) => prev.filter((m) => m.userId !== userId));
