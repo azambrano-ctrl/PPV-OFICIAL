@@ -58,7 +58,7 @@ export default function ReactionLayer({ socket, eventId }: ReactionLayerProps) {
                         style={{ left: `${reaction.x}%`, top: `${reaction.y}%` }}
                         animate={{
                             opacity: [0, 1, 1, 0],
-                            y: '-10%',
+                            y: -800,
                             scale: [0.5, 1.2, 1, 0.8],
                             rotate: [0, -10, 10, 0]
                         }}
