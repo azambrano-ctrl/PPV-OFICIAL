@@ -21,6 +21,8 @@ import {
     verifyRefreshToken,
     generateAccessToken,
     generateRefreshToken,
+    setAuthCookies,
+    clearAuthCookies,
 } from '../middleware/auth';
 
 const router = Router();
@@ -83,6 +85,9 @@ router.post(
         // Login automatically
         const loginResponse = await loginUser(email, password);
 
+        // Set secure cookies
+        setAuthCookies(res, loginResponse.accessToken, loginResponse.refreshToken);
+
         res.status(201).json({
             success: true,
             message: 'User registered successfully',
@@ -104,6 +109,9 @@ router.post(
         try {
             const loginResponse = await loginUser(email, password);
 
+            // Set secure cookies
+            setAuthCookies(res, loginResponse.accessToken, loginResponse.refreshToken);
+
             res.json({
                 success: true,
                 message: 'Login successful',
@@ -119,13 +127,28 @@ router.post(
 );
 
 /**
+ * POST /api/auth/logout
+ * Logout user
+ */
+router.post(
+    '/logout',
+    asyncHandler(async (_req: Request, res: Response) => {
+        clearAuthCookies(res);
+        res.json({
+            success: true,
+            message: 'Logged out successfully',
+        });
+    })
+);
+
+/**
  * POST /api/auth/refresh
  * Refresh access token
  */
 router.post(
     '/refresh',
     asyncHandler(async (req: Request, res: Response) => {
-        const { refreshToken } = req.body;
+        const refreshToken = req.body.refreshToken || req.cookies.refreshToken;
 
         if (!refreshToken) {
             res.status(400).json({
@@ -159,6 +182,9 @@ router.post(
             // Generate new tokens
             const newAccessToken = generateAccessToken(decoded);
             const newRefreshToken = generateRefreshToken(decoded);
+
+            // Set secure cookies
+            setAuthCookies(res, newAccessToken, newRefreshToken);
 
             res.json({
                 success: true,

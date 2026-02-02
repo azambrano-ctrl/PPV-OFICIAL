@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 import passport from 'passport';
 import logger from './config/logger';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
@@ -94,6 +95,7 @@ app.use('/api/', limiter);
 // Note: For Stripe webhooks, we need raw body
 app.use('/api/payments/webhooks/stripe', express.raw({ type: 'application/json' }));
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded files

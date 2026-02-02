@@ -16,6 +16,37 @@ export interface AuthRequest extends Request {
     user?: JWTPayload;
 }
 
+/**
+ * Helper to set HttpOnly cookies for authentication
+ */
+export const setAuthCookies = (res: Response, accessToken: string, refreshToken: string) => {
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    res.cookie('accessToken', accessToken, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'lax',
+        maxAge: 3600000, // 1h
+        path: '/',
+    });
+
+    res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 3600000, // 7d
+        path: '/',
+    });
+};
+
+/**
+ * Helper to clear authentication cookies
+ */
+export const clearAuthCookies = (res: Response) => {
+    res.clearCookie('accessToken', { path: '/' });
+    res.clearCookie('refreshToken', { path: '/' });
+};
+
 // Validate required environment variables
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-change-in-production';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'default-refresh-secret-change-in-production';
@@ -69,8 +100,15 @@ export const authenticate = (
     next: NextFunction
 ): void => {
     const authHeader = req.headers.authorization;
+    let token = '';
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+    } else if (req.cookies && req.cookies.accessToken) {
+        token = req.cookies.accessToken;
+    }
+
+    if (!token) {
         res.status(401).json({
             success: false,
             message: 'No token provided',
@@ -79,7 +117,6 @@ export const authenticate = (
     }
 
     try {
-        const token = authHeader.substring(7);
         const decoded = verifyAccessToken(token);
 
         // Session Control: Verify session ID matches DB
@@ -134,9 +171,15 @@ export const optionalAuthenticate = (
 ): void => {
     try {
         const authHeader = req.headers.authorization;
+        let token = '';
 
         if (authHeader && authHeader.startsWith('Bearer ')) {
-            const token = authHeader.substring(7);
+            token = authHeader.substring(7);
+        } else if (req.cookies && req.cookies.accessToken) {
+            token = req.cookies.accessToken;
+        }
+
+        if (token) {
             const decoded = verifyAccessToken(token);
             (req as any).user = decoded;
         }

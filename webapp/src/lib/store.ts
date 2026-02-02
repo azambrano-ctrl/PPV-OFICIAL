@@ -39,10 +39,7 @@ export const useAuthStore = create<AuthState>()(
                 localStorage.setItem('accessToken', accessToken);
                 localStorage.setItem('refreshToken', refreshToken);
 
-                // Save to cookies for middleware (server-side)
-                document.cookie = `accessToken=${accessToken}; path=/; max-age=${7 * 24 * 60 * 60}`; // 7 days
-                document.cookie = `refreshToken=${refreshToken}; path=/; max-age=${7 * 24 * 60 * 60}`;
-
+                // Cookies are now handled by the server (HttpOnly)
                 set({
                     user,
                     accessToken,
@@ -59,9 +56,11 @@ export const useAuthStore = create<AuthState>()(
                 localStorage.removeItem('accessToken');
                 localStorage.removeItem('refreshToken');
 
-                // Clear cookies
-                document.cookie = 'accessToken=; path=/; max-age=0';
-                document.cookie = 'refreshToken=; path=/; max-age=0';
+                // Server-side logout should be called by the component or here via a separate fetch
+                // to avoid circular dependency with api.ts. We'll use native fetch for simplicity.
+                const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+                fetch(`${API_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' })
+                    .catch(err => console.error('Error during server logout:', err));
 
                 set({
                     user: null,

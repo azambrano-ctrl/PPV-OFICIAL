@@ -165,7 +165,7 @@ router.get('/facebook/callback',
 );
 
 // Shared auth success handler
-import { generateAccessToken, generateRefreshToken } from '../middleware/auth';
+import { generateAccessToken, generateRefreshToken, setAuthCookies } from '../middleware/auth';
 
 const handleAuthSuccess = async (req: any, res: Response) => {
     try {
@@ -184,6 +184,9 @@ const handleAuthSuccess = async (req: any, res: Response) => {
 
         const accessToken = generateAccessToken(payload);
         const refreshToken = generateRefreshToken(payload);
+
+        // Set secure cookies
+        setAuthCookies(res, accessToken, refreshToken);
 
         const webUrl = getWebUrl();
         const redirectUrl = `${webUrl}/auth/callback?token=${accessToken}&refresh=${refreshToken}&user=${encodeURIComponent(JSON.stringify({

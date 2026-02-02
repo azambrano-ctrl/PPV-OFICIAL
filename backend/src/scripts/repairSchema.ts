@@ -24,7 +24,7 @@ export const repairSchema = async () => {
             ADD COLUMN IF NOT EXISTS about_slider_images JSONB DEFAULT '[]',
             
             -- General settings
-            ADD COLUMN IF NOT EXISTS site_name TEXT DEFAULT 'PPV Streaming',
+            ADD COLUMN IF NOT EXISTS site_name TEXT DEFAULT 'Arena Fight Pass',
             ADD COLUMN IF NOT EXISTS site_description TEXT DEFAULT '',
             ADD COLUMN IF NOT EXISTS contact_email TEXT DEFAULT '',
             ADD COLUMN IF NOT EXISTS social_links JSONB DEFAULT '{"facebook": "", "instagram": "", "twitter": ""}',

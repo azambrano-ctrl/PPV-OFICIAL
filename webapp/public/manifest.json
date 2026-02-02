@@ -1,0 +1,16 @@
+{
+  "name": "Arena Fight Pass",
+  "short_name": "ArenaPPV",
+  "description": "Streaming en vivo de deportes de combate y eventos especiales.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

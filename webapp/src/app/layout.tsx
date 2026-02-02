@@ -14,14 +14,23 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-    title: 'PPV Streaming - Peleas en Vivo',
-    description: 'Transmisión en vivo de las mejores peleas. Compra acceso y disfruta del mejor entretenimiento deportivo.',
-    keywords: 'peleas, streaming, ppv, en vivo, deportes, boxeo, mma',
-    authors: [{ name: 'PPV Streaming' }],
+    title: 'Arena Fight Pass - Peleas en Vivo',
+    description: 'La plataforma oficial de streaming de deportes de combate. Compra tu acceso y disfruta de los mejores eventos en vivo.',
+    keywords: 'boxeo, mma, kickboxing, streaming, ppv, en vivo, peleas, arena fight pass',
+    authors: [{ name: 'Arena Fight Pass' }],
+    manifest: '/manifest.json',
+    themeColor: '#020617',
+    viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0',
+    appleWebApp: {
+        capable: true,
+        statusBarStyle: 'default',
+        title: 'Arena PPV',
+    },
     openGraph: {
-        title: 'PPV Streaming - Peleas en Vivo',
-        description: 'Las mejores peleas en vivo',
+        title: 'Arena Fight Pass - Streaming de Combate',
+        description: 'Disfruta de las mejores peleas en vivo y en alta definición.',
         type: 'website',
+        images: ['/og-image.png'],
     },
 };
 
@@ -32,6 +41,7 @@ import Navbar from '@/components/ui/Navbar';
 import SettingsProvider from '@/components/providers/SettingsProvider';
 import { LanguageProvider } from '@/components/providers/LanguageProvider';
 import SessionWatcher from '@/components/providers/SessionWatcher';
+import CookieBanner from '@/components/ui/CookieBanner';
 import Script from 'next/script';
 
 export default function RootLayout({
@@ -54,6 +64,7 @@ export default function RootLayout({
                         <SessionWatcher />
                         <Navbar />
                         {children}
+                        <CookieBanner />
                     </SettingsProvider>
                 </LanguageProvider>
 
