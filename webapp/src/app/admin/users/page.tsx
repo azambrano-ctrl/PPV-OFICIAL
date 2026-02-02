@@ -11,7 +11,7 @@ interface User {
     email: string;
     full_name: string;
     phone?: string;
-    role: 'user' | 'admin';
+    role: 'user' | 'admin' | 'promoter';
     created_at: string;
 }
 
