@@ -227,9 +227,11 @@ export default function AdminUsersPage() {
                                         <td className="py-4 px-6">
                                             <span className={`badge ${user.role === 'admin'
                                                 ? 'bg-red-500/20 text-red-400 border-red-500/30'
-                                                : 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                                                : user.role === 'promoter'
+                                                    ? 'bg-purple-500/20 text-purple-400 border-purple-500/30'
+                                                    : 'bg-blue-500/20 text-blue-400 border-blue-500/30'
                                                 }`}>
-                                                {user.role === 'admin' ? '🛡️ Admin' : '👤 Usuario'}
+                                                {user.role === 'admin' ? '🛡️ Admin' : user.role === 'promoter' ? '📢 Promotora' : '👤 Usuario'}
                                             </span>
                                         </td>
                                         <td className="py-4 px-6 text-gray-300">

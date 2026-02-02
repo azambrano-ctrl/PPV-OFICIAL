@@ -15,6 +15,11 @@ export const translations = {
             promoter: 'Panel Promotora',
             logout: 'Cerrar Sesión',
         },
+        roles: {
+            admin: 'Administrador',
+            promoter: 'Promotora',
+            user: 'Usuario',
+        },
         // Footer
         footer: {
             description: 'La mejor plataforma para ver peleas en vivo. Acceso exclusivo a los eventos más emocionantes del deporte.',
@@ -145,6 +150,11 @@ export const translations = {
             admin: 'Admin Panel',
             promoter: 'Promoter Panel',
             logout: 'Logout',
+        },
+        roles: {
+            admin: 'Administrator',
+            promoter: 'Promoter',
+            user: 'User',
         },
         // Footer
         footer: {

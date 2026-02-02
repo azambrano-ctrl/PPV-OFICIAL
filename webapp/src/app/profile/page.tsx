@@ -97,7 +97,7 @@ export default function ProfilePage() {
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-lg">{user.full_name}</h3>
-                                        <p className="text-sm text-dark-400">{user.role === 'admin' ? 'Administrador' : 'Usuario'}</p>
+                                        <p className="text-sm text-dark-400">{user.role === 'admin' ? 'Administrador' : user.role === 'promoter' ? 'Promotora' : 'Usuario'}</p>
                                     </div>
                                 </div>
 

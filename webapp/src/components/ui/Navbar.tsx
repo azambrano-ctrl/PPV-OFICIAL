@@ -154,7 +154,7 @@ export default function Navbar() {
                                                 <p className="text-sm font-bold text-white">{user.full_name}</p>
                                                 <p className="text-xs text-gray-400 truncate">{user.email}</p>
                                                 <div className="mt-2 text-xs font-semibold px-2 py-0.5 rounded-md bg-primary-900/30 text-primary-400 inline-block border border-primary-500/20 uppercase tracking-wider">
-                                                    {user.role === 'admin' ? t('nav.admin') : t('nav.promoter')}
+                                                    {user.role === 'admin' ? t('roles.admin') : user.role === 'promoter' ? t('roles.promoter') : t('roles.user')}
                                                 </div>
 
                                             </div>
