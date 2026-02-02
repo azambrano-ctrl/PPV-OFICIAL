@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, Outfit } from 'next/font/google';
 import './globals.css';
 import { Toaster } from 'react-hot-toast';
@@ -13,14 +13,20 @@ const outfit = Outfit({
     variable: '--font-outfit',
 });
 
+export const viewport: Viewport = {
+    themeColor: '#020617',
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+};
+
 export const metadata: Metadata = {
     title: 'Arena Fight Pass - Peleas en Vivo',
     description: 'La plataforma oficial de streaming de deportes de combate. Compra tu acceso y disfruta de los mejores eventos en vivo.',
     keywords: 'boxeo, mma, kickboxing, streaming, ppv, en vivo, peleas, arena fight pass',
     authors: [{ name: 'Arena Fight Pass' }],
     manifest: '/manifest.json',
-    themeColor: '#020617',
-    viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0',
     appleWebApp: {
         capable: true,
         statusBarStyle: 'default',
