@@ -59,6 +59,19 @@ export default function RootLayout({
                     src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"
                     strategy="afterInteractive"
                 />
+                <Script
+                    id="register-sw"
+                    strategy="afterInteractive"
+                    dangerouslySetInnerHTML={{
+                        __html: `
+                            if ('serviceWorker' in navigator) {
+                                window.addEventListener('load', function() {
+                                    navigator.serviceWorker.register('/sw.js');
+                                });
+                            }
+                        `,
+                    }}
+                />
                 <LanguageProvider>
                     <SettingsProvider>
                         <SessionWatcher />
