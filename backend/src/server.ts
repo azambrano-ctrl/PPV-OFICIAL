@@ -153,6 +153,8 @@ io.use((socket, next) => {
     }
 });
 
+import { getPromoterById, moderateUser, checkChatStatus, removeModeration } from './services/promoterService';
+
 // Socket.io connection handling
 io.on('connection', (socket) => {
     logger.info('User connected to chat', {
@@ -165,18 +167,28 @@ io.on('connection', (socket) => {
         try {
             logger.info('[CHAT] Join attempt', { userId: socket.data.user.userId, eventId });
 
+            const userId = socket.data.user.userId;
+
+            // Check if user is banned
+            const { isBanned } = await checkChatStatus(eventId, userId);
+            if (isBanned) {
+                logger.warn('[CHAT] Banned user tried to join', { userId, eventId });
+                socket.emit('error', { message: 'Has sido baneado de este chat' });
+                return;
+            }
+
             // Check if user is admin or has purchased the event
             const isAdmin = socket.data.user.role === 'admin';
 
             if (!isAdmin) {
                 // Verify user has access to event (purchased or free)
                 const hasAccess = await userHasAccessToEvent(
-                    socket.data.user.userId,
+                    userId,
                     eventId
                 );
 
                 if (!hasAccess) {
-                    logger.warn('[CHAT] Access denied', { userId: socket.data.user.userId, eventId });
+                    logger.warn('[CHAT] Access denied', { userId, eventId });
                     socket.emit('error', { message: 'Access denied to this event chat' });
                     return;
                 }
@@ -185,7 +197,7 @@ io.on('connection', (socket) => {
             const roomName = `event_${eventId}`;
             socket.join(roomName);
             logger.info('[CHAT] User joined room', {
-                userId: socket.data.user.userId,
+                userId,
                 room: roomName,
                 isAdmin,
             });
@@ -209,15 +221,22 @@ io.on('connection', (socket) => {
                 return;
             }
 
-            // Verify if user is in the room (optional check for security)
+            // Check moderation status
+            const { isBanned, isMuted } = await checkChatStatus(eventId, userId);
+            if (isBanned || isMuted) {
+                socket.emit('error', {
+                    message: isBanned ? 'Has sido baneado' : 'Has sido silenciado temporalmente'
+                });
+                return;
+            }
+
+            // Verify if user is in the room
             const roomName = `event_${eventId}`;
             if (!socket.rooms.has(roomName)) {
-                logger.warn('[CHAT] User not in room but trying to send message', { userId, roomName });
-                // Re-join them if they have access
+                // ... same re-join logic ...
                 const hasAccess = socket.data.user.role === 'admin' || await userHasAccessToEvent(userId, eventId);
                 if (hasAccess) {
                     socket.join(roomName);
-                    logger.info('[CHAT] Auto-rejoined user to room', { userId, roomName });
                 } else {
                     socket.emit('error', { message: 'Not authorized for this chat' });
                     return;
@@ -234,7 +253,7 @@ io.on('connection', (socket) => {
 
             const chatMessage = result.rows[0];
 
-            // Get user info and check if banned
+            // Get user info
             const userResult = await query(
                 'SELECT full_name, role FROM users WHERE id = $1',
                 [userId]
@@ -251,11 +270,6 @@ io.on('connection', (socket) => {
             // Broadcast to event room
             io.to(roomName).emit('new_message', messageData);
 
-            logger.info('[CHAT] Message broadcasted', {
-                userId,
-                eventId,
-                room: roomName
-            });
         } catch (error) {
             logger.error('[CHAT] Error sending message:', error);
             socket.emit('error', { message: 'Failed to send message' });
@@ -267,26 +281,17 @@ io.on('connection', (socket) => {
         try {
             const { eventId, messageId } = data;
 
-            // Check if user is admin
             if (socket.data.user.role !== 'admin') {
                 socket.emit('error', { message: 'Access denied' });
                 return;
             }
 
-            // Update message in database
             await query(
                 'UPDATE chat_messages SET is_deleted = true WHERE id = $1 AND event_id = $2',
                 [messageId, eventId]
             );
 
-            // Broadcast to event room
             io.to(`event_${eventId}`).emit('message_deleted', { messageId });
-
-            logger.info('Chat message deleted by admin', {
-                adminId: socket.data.user.userId,
-                messageId,
-                eventId,
-            });
         } catch (error) {
             logger.error('Error deleting message:', error);
             socket.emit('error', { message: 'Failed to delete message' });
@@ -303,9 +308,20 @@ io.on('connection', (socket) => {
                 return;
             }
 
-            // In a real app, you'd save this to a 'chat_bans' table
-            // For now, we'll broadcast the ban to sync all clients
+            // Persist ban
+            await moderateUser(eventId, userId, 'ban');
+
             io.to(`event_${eventId}`).emit('user_banned', { userId, userName });
+
+            // Force disconnect the banned user from the room
+            const roomName = `event_${eventId}`;
+            const sockets = await io.in(roomName).fetchSockets();
+            for (const s of sockets) {
+                if (s.data.user?.userId === userId) {
+                    s.leave(roomName);
+                    s.emit('error', { message: 'Has sido expulsado del chat' });
+                }
+            }
 
             logger.info('User banned from chat by admin', {
                 adminId: socket.data.user.userId,
@@ -315,6 +331,50 @@ io.on('connection', (socket) => {
         } catch (error) {
             logger.error('Error banning user:', error);
             socket.emit('error', { message: 'Failed to ban user' });
+        }
+    });
+
+    // Mute user (Admin only)
+    socket.on('mute_user', async (data: { eventId: string; userId: string; userName: string }) => {
+        try {
+            const { eventId, userId, userName } = data;
+
+            if (socket.data.user.role !== 'admin') {
+                socket.emit('error', { message: 'Access denied' });
+                return;
+            }
+
+            // Persist mute
+            await moderateUser(eventId, userId, 'mute');
+
+            io.to(`event_${eventId}`).emit('user_muted', { userId, userName });
+
+            logger.info('User muted in chat by admin', {
+                adminId: socket.data.user.userId,
+                mutedUserId: userId,
+                eventId,
+            });
+        } catch (error) {
+            logger.error('Error muting user:', error);
+            socket.emit('error', { message: 'Failed to mute user' });
+        }
+    });
+
+    // Unmute/Unban (Admin only)
+    socket.on('unmoderate_user', async (data: { eventId: string; userId: string; type: 'ban' | 'mute' }) => {
+        try {
+            const { eventId, userId, type } = data;
+
+            if (socket.data.user.role !== 'admin') {
+                socket.emit('error', { message: 'Access denied' });
+                return;
+            }
+
+            await removeModeration(eventId, userId, type);
+
+            io.to(`event_${eventId}`).emit('user_unmoderated', { userId, type });
+        } catch (error) {
+            logger.error('Error unmoderating user:', error);
         }
     });
 

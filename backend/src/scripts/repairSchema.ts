@@ -50,6 +50,17 @@ export const repairSchema = async () => {
             ALTER TABLE chat_messages 
             ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT false;
 
+            CREATE TABLE IF NOT EXISTS chat_bans (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                event_id UUID REFERENCES events(id) ON DELETE CASCADE,
+                user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+                type TEXT NOT NULL, -- 'ban' or 'mute'
+                reason TEXT,
+                expires_at TIMESTAMP WITH TIME ZONE,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(event_id, user_id, type)
+            );
+
             -- Events table repairs
             ALTER TABLE events
             ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'upcoming',

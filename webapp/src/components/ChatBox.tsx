@@ -95,12 +95,26 @@ export default function ChatBox({ eventId, eventTitle, eventStatus = 'live', soc
         const handleUserBanned = ({ userId, userName }: { userId: string, userName: string }) => {
             if (user?.id === userId) {
                 toast.error('Has sido expulsado del chat');
+                window.location.reload();
             }
             setMessages((prev) => prev.filter((m) => m.userId !== userId));
         };
 
+        const handleUserMuted = ({ userId, userName }: { userId: string, userName: string }) => {
+            if (user?.id === userId) {
+                toast.error('Has sido silenciado por un moderador');
+            }
+        };
+
+        const handleUserUnmoderated = ({ userId, type }: { userId: string, type: string }) => {
+            if (user?.id === userId) {
+                toast.success(`Tu sanción de ${type} ha sido levantada`);
+            }
+        };
+
         const handleError = (err: any) => {
             console.error('[CHAT] Socket error:', err);
+            if (err.message) toast.error(err.message);
         };
 
         // Listeners
@@ -111,6 +125,8 @@ export default function ChatBox({ eventId, eventTitle, eventStatus = 'live', soc
         socket.on('new_message', handleNewMessage);
         socket.on('message_deleted', handleMessageDeleted);
         socket.on('user_banned', handleUserBanned);
+        socket.on('user_muted', handleUserMuted);
+        socket.on('user_unmoderated', handleUserUnmoderated);
         socket.on('error', handleError);
 
         return () => {
@@ -119,6 +135,8 @@ export default function ChatBox({ eventId, eventTitle, eventStatus = 'live', soc
             socket.off('new_message', handleNewMessage);
             socket.off('message_deleted', handleMessageDeleted);
             socket.off('user_banned', handleUserBanned);
+            socket.off('user_muted', handleUserMuted);
+            socket.off('user_unmoderated', handleUserUnmoderated);
             socket.off('error', handleError);
         };
     }, [socket, eventId, user]);
@@ -184,6 +202,18 @@ export default function ChatBox({ eventId, eventTitle, eventStatus = 'live', soc
         if (window.confirm(`¿Estás seguro de que deseas BLOQUEAR permanentemente a ${userName}?`)) {
             socket.emit('ban_user', { eventId, userId, userName });
         }
+    };
+
+    const muteUser = (userId: string, userName: string) => {
+        if (!socket || !isConnected || !isAdmin) return;
+        if (window.confirm(`¿Estás seguro de que deseas SILENCIAR a ${userName}?`)) {
+            socket.emit('mute_user', { eventId, userId, userName });
+        }
+    };
+
+    const unmoderateUser = (userId: string, type: 'ban' | 'mute') => {
+        if (!socket || !isConnected || !isAdmin) return;
+        socket.emit('unmoderate_user', { eventId, userId, type });
     };
 
     const addEmoji = (emoji: string) => {
@@ -256,6 +286,13 @@ export default function ChatBox({ eventId, eventTitle, eventStatus = 'live', soc
                                                 title="Eliminar mensaje"
                                             >
                                                 <X className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button
+                                                onClick={() => muteUser(msg.userId, msg.user)}
+                                                className="p-1 text-white/20 hover:text-yellow-500 hover:bg-yellow-500/10 rounded transition-all"
+                                                title="Silenciar usuario"
+                                            >
+                                                <Info className="w-3.5 h-3.5" />
                                             </button>
                                             <button
                                                 onClick={() => banUser(msg.userId, msg.user)}

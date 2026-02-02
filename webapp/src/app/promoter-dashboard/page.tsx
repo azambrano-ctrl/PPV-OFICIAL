@@ -5,17 +5,18 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 import { promotersAPI, handleAPIError } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { Save, Calendar, Globe, Facebook, Instagram, Twitter, Image as ImageIcon, User, Trophy, Upload, Trash2, X } from 'lucide-react';
+import { Save, Calendar, Globe, Facebook, Instagram, Twitter, Image as ImageIcon, User, Trophy, Upload, Trash2, X, TrendingUp } from 'lucide-react';
 import { getImageUrl } from '@/lib/utils';
 import ImageUpload from '@/components/admin/ImageUpload';
 import PromoterEvents from '@/components/promoter/PromoterEvents';
+import PromoterAnalytics from '@/components/promoter/PromoterAnalytics';
 
 export default function PromoterDashboard() {
     const router = useRouter();
     const { user, isPromoter, isAuthenticated } = useAuthStore();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [activeTab, setActiveTab] = useState<'profile' | 'events'>('profile');
+    const [activeTab, setActiveTab] = useState<'profile' | 'events' | 'analytics'>('profile');
 
     const [formData, setFormData] = useState({
         id: '',
@@ -189,6 +190,13 @@ export default function PromoterDashboard() {
                                 <Trophy className="w-5 h-5" />
                                 Mis Eventos
                             </button>
+                            <button
+                                onClick={() => setActiveTab('analytics')}
+                                className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black uppercase italic tracking-tighter transition-all ${activeTab === 'analytics' ? 'bg-primary-600 text-white shadow-xl shadow-primary-600/20' : 'text-gray-500 hover:text-white hover:bg-dark-900 border border-transparent'}`}
+                            >
+                                <TrendingUp className="w-5 h-5" />
+                                Analíticas
+                            </button>
                         </nav>
 
                         {/* Status Card */}
@@ -213,6 +221,8 @@ export default function PromoterDashboard() {
                     <main className="flex-1">
                         {activeTab === 'events' ? (
                             <PromoterEvents promoterId={formData.id} />
+                        ) : activeTab === 'analytics' ? (
+                            <PromoterAnalytics />
                         ) : (
                             <form onSubmit={handleSubmit} className="space-y-12">
                                 {/* Header Info */}

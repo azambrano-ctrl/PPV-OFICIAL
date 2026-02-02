@@ -258,6 +258,9 @@ export const promotersAPI = {
 
     updateStatus: (id: string, status: 'pending' | 'active' | 'suspended') =>
         api.patch(`/promoters/${id}/status`, { status }),
+
+    getStats: () =>
+        api.get('/promoters/my/stats'),
 };
 
 // Error handler helper

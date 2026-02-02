@@ -175,3 +175,98 @@ export const deletePromoter = async (id: string): Promise<void> => {
         throw new Error('Promoter not found');
     }
 };
+
+/**
+ * Get analytics for a promoter
+ */
+export const getPromoterStats = async (promoterId: string) => {
+    // 1. Total revenue and sales
+    const revenueSql = `
+        SELECT 
+            COUNT(*) as total_sales,
+            COALESCE(SUM(p.final_amount), 0) as total_revenue
+        FROM purchases p
+        JOIN events e ON p.event_id = e.id
+        WHERE e.promoter_id = $1 AND p.payment_status = 'completed'
+    `;
+    const revenueRes = await query(revenueSql, [promoterId]);
+
+    // 2. Sales per event
+    const eventSalesSql = `
+        SELECT 
+            e.id,
+            e.title,
+            e.event_date,
+            COUNT(p.id) as sales_count,
+            COALESCE(SUM(p.final_amount), 0) as revenue
+        FROM events e
+        LEFT JOIN purchases p ON e.id = p.event_id AND p.payment_status = 'completed'
+        WHERE e.promoter_id = $1
+        GROUP BY e.id, e.title, e.event_date
+        ORDER BY e.event_date DESC
+    `;
+    const eventSalesRes = await query(eventSalesSql, [promoterId]);
+
+    // 3. Daily sales (last 30 days) for chart
+    const dailySalesSql = `
+        SELECT 
+            TO_CHAR(DATE_TRUNC('day', p.purchased_at), 'YYYY-MM-DD') as date,
+            COUNT(*) as count,
+            SUM(p.final_amount) as amount
+        FROM purchases p
+        JOIN events e ON p.event_id = e.id
+        WHERE e.promoter_id = $1 
+          AND p.payment_status = 'completed'
+          AND p.purchased_at >= NOW() - INTERVAL '30 days'
+        GROUP BY DATE_TRUNC('day', p.purchased_at)
+        ORDER BY DATE_TRUNC('day', p.purchased_at) ASC
+    `;
+    const dailySalesRes = await query(dailySalesSql, [promoterId]);
+
+    return {
+        summary: revenueRes.rows[0],
+        events: eventSalesRes.rows,
+        daily_chart: dailySalesRes.rows
+    };
+};
+
+/**
+ * Chat Moderation: Ban or Mute user
+ */
+export const moderateUser = async (eventId: string, userId: string, type: 'ban' | 'mute', reason?: string) => {
+    const sql = `
+        INSERT INTO chat_bans (event_id, user_id, type, reason)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (event_id, user_id, type) DO UPDATE SET
+            reason = EXCLUDED.reason,
+            created_at = NOW()
+        RETURNING *
+    `;
+    const result = await query(sql, [eventId, userId, type, reason || '']);
+    return result.rows[0];
+};
+
+/**
+ * Chat Moderation: Check user status
+ */
+export const checkChatStatus = async (eventId: string, userId: string) => {
+    const sql = `
+        SELECT type FROM chat_bans 
+        WHERE event_id = $1 AND user_id = $2
+    `;
+    const result = await query(sql, [eventId, userId]);
+    return {
+        isBanned: result.rows.some((r: { type: string }) => r.type === 'ban'),
+        isMuted: result.rows.some((r: { type: string }) => r.type === 'mute')
+    };
+};
+
+/**
+ * Chat Moderation: Remove ban/mute
+ */
+export const removeModeration = async (eventId: string, userId: string, type: 'ban' | 'mute') => {
+    await query(
+        'DELETE FROM chat_bans WHERE event_id = $1 AND user_id = $2 AND type = $3',
+        [eventId, userId, type]
+    );
+};

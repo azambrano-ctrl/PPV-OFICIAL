@@ -242,4 +242,28 @@ router.delete(
     })
 );
 
+/**
+ * GET /api/promoters/stats
+ * Get promoter dashboard statistics (Promoter only)
+ */
+router.get(
+    '/my/stats',
+    authenticate,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const user = req.user!;
+
+        if (user.role !== 'promoter' || !user.promoterId) {
+            res.status(403).json({ success: false, message: 'Se requiere rol de promotora' });
+            return;
+        }
+
+        const stats = await promoterService.getPromoterStats(user.promoterId);
+
+        res.json({
+            success: true,
+            data: stats
+        });
+    })
+);
+
 export default router;
