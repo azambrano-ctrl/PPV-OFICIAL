@@ -263,6 +263,17 @@ export const promotersAPI = {
         api.get('/promoters/my/stats'),
 };
 
+export const notificationsAPI = {
+    getAll: () =>
+        api.get('/notifications'),
+
+    markAsRead: (id: string) =>
+        api.patch(`/notifications/${id}/read`),
+
+    markAllAsRead: () =>
+        api.patch('/notifications/read-all'),
+};
+
 // Error handler helper
 export const handleAPIError = (error: any): string => {
     if (axios.isAxiosError(error)) {

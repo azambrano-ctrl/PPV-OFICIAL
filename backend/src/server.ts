@@ -18,6 +18,7 @@ import cleanupRoutes from './routes/cleanup';
 import newsletterRoutes from './routes/newsletter';
 import promoterRoutes from './routes/promoters';
 import publicStatsRoutes from './routes/public-stats';
+import notificationRoutes from './routes/notifications';
 import { query } from './config/database';
 import { verifyAccessToken } from './middleware/auth';
 import { userHasAccessToEvent } from './services/eventService';
@@ -43,6 +44,9 @@ const io = new Server(httpServer, {
         credentials: true,
     },
 });
+
+// Inject io into global for services to use
+(global as any).io = io;
 
 // Middleware
 app.use(helmet({
@@ -124,6 +128,7 @@ app.get('/health', (_req, res) => {
 });
 
 // API Routes
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', oauthRoutes); // Google OAuth routes
 app.use('/api/events', eventRoutes);
@@ -154,13 +159,18 @@ io.use((socket, next) => {
 });
 
 import { moderateUser, checkChatStatus, removeModeration } from './services/promoterService';
+import * as notificationService from './services/notificationService';
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
-    logger.info('User connected to chat', {
+    logger.info('User connected to socket', {
         userId: socket.data.user.userId,
         socketId: socket.id,
     });
+
+    // Each user joins their own notification room
+    const userId = socket.data.user.userId;
+    socket.join(`user_notifications_${userId}`);
 
     // Join event room
     socket.on('join_event', async (eventId: string) => {
@@ -425,6 +435,55 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 // Start server
+/**
+ * Event Reminder Cron / Interval
+ * Checks every 60 seconds for events starting in the next 10 minutes
+ */
+const startReminderCron = () => {
+    logger.info('⏰ Starting event reminder cron...');
+
+    // Set to store notified event-user pairs for current session to avoid duplicates
+    const notifiedPairs = new Set<string>();
+
+    setInterval(async () => {
+        try {
+            // Find events starting in the next 10 minutes that haven't started yet
+            const sql = `
+                SELECT e.id, e.title, e.event_date, p.user_id
+                FROM events e
+                JOIN purchases p ON e.id = p.event_id
+                WHERE e.event_date > NOW() 
+                AND e.event_date <= NOW() + INTERVAL '10 minutes'
+                AND p.payment_status = 'completed'
+                AND e.status = 'upcoming'
+            `;
+            const result = await query(sql);
+
+            for (const row of result.rows) {
+                const key = `${row.id}-${row.user_id}`;
+                if (!notifiedPairs.has(key)) {
+                    const timeUntil = Math.round((new Date(row.event_date).getTime() - Date.now()) / 60000);
+
+                    await notificationService.createNotification(
+                        row.user_id,
+                        '¡Evento por comenzar!',
+                        `"${row.title}" comienza en ${timeUntil} minutos. ¡No te lo pierdas!`,
+                        'event_reminder',
+                        `/watch/${row.id}`
+                    );
+
+                    notifiedPairs.add(key);
+                    logger.info(`Notification sent for event ${row.id} to user ${row.user_id}`);
+                }
+            }
+        } catch (error) {
+            logger.error('Error in reminder cron:', error);
+        }
+    }, 60000);
+};
+
+startReminderCron();
+
 const PORT = process.env.PORT || 5000;
 
 import { repairSchema } from './scripts/repairSchema';

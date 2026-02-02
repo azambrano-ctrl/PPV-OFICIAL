@@ -94,6 +94,19 @@ export const repairSchema = async () => {
             CREATE UNIQUE INDEX IF NOT EXISTS idx_one_season_pass_per_user 
             ON purchases (user_id) 
             WHERE purchase_type = 'season_pass' AND payment_status = 'completed';
+
+            -- Notifications table
+            CREATE TABLE IF NOT EXISTS notifications (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+                title TEXT NOT NULL,
+                message TEXT NOT NULL,
+                type TEXT NOT NULL DEFAULT 'system', -- 'event_reminder', 'system', 'purchase'
+                link TEXT,
+                is_read BOOLEAN DEFAULT false,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, is_read);
         `;
 
         await query(sql);

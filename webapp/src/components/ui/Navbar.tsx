@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, User, LogOut, Settings, ShoppingBag, Globe } from 'lucide-react';
 import { useAuthStore, useSettingsStore } from '@/lib/store';
 import { useLanguage } from '@/components/providers/LanguageProvider';
+import NotificationCenter from './NotificationCenter';
 
 
 export default function Navbar() {
@@ -106,6 +107,7 @@ export default function Navbar() {
 
                     {/* Right Side - Auth/Profile */}
                     <div className="hidden md:flex items-center gap-4">
+                        <NotificationCenter />
                         {/* Language Switcher */}
                         <div className="flex items-center bg-dark-900/50 rounded-lg p-0.5 mr-2 border border-white/5">
                             <button
