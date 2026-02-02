@@ -153,7 +153,7 @@ io.use((socket, next) => {
     }
 });
 
-import { getPromoterById, moderateUser, checkChatStatus, removeModeration } from './services/promoterService';
+import { moderateUser, checkChatStatus, removeModeration } from './services/promoterService';
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
