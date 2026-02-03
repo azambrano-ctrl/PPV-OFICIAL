@@ -51,18 +51,23 @@ export const bunnyService = {
             });
 
             const stream = response.data;
-            logger.info('Bunny.net live stream created', { streamId: stream.id });
-            console.log('Bunny Stream created:', stream.id);
+            // Bunny.net API can be inconsistent with casing (PascalCase vs camelCase)
+            const streamId = stream.Id || stream.id;
+            const streamKey = stream.StreamKey || stream.streamKey;
 
-            // Bunny response for live streams usually includes:
-            // id, name, streamKey, status, etc.
-            // Note: Ingest URL is usually rtmp://video-ingest.bunnycdn.com/app
+            if (!streamId) {
+                console.error('[BunnyService] API Response missing ID. Data:', JSON.stringify(stream));
+                throw new Error('La API de Bunny.net no devolvió un ID de stream válido.');
+            }
+
+            logger.info('Bunny.net live stream created', { streamId });
+            console.log('Bunny Stream created:', streamId);
 
             return {
-                bunnyLiveStreamId: stream.id,
-                streamKey: stream.streamKey,
+                bunnyLiveStreamId: streamId,
+                streamKey: streamKey || '',
                 rtmpUrl: 'rtmp://video-ingest.bunnycdn.com/app',
-                playbackId: stream.id, // In Bunny, the video/stream ID is used in the URL
+                playbackId: streamId, // In Bunny, the video/stream ID is used in the URL
             };
         } catch (error: any) {
             console.error('Bunny.net API Error:', error.response?.data || error.message);
