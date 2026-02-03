@@ -2,7 +2,6 @@ import { Router, Response } from 'express';
 import { asyncHandler } from '../middleware/errorHandler';
 import { authenticate, requireAdmin, AuthRequest } from '../middleware/auth';
 import pool from '../config/database';
-import { muxService } from '../services/muxService';
 import { bunnyService } from '../services/bunnyService';
 import { getEventById } from '../services/eventService';
 
