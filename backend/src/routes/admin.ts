@@ -252,42 +252,44 @@ router.get(
     requireAdmin,
     asyncHandler(async (_req: any, res: Response) => {
         try {
-            console.log('[Admin] Testing Bunny API connection...');
+            console.log('[Admin] Running Deep Diagnostic for Bunny API...');
 
             const results: any = {
                 config: {
                     libraryId: process.env.BUNNY_LIBRARY_ID,
                     hostname: process.env.BUNNY_STREAM_HOSTNAME,
-                    apiKeyLength: process.env.BUNNY_API_KEY?.length || 0
-                }
+                    apiKeyLength: process.env.BUNNY_API_KEY?.length || 0,
+                    apiKeyStart: process.env.BUNNY_API_KEY?.substring(0, 5) + '...'
+                },
+                endpoints: {}
             };
 
-            // Test 1: Live Streams
-            try {
-                const liveStreams = await bunnyService.getLibraries();
-                results.liveStreamsTest = 'SUCCESS';
-                results.liveStreamsCount = liveStreams.length || 0;
-            } catch (e: any) {
-                results.liveStreamsTest = `FAILED: ${e.message}`;
-                results.liveStreamsResponse = e.response?.data || 'No details';
-            }
+            const endpoints = [
+                { name: 'liveStreams_Pascal', url: `/library/${process.env.BUNNY_LIBRARY_ID}/liveStreams` },
+                { name: 'livestreams_Lower', url: `/library/${process.env.BUNNY_LIBRARY_ID}/livestreams` },
+                { name: 'videos_List', url: `/library/${process.env.BUNNY_LIBRARY_ID}/videos?page=1&itemsPerPage=1` }
+            ];
 
-            // Test 2: Standard Videos (Isolation test)
-            try {
-                const vidResponse = await axios.get(
-                    `https://video.bunnycdn.com/library/${process.env.BUNNY_LIBRARY_ID}/videos?page=1&itemsPerPage=1`,
-                    {
+            for (const ep of endpoints) {
+                try {
+                    const response = await axios.get(`https://video.bunnycdn.com${ep.url}`, {
                         headers: {
                             'AccessKey': process.env.BUNNY_API_KEY || '',
                             'accept': 'application/json'
                         }
-                    }
-                );
-                results.videosTest = 'SUCCESS';
-                results.videosCount = vidResponse.data.length || 0;
-            } catch (e: any) {
-                results.videosTest = `FAILED: ${e.message}`;
-                results.videosResponse = e.response?.data || 'No details';
+                    });
+                    results.endpoints[ep.name] = {
+                        status: 'OK',
+                        data: response.data
+                    };
+                } catch (e: any) {
+                    results.endpoints[ep.name] = {
+                        status: 'FAILED',
+                        code: e.response?.status || 'No status',
+                        message: e.message,
+                        details: e.response?.data || 'No details'
+                    };
+                }
             }
 
             res.json({
@@ -295,7 +297,7 @@ router.get(
                 results
             });
         } catch (error: any) {
-            console.error('[Admin] Bunny Global Test Error:', error.message);
+            console.error('[Admin] Global Diagnostic Error:', error.message);
             res.status(500).json({
                 success: false,
                 message: 'Unexpected error in diagnostic route',
