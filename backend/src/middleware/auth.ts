@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 import { Request, Response, NextFunction } from 'express';
 import logger from '../config/logger';
 
@@ -245,5 +246,32 @@ export const verifyStreamToken = (token: string): { userId: string; eventId: str
         return { userId: decoded.userId, eventId: decoded.eventId };
     } catch (error) {
         throw new Error('Invalid or expired stream token');
+    }
+};
+/**
+ * Sign Bunny.net Stream URL
+ * @param url The base URL to sign
+ * @param securityKey The Bunny.net Security Key
+ * @param expirationTime Seconds until expiration (default 3h)
+ */
+export const signBunnyUrl = (
+    url: string,
+    securityKey: string,
+    expirationTime: number = 3 * 3600
+): string => {
+    try {
+        const parsedUrl = new URL(url);
+        const path = parsedUrl.pathname;
+        const expires = Math.floor(Date.now() / 1000) + expirationTime;
+
+        // Bunny.net Authentication Token logic
+        // format: sha256(securityKey + path + expires)
+        const hashable = securityKey + path + expires;
+        const token = crypto.createHash('sha256').update(hashable).digest('hex');
+
+        return `${url}${url.includes('?') ? '&' : '?'}token=${token}&expires=${expires}`;
+    } catch (error) {
+        logger.error('Error signing Bunny URL:', error);
+        return url;
     }
 };

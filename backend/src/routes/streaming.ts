@@ -3,7 +3,7 @@ import { z } from 'zod';
 import axios from 'axios';
 import { asyncHandler } from '../middleware/errorHandler';
 import { validateParams } from '../middleware/validation';
-import { authenticate, AuthRequest, generateStreamToken, verifyStreamToken } from '../middleware/auth';
+import { authenticate, AuthRequest, generateStreamToken, verifyStreamToken, signBunnyUrl } from '../middleware/auth';
 import { query } from '../config/database';
 import { userHasAccessToEvent, getEventById } from '../services/eventService';
 
@@ -113,6 +113,10 @@ router.get(
                 const host = req.get('host');
                 streamUrl = `${protocol}://${host}/api/streaming/${eventId}/proxy?token=${existingToken.token}`;
                 console.log('[Token Existente] Stream inseguro. Usando proxy:', streamUrl);
+            } else if (streamUrl.includes('b-cdn.net') && process.env.BUNNY_SECURITY_KEY) {
+                // Sign Bunny.net URL
+                streamUrl = signBunnyUrl(streamUrl, process.env.BUNNY_SECURITY_KEY);
+                console.log('[Token Existente] Stream de Bunny detectado. URL firmada.');
             }
 
             console.log(`[Stream Token] Event: ${event.title}, Stream URL: ${streamUrl}, isMp4: ${isMp4}`);
@@ -177,6 +181,10 @@ router.get(
 
             streamUrl = `${protocol}://${host}/api/streaming/${eventId}/proxy?token=${token}`;
             console.log('Insecure stream detected. Wrapping in proxy:', streamUrl);
+        } else if (streamUrl.includes('b-cdn.net') && process.env.BUNNY_SECURITY_KEY) {
+            // Sign Bunny.net URL
+            streamUrl = signBunnyUrl(streamUrl, process.env.BUNNY_SECURITY_KEY);
+            console.log('Bunny stream detected. Signed URL:', streamUrl);
         }
 
         console.log(`[New Stream Token] Event: ${event.title}, Stream URL: ${streamUrl}, isMp4: ${isMp4}`);
@@ -269,9 +277,17 @@ router.get(
         } else if (isAbsoluteUrl) {
             streamUrl = `${streamKey}${streamKey.includes('?') ? '&' : '?'}token=${token}`;
         } else if (streamKey && !streamKey.startsWith('stream_')) {
-            streamUrl = `https://stream.mux.com/${streamKey}.m3u8?token=${token}`;
+            streamUrl = `https://stream.mux.com/${streamKey}.m3u8`;
         } else {
             streamUrl = '';
+        }
+
+        // Apply Bunny signing if applicable for URL endpoint too
+        if (streamUrl.includes('b-cdn.net') && process.env.BUNNY_SECURITY_KEY) {
+            streamUrl = signBunnyUrl(streamUrl, process.env.BUNNY_SECURITY_KEY);
+        } else if (streamUrl && !streamUrl.includes('token=')) {
+            // Legacy/Generic token attachment
+            streamUrl = `${streamUrl}${streamUrl.includes('?') ? '&' : '?'}token=${token}`;
         }
 
         res.json({

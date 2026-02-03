@@ -129,6 +129,8 @@ router.get(
 export default router;
 
 import { muxService } from '../services/muxService';
+import { bunnyService } from '../services/bunnyService';
+import { getEventById } from '../services/eventService';
 
 /**
  * POST /api/admin/events/:id/live-stream
@@ -157,14 +159,15 @@ router.post(
             return;
         }
 
-        // Create stream in Mux
-        const streamData = await muxService.createLiveStream();
+        // Create stream in Bunny.net (replacing Mux)
+        const event = await getEventById(eventId);
+        const streamData = await bunnyService.createLiveStream(event?.title || 'Event Stream');
 
         // Save to DB
         const result = await pool.query(
             `INSERT INTO live_streams (
                 event_id, 
-                mux_live_stream_id, 
+                bunny_live_stream_id, 
                 stream_key, 
                 rtmp_url, 
                 mux_playback_id
@@ -173,18 +176,19 @@ router.post(
             RETURNING *`,
             [
                 eventId,
-                streamData.muxLiveStreamId,
+                streamData.bunnyLiveStreamId,
                 streamData.streamKey,
                 streamData.rtmpUrl,
-                streamData.playbackId,
+                streamData.playbackId, // Reusing mux_playback_id for the bunny playback id for simplicity or adding bunny_playback_id?
             ]
         );
 
-        // Update event with stream URL (optional, but good for automated playback)
-        // If using standard HLS player
-        let hlsUrl = `https://stream.mux.com/${streamData.playbackId}.m3u8`;
+        // Update event with stream URL (Bunny format)
+        // Format: https://vz-8118499b-e3c.b-cdn.net/PLAYBACK_ID/playlist.m3u8
+        const bunnyHostname = process.env.BUNNY_STREAM_HOSTNAME || 'vz-8118499b-e3c.b-cdn.net';
+        let hlsUrl = `https://${bunnyHostname}/${streamData.playbackId}/playlist.m3u8`;
 
-        // If this is a mock stream (due to free plan limits), use a valid public test stream (Big Buck Bunny)
+        // If this is a mock stream, use the same test stream
         if (streamData.playbackId && streamData.playbackId.startsWith('mock_')) {
             hlsUrl = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
         }
@@ -226,40 +230,20 @@ router.get(
             return;
         }
 
-        // Optionally fetch up-to-date status from Mux
+        // Optionally fetch up-to-date status
         const stream = result.rows[0];
         try {
-            const muxStream = await muxService.getLiveStream(stream.mux_live_stream_id);
-            stream.status = muxStream.status;
-
-            // Sync Playback ID if needed (sometimes it's not available immediately on creation)
-            const currentPlaybackId = muxStream.playback_ids?.[0]?.id;
-
-            if (currentPlaybackId && currentPlaybackId !== stream.mux_playback_id) {
-                console.log('Syncing Playback ID from Mux:', currentPlaybackId);
-
-                await pool.query(
-                    'UPDATE live_streams SET mux_playback_id = $1, status = $2 WHERE id = $3',
-                    [currentPlaybackId, muxStream.status, stream.id]
-                );
-
-                // Update event stream key (URL) too
-                const hlsUrl = `https://stream.mux.com/${currentPlaybackId}.m3u8`;
-                await pool.query(
-                    'UPDATE events SET stream_key = $1 WHERE id = $2',
-                    [hlsUrl, eventId]
-                );
-
-                stream.mux_playback_id = currentPlaybackId;
-            } else {
-                // Update status in DB
-                await pool.query(
-                    'UPDATE live_streams SET status = $1 WHERE id = $2',
-                    [muxStream.status, stream.id]
-                );
+            if (stream.bunny_live_stream_id) {
+                const bunnyStream = await bunnyService.getLiveStream(stream.bunny_live_stream_id);
+                // Bunny status: 0: Created, 1: Uploading, 2: Processing, 3: Transcoding, 4: Finished, 5: Error, 6: UploadFailed
+                // For Live: It might be different. 
+                stream.status = bunnyStream.status === 3 ? 'active' : 'idle';
+            } else if (stream.mux_live_stream_id) {
+                const muxStream = await muxService.getLiveStream(stream.mux_live_stream_id);
+                stream.status = muxStream.status;
             }
         } catch (error) {
-            console.error('Failed to fetch Mux status', error);
+            console.error('Failed to fetch stream status', error);
         }
 
         res.json({
@@ -296,8 +280,12 @@ router.delete(
 
         const stream = result.rows[0];
 
-        // Delete from Mux
-        await muxService.deleteLiveStream(stream.mux_live_stream_id);
+        // Delete from Provider
+        if (stream.bunny_live_stream_id) {
+            await bunnyService.deleteLiveStream(stream.bunny_live_stream_id);
+        } else if (stream.mux_live_stream_id) {
+            await muxService.deleteLiveStream(stream.mux_live_stream_id);
+        }
 
         // Delete from DB
         await pool.query('DELETE FROM live_streams WHERE id = $1', [stream.id]);

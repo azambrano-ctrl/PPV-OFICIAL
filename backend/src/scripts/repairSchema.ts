@@ -107,6 +107,11 @@ export const repairSchema = async () => {
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
             CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, is_read);
+
+            -- Bunny.net Stream migration
+            ALTER TABLE live_streams 
+            ALTER COLUMN mux_live_stream_id DROP NOT NULL,
+            ADD COLUMN IF NOT EXISTS bunny_live_stream_id VARCHAR(255);
         `;
 
         await query(sql);

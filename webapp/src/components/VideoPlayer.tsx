@@ -211,11 +211,11 @@ Pasos para solucionar:
         }
 
         if (finalUrl.includes('/api/streaming/') && finalUrl.includes('token=')) {
-            // Already proxied with token
+            // Already proxied with internal token
             console.log('Proxy URL detected - Using as is');
-        } else if (finalUrl.includes('stream.mux.com')) {
-            // Use Mux URL as provided (might be signed or have custom params)
-            console.log('Mux Stream detected - Using URL:', finalUrl);
+        } else if (finalUrl.includes('stream.mux.com') || finalUrl.includes('b-cdn.net')) {
+            // Protected provider URL - Use as is (already signed by backend if needed)
+            console.log('Provider Stream detected - Using URL as provided');
         } else {
             finalUrl = `${finalUrl}${finalUrl.includes('?') ? '&' : '?'}token=${token}`;
         }
