@@ -87,11 +87,8 @@ router.get(
 
                 if (isAbsoluteUrl) {
                     streamUrl = streamKey;
-                } else if (streamKey && !streamKey.startsWith('stream_')) {
-                    // It's a Mux Playback ID (external/manual) - construct Mux URL
-                    streamUrl = `https://stream.mux.com/${streamKey}.m3u8`;
                 } else {
-                    // No valid stream source yet (it's either our internal placeholder or empty)
+                    // No valid stream source
                     streamUrl = '';
                 }
             }
@@ -153,9 +150,6 @@ router.get(
             streamUrl = event.stream_url;
         } else if (isAbsoluteUrl) {
             streamUrl = streamKey;
-        } else if (streamKey && !streamKey.startsWith('stream_')) {
-            // It's a Mux Playback ID - construct Mux URL
-            streamUrl = `https://stream.mux.com/${streamKey}.m3u8`;
         } else {
             // No valid stream source
             streamUrl = '';
@@ -276,9 +270,8 @@ router.get(
             streamUrl = event.stream_url;
         } else if (isAbsoluteUrl) {
             streamUrl = `${streamKey}${streamKey.includes('?') ? '&' : '?'}token=${token}`;
-        } else if (streamKey && !streamKey.startsWith('stream_')) {
-            streamUrl = `https://stream.mux.com/${streamKey}.m3u8`;
         } else {
+            // No valid stream source
             streamUrl = '';
         }
 

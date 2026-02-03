@@ -172,26 +172,22 @@ router.post(
             const streamData = await bunnyService.createLiveStream(event.title);
             console.log('[Admin] Bunny stream created:', streamData.bunnyLiveStreamId);
 
-            // Save to DB
+            // Save to DB (Only Bunny and general fields)
             const result = await pool.query(
                 `INSERT INTO live_streams (
                     event_id, 
                     bunny_live_stream_id, 
                     stream_key, 
                     rtmp_url, 
-                    mux_playback_id,
-                    mux_live_stream_id,
                     status
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                VALUES ($1, $2, $3, $4, $5)
                 RETURNING *`,
                 [
                     eventId,
                     streamData.bunnyLiveStreamId || '',
                     streamData.streamKey || '',
                     streamData.rtmpUrl || '',
-                    streamData.playbackId || '',
-                    'bunny_' + (streamData.bunnyLiveStreamId || Date.now()),
                     'idle'
                 ]
             );
