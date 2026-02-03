@@ -187,11 +187,11 @@ router.post(
                 RETURNING *`,
                 [
                     eventId,
-                    streamData.bunnyLiveStreamId,
-                    streamData.streamKey,
-                    streamData.rtmpUrl,
-                    streamData.playbackId,
-                    'bunny_' + streamData.bunnyLiveStreamId,
+                    streamData.bunnyLiveStreamId || '',
+                    streamData.streamKey || '',
+                    streamData.rtmpUrl || '',
+                    streamData.playbackId || '',
+                    'bunny_' + (streamData.bunnyLiveStreamId || Date.now()),
                     'idle'
                 ]
             );
