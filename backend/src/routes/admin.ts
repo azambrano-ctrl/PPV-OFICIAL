@@ -324,3 +324,32 @@ router.delete(
 );
 
 export default router;
+
+/**
+ * GET /api/admin/bunny-test
+ * Test connectivity with Bunny.net API
+ */
+router.get(
+    '/bunny-test',
+    authenticate,
+    requireAdmin,
+    asyncHandler(async (_req: any, res: Response) => {
+        try {
+            console.log('[Admin] Testing Bunny.net connectivity...');
+            const result = await bunnyService.getLibraries();
+            res.json({
+                success: true,
+                message: 'Conexión con Bunny.net exitosa',
+                data: result
+            });
+        } catch (error: any) {
+            console.error('[Admin] Bunny.net Test Failed:', error.message);
+            res.status(500).json({
+                success: false,
+                message: 'Error de conexión con Bunny.net',
+                error: error.message,
+                details: error.response?.data || 'No details'
+            });
+        }
+    })
+);

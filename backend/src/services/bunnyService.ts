@@ -97,5 +97,22 @@ export const bunnyService = {
             logger.error('Error deleting Bunny.net live stream:', error);
             throw error;
         }
+    },
+
+    /**
+     * Test connectivity by fetching libraries (Diagnostic)
+     */
+    async getLibraries() {
+        try {
+            const response = await axios.get(`${BASE_URL}/library`, {
+                headers: {
+                    'AccessKey': BUNNY_API_KEY || '',
+                    'accept': 'application/json'
+                }
+            });
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
     }
 };
