@@ -97,6 +97,7 @@ export const getEventStatusColor = (status: string): string => {
         finished: 'badge-warning',
         cancelled: 'badge-danger',
         reprise: 'badge-info',
+        draft: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
     };
     return colors[s] || 'badge-info';
 };
@@ -111,6 +112,7 @@ export const getEventStatusText = (status: string): string => {
         finished: 'Finalizado',
         cancelled: 'Cancelado',
         reprise: 'Reprise',
+        draft: 'Borrador (Solo Admin)',
     };
     return texts[status] || status;
 };

@@ -342,6 +342,7 @@ export default function EditEventPage() {
                             <option value="finished">Finalizado</option>
                             <option value="cancelled">Cancelado</option>
                             <option value="reprise">Reprise</option>
+                            <option value="draft">Borrador (Solo Admin)</option>
                         </select>
                     </div>
 

@@ -130,6 +130,7 @@ export default function AdminEventsPage() {
                             <option value="finished">Finalizados</option>
                             <option value="cancelled">Cancelados</option>
                             <option value="reprise">Reprise</option>
+                            <option value="draft">Borrador (Solo Admin)</option>
                         </select>
                     </div>
                 </div>

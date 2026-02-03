@@ -10,7 +10,7 @@ export interface Event {
     currency: string;
     thumbnail_url?: string;
     banner_url?: string;
-    status: 'upcoming' | 'live' | 'finished' | 'cancelled' | 'reprise';
+    status: 'upcoming' | 'live' | 'finished' | 'cancelled' | 'reprise' | 'draft';
     stream_key?: string;
     stream_url?: string;
     max_viewers?: number;
