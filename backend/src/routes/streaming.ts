@@ -114,6 +114,8 @@ router.get(
                 // Sign Bunny.net URL
                 streamUrl = signBunnyUrl(streamUrl, process.env.BUNNY_SECURITY_KEY);
                 console.log('[Token Existente] Stream de Bunny detectado. URL firmada.');
+            } else if (streamUrl.includes('cloudflarestream.com')) {
+                console.log('[Token Existente] Stream de Cloudflare detectado.');
             }
 
             console.log(`[Stream Token] Event: ${event.title}, Stream URL: ${streamUrl}, isMp4: ${isMp4}`);

@@ -4,9 +4,77 @@ import { asyncHandler } from '../middleware/errorHandler';
 import { authenticate, requireAdmin, AuthRequest } from '../middleware/auth';
 import pool from '../config/database';
 import { bunnyService } from '../services/bunnyService';
+import { cloudflareService } from '../services/cloudflareService';
 import { getEventById } from '../services/eventService';
 
 const router = Router();
+
+/**
+ * GET /api/admin/ping
+ * Quick check to verify admin router is mounted
+ */
+router.get('/ping', (_req, res) => {
+    res.json({ success: true, message: 'Admin router is active' });
+});
+
+/**
+ * GET /api/admin/cf-test
+ * Diagnostic route for Cloudflare Stream
+ */
+router.get(
+    '/cf-test',
+    authenticate,
+    requireAdmin,
+    asyncHandler(async (_req: any, res: Response) => {
+        try {
+            console.log('[Admin] Running Cloudflare Diagnostic...');
+            const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+            const token = process.env.CLOUDFLARE_API_TOKEN;
+
+            const results: any = {
+                config: {
+                    accountId,
+                    tokenLength: token?.length || 0,
+                    tokenStart: token?.substring(0, 5) + '...'
+                },
+                apiTest: {}
+            };
+
+            // Test 1: Basic list inputs
+            try {
+                const response = await axios.get(
+                    `https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/live_inputs`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+                results.apiTest.listInputs = {
+                    status: 'OK',
+                    count: response.data.result?.length || 0
+                };
+            } catch (e: any) {
+                results.apiTest.listInputs = {
+                    status: 'FAILED',
+                    code: e.response?.status,
+                    data: e.response?.data
+                };
+            }
+
+            res.json({
+                success: true,
+                results
+            });
+        } catch (error: any) {
+            res.status(500).json({
+                success: false,
+                error: error.message
+            });
+        }
+    })
+);
 
 /**
  * GET /api/admin/stats
@@ -160,7 +228,7 @@ router.post(
         try {
             console.log('[Admin] Creating stream for event:', eventId);
 
-            // Create stream in Bunny.net (replacing Mux)
+            // Create stream in Cloudflare Stream
             const event = await getEventById(eventId);
             if (!event) {
                 console.error('[Admin] Event not found:', eventId);
@@ -168,9 +236,9 @@ router.post(
                 return;
             }
 
-            console.log('[Admin] Calling bunnyService for event:', event.title);
-            const streamData = await bunnyService.createLiveStream(event.title);
-            console.log('[Admin] Bunny stream created:', streamData.bunnyLiveStreamId);
+            console.log('[Admin] Calling cloudflareService for event:', event.title);
+            const streamData = await cloudflareService.createLiveInput(event.title);
+            console.log('[Admin] Cloudflare stream created:', streamData.cloudflareStreamId);
 
             console.log('[Admin] Inserting into live_streams table...');
             let result;
@@ -178,7 +246,7 @@ router.post(
                 result = await pool.query(
                     `INSERT INTO live_streams (
                         event_id, 
-                        bunny_live_stream_id, 
+                        cloudflare_stream_id, 
                         stream_key, 
                         rtmp_url, 
                         status
@@ -187,10 +255,10 @@ router.post(
                     RETURNING *`,
                     [
                         eventId,
-                        streamData.bunnyLiveStreamId || '',
+                        streamData.cloudflareStreamId,
                         streamData.streamKey || '',
                         streamData.rtmpUrl || '',
-                        'idle'
+                        'active' // Cloudflare inputs are ready immediately
                     ]
                 );
                 console.log('[Admin] Insert into live_streams successful');
@@ -200,12 +268,7 @@ router.post(
             }
 
             // Update event with stream details
-            const bunnyHostname = process.env.BUNNY_STREAM_HOSTNAME || 'vz-8118499b-e3c.b-cdn.net';
-            let hlsUrl = `https://${bunnyHostname}/${streamData.playbackId}/playlist.m3u8`;
-
-            if (streamData.playbackId && streamData.playbackId.startsWith('mock_')) {
-                hlsUrl = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
-            }
+            const hlsUrl = streamData.hlsUrl;
 
             console.log('[Admin] Updating event with HLS URL:', hlsUrl);
             try {
@@ -216,7 +279,6 @@ router.post(
                 console.log('[Admin] Event updated successfully');
             } catch (dbError: any) {
                 console.error('[Admin] FAILED TO UPDATE EVENT:', dbError.message);
-                // We DON'T throw here so we can still return the stream data
             }
 
             res.json({
@@ -225,88 +287,16 @@ router.post(
             });
         } catch (error: any) {
             console.error('[Admin] FATAL ERROR in live-stream route:', error);
-
-            // Extract detailed error info
-            const errorMsg = error.message || 'Unknown error';
-            const errorDetail = error.detail || ''; // DB detail
-            const errorData = error.response?.data ? JSON.stringify(error.response.data) : 'No provider response data';
-
             res.status(500).json({
                 success: false,
                 message: 'Error interno al procesar el stream',
-                error: errorMsg,
-                dbDetail: errorDetail,
-                providerDetails: errorData
+                error: error.message || 'Unknown error',
+                providerDetails: error.response?.data ? JSON.stringify(error.response.data) : 'No response data'
             });
         }
     })
 );
 
-/**
- * GET /api/admin/bunny-test
- * Simple test for Bunny.net API connection
- */
-router.get(
-    '/bunny-test',
-    authenticate,
-    requireAdmin,
-    asyncHandler(async (_req: any, res: Response) => {
-        try {
-            console.log('[Admin] Running Deep Diagnostic for Bunny API...');
-
-            const results: any = {
-                config: {
-                    libraryId: process.env.BUNNY_LIBRARY_ID,
-                    hostname: process.env.BUNNY_STREAM_HOSTNAME,
-                    apiKeyLength: process.env.BUNNY_API_KEY?.length || 0,
-                    apiKeyStart: process.env.BUNNY_API_KEY?.substring(0, 5) + '...'
-                },
-                endpoints: {}
-            };
-
-            const endpoints = [
-                { name: 'liveStreams_Pascal', url: `/library/${process.env.BUNNY_LIBRARY_ID}/liveStreams` },
-                { name: 'livestreams_Lower', url: `/library/${process.env.BUNNY_LIBRARY_ID}/livestreams` },
-                { name: 'live-streams_Hyphen', url: `/library/${process.env.BUNNY_LIBRARY_ID}/live-streams` },
-                { name: 'videos_List', url: `/library/${process.env.BUNNY_LIBRARY_ID}/videos?page=1&itemsPerPage=1` }
-            ];
-
-            for (const ep of endpoints) {
-                try {
-                    const response = await axios.get(`https://video.bunnycdn.com${ep.url}`, {
-                        headers: {
-                            'AccessKey': process.env.BUNNY_API_KEY || '',
-                            'accept': 'application/json'
-                        }
-                    });
-                    results.endpoints[ep.name] = {
-                        status: 'OK',
-                        data: response.data
-                    };
-                } catch (e: any) {
-                    results.endpoints[ep.name] = {
-                        status: 'FAILED',
-                        code: e.response?.status || 'No status',
-                        message: e.message,
-                        details: e.response?.data || 'No details'
-                    };
-                }
-            }
-
-            res.json({
-                success: true,
-                results
-            });
-        } catch (error: any) {
-            console.error('[Admin] Global Diagnostic Error:', error.message);
-            res.status(500).json({
-                success: false,
-                message: 'Unexpected error in diagnostic route',
-                error: error.message
-            });
-        }
-    })
-);
 
 /**
  * GET /api/admin/events/:id/live-stream
@@ -336,10 +326,12 @@ router.get(
         // Optionally fetch up-to-date status
         const stream = result.rows[0];
         try {
-            if (stream.bunny_live_stream_id) {
+            if (stream.cloudflare_stream_id) {
+                const cfInput = await cloudflareService.getLiveInput(stream.cloudflare_stream_id);
+                // Cloudflare status from live_inputs response
+                stream.status = cfInput.status === 'connected' ? 'active' : 'idle';
+            } else if (stream.bunny_live_stream_id) {
                 const bunnyStream = await bunnyService.getLiveStream(stream.bunny_live_stream_id);
-                // Bunny status: 0: Created, 1: Uploading, 2: Processing, 3: Transcoding, 4: Finished, 5: Error, 6: UploadFailed
-                // For Live: It might be different. 
                 stream.status = bunnyStream.status === 3 ? 'active' : 'idle';
             }
         } catch (error) {
@@ -381,7 +373,13 @@ router.delete(
         const stream = result.rows[0];
 
         // Delete from Provider
-        if (stream.bunny_live_stream_id) {
+        if (stream.cloudflare_stream_id) {
+            try {
+                await cloudflareService.deleteLiveInput(stream.cloudflare_stream_id);
+            } catch (e) {
+                console.warn('Cloudflare delete failed', e);
+            }
+        } else if (stream.bunny_live_stream_id) {
             try {
                 await bunnyService.deleteLiveStream(stream.bunny_live_stream_id);
             } catch (e) {
