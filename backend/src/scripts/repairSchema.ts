@@ -111,7 +111,8 @@ export const repairSchema = async () => {
             -- Bunny.net Stream migration
             ALTER TABLE live_streams 
             ALTER COLUMN mux_live_stream_id DROP NOT NULL,
-            ADD COLUMN IF NOT EXISTS bunny_live_stream_id VARCHAR(255);
+            ADD COLUMN IF NOT EXISTS bunny_live_stream_id VARCHAR(255),
+            ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'idle';
         `;
 
         await query(sql);
