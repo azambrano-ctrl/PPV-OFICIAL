@@ -53,14 +53,13 @@ export const bunnyService = {
             const stream = response.data;
             console.log('[BunnyService] API Raw Response:', JSON.stringify(stream));
 
-            // Bunny.net API can be inconsistent with casing (PascalCase vs camelCase)
-            // Normalizing common fields
-            const streamId = stream.Id || stream.id || stream.ID;
-            const streamKey = stream.StreamKey || stream.streamKey;
+            // Bunny.net API can be inconsistent with casing
+            const streamId = stream.Id || stream.id || stream.ID || stream.guid;
+            const streamKey = stream.StreamKey || stream.streamKey || stream.stream_key;
 
             if (!streamId) {
                 console.error('[BunnyService] API Response missing ID. Data:', JSON.stringify(stream));
-                throw new Error('La API de Bunny.net no devolvió un ID de stream válido. Revisa los logs.');
+                throw new Error(`La API de Bunny.net respondió pero no encontramos un ID. Datos: ${JSON.stringify(stream)}`);
             }
 
             logger.info('Bunny.net live stream created', { streamId });

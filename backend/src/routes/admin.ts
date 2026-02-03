@@ -253,27 +253,52 @@ router.get(
         try {
             console.log('[Admin] Testing Bunny API connection...');
 
-            // Try to list streams in the library (real API call)
-            const testResult = await bunnyService.getLibraries();
+            const results: any = {
+                config: {
+                    libraryId: process.env.BUNNY_LIBRARY_ID,
+                    hostname: process.env.BUNNY_STREAM_HOSTNAME,
+                    apiKeyLength: process.env.BUNNY_API_KEY?.length || 0
+                }
+            };
+
+            // Test 1: Live Streams
+            try {
+                const liveStreams = await bunnyService.getLibraries();
+                results.liveStreamsTest = 'SUCCESS';
+                results.liveStreamsCount = liveStreams.length || 0;
+            } catch (e: any) {
+                results.liveStreamsTest = `FAILED: ${e.message}`;
+                results.liveStreamsResponse = e.response?.data || 'No details';
+            }
+
+            // Test 2: Standard Videos (Isolation test)
+            try {
+                const vidResponse = await axios.get(
+                    `https://video.bunnycdn.com/library/${process.env.BUNNY_LIBRARY_ID}/videos?page=1&itemsPerPage=1`,
+                    {
+                        headers: {
+                            'AccessKey': process.env.BUNNY_API_KEY || '',
+                            'accept': 'application/json'
+                        }
+                    }
+                );
+                results.videosTest = 'SUCCESS';
+                results.videosCount = vidResponse.data.length || 0;
+            } catch (e: any) {
+                results.videosTest = `FAILED: ${e.message}`;
+                results.videosResponse = e.response?.data || 'No details';
+            }
 
             res.json({
                 success: true,
-                config: {
-                    hasApiKey: !!process.env.BUNNY_API_KEY,
-                    hasLibraryId: !!process.env.BUNNY_LIBRARY_ID,
-                    libraryId: process.env.BUNNY_LIBRARY_ID,
-                    hostname: process.env.BUNNY_STREAM_HOSTNAME
-                },
-                apiTest: 'SUCCESS',
-                streamsCount: testResult.length || 0
+                results
             });
         } catch (error: any) {
-            console.error('[Admin] Bunny Test Error:', error.response?.data || error.message);
+            console.error('[Admin] Bunny Global Test Error:', error.message);
             res.status(500).json({
                 success: false,
-                message: 'Bunny API connection failed (likely invalid API Key or Library ID)',
-                error: error.message,
-                details: error.response?.data || 'No details'
+                message: 'Unexpected error in diagnostic route',
+                error: error.message
             });
         }
     })
