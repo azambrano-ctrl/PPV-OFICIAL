@@ -17,17 +17,13 @@ export const repairSchema = async () => {
             `ALTER TABLE events ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'upcoming'`,
             `ALTER TABLE events ADD COLUMN IF NOT EXISTS stream_key TEXT`,
             `ALTER TABLE events ADD COLUMN IF NOT EXISTS stream_url TEXT`,
-
-            --Stream table cleanup
-                `ALTER TABLE live_streams ALTER COLUMN mux_live_stream_id DROP NOT NULL`,
+            `ALTER TABLE live_streams ALTER COLUMN mux_live_stream_id DROP NOT NULL`,
             `ALTER TABLE live_streams ALTER COLUMN mux_playback_id DROP NOT NULL`,
             `ALTER TABLE live_streams ALTER COLUMN stream_key DROP NOT NULL`,
             `ALTER TABLE live_streams ALTER COLUMN rtmp_url DROP NOT NULL`,
             `ALTER TABLE live_streams ADD COLUMN IF NOT EXISTS bunny_live_stream_id VARCHAR(255)`,
             `ALTER TABLE live_streams ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'idle'`,
-
-            --Constraint dropping(one by one)
-                `ALTER TABLE live_streams DROP CONSTRAINT IF EXISTS live_streams_rtmp_url_key`,
+            `ALTER TABLE live_streams DROP CONSTRAINT IF EXISTS live_streams_rtmp_url_key`,
             `ALTER TABLE live_streams DROP CONSTRAINT IF EXISTS live_streams_stream_key_key`,
             `ALTER TABLE live_streams DROP CONSTRAINT IF EXISTS live_streams_mux_live_stream_id_key`,
             `ALTER TABLE events DROP CONSTRAINT IF EXISTS events_stream_key_key`
