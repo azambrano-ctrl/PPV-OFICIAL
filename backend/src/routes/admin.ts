@@ -171,9 +171,10 @@ router.post(
                     bunny_live_stream_id, 
                     stream_key, 
                     rtmp_url, 
-                    mux_playback_id
+                    mux_playback_id,
+                    mux_live_stream_id
                 )
-                VALUES ($1, $2, $3, $4, $5)
+                VALUES ($1, $2, $3, $4, $5, $6)
                 RETURNING *`,
                 [
                     eventId,
@@ -181,10 +182,11 @@ router.post(
                     streamData.streamKey,
                     streamData.rtmpUrl,
                     streamData.playbackId,
+                    'bunny_' + streamData.bunnyLiveStreamId,
                 ]
             );
 
-            // Update event with stream URL (Bunny format)
+            // Update event with stream details
             const bunnyHostname = process.env.BUNNY_STREAM_HOSTNAME || 'vz-8118499b-e3c.b-cdn.net';
             let hlsUrl = `https://${bunnyHostname}/${streamData.playbackId}/playlist.m3u8`;
 
@@ -192,9 +194,11 @@ router.post(
                 hlsUrl = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
             }
 
+            // stream_url = HLS Manifest URL
+            // stream_key = RTMP Stream Key
             await pool.query(
-                'UPDATE events SET stream_key = $1 WHERE id = $2',
-                [hlsUrl, eventId]
+                'UPDATE events SET stream_url = $1, stream_key = $2 WHERE id = $3',
+                [hlsUrl, streamData.streamKey, eventId]
             );
 
             res.json({

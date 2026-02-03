@@ -11,7 +11,7 @@ const BASE_URL = 'https://video.bunnycdn.com';
 const bunnyClient = axios.create({
     baseURL: BASE_URL,
     headers: {
-        'AccessKey': BUNNY_API_KEY,
+        'AccessKey': BUNNY_API_KEY || '',
         'Content-Type': 'application/json',
         'accept': 'application/json'
     }
@@ -22,6 +22,19 @@ export const bunnyService = {
      * Creates a new live stream in Bunny.net
      */
     async createLiveStream(title: string) {
+        if (!process.env.BUNNY_API_KEY || !process.env.BUNNY_LIBRARY_ID) {
+            console.error('Missing Bunny.net configuration (API Key or Library ID)');
+            if (process.env.NODE_ENV === 'development') {
+                return {
+                    bunnyLiveStreamId: 'mock_bunny_' + Date.now(),
+                    streamKey: 'mock_stream_key_' + Date.now(),
+                    rtmpUrl: 'rtmp://video-ingest.bunnycdn.com/app',
+                    playbackId: 'mock_playback_' + Date.now(),
+                };
+            }
+            throw new Error('Configuración de Bunny.net incompleta (BUNNY_API_KEY o BUNNY_LIBRARY_ID faltante)');
+        }
+
         try {
             console.log('Creating Bunny.net live stream:', title);
 
