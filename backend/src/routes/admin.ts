@@ -267,6 +267,7 @@ router.get(
             const endpoints = [
                 { name: 'liveStreams_Pascal', url: `/library/${process.env.BUNNY_LIBRARY_ID}/liveStreams` },
                 { name: 'livestreams_Lower', url: `/library/${process.env.BUNNY_LIBRARY_ID}/livestreams` },
+                { name: 'live-streams_Hyphen', url: `/library/${process.env.BUNNY_LIBRARY_ID}/live-streams` },
                 { name: 'videos_List', url: `/library/${process.env.BUNNY_LIBRARY_ID}/videos?page=1&itemsPerPage=1` }
             ];
 
