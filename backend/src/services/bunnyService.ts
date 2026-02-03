@@ -17,6 +17,14 @@ const bunnyClient = axios.create({
     }
 });
 
+// Logging connection info (masked)
+console.log('[BunnyService] Initialized with Library ID:', BUNNY_LIBRARY_ID);
+if (BUNNY_API_KEY) {
+    console.log('[BunnyService] API Key provided (starts with:', BUNNY_API_KEY.substring(0, 4) + '...)');
+} else {
+    console.warn('[BunnyService] NO API KEY PROVIDED');
+}
+
 export const bunnyService = {
     /**
      * Creates a new live stream in Bunny.net
@@ -100,18 +108,31 @@ export const bunnyService = {
     },
 
     /**
-     * Test connectivity by fetching libraries (Diagnostic)
+     * Test connectivity by fetching specific library details (Diagnostic)
      */
     async getLibraries() {
+        if (!process.env.BUNNY_API_KEY || !process.env.BUNNY_LIBRARY_ID) {
+            throw new Error(`Configuración incompleta: ID=${process.env.BUNNY_LIBRARY_ID}, Key=${process.env.BUNNY_API_KEY ? 'Si' : 'No'}`);
+        }
+
+        const testUrl = `${BASE_URL}/library/${BUNNY_LIBRARY_ID}`;
+        console.log('[BunnyService] Testing connection to:', testUrl);
+
         try {
-            const response = await axios.get(`${BASE_URL}/library`, {
+            const response = await axios.get(testUrl, {
                 headers: {
                     'AccessKey': BUNNY_API_KEY || '',
                     'accept': 'application/json'
                 }
             });
-            return response.data;
-        } catch (error) {
+            return {
+                status: 'OK',
+                libraryId: BUNNY_LIBRARY_ID,
+                libraryName: response.data.Name,
+                data: response.data
+            };
+        } catch (error: any) {
+            console.error('[BunnyService] Test failed at URL:', testUrl);
             throw error;
         }
     }
