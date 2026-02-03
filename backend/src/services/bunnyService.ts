@@ -105,35 +105,5 @@ export const bunnyService = {
             logger.error('Error deleting Bunny.net live stream:', error);
             throw error;
         }
-    },
-
-    /**
-     * Test connectivity by fetching specific library details (Diagnostic)
-     */
-    async getLibraries() {
-        if (!process.env.BUNNY_API_KEY || !process.env.BUNNY_LIBRARY_ID) {
-            throw new Error(`Configuración incompleta: ID=${process.env.BUNNY_LIBRARY_ID}, Key=${process.env.BUNNY_API_KEY ? 'Si' : 'No'}`);
-        }
-
-        const testUrl = `${BASE_URL}/library/${BUNNY_LIBRARY_ID}`;
-        console.log('[BunnyService] Testing connection to:', testUrl);
-
-        try {
-            const response = await axios.get(testUrl, {
-                headers: {
-                    'AccessKey': BUNNY_API_KEY || '',
-                    'accept': 'application/json'
-                }
-            });
-            return {
-                status: 'OK',
-                libraryId: BUNNY_LIBRARY_ID,
-                libraryName: response.data.Name,
-                data: response.data
-            };
-        } catch (error: any) {
-            console.error('[BunnyService] Test failed at URL:', testUrl);
-            throw error;
-        }
     }
 };
