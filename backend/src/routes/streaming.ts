@@ -115,7 +115,10 @@ router.get(
                 streamUrl = signBunnyUrl(streamUrl, process.env.BUNNY_SECURITY_KEY);
                 console.log('[Token Existente] Stream de Bunny detectado. URL firmada.');
             } else if (streamUrl.includes('cloudflarestream.com')) {
-                console.log('[Token Existente] Stream de Cloudflare detectado.');
+                console.log('[Token Existente] Stream de Cloudflare detectado. Usando proxy para evitar CORS.');
+                const protocol = (req.headers['x-forwarded-proto'] as string) || 'https';
+                const host = req.get('host');
+                streamUrl = `${protocol}://${host}/api/streaming/${eventId}/proxy?token=${existingToken.token}`;
             }
 
             console.log(`[Stream Token] Event: ${event.title}, Stream URL: ${streamUrl}, isMp4: ${isMp4}`);
@@ -181,6 +184,11 @@ router.get(
             // Sign Bunny.net URL
             streamUrl = signBunnyUrl(streamUrl, process.env.BUNNY_SECURITY_KEY);
             console.log('Bunny stream detected. Signed URL:', streamUrl);
+        } else if (streamUrl.includes('cloudflarestream.com')) {
+            console.log('Cloudflare stream detected. Using proxy for bypass CORS.');
+            const protocol = (req.headers['x-forwarded-proto'] as string) || 'https';
+            const host = req.get('host');
+            streamUrl = `${protocol}://${host}/api/streaming/${eventId}/proxy?token=${token}`;
         }
 
         console.log(`[New Stream Token] Event: ${event.title}, Stream URL: ${streamUrl}, isMp4: ${isMp4}`);

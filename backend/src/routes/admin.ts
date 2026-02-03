@@ -37,8 +37,30 @@ router.get(
                     tokenLength: token?.length || 0,
                     tokenStart: token?.substring(0, 5) + '...'
                 },
-                apiTest: {}
+                apiTest: {},
+                dbTest: {}
             };
+
+            // Test 0: Database Health
+            try {
+                const dbRes = await pool.query('SELECT current_database(), now()');
+                results.dbTest.status = 'OK';
+                results.dbTest.details = dbRes.rows[0];
+
+                const eventsCount = await pool.query('SELECT COUNT(*) FROM events');
+                results.dbTest.eventsCount = parseInt(eventsCount.rows[0].count);
+
+                const tableCheck = await pool.query(`
+                    SELECT table_name, column_name, data_type 
+                    FROM information_schema.columns 
+                    WHERE table_name IN ('events', 'live_streams', 'promoters')
+                    ORDER BY table_name, ordinal_position
+                `);
+                results.dbTest.schema = tableCheck.rows.length;
+            } catch (dbErr: any) {
+                results.dbTest.status = 'FAILED';
+                results.dbTest.error = dbErr.message;
+            }
 
             // Test 1: Basic list inputs
             try {
