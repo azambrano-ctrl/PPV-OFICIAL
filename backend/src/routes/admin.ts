@@ -252,10 +252,10 @@ router.get(
     asyncHandler(async (_req: any, res: Response) => {
         try {
             console.log('[Admin] Testing Bunny API connection...');
-            // Try to list libraries or just any simple call
-            // We use createLiveStream logic flow but with a dummy call if possible
-            // Actually let's just use getLibraries if it exists in the service
-            // For now, let's just check the env vars
+
+            // Try to list streams in the library (real API call)
+            const testResult = await bunnyService.getLibraries();
+
             res.json({
                 success: true,
                 config: {
@@ -263,13 +263,17 @@ router.get(
                     hasLibraryId: !!process.env.BUNNY_LIBRARY_ID,
                     libraryId: process.env.BUNNY_LIBRARY_ID,
                     hostname: process.env.BUNNY_STREAM_HOSTNAME
-                }
+                },
+                apiTest: 'SUCCESS',
+                streamsCount: testResult.length || 0
             });
         } catch (error: any) {
+            console.error('[Admin] Bunny Test Error:', error.response?.data || error.message);
             res.status(500).json({
                 success: false,
-                message: 'Bunny test failed',
-                error: error.message
+                message: 'Bunny API connection failed (likely invalid API Key or Library ID)',
+                error: error.message,
+                details: error.response?.data || 'No details'
             });
         }
     })

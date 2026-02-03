@@ -51,13 +51,16 @@ export const bunnyService = {
             });
 
             const stream = response.data;
+            console.log('[BunnyService] API Raw Response:', JSON.stringify(stream));
+
             // Bunny.net API can be inconsistent with casing (PascalCase vs camelCase)
-            const streamId = stream.Id || stream.id;
+            // Normalizing common fields
+            const streamId = stream.Id || stream.id || stream.ID;
             const streamKey = stream.StreamKey || stream.streamKey;
 
             if (!streamId) {
                 console.error('[BunnyService] API Response missing ID. Data:', JSON.stringify(stream));
-                throw new Error('La API de Bunny.net no devolvió un ID de stream válido.');
+                throw new Error('La API de Bunny.net no devolvió un ID de stream válido. Revisa los logs.');
             }
 
             logger.info('Bunny.net live stream created', { streamId });
@@ -108,6 +111,22 @@ export const bunnyService = {
             logger.info('Bunny.net live stream deleted', { streamId });
         } catch (error) {
             logger.error('Error deleting Bunny.net live stream:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Diagnostic: Get all video libraries to verify API Key
+     */
+    async getLibraries() {
+        try {
+            // Note: This might require a global API Key, not a library one.
+            // But let's try with the current library ID endpoint or similar.
+            // Actually, just listing streams in the current library is a better test.
+            const response = await bunnyClient.get(`/library/${BUNNY_LIBRARY_ID}/liveStreams?page=1&itemsPerPage=1`);
+            return response.data;
+        } catch (error: any) {
+            console.error('[BunnyService] getLibraries/test failed:', error.response?.data || error.message);
             throw error;
         }
     }
