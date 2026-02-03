@@ -108,14 +108,14 @@ export const repairSchema = async () => {
             );
             CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, is_read);
 
-            // Bunny.net Stream migration
+            -- Bunny.net Stream migration
             ALTER TABLE live_streams 
             ALTER COLUMN mux_live_stream_id DROP NOT NULL,
             ALTER COLUMN mux_playback_id DROP NOT NULL,
             ALTER COLUMN stream_key DROP NOT NULL,
             ALTER COLUMN rtmp_url DROP NOT NULL,
             ADD COLUMN IF NOT EXISTS bunny_live_stream_id VARCHAR(255),
-            ADD COLUMN IF NOT EXISTS status TEXT DEFAULT \'idle\';
+            ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'idle';
         `;
 
         await query(sql);
