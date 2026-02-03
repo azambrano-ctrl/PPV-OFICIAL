@@ -171,25 +171,32 @@ router.post(
             const streamData = await bunnyService.createLiveStream(event.title);
             console.log('[Admin] Bunny stream created:', streamData.bunnyLiveStreamId);
 
-            // Save to DB (Only Bunny and general fields)
-            const result = await pool.query(
-                `INSERT INTO live_streams (
-                    event_id, 
-                    bunny_live_stream_id, 
-                    stream_key, 
-                    rtmp_url, 
-                    status
-                )
-                VALUES ($1, $2, $3, $4, $5)
-                RETURNING *`,
-                [
-                    eventId,
-                    streamData.bunnyLiveStreamId || '',
-                    streamData.streamKey || '',
-                    streamData.rtmpUrl || '',
-                    'idle'
-                ]
-            );
+            console.log('[Admin] Inserting into live_streams table...');
+            let result;
+            try {
+                result = await pool.query(
+                    `INSERT INTO live_streams (
+                        event_id, 
+                        bunny_live_stream_id, 
+                        stream_key, 
+                        rtmp_url, 
+                        status
+                    )
+                    VALUES ($1, $2, $3, $4, $5)
+                    RETURNING *`,
+                    [
+                        eventId,
+                        streamData.bunnyLiveStreamId || '',
+                        streamData.streamKey || '',
+                        streamData.rtmpUrl || '',
+                        'idle'
+                    ]
+                );
+                console.log('[Admin] Insert into live_streams successful');
+            } catch (dbError: any) {
+                console.error('[Admin] DB INSERT FAILED:', dbError.message, dbError.detail || '');
+                throw new Error(`Error en base de datos: ${dbError.message}`);
+            }
 
             // Update event with stream details
             const bunnyHostname = process.env.BUNNY_STREAM_HOSTNAME || 'vz-8118499b-e3c.b-cdn.net';
@@ -200,10 +207,16 @@ router.post(
             }
 
             console.log('[Admin] Updating event with HLS URL:', hlsUrl);
-            await pool.query(
-                'UPDATE events SET stream_url = $1, stream_key = $2 WHERE id = $3',
-                [hlsUrl, streamData.streamKey, eventId]
-            );
+            try {
+                await pool.query(
+                    'UPDATE events SET stream_url = $1, stream_key = $2 WHERE id = $3',
+                    [hlsUrl, streamData.streamKey, eventId]
+                );
+                console.log('[Admin] Event updated successfully');
+            } catch (dbError: any) {
+                console.error('[Admin] FAILED TO UPDATE EVENT:', dbError.message);
+                // We DON'T throw here so we can still return the stream data
+            }
 
             res.json({
                 success: true,

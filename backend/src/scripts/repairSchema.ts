@@ -116,6 +116,14 @@ export const repairSchema = async () => {
             ALTER COLUMN rtmp_url DROP NOT NULL,
             ADD COLUMN IF NOT EXISTS bunny_live_stream_id VARCHAR(255),
             ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'idle';
+
+            -- Ensure rtmp_url is NOT unique (Bunny uses shared URLs)
+            DO $$
+            BEGIN
+                IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'live_streams_rtmp_url_key') THEN
+                    ALTER TABLE live_streams DROP CONSTRAINT live_streams_rtmp_url_key;
+                END IF;
+            END $$;
         `;
 
         await query(sql);
