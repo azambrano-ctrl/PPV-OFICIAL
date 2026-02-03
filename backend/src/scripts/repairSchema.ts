@@ -117,11 +117,23 @@ export const repairSchema = async () => {
             ADD COLUMN IF NOT EXISTS bunny_live_stream_id VARCHAR(255),
             ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'idle';
 
-            -- Ensure rtmp_url is NOT unique (Bunny uses shared URLs)
+            -- Ensure stream fields are NOT unique (Bunny or mocks can have duplicates)
             DO $$
             BEGIN
+                -- Drop constraints in live_streams
                 IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'live_streams_rtmp_url_key') THEN
                     ALTER TABLE live_streams DROP CONSTRAINT live_streams_rtmp_url_key;
+                END IF;
+                IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'live_streams_stream_key_key') THEN
+                    ALTER TABLE live_streams DROP CONSTRAINT live_streams_stream_key_key;
+                END IF;
+                IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'live_streams_mux_live_stream_id_key') THEN
+                    ALTER TABLE live_streams DROP CONSTRAINT live_streams_mux_live_stream_id_key;
+                END IF;
+                
+                -- Drop constraints in events
+                IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'events_stream_key_key') THEN
+                    ALTER TABLE events DROP CONSTRAINT events_stream_key_key;
                 END IF;
             END $$;
         `;

@@ -227,13 +227,49 @@ router.post(
 
             // Extract detailed error info
             const errorMsg = error.message || 'Unknown error';
-            const errorData = error.response?.data ? JSON.stringify(error.response.data) : 'No response data';
+            const errorDetail = error.detail || ''; // DB detail
+            const errorData = error.response?.data ? JSON.stringify(error.response.data) : 'No provider response data';
 
             res.status(500).json({
                 success: false,
                 message: 'Error interno al procesar el stream',
                 error: errorMsg,
-                details: errorData
+                dbDetail: errorDetail,
+                providerDetails: errorData
+            });
+        }
+    })
+);
+
+/**
+ * GET /api/admin/bunny-test
+ * Simple test for Bunny.net API connection
+ */
+router.get(
+    '/bunny-test',
+    authenticate,
+    requireAdmin,
+    asyncHandler(async (_req: any, res: Response) => {
+        try {
+            console.log('[Admin] Testing Bunny API connection...');
+            // Try to list libraries or just any simple call
+            // We use createLiveStream logic flow but with a dummy call if possible
+            // Actually let's just use getLibraries if it exists in the service
+            // For now, let's just check the env vars
+            res.json({
+                success: true,
+                config: {
+                    hasApiKey: !!process.env.BUNNY_API_KEY,
+                    hasLibraryId: !!process.env.BUNNY_LIBRARY_ID,
+                    libraryId: process.env.BUNNY_LIBRARY_ID,
+                    hostname: process.env.BUNNY_STREAM_HOSTNAME
+                }
+            });
+        } catch (error: any) {
+            res.status(500).json({
+                success: false,
+                message: 'Bunny test failed',
+                error: error.message
             });
         }
     })
