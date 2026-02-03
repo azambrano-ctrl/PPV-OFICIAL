@@ -63,20 +63,30 @@ router.get(
     '/:id',
     validateParams(eventIdSchema),
     asyncHandler(async (req: Request, res: Response) => {
-        const event = await getEventById(req.params.id);
+        try {
+            const event = await getEventById(req.params.id);
 
-        if (!event) {
-            res.status(404).json({
-                success: false,
-                message: 'Event not found',
+            if (!event) {
+                res.status(404).json({
+                    success: false,
+                    message: 'Event not found',
+                });
+                return;
+            }
+
+            res.json({
+                success: true,
+                data: event,
             });
-            return;
+        } catch (error: any) {
+            console.error('[EventsRoute] Error fetching event:', error.message);
+            console.error('[EventsRoute] Stack:', error.stack);
+            res.status(500).json({
+                success: false,
+                message: 'Error al obtener los detalles del evento',
+                error: error.message
+            });
         }
-
-        res.json({
-            success: true,
-            data: event,
-        });
     })
 );
 
