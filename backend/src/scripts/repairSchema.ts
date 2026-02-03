@@ -120,3 +120,14 @@ export const repairSchema = async () => {
         logger.error('❌ Emergency schema repair failed:', error);
     }
 };
+
+// Call repairSchema if run directly
+if (require.main === module) {
+    repairSchema().then(() => {
+        console.log('Done.');
+        process.exit(0);
+    }).catch(err => {
+        console.error('Error:', err);
+        process.exit(1);
+    });
+}

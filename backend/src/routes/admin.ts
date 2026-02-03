@@ -159,49 +159,57 @@ router.post(
             return;
         }
 
-        // Create stream in Bunny.net (replacing Mux)
-        const event = await getEventById(eventId);
-        const streamData = await bunnyService.createLiveStream(event?.title || 'Event Stream');
+        try {
+            // Create stream in Bunny.net (replacing Mux)
+            const event = await getEventById(eventId);
+            const streamData = await bunnyService.createLiveStream(event?.title || 'Event Stream');
 
-        // Save to DB
-        const result = await pool.query(
-            `INSERT INTO live_streams (
-                event_id, 
-                bunny_live_stream_id, 
-                stream_key, 
-                rtmp_url, 
-                mux_playback_id
-            )
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING *`,
-            [
-                eventId,
-                streamData.bunnyLiveStreamId,
-                streamData.streamKey,
-                streamData.rtmpUrl,
-                streamData.playbackId, // Reusing mux_playback_id for the bunny playback id for simplicity or adding bunny_playback_id?
-            ]
-        );
+            // Save to DB
+            const result = await pool.query(
+                `INSERT INTO live_streams (
+                    event_id, 
+                    bunny_live_stream_id, 
+                    stream_key, 
+                    rtmp_url, 
+                    mux_playback_id
+                )
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING *`,
+                [
+                    eventId,
+                    streamData.bunnyLiveStreamId,
+                    streamData.streamKey,
+                    streamData.rtmpUrl,
+                    streamData.playbackId,
+                ]
+            );
 
-        // Update event with stream URL (Bunny format)
-        // Format: https://vz-8118499b-e3c.b-cdn.net/PLAYBACK_ID/playlist.m3u8
-        const bunnyHostname = process.env.BUNNY_STREAM_HOSTNAME || 'vz-8118499b-e3c.b-cdn.net';
-        let hlsUrl = `https://${bunnyHostname}/${streamData.playbackId}/playlist.m3u8`;
+            // Update event with stream URL (Bunny format)
+            const bunnyHostname = process.env.BUNNY_STREAM_HOSTNAME || 'vz-8118499b-e3c.b-cdn.net';
+            let hlsUrl = `https://${bunnyHostname}/${streamData.playbackId}/playlist.m3u8`;
 
-        // If this is a mock stream, use the same test stream
-        if (streamData.playbackId && streamData.playbackId.startsWith('mock_')) {
-            hlsUrl = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
+            if (streamData.playbackId && streamData.playbackId.startsWith('mock_')) {
+                hlsUrl = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
+            }
+
+            await pool.query(
+                'UPDATE events SET stream_key = $1 WHERE id = $2',
+                [hlsUrl, eventId]
+            );
+
+            res.json({
+                success: true,
+                data: result.rows[0],
+            });
+        } catch (error: any) {
+            console.error('Error in create-live-stream route:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to create live stream',
+                error: error.message,
+                details: error.response?.data || 'Check database or environment variables'
+            });
         }
-
-        await pool.query(
-            'UPDATE events SET stream_key = $1 WHERE id = $2',
-            [hlsUrl, eventId]
-        );
-
-        res.json({
-            success: true,
-            data: result.rows[0],
-        });
     })
 );
 
