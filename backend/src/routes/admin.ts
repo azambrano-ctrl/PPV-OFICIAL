@@ -259,19 +259,15 @@ router.get(
                 // Bunny status: 0: Created, 1: Uploading, 2: Processing, 3: Transcoding, 4: Finished, 5: Error, 6: UploadFailed
                 // For Live: It might be different. 
                 stream.status = bunnyStream.status === 3 ? 'active' : 'idle';
-            } else if (stream.mux_live_stream_id) {
-                const muxStream = await muxService.getLiveStream(stream.mux_live_stream_id);
-                stream.status = muxStream.status;
+            } catch (error) {
+                console.error('Failed to fetch stream status', error);
             }
-        } catch (error) {
-            console.error('Failed to fetch stream status', error);
-        }
 
-        res.json({
-            success: true,
-            data: stream,
-        });
-    })
+            res.json({
+                success: true,
+                data: stream,
+            });
+        })
 );
 
 /**
@@ -304,18 +300,15 @@ router.delete(
         // Delete from Provider
         if (stream.bunny_live_stream_id) {
             await bunnyService.deleteLiveStream(stream.bunny_live_stream_id);
-        } else if (stream.mux_live_stream_id) {
-            await muxService.deleteLiveStream(stream.mux_live_stream_id);
-        }
 
-        // Delete from DB
-        await pool.query('DELETE FROM live_streams WHERE id = $1', [stream.id]);
+            // Delete from DB
+            await pool.query('DELETE FROM live_streams WHERE id = $1', [stream.id]);
 
-        res.json({
-            success: true,
-            message: 'Stream deleted successfully',
-        });
-    })
+            res.json({
+                success: true,
+                message: 'Stream deleted successfully',
+            });
+        })
 );
 
 
