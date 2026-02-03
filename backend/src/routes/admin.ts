@@ -2,6 +2,9 @@ import { Router, Response } from 'express';
 import { asyncHandler } from '../middleware/errorHandler';
 import { authenticate, requireAdmin, AuthRequest } from '../middleware/auth';
 import pool from '../config/database';
+import { muxService } from '../services/muxService';
+import { bunnyService } from '../services/bunnyService';
+import { getEventById } from '../services/eventService';
 
 const router = Router();
 
@@ -126,11 +129,6 @@ router.get(
     })
 );
 
-export default router;
-
-import { muxService } from '../services/muxService';
-import { bunnyService } from '../services/bunnyService';
-import { getEventById } from '../services/eventService';
 
 /**
  * POST /api/admin/events/:id/live-stream
@@ -160,9 +158,19 @@ router.post(
         }
 
         try {
+            console.log('[Admin] Creating stream for event:', eventId);
+
             // Create stream in Bunny.net (replacing Mux)
             const event = await getEventById(eventId);
-            const streamData = await bunnyService.createLiveStream(event?.title || 'Event Stream');
+            if (!event) {
+                console.error('[Admin] Event not found:', eventId);
+                res.status(404).json({ success: false, message: 'Event not found' });
+                return;
+            }
+
+            console.log('[Admin] Calling bunnyService for event:', event.title);
+            const streamData = await bunnyService.createLiveStream(event.title);
+            console.log('[Admin] Bunny stream created:', streamData.bunnyLiveStreamId);
 
             // Save to DB
             const result = await pool.query(
@@ -172,9 +180,10 @@ router.post(
                     stream_key, 
                     rtmp_url, 
                     mux_playback_id,
-                    mux_live_stream_id
+                    mux_live_stream_id,
+                    status
                 )
-                VALUES ($1, $2, $3, $4, $5, $6)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
                 RETURNING *`,
                 [
                     eventId,
@@ -183,6 +192,7 @@ router.post(
                     streamData.rtmpUrl,
                     streamData.playbackId,
                     'bunny_' + streamData.bunnyLiveStreamId,
+                    'idle'
                 ]
             );
 
@@ -194,8 +204,7 @@ router.post(
                 hlsUrl = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
             }
 
-            // stream_url = HLS Manifest URL
-            // stream_key = RTMP Stream Key
+            console.log('[Admin] Updating event with HLS URL:', hlsUrl);
             await pool.query(
                 'UPDATE events SET stream_url = $1, stream_key = $2 WHERE id = $3',
                 [hlsUrl, streamData.streamKey, eventId]
@@ -206,12 +215,17 @@ router.post(
                 data: result.rows[0],
             });
         } catch (error: any) {
-            console.error('Error in create-live-stream route:', error);
+            console.error('[Admin] FATAL ERROR in live-stream route:', error);
+
+            // Extract detailed error info
+            const errorMsg = error.message || 'Unknown error';
+            const errorData = error.response?.data ? JSON.stringify(error.response.data) : 'No response data';
+
             res.status(500).json({
                 success: false,
-                message: 'Failed to create live stream',
-                error: error.message,
-                details: error.response?.data || 'Check database or environment variables'
+                message: 'Error interno al procesar el stream',
+                error: errorMsg,
+                details: errorData
             });
         }
     })
@@ -308,3 +322,5 @@ router.delete(
         });
     })
 );
+
+export default router;
