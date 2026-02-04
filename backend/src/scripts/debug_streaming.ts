@@ -1,7 +1,7 @@
 
 import dotenv from 'dotenv';
 import { query, closePool } from '../config/database';
-import { getEventById } from '../services/eventService';
+
 import { generateStreamToken, verifyStreamToken } from '../middleware/auth';
 
 dotenv.config();

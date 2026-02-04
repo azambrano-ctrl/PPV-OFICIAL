@@ -1,9 +1,9 @@
 
 import axios from 'axios';
 import dotenv from 'dotenv';
-import { query, closePool } from '../config/database';
+import { closePool } from '../config/database';
 import { getEventById } from '../services/eventService';
-import { verifyStreamToken } from '../middleware/auth';
+
 
 dotenv.config();
 
