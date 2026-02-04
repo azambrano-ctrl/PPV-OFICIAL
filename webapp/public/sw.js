@@ -15,24 +15,20 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+    // Solo interceptamos recursos estáticos definidos en ASSETS_TO_CACHE
     const url = new URL(event.request.url);
+    const isStaticAsset = ASSETS_TO_CACHE.some(asset => url.pathname === asset || (asset === '/' && url.pathname === '/'));
 
-    // EXCLUIR APIS Y STREAMS: No interceptar peticiones de API ni segmentos de video
-    if (
-        url.pathname.includes('/api/') ||
-        url.hostname.includes('cloudflarestream.com') ||
-        url.hostname.includes('videodelivery.net') ||
-        url.hostname.includes('b-cdn.net') ||
-        url.hostname.includes('mux.com') ||
-        url.pathname.endsWith('.m3u8') ||
-        url.pathname.endsWith('.ts')
-    ) {
-        return; // Deja que el navegador maneje la petición normalmente
+    if (!isStaticAsset) {
+        return; // Passthrough total para todo lo demás (APIs, Video, Sockets, etc)
     }
 
     event.respondWith(
         caches.match(event.request).then((response) => {
-            return response || fetch(event.request);
+            return response || fetch(event.request).catch(err => {
+                console.warn('[SW] Fetch failed for:', event.request.url, err);
+                return undefined;
+            });
         })
     );
 });

@@ -5,7 +5,6 @@ import Hls from 'hls.js';
 import { useSettingsStore } from '@/lib/store';
 import { authAPI } from '@/lib/api';
 
-
 interface VideoPlayerProps {
     streamUrl: string;
     token: string;
@@ -27,25 +26,11 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     const [resolvedUrl, setResolvedUrl] = useState<string>('');
     const lastStreamUrlRef = useRef<string>('');
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const heartbeatRef = useRef<NodeJS.Timeout | null>(null);
 
     const { settings } = useSettingsStore();
 
     // Detect if browser supports casting/remote playback
     useEffect(() => {
-        const video = videoRef.current;
-        if (!video) return;
-
-        // 1. Check for native Remote Playback API (Safari/AirPlay)
-        if ('remote' in video) {
-            const remote = (video as any).remote;
-            if (remote.state !== 'disabled') {
-                setCanCast(true);
-            }
-        }
-
-        // 2. Check for Google Cast SDK (Chrome/Chromecast)
-        // We check if the script we added to layout.tsx has loaded
         const checkCastSDK = setInterval(() => {
             if ((window as any).chrome && (window as any).chrome.cast && (window as any).chrome.cast.isAvailable) {
                 setCanCast(true);
@@ -54,43 +39,35 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
             }
         }, 1000);
 
-        // Max check 10 seconds
-        setTimeout(() => clearInterval(checkCastSDK), 10000);
+        // Native AirPlay support (Safari)
+        if (typeof window !== 'undefined' && 'WebKitPlaybackTargetAvailabilityEvent' in window) {
+            setCanCast(true);
+        }
 
+        setTimeout(() => clearInterval(checkCastSDK), 10000);
         return () => clearInterval(checkCastSDK);
     }, []);
 
-    // Heartbeat to keep session alive during long playback
+    // Heartbeat to keep session alive
     useEffect(() => {
         if (!isPlaying && !isLoading) return;
-
         const heartbeatInterval = setInterval(async () => {
-            try {
-                await authAPI.getProfile();
-                console.log('Auth heartbeat: session active');
-            } catch (err) {
-                console.warn('Auth heartbeat failed:', err);
-            }
-        }, 5 * 60 * 1000); // Every 5 minutes
-
+            try { await authAPI.getProfile(); } catch (err) { }
+        }, 5 * 60 * 1000);
         return () => clearInterval(heartbeatInterval);
     }, [isPlaying, isLoading]);
 
     const handleCast = async () => {
+        const currentStreamUrl = lastStreamUrlRef.current || streamUrl;
+        if (!currentStreamUrl) return;
 
         const video = videoRef.current;
-        if (!video) return;
-
-        // Try Google Cast SDK first (more reliable for Chrome)
         const cast = (window as any).cast;
         const chrome = (window as any).chrome;
 
+        // Try Google Cast SDK
         if (cast && cast.framework && chrome && chrome.cast) {
-            console.log('Starting Google Cast SDK session...');
             const castContext = cast.framework.CastContext.getInstance();
-            const currentStreamUrl = lastStreamUrlRef.current || streamUrl;
-
-            // Set options if not already set
             castContext.setOptions({
                 receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
                 autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
@@ -100,75 +77,34 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
                 await castContext.requestSession();
                 const session = castContext.getCurrentSession();
                 if (session) {
-                    const isMpegUrl = currentStreamUrl.toLowerCase().includes('.m3u8') || !isMp4;
-                    const contentType = isMp4 || currentStreamUrl.toLowerCase().includes('.mp4')
-                        ? 'video/mp4'
-                        : 'application/x-mpegurl';
-
+                    const contentType = isMp4 || currentStreamUrl.toLowerCase().includes('.mp4') ? 'video/mp4' : 'application/x-mpegurl';
                     const mediaInfo = new chrome.cast.media.MediaInfo(currentStreamUrl, contentType);
-
-
-                    // Set stream type based on event status
-                    if (status === 'live') {
-                        mediaInfo.streamType = chrome.cast.media.StreamType.LIVE;
-                    } else {
-                        mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
-                    }
-
+                    mediaInfo.streamType = status === 'live' ? chrome.cast.media.StreamType.LIVE : chrome.cast.media.StreamType.BUFFERED;
                     mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
                     mediaInfo.metadata.title = eventTitle;
                     if (poster) {
-                        // Ensure poster URL is also absolute
-                        const absolutePoster = poster.startsWith('/')
-                            ? `${window.location.protocol}//${window.location.host}${poster}`
-                            : poster;
-                        mediaInfo.metadata.images = [{ url: absolutePoster }];
+                        const absPoster = poster.startsWith('/') ? `${window.location.protocol}//${window.location.host}${poster}` : poster;
+                        mediaInfo.metadata.images = [{ url: absPoster }];
                     }
-
                     const request = new chrome.cast.media.LoadRequest(mediaInfo);
-                    request.autoplay = true; // Force autoplay on load
-
+                    request.autoplay = true;
                     await session.loadMedia(request);
-                    console.log('Media loaded to Chromecast successfully');
-                    return; // Success!
+                    return;
                 }
-            } catch (err: any) {
-                console.log('Cast SDK failed or cancelled:', err);
-                // Fallback to Remote Playback if SDK fails but didn't error out completely
-                if (err === 'cancel') return;
-            }
+            } catch (err) { console.warn('Cast failed:', err); }
         }
 
-        // Fallback or Native Remote Playback (Safari/Legacy)
-        if ('remote' in video) {
+        // Fallback to Native Remote Playback (Safari/AirPlay)
+        if (video && 'remote' in video) {
             try {
-                const originalSrc = video.src;
-                const isBlob = originalSrc.startsWith('blob:');
-                const currentStreamUrl = lastStreamUrlRef.current || streamUrl;
-
-                // If on Safari (native HLS support), swapping works. 
-                if (isBlob && currentStreamUrl && video.canPlayType('application/vnd.apple.mpegurl')) {
+                const isBlob = video.src.startsWith('blob:');
+                if (isBlob && video.canPlayType('application/vnd.apple.mpegurl')) {
                     video.src = currentStreamUrl;
                 }
-
                 await (video as any).remote.prompt();
-            } catch (err: any) {
-                if (err.name === 'NotFoundError') {
-                    const message = `No se detectaron dispositivos de transmisión (TV o Chromecast).
-                    
-Pasos para solucionar:
-1. Asegúrate de que el TV esté en la misma red Wi-Fi.
-2. Si usas PC, verifica que Chrome esté actualizado.
-3. Reinicia el Wi-Fi de tu dispositivo si el problema persiste.`;
-                    alert(message);
-                } else if (err.name === 'NotAllowedError') {
-                    console.log('Casting prompt cancelled or blocked');
-                } else {
-                    console.error('Remote playback prompt failed:', err);
-                }
-            }
-        } else {
-            alert('Tu navegador no soporta transmisiones nativas. Prueba usando Google Chrome en PC o Safari en iPhone.');
+            } catch (err) { console.error('Remote prompt failed:', err); }
+        } else if (!cast) {
+            alert('Tu dispositivo no soporta transmisión nativa. Prueba usar Google Chrome desde una PC.');
         }
     };
 
@@ -177,51 +113,32 @@ Pasos para solucionar:
         const handleGlobalCast = () => handleCast();
         window.addEventListener('trigger-cast', handleGlobalCast);
         return () => window.removeEventListener('trigger-cast', handleGlobalCast);
-    }, [canCast]); // Re-bind if canCast changes
+    }, [canCast, streamUrl]);
 
     const handleMouseMove = () => {
         setShowUI(true);
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        timeoutRef.current = setTimeout(() => {
-            if (isPlaying) setShowUI(false);
-        }, 3000);
+        timeoutRef.current = setTimeout(() => { if (isPlaying) setShowUI(false); }, 3000);
     };
 
-    const handleMouseLeave = () => {
-        if (isPlaying) {
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
-            setShowUI(false);
-        }
-    };
+    const handleMouseLeave = () => { if (isPlaying) setShowUI(false); };
 
     useEffect(() => {
-        if (!videoRef.current || !streamUrl) return;
-
-        const video = videoRef.current;
-
-        // SMART URL LOGIC:
-        const protocol = window.location.protocol;
-        const host = window.location.host;
-        const absoluteBase = `${protocol}//${host}`;
-
         let finalUrl = streamUrl;
+        if (!finalUrl) return;
 
-        // Ensure URL is absolute for casting/external players
-        if (streamUrl.startsWith('/')) {
-            finalUrl = `${absoluteBase}${streamUrl}`;
+        if (finalUrl.startsWith('/')) {
+            finalUrl = `${window.location.protocol}//${window.location.host}${finalUrl}`;
         }
 
-        if (
-            (finalUrl.includes('/api/streaming/') && finalUrl.includes('token=')) ||
-            finalUrl.includes('cloudflarestream.com') ||
+        // URL Security / Provider logic
+        const isProvider = finalUrl.includes('cloudflarestream.com') ||
             finalUrl.includes('videodelivery.net') ||
             finalUrl.includes('stream.mux.com') ||
-            finalUrl.includes('b-cdn.net')
-        ) {
-            // Ya es una URL de proxy interna o de un proveedor externo protegido - Usar tal cual
-            console.log('Provider/Proxy URL detected - Using as is');
-        } else {
-            // URL genérica - Adjuntar el token de stream interno
+            finalUrl.includes('b-cdn.net') ||
+            finalUrl.includes('/api/streaming/');
+
+        if (!isProvider) {
             finalUrl = `${finalUrl}${finalUrl.includes('?') ? '&' : '?'}token=${token}`;
         }
 
@@ -229,250 +146,131 @@ Pasos para solucionar:
         setResolvedUrl(finalUrl);
         lastStreamUrlRef.current = finalUrl;
 
-        // Si es una URL de Cloudflare Stream, usaremos el Iframe, por lo que NO inicializamos HLS
+        // If Iframe Provider
         if (finalUrl.includes('cloudflarestream.com') || finalUrl.includes('videodelivery.net')) {
-            console.log('Cloudflare detected - Skipping HLS initialization, using iframe mode');
             setIsLoading(false);
             return;
         }
 
+        const video = videoRef.current;
+        if (!video) return;
 
         const handleManifestParsed = () => {
-            console.log('HLS manifest parsed successfully');
             setIsLoading(false);
             setError(null);
-
-            // Auto-play for live streams
             if (status === 'live' || status === 'reprise') {
-                const playPromise = video.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(error => {
-                        console.log('Autoplay prevented:', error);
-                        // Show play button if autoplay fails
-                        setShowPlayButton(true);
-                        // Try playing muted as fallback
-                        video.muted = true;
-                        video.play().catch(e => console.log('Muted autoplay also failed:', e));
-                    });
-                }
+                video.play().catch(() => {
+                    setShowPlayButton(true);
+                    video.muted = true;
+                    video.play().catch(() => { });
+                });
             }
         };
 
-        const handleError = (event: any, data: any) => {
+        const handleError = (_: any, data: any) => {
             if (data.fatal) {
-                switch (data.type) {
-                    case Hls.ErrorTypes.NETWORK_ERROR:
-                        console.log('Network error, trying to recover...');
-                        hlsRef.current?.startLoad();
-                        break;
-                    case Hls.ErrorTypes.MEDIA_ERROR:
-                        console.log('Media error, trying to recover...');
-                        hlsRef.current?.recoverMediaError();
-                        break;
-                    default:
-                        console.error('Fatal streaming error:', data);
-                        setError('No se pudo cargar la transmisión. Verifica tu conexión.');
-                        setIsLoading(false);
-                        break;
+                if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                    hlsRef.current?.startLoad();
+                } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                    hlsRef.current?.recoverMediaError();
+                } else {
+                    setError('Error al cargar la transmisión.');
+                    setIsLoading(false);
                 }
             }
         };
 
-        // Check if HLS is supported
-        // SPECIAL CASE: If it's an MP4 file (detected by flag or extension), play natively, do NOT use HLS.js
         if (isMp4 || finalUrl.includes('.mp4')) {
-            console.log('MP4 detected (forced or by extension), using native playback');
             video.src = finalUrl;
             video.addEventListener('loadedmetadata', handleManifestParsed);
-            video.addEventListener('error', (e) => handleError(null, { fatal: true, type: 'native', details: e }));
-
-            return () => {
-                video.removeEventListener('loadedmetadata', handleManifestParsed);
-                video.removeEventListener('error', () => { });
-            };
-        }
-        else if (Hls.isSupported()) {
-            const hls = new Hls({
-                debug: false,
-                enableWorker: true,
-                lowLatencyMode: true,
-                backBufferLength: 60,
-                maxBufferLength: 30,
-                maxMaxBufferLength: 60,
-                maxBufferSize: 30 * 1000 * 1000,
-                startLevel: -1,
-                liveSyncDurationCount: 3,
-                liveMaxLatencyDurationCount: 10,
-                manifestLoadingMaxRetry: 4,
-                levelLoadingMaxRetry: 4,
-            });
-
-
+            return () => video.removeEventListener('loadedmetadata', handleManifestParsed);
+        } else if (Hls.isSupported()) {
+            const hls = new Hls({ debug: false, enableWorker: true, lowLatencyMode: true });
             hlsRef.current = hls;
-
             hls.loadSource(finalUrl);
             hls.attachMedia(video);
             hls.on(Hls.Events.MANIFEST_PARSED, handleManifestParsed);
             hls.on(Hls.Events.ERROR, handleError);
-
-            return () => {
-                if (hlsRef.current) {
-                    hlsRef.current.destroy();
-                }
-            };
-        }
-        // Native HLS support (Safari)
-        else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            return () => hls.destroy();
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = finalUrl;
-
             video.addEventListener('loadedmetadata', handleManifestParsed);
-            video.addEventListener('error', (e) => handleError(null, { fatal: true, type: 'native', details: e }));
-
-            return () => {
-                video.removeEventListener('loadedmetadata', handleManifestParsed);
-                video.removeEventListener('error', () => { });
-            };
+            return () => video.removeEventListener('loadedmetadata', handleManifestParsed);
         } else {
-            setError('Tu navegador no soporta reproducción HLS.');
+            setError('Tu navegador no soporta HLS.');
             setIsLoading(false);
         }
-    }, [streamUrl, token, status]);
+    }, [streamUrl, token, status, isMp4]);
 
-    // Handle play/pause events
     useEffect(() => {
         const video = videoRef.current;
         if (!video) return;
-
-        const onPlay = () => {
-            setIsPlaying(true);
-            setShowPlayButton(false);
-        };
-        const onPause = () => {
-            setIsPlaying(false);
-            // Only show play button if not seeking/loading
-            if (!isLoading) setShowPlayButton(true);
-        };
-
+        const onPlay = () => { setIsPlaying(true); setShowPlayButton(false); };
+        const onPause = () => { setIsPlaying(false); if (!isLoading) setShowPlayButton(true); };
         video.addEventListener('play', onPlay);
         video.addEventListener('pause', onPause);
-
-        return () => {
-            video.removeEventListener('play', onPlay);
-            video.removeEventListener('pause', onPause);
-        };
+        return () => { video.removeEventListener('play', onPlay); video.removeEventListener('pause', onPause); };
     }, [isLoading]);
 
     const handleManualPlay = () => {
         if (videoRef.current) {
             videoRef.current.play();
-            videoRef.current.muted = false; // Unmute on manual interaction
+            videoRef.current.muted = false;
         }
     };
 
     return (
-        <div
-            className="relative w-full h-full bg-black group overflow-hidden"
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-        >
-            {/* Video Element */}
-            {resolvedUrl.includes('cloudflarestream.com') ? (
+        <div className="relative w-full h-full bg-black group overflow-hidden" onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
+            {resolvedUrl.includes('cloudflarestream.com') || resolvedUrl.includes('videodelivery.net') ? (
                 <div className="w-full h-full">
                     <iframe
-                        src={`${resolvedUrl.replace('/manifest/video.m3u8', '/iframe')}?autoplay=true&letterbox=false`}
-                        style={{ border: 'none', position: 'absolute', top: 0, left: 0, height: '100%', width: '100%' }}
+                        src={
+                            resolvedUrl.includes('/manifest/video.m3u8')
+                                ? `${resolvedUrl.replace('/manifest/video.m3u8', '/iframe')}?autoplay=true&letterbox=false`
+                                : resolvedUrl.includes('/iframe') ? resolvedUrl : `${resolvedUrl}/iframe?autoplay=true`
+                        }
+                        className="absolute inset-0 w-full h-full border-0"
                         allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
-                        allowFullScreen={true}
+                        allowFullScreen
                     ></iframe>
                 </div>
             ) : (
-                <video
-                    ref={videoRef}
-                    className="w-full h-full object-contain"
-                    controls
-                    playsInline
-                    poster={poster}
-                />
+                <video ref={videoRef} className="w-full h-full object-contain" controls playsInline poster={poster} />
             )}
 
-            {/* Loading Overlay */}
             {isLoading && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm z-20">
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-20">
                     <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-                    <p className="text-white font-medium">Cargando transmisión...</p>
+                    <p className="text-white">Cargando...</p>
                 </div>
             )}
 
-            {/* Error Overlay */}
             {error && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-30">
-                    <div className="text-red-500 mb-4">
-                        <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                    </div>
-                    <p className="text-white text-lg font-bold mb-2">Error de Reproducción</p>
-                    <p className="text-gray-400 mb-6">{error}</p>
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-                    >
-                        Reintentar
-                    </button>
+                    <p className="text-white text-lg font-bold mb-4">{error}</p>
+                    <button onClick={() => window.location.reload()} className="px-6 py-2 bg-red-600 text-white rounded-lg">Reintentar</button>
                 </div>
             )}
 
-            {/* Manual Play Button Overlay - Mejorado para móviles */}
             {!isLoading && !error && showPlayButton && (
-                <div
-                    className="absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/50 transition-colors cursor-pointer z-10"
-                    onClick={handleManualPlay}
-                >
-                    <div className="w-20 h-20 bg-red-600/90 rounded-full flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
-                        <svg className="w-10 h-10 text-white translate-x-1" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z" />
-                        </svg>
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10 cursor-pointer" onClick={handleManualPlay}>
+                    <div className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center">
+                        <svg className="w-10 h-10 text-white translate-x-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                     </div>
                 </div>
             )}
 
-
-
-            {/* Cast Button Overlay */}
             {!isLoading && !error && canCast && (
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        handleCast();
-                    }}
-                    className={`absolute top-4 right-4 z-20 p-2.5 bg-black/50 hover:bg-black/80 text-white rounded-full backdrop-blur-md transition-all duration-500 border border-white/10 ${showUI ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}
-                    title="Enviar a TV"
-                >
-                    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M2 16.1A5 5 0 0 1 5.9 20M2 12.05A9 9 0 0 1 9.95 20M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6" />
-                        <line x1="2" y1="20" x2="2.01" y2="20" />
-                    </svg>
+                <button onClick={(e) => { e.stopPropagation(); handleCast(); }} className={`absolute top-4 right-4 z-20 p-2 bg-black/50 text-white rounded-full transition-all ${showUI ? 'opacity-100' : 'opacity-0'}`} title="Enviar a TV">
+                    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 16.1A5 5 0 0 1 5.9 20M2 12.05A9 9 0 0 1 9.95 20M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6" /><line x1="2" y1="20" x2="2.01" y2="20" /></svg>
                 </button>
             )}
 
-            {/* Logo Watermark */}
             {settings?.site_logo && (
-                <div
-                    className={`absolute top-6 right-6 z-50 transition-all duration-500 pointer-events-none select-none ${showUI ? 'opacity-80 scale-100' : 'opacity-40 scale-95'
-                        }`}
-                    style={{
-                        maxWidth: '120px',
-                    }}
-                >
-                    <img
-                        src={settings.site_logo}
-                        alt="Watermark"
-                        className="w-full h-auto object-contain drop-shadow-lg"
-                        onDragStart={(e) => e.preventDefault()}
-                    />
+                <div className={`absolute top-6 left-6 z-50 transition-opacity pointer-events-none ${showUI ? 'opacity-80' : 'opacity-40'}`} style={{ maxWidth: '100px' }}>
+                    <img src={settings.site_logo} alt="Logo" className="w-full h-auto object-contain" />
                 </div>
             )}
-
         </div>
     );
 }
