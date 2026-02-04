@@ -308,7 +308,11 @@ router.post(
                 data: result.rows[0],
             });
         } catch (error: any) {
-            console.error('[Admin] FATAL ERROR in live-stream route:', error);
+            console.error('[Admin DEBUG] FATAL ERROR in live-stream route:', error);
+            if (error.response) {
+                console.error('[Admin DEBUG] Cloudflare Response Data:', JSON.stringify(error.response.data, null, 2));
+                console.error('[Admin DEBUG] Cloudflare Response Status:', error.response.status);
+            }
             res.status(500).json({
                 success: false,
                 message: 'Error interno al procesar el stream',
