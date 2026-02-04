@@ -24,6 +24,7 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     const [showPlayButton, setShowPlayButton] = useState(false);
     const [showUI, setShowUI] = useState(true);
     const [canCast, setCanCast] = useState(false);
+    const [resolvedUrl, setResolvedUrl] = useState<string>('');
     const lastStreamUrlRef = useRef<string>('');
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     const heartbeatRef = useRef<NodeJS.Timeout | null>(null);
@@ -221,6 +222,7 @@ Pasos para solucionar:
         }
 
         console.log('Loading stream:', finalUrl);
+        setResolvedUrl(finalUrl);
         lastStreamUrlRef.current = finalUrl;
 
 
@@ -363,10 +365,10 @@ Pasos para solucionar:
             onMouseLeave={handleMouseLeave}
         >
             {/* Video Element */}
-            {finalUrl.includes('cloudflarestream.com') ? (
+            {resolvedUrl.includes('cloudflarestream.com') ? (
                 <div className="w-full h-full">
                     <iframe
-                        src={`${finalUrl.replace('/manifest/video.m3u8', '/iframe')}?autoplay=true&letterbox=false`}
+                        src={`${resolvedUrl.replace('/manifest/video.m3u8', '/iframe')}?autoplay=true&letterbox=false`}
                         style={{ border: 'none', position: 'absolute', top: 0, left: 0, height: '100%', width: '100%' }}
                         allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
                         allowFullScreen={true}
