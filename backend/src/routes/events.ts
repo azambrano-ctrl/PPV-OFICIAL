@@ -165,6 +165,7 @@ router.put(
             console.log(`[DEBUG] Received update for event ${req.params.id}`);
             const user = req.user!;
             const eventId = req.params.id;
+            console.log(`[DEBUG] User: ${user.email} (Role: ${user.role})`);
 
             // Fetch current event to check ownership
             const currentEvent = await getEventById(eventId);
@@ -233,10 +234,10 @@ router.put(
                 updates.banner_url = null;
             }
 
-            console.log('[DEBUG] Updates object:', updates);
+            console.log('[DEBUG] Updates object before DB call:', JSON.stringify(updates, null, 2));
 
             const event = await updateEvent(eventId, updates);
-            console.log('[DEBUG] Event updated successfully');
+            console.log('[DEBUG] Event updated successfully in DB');
 
             res.json({
                 success: true,

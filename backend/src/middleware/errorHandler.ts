@@ -41,7 +41,7 @@ export const errorHandler = (
     } else if (err.code === '23503') {
         // PostgreSQL foreign key violation
         statusCode = 400;
-        message = 'Invalid reference';
+        message = 'No se puede eliminar o modificar el recurso porque tiene otros registros asociados (como ventas, mensajes de chat o streams). Para mantener la integridad de los datos, considera cancelar el evento en lugar de borrarlo.';
     }
 
     // Don't leak error details in production
