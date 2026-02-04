@@ -2,13 +2,9 @@ import { io, Socket } from 'socket.io-client';
 
 // Force direct backend connection for Socket.io to bypass Next.js proxy limitations
 const getWsUrl = () => {
-    // Si estamos en producción y en el dominio principal, forzar el backend directo de Render
-    // ya que el proxy de sockets puede fallar en el dominio personalizado.
-    if (typeof window !== 'undefined' && window.location.hostname.includes('arenafightpass.com')) {
-        return 'https://ppv-backend.onrender.com';
-    }
-
-    return process.env.NEXT_PUBLIC_WS_URL || 'https://ppv-backend.onrender.com';
+    // Usar la URL relativa para que pase por el proxy de Next.js configurado en next.config.js
+    // Esto es lo más robusto para evitar errores de CORS y 404 en dominios personalizados.
+    return '';
 };
 
 const WS_URL = getWsUrl();
