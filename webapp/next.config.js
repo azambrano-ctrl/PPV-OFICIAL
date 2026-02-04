@@ -31,6 +31,10 @@ const nextConfig = {
                 source: '/socket.io/:path*',
                 destination: 'https://ppv-backend.onrender.com/socket.io/:path*',
             },
+            {
+                source: '/socket.io',
+                destination: 'https://ppv-backend.onrender.com/socket.io/',
+            },
         ]
     },
 }
