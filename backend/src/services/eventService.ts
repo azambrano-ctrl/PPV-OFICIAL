@@ -83,15 +83,20 @@ export const getAllEvents = async (filters?: {
  * Get event by ID
  */
 export const getEventById = async (id: string): Promise<Event | null> => {
-    const result = await query(
-        `SELECT e.*, p.name as promoter_name, p.logo_url as promoter_logo_url
-         FROM events e
-         LEFT JOIN promoters p ON e.promoter_id = p.id
-         WHERE e.id = $1`,
-        [id]
-    );
+    try {
+        const result = await query(
+            `SELECT e.*, p.name as promoter_name, p.logo_url as promoter_logo_url
+             FROM events e
+             LEFT JOIN promoters p ON e.promoter_id = p.id
+             WHERE e.id = $1`,
+            [id]
+        );
 
-    return result.rows[0] || null;
+        return result.rows[0] || null;
+    } catch (error) {
+        console.error(`[EventService] Error in getEventById for id ${id}:`, error);
+        throw error;
+    }
 };
 
 /**
@@ -216,31 +221,35 @@ export const userHasAccessToEvent = async (
     userId: string,
     eventId: string
 ): Promise<boolean> => {
+    try {
+        // Check if event is free
+        const event = await getEventById(eventId);
+        if (event && (event.price === 0 || Number(event.price) === 0)) {
+            return true;
+        }
 
-    // Check if event is free
-    const event = await getEventById(eventId);
-    if (event && (event.price === 0 || Number(event.price) === 0)) {
-        return true;
+        // Check if user has a Season Pass
+        const seasonPassResult = await query(
+            `SELECT COUNT(*) as count FROM purchases
+         WHERE user_id = $1 AND purchase_type = 'season_pass' AND payment_status = 'completed'`,
+            [userId]
+        );
+
+        if (parseInt(seasonPassResult.rows[0].count) > 0) {
+            return true;
+        }
+
+        const result = await query(
+            `SELECT COUNT(*) as count FROM purchases
+         WHERE user_id = $1 AND event_id = $2 AND payment_status = 'completed'`,
+            [userId, eventId]
+        );
+
+        return parseInt(result.rows[0].count) > 0;
+    } catch (error) {
+        console.error(`[EventService] Error in userHasAccessToEvent (User: ${userId}, Event: ${eventId}):`, error);
+        throw error;
     }
-
-    // Check if user has a Season Pass
-    const seasonPassResult = await query(
-        `SELECT COUNT(*) as count FROM purchases
-     WHERE user_id = $1 AND purchase_type = 'season_pass' AND payment_status = 'completed'`,
-        [userId]
-    );
-
-    if (parseInt(seasonPassResult.rows[0].count) > 0) {
-        return true;
-    }
-
-    const result = await query(
-        `SELECT COUNT(*) as count FROM purchases
-     WHERE user_id = $1 AND event_id = $2 AND payment_status = 'completed'`,
-        [userId, eventId]
-    );
-
-    return parseInt(result.rows[0].count) > 0;
 };
 
 /**

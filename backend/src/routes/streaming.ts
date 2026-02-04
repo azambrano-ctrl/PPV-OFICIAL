@@ -27,7 +27,20 @@ router.get(
         const userId = authReq.user!.userId;
 
         // Check if event exists
-        const event = await getEventById(eventId);
+        console.log(`[Streaming] Token request for event: ${eventId} by user: ${userId}`);
+
+        let event;
+        try {
+            event = await getEventById(eventId);
+        } catch (dbError: any) {
+            console.error(`[Streaming Error] Failed to fetch event ${eventId}:`, dbError);
+            res.status(500).json({
+                success: false,
+                message: 'Error retrieving event details',
+                debug: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+            });
+            return;
+        }
 
         if (!event) {
             res.status(404).json({
@@ -39,11 +52,22 @@ router.get(
 
         // Check if user has access
         let hasAccess = false;
-        if (req.user!.role === 'admin') {
-            hasAccess = true;
-        } else {
-            hasAccess = await userHasAccessToEvent(userId, eventId);
+        try {
+            if (req.user!.role === 'admin') {
+                hasAccess = true;
+            } else {
+                hasAccess = await userHasAccessToEvent(userId, eventId);
+            }
+        } catch (accessError: any) {
+            console.error(`[Streaming Error] Failed to check access for user ${userId} on event ${eventId}:`, accessError);
+            res.status(500).json({
+                success: false,
+                message: 'Error verifying access rights',
+                debug: process.env.NODE_ENV === 'development' ? accessError.message : undefined
+            });
+            return;
         }
+        console.log(`[Streaming] User access check: ${hasAccess} (Role: ${req.user!.role})`);
 
         if (!hasAccess) {
             res.status(403).json({
@@ -115,10 +139,7 @@ router.get(
                 streamUrl = signBunnyUrl(streamUrl, process.env.BUNNY_SECURITY_KEY);
                 console.log('[Token Existente] Stream de Bunny detectado. URL firmada.');
             } else if (streamUrl.includes('cloudflarestream.com')) {
-                console.log('[Token Existente] Stream de Cloudflare detectado. Usando proxy para evitar CORS.');
-                const protocol = (req.headers['x-forwarded-proto'] as string) || 'https';
-                const host = req.get('host');
-                streamUrl = `${protocol}://${host}/api/streaming/${eventId}/proxy?token=${existingToken.token}`;
+                console.log('[Token Existente] Cloudflare detectado.');
             }
 
             console.log(`[Stream Token] Event: ${event.title}, Stream URL: ${streamUrl}, isMp4: ${isMp4}`);
@@ -185,10 +206,7 @@ router.get(
             streamUrl = signBunnyUrl(streamUrl, process.env.BUNNY_SECURITY_KEY);
             console.log('Bunny stream detected. Signed URL:', streamUrl);
         } else if (streamUrl.includes('cloudflarestream.com')) {
-            console.log('Cloudflare stream detected. Using proxy for bypass CORS.');
-            const protocol = (req.headers['x-forwarded-proto'] as string) || 'https';
-            const host = req.get('host');
-            streamUrl = `${protocol}://${host}/api/streaming/${eventId}/proxy?token=${token}`;
+            console.log('Cloudflare stream detected.');
         }
 
         console.log(`[New Stream Token] Event: ${event.title}, Stream URL: ${streamUrl}, isMp4: ${isMp4}`);
@@ -352,6 +370,8 @@ router.get(
         const eventId = req.params.id;
         const token = req.query.token as string;
 
+        console.log(`[Streaming Proxy] Attempt for event: ${eventId} with token: ${token ? 'present' : 'missing'}`);
+
         if (!token) {
             res.status(401).json({
                 success: false,
@@ -459,11 +479,22 @@ router.get(
             // Pipe the stream to the response
             response.data.pipe(res);
         } catch (error: any) {
-            console.error('Proxy error:', error.message);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to fetch external stream',
-            });
+            console.error('[Streaming Proxy] Error:', error.message);
+            if (error.response) {
+                console.error('[Streaming Proxy] Upstream returned status:', error.response.status);
+                // Si el origen falla (ej. 404), devolvemos 502 (Bad Gateway) en lugar de 500 (Internal Error)
+                res.status(502).json({
+                    success: false,
+                    message: `Stream provider returned ${error.response.status}`,
+                    error: process.env.NODE_ENV === 'development' ? error.message : undefined
+                });
+            } else {
+                res.status(500).json({
+                    success: false,
+                    message: 'Failed to fetch external stream (Network Error)',
+                    error: process.env.NODE_ENV === 'development' ? error.message : undefined
+                });
+            }
         }
     })
 );

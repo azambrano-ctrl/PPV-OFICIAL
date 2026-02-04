@@ -24,6 +24,8 @@ export const repairSchema = async () => {
             `ALTER TABLE live_streams ADD COLUMN IF NOT EXISTS bunny_live_stream_id VARCHAR(255)`,
             `ALTER TABLE live_streams ADD COLUMN IF NOT EXISTS cloudflare_stream_id VARCHAR(255)`,
             `ALTER TABLE live_streams ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'idle'`,
+            `ALTER TABLE promoters ADD COLUMN IF NOT EXISTS logo_url TEXT`,
+            `ALTER TABLE promoters ADD COLUMN IF NOT EXISTS banner_url TEXT`,
             `ALTER TABLE live_streams DROP CONSTRAINT IF EXISTS live_streams_rtmp_url_key`,
             `ALTER TABLE live_streams DROP CONSTRAINT IF EXISTS live_streams_stream_key_key`,
             `ALTER TABLE live_streams DROP CONSTRAINT IF EXISTS live_streams_mux_live_stream_id_key`,

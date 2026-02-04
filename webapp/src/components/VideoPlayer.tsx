@@ -363,13 +363,24 @@ Pasos para solucionar:
             onMouseLeave={handleMouseLeave}
         >
             {/* Video Element */}
-            <video
-                ref={videoRef}
-                className="w-full h-full object-contain"
-                controls
-                playsInline
-                poster={poster}
-            />
+            {finalUrl.includes('cloudflarestream.com') ? (
+                <div className="w-full h-full">
+                    <iframe
+                        src={`${finalUrl.replace('/manifest/video.m3u8', '/iframe')}?autoplay=true&letterbox=false`}
+                        style={{ border: 'none', position: 'absolute', top: 0, left: 0, height: '100%', width: '100%' }}
+                        allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+                        allowFullScreen={true}
+                    ></iframe>
+                </div>
+            ) : (
+                <video
+                    ref={videoRef}
+                    className="w-full h-full object-contain"
+                    controls
+                    playsInline
+                    poster={poster}
+                />
+            )}
 
             {/* Loading Overlay */}
             {isLoading && (
