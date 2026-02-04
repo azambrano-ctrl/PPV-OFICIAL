@@ -211,19 +211,30 @@ Pasos para solucionar:
             finalUrl = `${absoluteBase}${streamUrl}`;
         }
 
-        if (finalUrl.includes('/api/streaming/') && finalUrl.includes('token=')) {
-            // Already proxied with internal token
-            console.log('Proxy URL detected - Using as is');
-        } else if (finalUrl.includes('stream.mux.com') || finalUrl.includes('b-cdn.net')) {
-            // Protected provider URL - Use as is (already signed by backend if needed)
-            console.log('Provider Stream detected - Using URL as provided');
+        if (
+            (finalUrl.includes('/api/streaming/') && finalUrl.includes('token=')) ||
+            finalUrl.includes('cloudflarestream.com') ||
+            finalUrl.includes('videodelivery.net') ||
+            finalUrl.includes('stream.mux.com') ||
+            finalUrl.includes('b-cdn.net')
+        ) {
+            // Ya es una URL de proxy interna o de un proveedor externo protegido - Usar tal cual
+            console.log('Provider/Proxy URL detected - Using as is');
         } else {
+            // URL genérica - Adjuntar el token de stream interno
             finalUrl = `${finalUrl}${finalUrl.includes('?') ? '&' : '?'}token=${token}`;
         }
 
-        console.log('Loading stream:', finalUrl);
+        console.log('Resolved Stream URL:', finalUrl);
         setResolvedUrl(finalUrl);
         lastStreamUrlRef.current = finalUrl;
+
+        // Si es una URL de Cloudflare Stream, usaremos el Iframe, por lo que NO inicializamos HLS
+        if (finalUrl.includes('cloudflarestream.com') || finalUrl.includes('videodelivery.net')) {
+            console.log('Cloudflare detected - Skipping HLS initialization, using iframe mode');
+            setIsLoading(false);
+            return;
+        }
 
 
         const handleManifestParsed = () => {
