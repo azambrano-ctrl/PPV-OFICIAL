@@ -2,9 +2,8 @@ import { io, Socket } from 'socket.io-client';
 
 // Force direct backend connection for Socket.io to bypass Next.js proxy limitations
 const getWsUrl = () => {
-    // Usar la variable de entorno que ya utiliza el sistema de API.
-    // Esto asegura que si la API funciona (como ya lo hace), el Socket apunte al servidor correcto.
-    return process.env.NEXT_PUBLIC_API_URL || '';
+    // Usar la variable de entorno o la URL confirmada del backend para evitar problemas de proxy.
+    return process.env.NEXT_PUBLIC_API_URL || 'https://ppv-backend.onrender.com';
 };
 
 const WS_URL = getWsUrl();
