@@ -195,6 +195,23 @@ export const updateEvent = async (
  * Delete event
  */
 export const deleteEvent = async (id: string): Promise<void> => {
+    // 1. Verificar si hay compras asociadas
+    const purchases = await query('SELECT COUNT(*) FROM purchases WHERE event_id = $1', [id]);
+    if (parseInt(purchases.rows[0].count) > 0) {
+        throw new Error('No se puede eliminar un evento que ya tiene ventas registradas. Considera cancelarlo o finalizarlo.');
+    }
+
+    // 2. Borrar datos técnicos asociados (borrado en cascada manual)
+    console.log(`[EventService] Eliminando datos técnicos del evento ${id}...`);
+    await query('DELETE FROM chat_messages WHERE event_id = $1', [id]).catch(() => { });
+    await query('DELETE FROM stream_tokens WHERE event_id = $1', [id]).catch(() => { });
+    await query('DELETE FROM live_streams WHERE event_id = $1', [id]).catch(() => { });
+    await query('DELETE FROM chat_bans WHERE event_id = $1', [id]).catch(() => { });
+    await query('DELETE FROM analytics WHERE event_id = $1', [id]).catch(() => { });
+    await query('DELETE FROM recordings WHERE event_id = $1', [id]).catch(() => { });
+    await query('DELETE FROM registrations WHERE event_id = $1', [id]).catch(() => { });
+
+    // 3. Borrar el evento
     const result = await query('DELETE FROM events WHERE id = $1', [id]);
 
     if (result.rowCount === 0) {
