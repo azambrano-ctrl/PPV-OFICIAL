@@ -123,13 +123,13 @@ export default function NotificationCenter() {
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute right-0 mt-3 w-80 md:w-96 bg-dark-900 border border-dark-700 rounded-2xl shadow-2xl z-50 overflow-hidden ring-1 ring-white/5"
+                        className="absolute -right-4 md:-right-2 mt-3 w-72 md:w-80 bg-dark-900 border border-dark-700 rounded-2xl shadow-2xl z-50 overflow-hidden ring-1 ring-white/5"
                     >
-                        <div className="p-4 border-b border-dark-700 flex items-center justify-between bg-dark-800/50">
-                            <h3 className="font-bold text-white flex items-center gap-2">
+                        <div className="p-3 border-b border-dark-700 flex items-center justify-between bg-dark-800/50">
+                            <h3 className="text-sm font-bold text-white flex items-center gap-2">
                                 Notificaciones
                                 {unreadCount > 0 && (
-                                    <span className="text-[10px] bg-primary-900/30 text-primary-400 border border-primary-500/20 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                    <span className="text-[9px] bg-primary-900/30 text-primary-400 border border-primary-500/20 px-1.5 py-0.5 rounded-full uppercase tracking-wider">
                                         Nuevo
                                     </span>
                                 )}
@@ -137,64 +137,64 @@ export default function NotificationCenter() {
                             {unreadCount > 0 && (
                                 <button
                                     onClick={handleMarkAllRead}
-                                    className="text-[10px] font-bold text-primary-500 hover:text-primary-400 uppercase tracking-widest"
+                                    className="text-[9px] font-bold text-primary-500 hover:text-primary-400 uppercase tracking-widest"
                                 >
-                                    Marcar todo como leído
+                                    Marcar todo
                                 </button>
                             )}
                         </div>
 
-                        <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                        <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
                             {loading && notifications.length === 0 ? (
-                                <div className="p-8 text-center space-y-3">
-                                    <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto" />
-                                    <p className="text-xs text-gray-500 font-medium uppercase tracking-widest">Cargando...</p>
+                                <div className="p-6 text-center space-y-3">
+                                    <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                                    <p className="text-[10px] text-gray-500 font-medium uppercase tracking-widest">Cargando...</p>
                                 </div>
                             ) : notifications.length > 0 ? (
                                 <div className="divide-y divide-dark-700/50">
                                     {notifications.map((notification) => (
                                         <div
                                             key={notification.id}
-                                            className={`p-4 transition-colors hover:bg-white/5 flex gap-4 ${!notification.is_read ? 'bg-primary-500/5' : ''}`}
+                                            className={`p-3 transition-colors hover:bg-white/5 flex gap-3 ${!notification.is_read ? 'bg-primary-500/5' : ''}`}
                                         >
-                                            <div className="flex-shrink-0 mt-1">
+                                            <div className="flex-shrink-0 mt-0.5">
                                                 {notification.type === 'event_reminder' ? (
-                                                    <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-500">
-                                                        <Calendar className="w-4 h-4" />
+                                                    <div className="w-7 h-7 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-500">
+                                                        <Calendar className="w-3.5 h-3.5" />
                                                     </div>
                                                 ) : (
-                                                    <div className="w-8 h-8 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-500">
-                                                        <CheckCircle2 className="w-4 h-4" />
+                                                    <div className="w-7 h-7 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-500">
+                                                        <CheckCircle2 className="w-3.5 h-3.5" />
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className="flex-1 space-y-1">
+                                            <div className="flex-1 space-y-0.5">
                                                 <div className="flex justify-between items-start gap-2">
-                                                    <h4 className={`text-sm font-bold ${notification.is_read ? 'text-gray-300' : 'text-white'}`}>
+                                                    <h4 className={`text-xs font-bold ${notification.is_read ? 'text-gray-300' : 'text-white'}`}>
                                                         {notification.title}
                                                     </h4>
                                                     {!notification.is_read && (
                                                         <button
                                                             onClick={() => handleMarkAsRead(notification.id)}
-                                                            className="w-2 h-2 rounded-full bg-primary-500 mt-1.5"
+                                                            className="w-1.5 h-1.5 rounded-full bg-primary-500 mt-1"
                                                             title="Marcar como leído"
                                                         />
                                                     )}
                                                 </div>
-                                                <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">
+                                                <p className="text-[11px] text-gray-400 line-clamp-2 leading-relaxed">
                                                     {notification.message}
                                                 </p>
-                                                <div className="flex items-center justify-between pt-2">
-                                                    <span className="text-[10px] font-medium text-gray-500">
+                                                <div className="flex items-center justify-between pt-1">
+                                                    <span className="text-[9px] font-medium text-gray-500">
                                                         {formatDate(notification.created_at, 'Pp')}
                                                     </span>
                                                     {notification.link && (
                                                         <Link
                                                             href={notification.link}
                                                             onClick={() => setIsOpen(false)}
-                                                            className="text-[10px] font-bold text-primary-500 hover:text-primary-400 flex items-center gap-1 uppercase tracking-widest"
+                                                            className="text-[9px] font-bold text-primary-500 hover:text-primary-400 flex items-center gap-1 uppercase tracking-widest"
                                                         >
-                                                            Ver más <ExternalLink className="w-2.5 h-2.5" />
+                                                            Ver más <ExternalLink className="w-2 h-2" />
                                                         </Link>
                                                     )}
                                                 </div>
@@ -203,21 +203,21 @@ export default function NotificationCenter() {
                                     ))}
                                 </div>
                             ) : (
-                                <div className="p-12 text-center space-y-4">
-                                    <div className="w-16 h-16 rounded-full bg-dark-800 flex items-center justify-center mx-auto text-gray-600">
-                                        <BellOff className="w-8 h-8" />
+                                <div className="p-8 text-center space-y-3">
+                                    <div className="w-12 h-12 rounded-full bg-dark-800 flex items-center justify-center mx-auto text-gray-600">
+                                        <BellOff className="w-6 h-6" />
                                     </div>
                                     <div className="space-y-1">
-                                        <p className="font-bold text-white text-sm">Sin notificaciones</p>
-                                        <p className="text-xs text-gray-500">Te avisaremos cuando haya novedades.</p>
+                                        <p className="font-bold text-white text-xs">Sin notificaciones</p>
+                                        <p className="text-[10px] text-gray-500">Te avisaremos cuando haya novedades.</p>
                                     </div>
                                 </div>
                             )}
                         </div>
 
                         {notifications.length > 0 && (
-                            <div className="p-3 bg-dark-800/50 border-t border-dark-700 text-center">
-                                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">
+                            <div className="p-2 bg-dark-800/50 border-t border-dark-700 text-center">
+                                <span className="text-[9px] font-bold text-gray-500 uppercase tracking-[0.2em]">
                                     Notificaciones Recientes
                                 </span>
                             </div>

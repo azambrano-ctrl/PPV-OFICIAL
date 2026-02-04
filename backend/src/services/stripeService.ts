@@ -2,19 +2,17 @@ import Stripe from 'stripe';
 import { query, transaction } from '../config/database';
 import logger from '../config/logger';
 
-let stripeInstance: Stripe | null = null;
-
 const getStripe = async () => {
-    if (stripeInstance) return stripeInstance;
-
     let secretKey = process.env.STRIPE_SECRET_KEY;
 
+    // If no env key, check database
     if (!secretKey) {
-        // Fallback to database settings
         try {
             const { getSettings } = await import('./settingsService');
             const settings = await getSettings();
-            secretKey = settings.stripe_secret_key;
+            if (settings.stripe_enabled && settings.stripe_secret_key) {
+                secretKey = settings.stripe_secret_key;
+            }
         } catch (error) {
             logger.error('Failed to fetch Stripe secret key from database:', error);
         }
@@ -24,11 +22,11 @@ const getStripe = async () => {
         throw new Error('Stripe secret key is not configured. Please set it in .env or settings dashboard.');
     }
 
-    stripeInstance = new Stripe(secretKey, {
+    // Always create a new instance to ensure we use the latest key
+    // Stripe client creation is lightweight
+    return new Stripe(secretKey, {
         apiVersion: '2023-10-16',
     });
-
-    return stripeInstance;
 };
 
 export interface CreatePaymentIntentInput {
