@@ -39,7 +39,7 @@ async function handleUpcomingToLive() {
         const result = await query(sql);
 
         if (result.rows.length > 0) {
-            result.rows.forEach(event => {
+            result.rows.forEach((event: any) => {
                 logger.info(`[BackgroundService] Event "${event.title}" (${event.id}) is now LIVE.`);
             });
         }
