@@ -24,11 +24,12 @@ export default function NotificationCenter() {
             fetchNotifications();
 
             // Setup real-time notifications via socket
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
-            const socket: any = io(API_URL, {
+            const WS_URL = process.env.NEXT_PUBLIC_WS_URL || process.env.NEXT_PUBLIC_API_URL || '';
+            const socket: any = io(WS_URL, {
                 auth: {
                     token: localStorage.getItem('accessToken')
-                }
+                },
+                transports: ['websocket', 'polling']
             });
 
             socketRef.current = socket;
