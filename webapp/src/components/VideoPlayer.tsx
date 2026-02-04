@@ -48,12 +48,20 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         return () => clearInterval(checkCastSDK);
     }, []);
 
-    // Heartbeat to keep session alive
+    // Heartbeat to keep session alive during long playback
     useEffect(() => {
         if (!isPlaying && !isLoading) return;
+
         const heartbeatInterval = setInterval(async () => {
-            try { await authAPI.getProfile(); } catch (err) { }
-        }, 5 * 60 * 1000);
+            try {
+                // Use a simple profile call as heartbeat
+                await authAPI.getProfile();
+                console.log('Auth heartbeat: session active');
+            } catch (err) {
+                console.warn('Auth heartbeat failed:', err);
+            }
+        }, 5 * 60 * 1000); // Every 5 minutes
+
         return () => clearInterval(heartbeatInterval);
     }, [isPlaying, isLoading]);
 
@@ -146,8 +154,13 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         setResolvedUrl(finalUrl);
         lastStreamUrlRef.current = finalUrl;
 
-        // If Iframe Provider
-        if (finalUrl.includes('cloudflarestream.com') || finalUrl.includes('videodelivery.net')) {
+        // If it's a Cloudflare URL and it's NOT a manifest, we might need the iframe.
+        // BUT if it IS a manifest, HLS.js is much better (supports Cast button).
+        const isCloudflare = finalUrl.includes('cloudflarestream.com') || finalUrl.includes('videodelivery.net');
+        const isManifest = finalUrl.includes('.m3u8');
+
+        if (isCloudflare && !isManifest) {
+            console.log('Cloudflare ID detected (no manifest) - Using iframe mode');
             setIsLoading(false);
             return;
         }
@@ -221,13 +234,13 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
 
     return (
         <div className="relative w-full h-full bg-black group overflow-hidden" onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
-            {resolvedUrl.includes('cloudflarestream.com') || resolvedUrl.includes('videodelivery.net') ? (
+            {(resolvedUrl.includes('cloudflarestream.com') || resolvedUrl.includes('videodelivery.net')) && !resolvedUrl.includes('.m3u8') ? (
                 <div className="w-full h-full">
                     <iframe
                         src={
-                            resolvedUrl.includes('/manifest/video.m3u8')
-                                ? `${resolvedUrl.replace('/manifest/video.m3u8', '/iframe')}?autoplay=true&letterbox=false`
-                                : resolvedUrl.includes('/iframe') ? resolvedUrl : `${resolvedUrl}/iframe?autoplay=true`
+                            resolvedUrl.includes('/iframe')
+                                ? resolvedUrl
+                                : `${resolvedUrl}/iframe?autoplay=true&letterbox=false`
                         }
                         className="absolute inset-0 w-full h-full border-0"
                         allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
