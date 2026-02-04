@@ -2,9 +2,9 @@ import { io, Socket } from 'socket.io-client';
 
 // Force direct backend connection for Socket.io to bypass Next.js proxy limitations
 const getWsUrl = () => {
-    // Usar la URL relativa para que pase por el proxy de Next.js configurado en next.config.js
-    // Esto es lo más robusto para evitar errores de CORS y 404 en dominios personalizados.
-    return '';
+    // Usar la variable de entorno que ya utiliza el sistema de API.
+    // Esto asegura que si la API funciona (como ya lo hace), el Socket apunte al servidor correcto.
+    return process.env.NEXT_PUBLIC_API_URL || '';
 };
 
 const WS_URL = getWsUrl();
