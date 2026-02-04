@@ -2,9 +2,34 @@ import Stripe from 'stripe';
 import { query, transaction } from '../config/database';
 import logger from '../config/logger';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2023-10-16',
-});
+let stripeInstance: Stripe | null = null;
+
+const getStripe = async () => {
+    if (stripeInstance) return stripeInstance;
+
+    let secretKey = process.env.STRIPE_SECRET_KEY;
+
+    if (!secretKey) {
+        // Fallback to database settings
+        try {
+            const { getSettings } = await import('./settingsService');
+            const settings = await getSettings();
+            secretKey = settings.stripe_secret_key;
+        } catch (error) {
+            logger.error('Failed to fetch Stripe secret key from database:', error);
+        }
+    }
+
+    if (!secretKey || secretKey === 'your_stripe_secret_key') {
+        throw new Error('Stripe secret key is not configured. Please set it in .env or settings dashboard.');
+    }
+
+    stripeInstance = new Stripe(secretKey, {
+        apiVersion: '2023-10-16',
+    });
+
+    return stripeInstance;
+};
 
 export interface CreatePaymentIntentInput {
     userId: string;
@@ -55,6 +80,7 @@ export const createPaymentIntent = async (
         }
 
         // Create Stripe payment intent
+        const stripe = await getStripe();
         const paymentIntent = await stripe.paymentIntents.create({
             amount: Math.round(finalAmount * 100), // Convert to cents
             currency: input.currency || 'usd',
@@ -115,6 +141,7 @@ export const handleStripeWebhook = async (
     rawBody: Buffer
 ): Promise<void> => {
     try {
+        const stripe = await getStripe();
         const event = stripe.webhooks.constructEvent(
             rawBody,
             signature,
@@ -306,6 +333,7 @@ export const createRefund = async (purchaseId: string): Promise<void> => {
         throw new Error('Only completed payments can be refunded');
     }
 
+    const stripe = await getStripe();
     await stripe.refunds.create({
         payment_intent: purchase.payment_intent_id,
     });
@@ -313,4 +341,4 @@ export const createRefund = async (purchaseId: string): Promise<void> => {
     logger.info('Refund initiated', { purchaseId });
 };
 
-export default stripe;
+export default { createPaymentIntent, handleStripeWebhook, createRefund };

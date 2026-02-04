@@ -40,9 +40,15 @@ router.get(
     '/',
     asyncHandler(async (_req: express.Request, res: express.Response) => {
         const settings = await settingsService.getSettings();
+
+        // Security: Remove sensitive fields from public output
+        const publicSettings = { ...settings };
+        delete (publicSettings as any).stripe_secret_key;
+        delete (publicSettings as any).paypal_secret_key;
+
         res.json({
             success: true,
-            data: settings,
+            data: publicSettings,
         });
     })
 );

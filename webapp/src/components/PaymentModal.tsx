@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { X, CreditCard, Loader2 } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -11,7 +11,8 @@ import { useSettingsStore } from '@/lib/store';
 
 const getStripePromise = (settings: any) => {
     const key = settings?.stripe_public_key || process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-    return key ? loadStripe(key) : null;
+    if (!key || key === 'pk_test_your_stripe_publishable_key') return null;
+    return loadStripe(key);
 };
 
 interface PaymentModalProps {
@@ -258,7 +259,10 @@ function StripeFormWrapper(props: PaymentModalProps) {
 
 export default function PaymentModal({ event, purchaseType = 'event', onClose }: PaymentModalProps) {
     const { settings } = useSettingsStore();
-    const stripePromise = getStripePromise(settings);
+
+    const stripePromise = useMemo(() => {
+        return getStripePromise(settings);
+    }, [settings?.stripe_public_key]);
 
     return (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
