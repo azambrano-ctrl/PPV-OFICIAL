@@ -45,6 +45,9 @@ export default function AboutPage() {
     const historyText = t('about.history_text');
     const locationTitle = t('about.location_title');
     const locationText = t('about.location_text');
+    const historyImage1 = settings?.about_history_image_1 || "https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=800&auto=format&fit=crop";
+    const historyImage2 = settings?.about_history_image_2 || "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=800&auto=format&fit=crop";
+    const historyImage3 = settings?.about_history_image_3 || "https://images.unsplash.com/photo-1595078472549-9df27b99c80d?q=80&w=800&auto=format&fit=crop";
 
 
     // Parse values if they are stored as JSON string, or use default array
@@ -242,15 +245,15 @@ export default function AboutPage() {
                         >
                             <div className="space-y-6">
                                 <div className="h-64 rounded-3xl overflow-hidden shadow-xl border border-white/5">
-                                    <img src="https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=800&auto=format&fit=crop" className="w-full h-full object-cover" alt="History 1" />
+                                    <img src={getImageUrl(historyImage1)} className="w-full h-full object-cover" alt="History 1" />
                                 </div>
                                 <div className="h-48 rounded-3xl overflow-hidden shadow-xl border border-white/5">
-                                    <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=800&auto=format&fit=crop" className="w-full h-full object-cover" alt="History 2" />
+                                    <img src={getImageUrl(historyImage2)} className="w-full h-full object-cover" alt="History 2" />
                                 </div>
                             </div>
                             <div className="pt-12 space-y-6">
                                 <div className="h-48 rounded-3xl overflow-hidden shadow-xl border border-white/5">
-                                    <img src="https://images.unsplash.com/photo-1595078472549-9df27b99c80d?q=80&w=800&auto=format&fit=crop" className="w-full h-full object-cover" alt="History 3" />
+                                    <img src={getImageUrl(historyImage3)} className="w-full h-full object-cover" alt="History 3" />
                                 </div>
                                 <div className="h-64 rounded-3xl overflow-hidden shadow-xl border border-white/5 bg-primary-600 flex items-center justify-center p-8 text-center">
                                     <p className="text-white text-2xl font-black font-display uppercase leading-tight italic">Apoyando lo Nuestro</p>

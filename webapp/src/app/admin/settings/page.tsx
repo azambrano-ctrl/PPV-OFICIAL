@@ -19,6 +19,9 @@ export default function AdminSettingsPage() {
         homepage_video: null as File | null,
         homepage_slider: [] as File[],
         about_background: null as File | null,
+        about_history_image_1: null as File | null,
+        about_history_image_2: null as File | null,
+        about_history_image_3: null as File | null,
         about_gallery: [] as File[],
         site_logo: null as File | null,
         site_favicon: null as File | null
@@ -43,6 +46,9 @@ export default function AdminSettingsPage() {
         about_hero_title: '',
         about_hero_subtitle: '',
         about_background: '',
+        about_history_image_1: '',
+        about_history_image_2: '',
+        about_history_image_3: '',
         about_mission_title: '',
         about_mission_text: '',
         about_values: [] as any[],
@@ -94,6 +100,9 @@ export default function AdminSettingsPage() {
                 about_hero_title: d.about_hero_title || '',
                 about_hero_subtitle: d.about_hero_subtitle || '',
                 about_background: d.about_background || '',
+                about_history_image_1: d.about_history_image_1 || '',
+                about_history_image_2: d.about_history_image_2 || '',
+                about_history_image_3: d.about_history_image_3 || '',
                 about_mission_title: d.about_mission_title || '',
                 about_mission_text: d.about_mission_text || '',
                 about_values: typeof d.about_values === 'string' ? JSON.parse(d.about_values) : (d.about_values || []),
@@ -154,6 +163,15 @@ export default function AdminSettingsPage() {
                 formData.append('about_background', form.about_background);
             }
 
+            if (fileState.about_history_image_1) formData.append('about_history_image_1', fileState.about_history_image_1);
+            else if (form.about_history_image_1) formData.append('about_history_image_1', form.about_history_image_1);
+
+            if (fileState.about_history_image_2) formData.append('about_history_image_2', fileState.about_history_image_2);
+            else if (form.about_history_image_2) formData.append('about_history_image_2', form.about_history_image_2);
+
+            if (fileState.about_history_image_3) formData.append('about_history_image_3', fileState.about_history_image_3);
+            else if (form.about_history_image_3) formData.append('about_history_image_3', form.about_history_image_3);
+
             fileState.about_gallery.forEach((file) => {
                 formData.append('about_gallery', file);
             });
@@ -212,6 +230,9 @@ export default function AdminSettingsPage() {
                 homepage_video: null,
                 homepage_slider: [],
                 about_background: null,
+                about_history_image_1: null,
+                about_history_image_2: null,
+                about_history_image_3: null,
                 about_gallery: [],
                 site_logo: null,
                 site_favicon: null
@@ -612,6 +633,44 @@ export default function AdminSettingsPage() {
                                             setFileState(prev => ({ ...prev, about_background: file }));
                                         }
                                         setForm({ ...form, about_background: previewUrl || '' });
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Sección Historias - Fotos */}
+                        <div className="bg-dark-900 p-6 rounded-xl border border-dark-800">
+                            <h2 className="text-xl font-bold mb-4 text-white">Fotos de "Nuestra Historia"</h2>
+                            <p className="text-sm text-dark-400 mb-6">Estas imágenes aparecen en la sección de historia de la página Nosotros.</p>
+                            <div className="grid md:grid-cols-3 gap-6">
+                                <ImageUpload
+                                    label="Historia Foto 1 (Alta)"
+                                    value={form.about_history_image_1}
+                                    maxSize={10}
+                                    aspect={3 / 4}
+                                    onChange={(file, previewUrl) => {
+                                        if (file) setFileState(prev => ({ ...prev, about_history_image_1: file }));
+                                        setForm({ ...form, about_history_image_1: previewUrl || '' });
+                                    }}
+                                />
+                                <ImageUpload
+                                    label="Historia Foto 2 (Baja)"
+                                    value={form.about_history_image_2}
+                                    maxSize={10}
+                                    aspect={4 / 3}
+                                    onChange={(file, previewUrl) => {
+                                        if (file) setFileState(prev => ({ ...prev, about_history_image_2: file }));
+                                        setForm({ ...form, about_history_image_2: previewUrl || '' });
+                                    }}
+                                />
+                                <ImageUpload
+                                    label="Historia Foto 3 (Baja)"
+                                    value={form.about_history_image_3}
+                                    maxSize={10}
+                                    aspect={4 / 3}
+                                    onChange={(file, previewUrl) => {
+                                        if (file) setFileState(prev => ({ ...prev, about_history_image_3: file }));
+                                        setForm({ ...form, about_history_image_3: previewUrl || '' });
                                     }}
                                 />
                             </div>

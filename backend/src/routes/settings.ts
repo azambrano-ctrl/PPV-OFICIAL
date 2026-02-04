@@ -137,6 +137,16 @@ router.put(
                     const currentHPSlider = safeParseJSON(req.body.homepage_slider, []);
                     updates.homepage_slider = [...currentHPSlider, ...newImages];
                 }
+
+                if (files.about_history_image_1 && files.about_history_image_1[0]) {
+                    updates.about_history_image_1 = files.about_history_image_1[0].path;
+                }
+                if (files.about_history_image_2 && files.about_history_image_2[0]) {
+                    updates.about_history_image_2 = files.about_history_image_2[0].path;
+                }
+                if (files.about_history_image_3 && files.about_history_image_3[0]) {
+                    updates.about_history_image_3 = files.about_history_image_3[0].path;
+                }
             }
 
             // 3. Assign final merged list to updates

@@ -14,6 +14,9 @@ export interface Settings {
     about_slider_images: any; // JSONB
     about_stats_users: string;
     about_stats_events: string;
+    about_history_image_1: string | null;
+    about_history_image_2: string | null;
+    about_history_image_3: string | null;
 
     // General
     site_name: string;
@@ -58,6 +61,9 @@ export interface UpdateSettingsDTO {
     about_slider_images?: any;
     about_stats_users?: string;
     about_stats_events?: string;
+    about_history_image_1?: string | null;
+    about_history_image_2?: string | null;
+    about_history_image_3?: string | null;
 
     // General
     site_name?: string;
@@ -123,6 +129,9 @@ export const updateSettings = async (updates: UpdateSettingsDTO): Promise<Settin
         'about_slider_images',
         'about_stats_users',
         'about_stats_events',
+        'about_history_image_1',
+        'about_history_image_2',
+        'about_history_image_3',
         'site_name',
         'site_description',
         'contact_email',
