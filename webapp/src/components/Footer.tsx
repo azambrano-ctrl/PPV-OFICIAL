@@ -80,7 +80,7 @@ export default function Footer() {
                                 >
                                     <img
                                         src={settings.site_logo}
-                                        alt={settings?.site_name || 'Logo'}
+                                        alt={settings?.site_name || ''}
                                         className="max-w-full h-auto object-contain"
                                     />
                                 </div>
@@ -93,7 +93,7 @@ export default function Footer() {
                             )}
                             {hasHydrated && (
                                 <span className="font-display font-bold text-xl gradient-text">
-                                    {settings?.site_name || 'PPV Streaming'}
+                                    {settings?.site_name}
                                 </span>
                             )}
                         </Link>
@@ -211,7 +211,7 @@ export default function Footer() {
                 {/* Bottom */}
                 <div className="mt-8 pt-8 border-t border-dark-800 flex flex-col md:flex-row justify-between items-center gap-4">
                     <p className="text-dark-400 text-sm">
-                        © {currentYear} {hasHydrated ? (settings?.site_name || 'PPV Streaming') : ''}. {t('footer.rights')}
+                        © {currentYear} {hasHydrated ? settings?.site_name : ''}. {t('footer.rights')}
                     </p>
 
                     <div className="flex items-center gap-4 text-sm text-dark-400">

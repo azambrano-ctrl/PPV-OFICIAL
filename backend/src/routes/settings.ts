@@ -175,7 +175,7 @@ router.put(
             }
 
             // Handle General Settings
-            if (req.body.site_name) updates.site_name = req.body.site_name;
+            if (req.body.site_name !== undefined) updates.site_name = req.body.site_name;
             if (req.body.site_description !== undefined) updates.site_description = req.body.site_description;
             if (req.body.contact_email) updates.contact_email = req.body.contact_email;
             if (req.body.site_favicon && !updates.site_favicon) {
