@@ -23,6 +23,7 @@ import notificationRoutes from './routes/notifications';
 import { query } from './config/database';
 import { verifyAccessToken } from './middleware/auth';
 import { userHasAccessToEvent } from './services/eventService';
+import { startBackgroundService } from './services/backgroundService';
 
 // Load environment variables
 dotenv.config();
@@ -485,6 +486,7 @@ const startReminderCron = () => {
 };
 
 startReminderCron();
+startBackgroundService();
 
 const PORT = process.env.PORT || 5000;
 
