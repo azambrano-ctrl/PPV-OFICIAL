@@ -263,6 +263,13 @@ router.post(
             console.log('[Admin] Cloudflare stream created:', streamData.cloudflareStreamId);
 
             console.log('[Admin] Inserting into live_streams table...');
+            console.log('[Admin] Stream data to insert:', {
+                eventId,
+                cloudflareStreamId: streamData.cloudflareStreamId,
+                streamKey: streamData.streamKey ? 'present' : 'missing',
+                rtmpUrl: streamData.rtmpUrl ? 'present' : 'missing'
+            });
+
             let result;
             try {
                 result = await pool.query(
@@ -285,8 +292,10 @@ router.post(
                 );
                 console.log('[Admin] Insert into live_streams successful');
             } catch (dbError: any) {
-                console.error('[Admin] DB INSERT FAILED:', dbError.message, dbError.detail || '');
-                throw new Error(`Error en base de datos: ${dbError.message}`);
+                console.error('[Admin] DB INSERT FAILED:', dbError.message);
+                console.error('[Admin] DB Error Detail:', dbError.detail || 'No detail');
+                console.error('[Admin] DB Error Code:', dbError.code || 'No code');
+                throw new Error(`Database error: ${dbError.message}. Detail: ${dbError.detail || 'none'}`);
             }
 
             // Update event with stream details
@@ -309,15 +318,22 @@ router.post(
             });
         } catch (error: any) {
             console.error('[Admin DEBUG] FATAL ERROR in live-stream route:', error);
+            console.error('[Admin DEBUG] Error stack:', error.stack);
+
             if (error.response) {
                 console.error('[Admin DEBUG] Cloudflare Response Data:', JSON.stringify(error.response.data, null, 2));
                 console.error('[Admin DEBUG] Cloudflare Response Status:', error.response.status);
             }
+
             res.status(500).json({
                 success: false,
-                message: 'Error interno al procesar el stream',
+                message: 'Error creating live stream',
                 error: error.message || 'Unknown error',
-                providerDetails: error.response?.data ? JSON.stringify(error.response.data) : 'No response data'
+                details: {
+                    cloudflareError: error.response?.data || null,
+                    cloudflareStatus: error.response?.status || null,
+                    errorType: error.constructor.name
+                }
             });
         }
     })

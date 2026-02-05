@@ -33,6 +33,15 @@ export const cloudflareService = {
 
             const data = response.data.result;
 
+            if (!data || !data.uid) {
+                throw new Error('Invalid response from Cloudflare API: missing uid');
+            }
+
+            if (!data.rtmps || !data.rtmps.streamKey || !data.rtmps.url) {
+                console.error('[CloudflareService] Incomplete rtmps data:', data);
+                throw new Error('Invalid response from Cloudflare API: missing rtmps credentials');
+            }
+
             logger.info('Cloudflare live input created', { uid: data.uid });
             console.log('[CloudflareService] Input created:', data.uid);
 
