@@ -66,41 +66,59 @@ async function handleLiveToReprise() {
         for (const event of result.rows) {
             let shouldEnd = false;
             let reason = '';
+            const now = Date.now();
+            const startTime = new Date(event.event_date).getTime();
+            const minutesSinceStart = (now - startTime) / (60 * 1000);
 
             // Check if stream is disconnected from providers
             try {
                 if (event.cloudflare_stream_id) {
                     const cfInput = await CloudflareService.getLiveInput(event.cloudflare_stream_id);
-                    // Cloudflare status: 'connected' or 'disconnected'
+                    // Update live_streams status in DB for visibility
+                    await query('UPDATE live_streams SET status = $1 WHERE event_id = $2', [cfInput.status, event.id]);
+
                     if (cfInput.status === 'disconnected') {
-                        // Wait for a small buffer (recorded in DB or just check duration)
-                        // For now, if it's disconnected and past its start time, we check duration
-                        shouldEnd = checkIfDurationExceeded(event);
-                        if (shouldEnd) reason = 'Stream disconnected and duration reached';
+                        // If Cloudflare says disconnected, and we've been live for at least 15 minutes
+                        // (setup buffer), we switch to reprise.
+                        if (minutesSinceStart > 15) {
+                            shouldEnd = true;
+                            reason = 'Cloudflare reported disconnected (Stream ended)';
+                        }
                     }
                 } else if (event.bunny_live_stream_id) {
                     const bunnyStream = await bunnyService.getLiveStream(event.bunny_live_stream_id);
                     // Bunny status: 3 is live/connected, others are idle/disconnected
                     if (bunnyStream.Status !== 3) {
-                        shouldEnd = checkIfDurationExceeded(event);
-                        if (shouldEnd) reason = 'Bunny stream disconnected and duration reached';
+                        if (minutesSinceStart > 15) {
+                            shouldEnd = true;
+                            reason = 'Bunny stream disconnected (Status: ' + bunnyStream.Status + ')';
+                        }
                     }
                 } else if (event.mux_live_stream_id && !event.mux_live_stream_id.startsWith('mock_')) {
                     const muxStream = await muxService.getLiveStream(event.mux_live_stream_id);
                     if (muxStream.status !== 'active') {
-                        shouldEnd = checkIfDurationExceeded(event);
-                        if (shouldEnd) reason = 'Mux stream disconnected and duration reached';
+                        if (minutesSinceStart > 15) {
+                            shouldEnd = true;
+                            reason = 'Mux stream inactive (Status: ' + muxStream.status + ')';
+                        }
                     }
                 } else {
-                    // No live stream tracking found, check by duration + 2 hours buffer
-                    shouldEnd = checkIfDurationExceeded(event, 120);
+                    // No provider tracking (manual URL), check by duration + 1 hour buffer (decreased from 2h)
+                    shouldEnd = checkIfDurationExceeded(event, 60);
                     if (shouldEnd) reason = 'No stream detected and safety duration buffer exceeded';
                 }
+
+                // Safety Fallback: Even if provider says connected, if duration is GREATLY exceeded (extra 4 hours), end it.
+                if (!shouldEnd && checkIfDurationExceeded(event, 240)) {
+                    shouldEnd = true;
+                    reason = 'Duration greatly exceeded (4h safety buffer)';
+                }
+
             } catch (providerError) {
                 logger.error(`[BackgroundService] Error checking provider for event ${event.id}:`, providerError);
                 // Fallback to duration check if provider check fails
-                shouldEnd = checkIfDurationExceeded(event, 60);
-                if (shouldEnd) reason = 'Provider check failed and duration buffer exceeded';
+                shouldEnd = checkIfDurationExceeded(event, 120);
+                if (shouldEnd) reason = 'Provider check failed and safety buffer exceeded';
             }
 
             if (shouldEnd) {
