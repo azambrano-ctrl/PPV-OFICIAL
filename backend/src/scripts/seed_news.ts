@@ -11,7 +11,7 @@ const newsItems = [
         category: 'TFL',
         status: 'published',
         is_featured: true,
-        thumbnail_url: 'https://tfl-latam.com/wp-content/uploads/2023/07/TFL-2.jpg'
+        thumbnail_url: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=2000&auto=format&fit=crop'
     },
     {
         title: 'Chito Vera regresa al octágono: Duelo confirmado contra David Martínez en CDMX',
@@ -21,7 +21,7 @@ const newsItems = [
         category: 'UFC',
         status: 'published',
         is_featured: true,
-        thumbnail_url: 'https://dmxg5wxfqgb4u.cloudfront.net/styles/background_image_xl/s3/2024-03/030924-UFC-299-Chito-Vera-Hero.jpg?itok=3v_9V_eJ'
+        thumbnail_url: 'https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?q=80&w=2000&auto=format&fit=crop'
     },
     {
         title: 'Michael Morales alcanza el Top 3 mundial: El ascenso imparable del guerrero de Pasaje',
@@ -31,7 +31,7 @@ const newsItems = [
         category: 'UFC',
         status: 'published',
         is_featured: true,
-        thumbnail_url: 'https://dmxg5wxfqgb4u.cloudfront.net/styles/background_image_xl/s3/2024-08/100424-UFC-307-Morales-Hero.jpg?itok=yTzRzV9_'
+        thumbnail_url: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=2000&auto=format&fit=crop'
     },
     {
         title: 'MMA en Ecuador: Arena Fight Pass se consolida como la plataforma líder para el combate',
@@ -41,7 +41,7 @@ const newsItems = [
         category: 'Arena FP',
         status: 'published',
         is_featured: false,
-        thumbnail_url: 'https://tfl-latam.com/wp-content/uploads/2023/07/TFL-1.jpg'
+        thumbnail_url: 'https://images.unsplash.com/photo-1511886929837-3e117449bc94?q=80&w=2000&auto=format&fit=crop'
     },
     {
         title: 'Análisis UFC 325: Los resultados que cambiaron el panorama divisionario',
@@ -91,7 +91,7 @@ const newsItems = [
         category: 'Arena FP',
         status: 'published',
         is_featured: true,
-        thumbnail_url: 'https://tfl-latam.com/wp-content/uploads/2023/07/TFL-2.jpg'
+        thumbnail_url: 'https://images.unsplash.com/photo-1517438322307-e67111335cb3?q=80&w=2000&auto=format&fit=crop'
     },
     {
         title: 'La Historia de Michael Morales: De Pasaje a la Cima del Mundo',
