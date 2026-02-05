@@ -61,7 +61,7 @@ const newsItems = [
         category: 'Educación',
         status: 'published',
         is_featured: false,
-        thumbnail_url: 'https://images.oracle.com/content/dam/oracle-www/content-images/content/fighting-rules.jpg'
+        thumbnail_url: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=2000&auto=format&fit=crop'
     },
     {
         title: 'Gimnasios Recomendados: Dónde empezar a entrenar MMA en Guayaquil y Quito',
@@ -151,7 +151,7 @@ const newsItems = [
         category: 'UFC',
         status: 'published',
         is_featured: false,
-        thumbnail_url: 'https://dmxg5wxfqgb4u.cloudfront.net/styles/background_image_xl/s3/2024-03/030924-UFC-299-Vera-vs-O-Malley-Hero.jpg?itok=5z_z_z'
+        thumbnail_url: 'https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?q=80&w=2000&auto=format&fit=crop'
     },
     {
         title: 'Resultados Arena FP Open: Nuevos talentos emergen en la Sierra Norte',
