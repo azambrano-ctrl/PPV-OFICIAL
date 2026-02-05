@@ -9,7 +9,7 @@ console.log('[CloudflareService] CLOUDFLARE_ACCOUNT_ID:', process.env.CLOUDFLARE
 
 const getBaseUrl = () => {
     const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-    const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/stream`;
+    const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/`;
     console.log('[CloudflareService] Base URL:', url);
     return url;
 };
@@ -22,7 +22,7 @@ const getCfClient = () => axios.create({
     },
 });
 
-export const cloudflareService = {
+export const CloudflareService = {
     /**
      * Creates a new live input in Cloudflare Stream
      */
@@ -30,7 +30,7 @@ export const cloudflareService = {
         try {
             console.log('[CloudflareService] Creating live input:', name);
             const cfClient = getCfClient();
-            const response = await cfClient.post('/live_inputs', {
+            const response = await cfClient.post('live_inputs', {
                 meta: { name },
                 recording: {
                     mode: 'automatic',
