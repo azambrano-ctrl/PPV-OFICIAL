@@ -138,9 +138,9 @@ router.post(
 
             const purchase = result.rows[0];
 
-            // Generate token
-            const streamToken = generateStreamToken(req.user!.userId, eventId);
-            const expiresAt = new Date(Date.now() + 3 * 60 * 60 * 1000); // 3 hours
+            // Generate token linked to session
+            const streamToken = generateStreamToken(req.user!.userId, eventId, req.user!.sessionId!);
+            const expiresAt = new Date(Date.now() + 6 * 60 * 60 * 1000); // 6 hours
 
             await query(
                 `INSERT INTO stream_tokens (user_id, event_id, token, expires_at)

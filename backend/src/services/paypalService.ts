@@ -247,8 +247,13 @@ const handlePayPalSuccess = async (orderId: string, _orderDetails: any) => {
         // Create stream token for user (ONLY for direct event purchases)
         if (purchase.purchase_type === 'event' && purchase.event_id) {
             const { generateStreamToken } = await import('../middleware/auth');
-            const streamToken = generateStreamToken(purchase.user_id, purchase.event_id);
-            const expiresAt = new Date(Date.now() + 3 * 60 * 60 * 1000); // 3 hours
+
+            // Fetch the user's current session ID to link the token
+            const userRes = await client.query('SELECT current_session_id FROM users WHERE id = $1', [purchase.user_id]);
+            const sessionId = userRes.rows[0]?.current_session_id || 'purchase-session';
+
+            const streamToken = generateStreamToken(purchase.user_id, purchase.event_id, sessionId);
+            const expiresAt = new Date(Date.now() + 6 * 60 * 60 * 1000); // 6 hours
 
             await client.query(
                 `INSERT INTO stream_tokens (user_id, event_id, token, expires_at)

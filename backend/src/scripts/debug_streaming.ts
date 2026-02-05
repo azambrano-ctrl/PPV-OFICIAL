@@ -27,7 +27,8 @@ async function runDebug() {
 
         // Prueba de token
         const mockUserId = '00000000-0000-0000-0000-000000000000';
-        const token = generateStreamToken(mockUserId, eventId);
+        const mockSessionId = 'debug-session-id';
+        const token = generateStreamToken(mockUserId, eventId, mockSessionId);
         console.log(`\n🔑 Token generado para usuario mock: ${token.substring(0, 15)}...`);
 
         try {
