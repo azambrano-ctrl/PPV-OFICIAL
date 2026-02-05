@@ -11,7 +11,7 @@ const newsItems = [
         category: 'TFL',
         status: 'published',
         is_featured: true,
-        thumbnail_url: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=2000&auto=format&fit=crop'
+        thumbnail_url: 'https://cdn.millions.co/stream/83ef170d-609f-4f51-9e25-6c23ebb2e9a9-1723045236730.png'
     },
     {
         title: 'Chito Vera regresa al octágono: Duelo confirmado contra David Martínez en CDMX',
@@ -41,7 +41,7 @@ const newsItems = [
         category: 'Arena FP',
         status: 'published',
         is_featured: false,
-        thumbnail_url: 'https://images.unsplash.com/photo-1511886929837-3e117449bc94?q=80&w=2000&auto=format&fit=crop'
+        thumbnail_url: 'https://cdn.millions.co/media-post/jorge-yepez-mma-image-1723626197406-0.png'
     },
     {
         title: 'Análisis UFC 325: Los resultados que cambiaron el panorama divisionario',
@@ -71,7 +71,7 @@ const newsItems = [
         category: 'Local',
         status: 'published',
         is_featured: false,
-        thumbnail_url: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2070&auto=format&fit=crop'
+        thumbnail_url: 'https://cdn.millions.co/video-edit-request/45145670-9922-4951-a57a-4ed1b55eb7cc-0.jpg'
     },
     {
         title: 'Nutrición para Peleadores: El secreto del corte de peso seguro',
@@ -91,7 +91,7 @@ const newsItems = [
         category: 'Arena FP',
         status: 'published',
         is_featured: true,
-        thumbnail_url: 'https://images.unsplash.com/photo-1517438322307-e67111335cb3?q=80&w=2000&auto=format&fit=crop'
+        thumbnail_url: 'https://cdn.millions.co/video-edit-request/247e1e14-d38d-4ed8-b970-b5fa3f93d3c0-0.jpg'
     },
     {
         title: 'La Historia de Michael Morales: De Pasaje a la Cima del Mundo',
@@ -111,7 +111,7 @@ const newsItems = [
         category: 'Local',
         status: 'published',
         is_featured: false,
-        thumbnail_url: 'https://images.unsplash.com/photo-1518608453480-106ea46f414e?q=80&w=1964&auto=format&fit=crop'
+        thumbnail_url: 'https://cdn.millions.co/video-edit-request/15370095-c092-4344-9cd5-e233fa866c6a-0.jpg'
     },
     {
         title: 'Jason Parillo y el Team Vera: El equipo detrás del éxito de "Chito"',
@@ -121,7 +121,7 @@ const newsItems = [
         category: 'Perfiles',
         status: 'published',
         is_featured: false,
-        thumbnail_url: 'https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?q=80&w=2070&auto=format&fit=crop'
+        thumbnail_url: 'https://cdn.millions.co/video-edit-request/2e6490fe-378c-43d5-a485-48231a5683a8-0.jpg'
     },
     {
         title: 'Previas del Mes: Combates imperdibles en el calendario 2026',
@@ -131,7 +131,7 @@ const newsItems = [
         category: 'Resultados',
         status: 'published',
         is_featured: false,
-        thumbnail_url: 'https://images.unsplash.com/photo-1517438322307-e67111335cb3?q=80&w=2040&auto=format&fit=crop'
+        thumbnail_url: 'https://cdn.millions.co/video-edit-request/896dab88-56e7-4a14-bb70-43e4e0cb9124-0.jpg'
     },
     {
         title: 'Tutorial: Cómo comprar y ver eventos en Arena Fight Pass',
@@ -161,7 +161,7 @@ const newsItems = [
         category: 'Resultados',
         status: 'published',
         is_featured: false,
-        thumbnail_url: 'https://images.unsplash.com/photo-1511871182292-9c9457b7849e?q=80&w=2070&auto=format&fit=crop'
+        thumbnail_url: 'https://cdn.millions.co/athlete/29a08485-fa45-45e1-8b01-8994c2e55d77-1722535665450.jpg'
     }
 ];
 
