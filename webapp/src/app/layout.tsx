@@ -60,7 +60,7 @@ export default function RootLayout({
             <head>
                 <Favicon />
                 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3458573665593188"
-                    crossorigin="anonymous"></script>
+                    crossOrigin="anonymous"></script>
             </head>
             <body className="font-sans">
                 <Script
