@@ -34,6 +34,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_news_posts_updated_at ON news_posts;
 CREATE TRIGGER update_news_posts_updated_at
     BEFORE UPDATE ON news_posts
     FOR EACH ROW
