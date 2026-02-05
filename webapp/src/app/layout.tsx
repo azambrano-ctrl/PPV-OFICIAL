@@ -59,6 +59,8 @@ export default function RootLayout({
         <html lang="es" className={`${inter.variable} ${outfit.variable}`}>
             <head>
                 <Favicon />
+                <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3458573665593188"
+                    crossorigin="anonymous"></script>
             </head>
             <body className="font-sans">
                 <Script
