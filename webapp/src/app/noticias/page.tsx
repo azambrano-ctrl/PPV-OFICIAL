@@ -25,7 +25,7 @@ export default function NewsPage() {
     const [loading, setLoading] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
-    const categories = ['All', 'UFC', 'TFL', 'Resultados', 'Perfiles', 'Local', 'Educación', 'Salud'];
+    const categories = ['All', 'UFC', 'Arena FP', 'Resultados', 'Perfiles', 'Local', 'Educación', 'Salud'];
 
     useEffect(() => {
         loadPosts();
@@ -63,11 +63,11 @@ export default function NewsPage() {
                     <div className="flex items-center gap-4 mb-6">
                         <div className="w-12 h-0.5 bg-red-600" />
                         <h1 className="font-display text-5xl md:text-7xl font-black uppercase tracking-tighter">
-                            Noticias <span className="text-red-600">TFL</span>
+                            Noticias <span className="text-red-600">ARENA FP</span>
                         </h1>
                     </div>
                     <p className="text-gray-400 text-lg md:text-xl max-w-2xl uppercase tracking-wide font-medium">
-                        Tu fuente principal de MMA en Ecuador y el mundo. Cobertura real, análisis técnico y exclusivas de la TFL.
+                        Tu fuente principal de MMA en Ecuador y el mundo. Cobertura real, análisis técnico y exclusivas de Arena Fight Pass.
                     </p>
                 </div>
             </div>

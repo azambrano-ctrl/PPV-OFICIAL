@@ -134,7 +134,7 @@ export default function NewPromoterPage() {
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     className="input"
-                                    placeholder="Ej: TFL - The Fight League"
+                                    placeholder="Ej: Arena Fight Pass - Ecuador"
                                 />
                             </div>
 
@@ -221,7 +221,7 @@ export default function NewPromoterPage() {
                                     value={userData.full_name}
                                     onChange={(e) => setUserData({ ...userData, full_name: e.target.value })}
                                     className="input"
-                                    placeholder="Ej: Administrador TFL"
+                                    placeholder="Ej: Administrador Arena FP"
                                 />
                             </div>
                             <div>
@@ -232,7 +232,7 @@ export default function NewPromoterPage() {
                                     value={userData.email}
                                     onChange={(e) => setUserData({ ...userData, email: e.target.value })}
                                     className="input"
-                                    placeholder="contacto@tfl.com"
+                                    placeholder="contacto@arenafightpass.com"
                                 />
                             </div>
                             <div>

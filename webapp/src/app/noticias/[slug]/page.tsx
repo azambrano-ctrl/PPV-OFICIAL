@@ -105,7 +105,7 @@ export default function SingleNewsPage() {
                             <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center">
                                 <User className="w-5 h-5 text-gray-400" />
                             </div>
-                            <span className="text-sm font-bold uppercase tracking-wide">Redacción TFL</span>
+                            <span className="text-sm font-bold uppercase tracking-wide">Redacción Arena Fight Pass</span>
                         </div>
                         <div className="h-4 w-px bg-zinc-800" />
                         <div className="flex gap-4">
@@ -186,7 +186,7 @@ export default function SingleNewsPage() {
                         <div className="bg-red-600 p-8 rounded-2xl shadow-xl shadow-red-900/10">
                             <Newspaper className="w-10 h-10 mb-4" />
                             <h3 className="text-2xl font-black uppercase mb-4 leading-tight">Suscríbete al Newsletter</h3>
-                            <p className="text-white/80 text-sm mb-6">Recibe las mejores noticias de MMA y ofertas exclusivas de la TFL en tu correo.</p>
+                            <p className="text-white/80 text-sm mb-6">Recibe las mejores noticias de MMA y ofertas exclusivas de Arena Fight Pass en tu correo.</p>
                             <input
                                 type="email"
                                 placeholder="tu@email.com"
