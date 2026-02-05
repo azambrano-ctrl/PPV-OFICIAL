@@ -58,7 +58,7 @@ export const CloudflareService = {
                 streamKey: data.rtmps.streamKey,
                 rtmpUrl: data.rtmps.url,
                 playbackId: data.uid, // Cloudflare uses UID for HLS playback URLs
-                hlsUrl: `https://customer-${process.env.CLOUDFLARE_ACCOUNT_ID}.cloudflarestream.com/${data.uid}/manifest/video.m3u8`
+                hlsUrl: `https://customer-${process.env.CLOUDFLARE_CUSTOMER_ID || process.env.CLOUDFLARE_ACCOUNT_ID}.cloudflarestream.com/${data.uid}/manifest/video.m3u8`
             };
         } catch (error: any) {
             console.error('[CloudflareService] API Error:', error.response?.data || error.message);
