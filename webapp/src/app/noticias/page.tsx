@@ -101,7 +101,7 @@ export default function NewsPage() {
                             <Link href={`/noticias/${featuredPost.slug}`} className="group mb-16 block">
                                 <div className="relative h-[400px] md:h-[600px] rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl">
                                     <Image
-                                        src={getImageUrl(featuredPost.thumbnail_url || '')}
+                                        src={getImageUrl(featuredPost.thumbnail_url || '') || ''}
                                         alt={featuredPost.title}
                                         fill
                                         className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -141,7 +141,7 @@ export default function NewsPage() {
                                 >
                                     <div className="relative h-56 overflow-hidden">
                                         <Image
-                                            src={getImageUrl(post.thumbnail_url || '')}
+                                            src={getImageUrl(post.thumbnail_url || '') || ''}
                                             alt={post.title}
                                             fill
                                             className="object-cover group-hover:scale-105 transition-transform duration-500"

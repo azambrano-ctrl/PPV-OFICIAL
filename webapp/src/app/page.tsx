@@ -312,7 +312,7 @@ export default function HomePage() {
                                 >
                                     <div className="relative h-48 overflow-hidden">
                                         <Image
-                                            src={getImageUrl(post.thumbnail_url || '')}
+                                            src={getImageUrl(post.thumbnail_url || '') || ''}
                                             alt={post.title}
                                             fill
                                             className="object-cover group-hover:scale-110 transition-transform duration-500"

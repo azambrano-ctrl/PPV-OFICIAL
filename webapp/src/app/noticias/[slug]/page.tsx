@@ -121,7 +121,7 @@ export default function SingleNewsPage() {
             <div className="container-custom mb-16">
                 <div className="relative aspect-video rounded-3xl overflow-hidden border border-zinc-900 shadow-2xl">
                     <Image
-                        src={getImageUrl(post.banner_url || post.thumbnail_url || '')}
+                        src={getImageUrl(post.banner_url || post.thumbnail_url || '') || ''}
                         alt={post.title}
                         fill
                         className="object-cover"
@@ -208,7 +208,7 @@ export default function SingleNewsPage() {
                                     <Link key={r.id} href={`/noticias/${r.slug}`} className="group flex gap-4">
                                         <div className="relative w-24 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-zinc-800">
                                             <Image
-                                                src={getImageUrl(r.thumbnail_url || '')}
+                                                src={getImageUrl(r.thumbnail_url || '') || ''}
                                                 alt={r.title}
                                                 fill
                                                 className="object-cover group-hover:scale-110 transition-transform duration-500"
