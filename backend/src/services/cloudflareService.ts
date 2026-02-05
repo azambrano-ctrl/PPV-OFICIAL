@@ -4,7 +4,15 @@ import logger from '../config/logger';
 
 dotenv.config();
 
-const getBaseUrl = () => `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/stream`;
+// Log the account ID being used (for debugging)
+console.log('[CloudflareService] CLOUDFLARE_ACCOUNT_ID:', process.env.CLOUDFLARE_ACCOUNT_ID);
+
+const getBaseUrl = () => {
+    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+    const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/stream`;
+    console.log('[CloudflareService] Base URL:', url);
+    return url;
+};
 
 const getCfClient = () => axios.create({
     baseURL: getBaseUrl(),
