@@ -4,6 +4,16 @@ const adminId = 'e5a029b5-6f6a-4d2f-9f5f-8d1219e49e6e';
 
 const newsItems = [
     {
+        title: 'Calendario TFL 2026: Nueve eventos confirmados para un año histórico',
+        slug: 'tfl-calendario-2026-nueve-eventos-mma-ecuador',
+        content: 'La promotora Troncal Fight League (TFL) ha sacudido el panorama del MMA nacional al anunciar su ambicioso calendario para el 2026. Con un total de nueve eventos programados a lo largo del año, la organización busca consolidar su presencia en diversas ciudades del país. Estos eventos no solo prometen careos de alto nivel, sino que también servirán como plataforma para que los guerreros locales acumulen la experiencia necesaria para el salto internacional. El primero de estos nueve encuentros se llevará a cabo a finales de febrero en La Troncal.',
+        excerpt: 'TFL anuncia un calendario sin precedentes con 9 eventos confirmados para 2026, reafirmando su rol clave en el desarrollo del MMA en Ecuador.',
+        category: 'TFL',
+        status: 'published',
+        is_featured: true,
+        thumbnail_url: 'https://tfl-latam.com/wp-content/uploads/2023/07/TFL-2.jpg'
+    },
+    {
         title: 'Chito Vera regresa al octágono: Duelo confirmado contra David Martínez en CDMX',
         slug: 'chito-vera-david-martinez-ufc-mexico-2026',
         content: 'El máximo referente del MMA ecuatoriano, Marlon "Chito" Vera, tiene fecha de retorno. El próximo 28 de febrero de 2026, Vera se enfrentará al emergente mexicano David Martínez en el UFC Fight Night que se llevará a cabo en la Arena CDMX. Tras un 2025 de aprendizaje, el manabita busca consolidar su posición en el top 10 y enfilarse nuevamente hacia una oportunidad por el título. Martínez, conocido como "Black Spartan", llega con una racha de victorias que promete un choque de estilos explosivo en la altura de la capital mexicana.',
