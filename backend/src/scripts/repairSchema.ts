@@ -8,6 +8,7 @@ import logger from '../config/logger';
  */
 export const repairSchema = async () => {
     try {
+        console.log('🔧 [Repair] Running emergency schema repair...');
         logger.info('🔧 Running emergency schema repair...');
 
         const queries = [
@@ -34,14 +35,36 @@ export const repairSchema = async () => {
 
         for (const sql of queries) {
             try {
+                process.stdout.write(`[Repair] Executing: ${sql.substring(0, 50)}... `);
                 await query(sql);
+                console.log('✅');
             } catch (err: any) {
-                // Ignore "already exists" or "not found" related to constraints for speed
+                console.log(`⚠️ (Skipped: ${err.message.substring(0, 50)})`);
                 logger.debug(`Schema repair step skipped: ${err.message}`);
             }
         }
+
+        // Final verification check
+        try {
+            const check = await query(`
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name = 'live_streams' 
+                AND column_name = 'cloudflare_stream_id'
+            `);
+            if (check.rowCount > 0) {
+                console.log('✅ [Repair] VERIFIED: cloudflare_stream_id column exists.');
+            } else {
+                console.warn('⚠️ [Repair] WARNING: cloudflare_stream_id column still missing!');
+            }
+        } catch (vErr) {
+            console.error('[Repair] Verification failed:', vErr);
+        }
+
+        console.log('✅ [Repair] Emergency schema repair completed successfully.');
         logger.info('✅ Emergency schema repair completed successfully.');
     } catch (error) {
+        console.error('❌ [Repair] Emergency schema repair failed:', error);
         logger.error('❌ Emergency schema repair failed:', error);
     }
 };
