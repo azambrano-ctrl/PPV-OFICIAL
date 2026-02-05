@@ -145,7 +145,7 @@ app.use('/api/promoters', promoterRoutes);
 app.use('/api/public-stats', publicStatsRoutes);
 
 // Socket.io authentication middleware
-io.use((socket, next) => {
+io.use(async (socket, next) => {
     const token = socket.handshake.auth.token;
 
     if (!token) {
@@ -154,6 +154,15 @@ io.use((socket, next) => {
 
     try {
         const decoded = verifyAccessToken(token);
+
+        // Session Control for Chat
+        const userResult = await query('SELECT current_session_id FROM users WHERE id = $1', [decoded.userId]);
+        const user = userResult.rows[0];
+
+        if (!user || user.current_session_id !== decoded.sessionId) {
+            return next(new Error('SESSION_CONFLICT'));
+        }
+
         socket.data.user = decoded;
         next();
     } catch (error) {

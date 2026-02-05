@@ -142,23 +142,34 @@ router.get(
                 console.log('[Token Existente] Cloudflare detectado.');
             }
 
-            console.log(`[Stream Token] Event: ${event.title}, Stream URL: ${streamUrl}, isMp4: ${isMp4}`);
+            // Verify if the token belongs to the CURRENT session
+            try {
+                const decoded = verifyStreamToken(existingToken.token);
+                if (decoded.sessionId !== authReq.user!.sessionId) {
+                    console.warn(`[Streaming] Valid token found but wrong session. Generating new one.`);
+                    // Fallthrough to generate new token
+                } else {
+                    console.log(`[Stream Token] Event: ${event.title}, Stream URL: ${streamUrl}, isMp4: ${isMp4}`);
 
-            res.json({
-                success: true,
-                data: {
-                    token: existingToken.token,
-                    expiresAt: existingToken.expires_at,
-                    streamUrl,
-                    isMp4,
-                },
-            });
-            return;
+                    res.json({
+                        success: true,
+                        data: {
+                            token: existingToken.token,
+                            expiresAt: existingToken.expires_at,
+                            streamUrl,
+                            isMp4,
+                        },
+                    });
+                    return;
+                }
+            } catch (tokenErr) {
+                // Token verification failed or session mismatch, fall through to create new one
+            }
         }
 
-        // Generate new stream token
-        const token = generateStreamToken(userId, eventId);
-        const expiresAt = new Date(Date.now() + 3 * 60 * 60 * 1000); // 3 hours
+        // Generate new stream token linked to session
+        const token = generateStreamToken(userId, eventId, authReq.user!.sessionId!);
+        const expiresAt = new Date(Date.now() + 6 * 60 * 60 * 1000); // 6 hours
 
         // Save token to database
         await query(
@@ -278,8 +289,8 @@ router.get(
         if (tokenResult.rows.length > 0) {
             token = tokenResult.rows[0].token;
         } else {
-            token = generateStreamToken(userId, eventId);
-            const expiresAt = new Date(Date.now() + 3 * 60 * 60 * 1000);
+            token = generateStreamToken(userId, eventId, authReq.user!.sessionId!);
+            const expiresAt = new Date(Date.now() + 6 * 60 * 60 * 1000); // 6 hours
 
             await query(
                 `INSERT INTO stream_tokens (user_id, event_id, token, expires_at)
@@ -387,6 +398,16 @@ router.get(
                 res.status(403).json({
                     success: false,
                     message: 'Invalid token for this event',
+                });
+                return;
+            }
+
+            // Verify session in proxy too
+            const userRes = await query('SELECT current_session_id FROM users WHERE id = $1', [decoded.userId]);
+            if (userRes.rows.length === 0 || userRes.rows[0].current_session_id !== decoded.sessionId) {
+                res.status(401).json({
+                    success: false,
+                    message: 'Sesión expirada o iniciada en otro dispositivo',
                 });
                 return;
             }

@@ -225,25 +225,30 @@ export const requireAdmin = (
  */
 export const generateStreamToken = (
     userId: string,
-    eventId: string
+    eventId: string,
+    sessionId: string
 ): string => {
     return jwt.sign(
-        { userId, eventId, type: 'stream' },
+        { userId, eventId, sessionId, type: 'stream' },
         JWT_SECRET,
-        { expiresIn: '3h' }
+        { expiresIn: '6h' } // Increased to 6h for long events
     ) as string;
 };
 
 /**
  * Verify stream token
  */
-export const verifyStreamToken = (token: string): { userId: string; eventId: string } => {
+export const verifyStreamToken = (token: string): { userId: string; eventId: string; sessionId: string } => {
     try {
         const decoded = jwt.verify(token, JWT_SECRET) as any;
         if (decoded.type !== 'stream') {
             throw new Error('Invalid token type');
         }
-        return { userId: decoded.userId, eventId: decoded.eventId };
+        return {
+            userId: decoded.userId,
+            eventId: decoded.eventId,
+            sessionId: decoded.sessionId
+        };
     } catch (error) {
         throw new Error('Invalid or expired stream token');
     }
