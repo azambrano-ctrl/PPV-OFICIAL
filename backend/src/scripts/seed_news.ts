@@ -11,7 +11,7 @@ const newsItems = [
         category: 'UFC',
         status: 'published',
         is_featured: true,
-        thumbnail_url: 'https://images.unsplash.com/photo-1552072092-7f9b8d63efcb?q=80&w=2070&auto=format&fit=crop'
+        thumbnail_url: 'https://dmxg5wxfqgb4u.cloudfront.net/styles/background_image_xl/s3/2024-03/030924-UFC-299-Chito-Vera-Hero.jpg?itok=3v_9V_eJ'
     },
     {
         title: 'Michael Morales alcanza el Top 3 mundial: El ascenso imparable del guerrero de Pasaje',
@@ -21,7 +21,7 @@ const newsItems = [
         category: 'UFC',
         status: 'published',
         is_featured: true,
-        thumbnail_url: 'https://images.unsplash.com/photo-1599058917232-d750c18510e9?q=80&w=2070&auto=format&fit=crop'
+        thumbnail_url: 'https://dmxg5wxfqgb4u.cloudfront.net/styles/background_image_xl/s3/2024-08/100424-UFC-307-Morales-Hero.jpg?itok=yTzRzV9_'
     },
     {
         title: 'MMA en Ecuador: TFL se consolida como el semillero oficial para la UFC',
@@ -31,7 +31,7 @@ const newsItems = [
         category: 'TFL',
         status: 'published',
         is_featured: false,
-        thumbnail_url: 'https://images.unsplash.com/photo-1544117518-2b44c8ad2183?q=80&w=1965&auto=format&fit=crop'
+        thumbnail_url: 'https://tfl-latam.com/wp-content/uploads/2023/07/TFL-1.jpg'
     },
     {
         title: 'Análisis UFC 325: Los resultados que cambiaron el panorama divisionario',
@@ -81,7 +81,7 @@ const newsItems = [
         category: 'TFL',
         status: 'published',
         is_featured: true,
-        thumbnail_url: 'https://images.unsplash.com/photo-1509562761614-256795f955d1?q=80&w=1974&auto=format&fit=crop'
+        thumbnail_url: 'https://tfl-latam.com/wp-content/uploads/2023/07/TFL-2.jpg'
     },
     {
         title: 'La Historia de Michael Morales: De Pasaje a la Cima del Mundo',
@@ -141,7 +141,7 @@ const newsItems = [
         category: 'UFC',
         status: 'published',
         is_featured: false,
-        thumbnail_url: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=2072&auto=format&fit=crop'
+        thumbnail_url: 'https://dmxg5wxfqgb4u.cloudfront.net/styles/background_image_xl/s3/2024-03/030924-UFC-299-Vera-vs-O-Malley-Hero.jpg?itok=5z_z_z'
     },
     {
         title: 'Resultados TFL Open: Nuevos talentos emergen en la Sierra Norte',
