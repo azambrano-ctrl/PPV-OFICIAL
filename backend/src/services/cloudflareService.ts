@@ -73,7 +73,7 @@ export const CloudflareService = {
     async getLiveInput(uid: string) {
         try {
             const cfClient = getCfClient();
-            const response = await cfClient.get(`/live_inputs/${uid}`);
+            const response = await cfClient.get(`live_inputs/${uid}`);
             return response.data.result;
         } catch (error: any) {
             logger.error('Error retrieving Cloudflare live input:', error);
@@ -87,7 +87,7 @@ export const CloudflareService = {
     async deleteLiveInput(uid: string) {
         try {
             const cfClient = getCfClient();
-            await cfClient.delete(`/live_inputs/${uid}`);
+            await cfClient.delete(`live_inputs/${uid}`);
             logger.info('Cloudflare live input deleted', { uid });
         } catch (error: any) {
             logger.error('Error deleting Cloudflare live input:', error);

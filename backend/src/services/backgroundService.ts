@@ -1,7 +1,7 @@
 import { query } from '../config/database';
 import logger from '../config/logger';
 import { updateEventStatus } from './eventService';
-import { cloudflareService } from './cloudflareService';
+import { CloudflareService } from './cloudflareService';
 import { bunnyService } from './bunnyService';
 import { muxService } from './muxService';
 
@@ -70,7 +70,7 @@ async function handleLiveToReprise() {
             // Check if stream is disconnected from providers
             try {
                 if (event.cloudflare_stream_id) {
-                    const cfInput = await cloudflareService.getLiveInput(event.cloudflare_stream_id);
+                    const cfInput = await CloudflareService.getLiveInput(event.cloudflare_stream_id);
                     // Cloudflare status: 'connected' or 'disconnected'
                     if (cfInput.status === 'disconnected') {
                         // Wait for a small buffer (recorded in DB or just check duration)

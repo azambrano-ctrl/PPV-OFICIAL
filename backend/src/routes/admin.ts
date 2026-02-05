@@ -4,7 +4,7 @@ import { asyncHandler } from '../middleware/errorHandler';
 import { authenticate, requireAdmin, AuthRequest } from '../middleware/auth';
 import pool from '../config/database';
 import { bunnyService } from '../services/bunnyService';
-import { cloudflareService } from '../services/cloudflareService';
+import { CloudflareService } from '../services/cloudflareService';
 import { getEventById } from '../services/eventService';
 
 const router = Router();
@@ -258,8 +258,8 @@ router.post(
                 return;
             }
 
-            console.log('[Admin] Calling cloudflareService for event:', event.title);
-            const streamData = await cloudflareService.createLiveInput(event.title);
+            console.log('[Admin] Calling CloudflareService for event:', event.title);
+            const streamData = await CloudflareService.createLiveInput(event.title);
             console.log('[Admin] Cloudflare stream created:', streamData.cloudflareStreamId);
 
             console.log('[Admin] Inserting into live_streams table...');
@@ -369,7 +369,7 @@ router.get(
         const stream = result.rows[0];
         try {
             if (stream.cloudflare_stream_id) {
-                const cfInput = await cloudflareService.getLiveInput(stream.cloudflare_stream_id);
+                const cfInput = await CloudflareService.getLiveInput(stream.cloudflare_stream_id);
                 // Cloudflare status from live_inputs response
                 stream.status = cfInput.status === 'connected' ? 'active' : 'idle';
             } else if (stream.bunny_live_stream_id) {
@@ -417,7 +417,7 @@ router.delete(
         // Delete from Provider
         if (stream.cloudflare_stream_id) {
             try {
-                await cloudflareService.deleteLiveInput(stream.cloudflare_stream_id);
+                await CloudflareService.deleteLiveInput(stream.cloudflare_stream_id);
             } catch (e) {
                 console.warn('Cloudflare delete failed', e);
             }
