@@ -11,8 +11,9 @@ import { formatDate, formatCurrency, getEventStatusColor, getEventStatusText, ge
 import { useAuthStore } from '@/lib/store';
 import { useLanguage } from '@/components/providers/LanguageProvider';
 import Footer from '@/components/Footer';
-
+import Navbar from '@/components/ui/Navbar';
 import EventCard from '@/components/events/EventCard';
+import { newsAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import AuthenticatedHome from '@/components/home/AuthenticatedHome';
 import HeroBackground from '@/components/home/HeroBackground';
@@ -44,6 +45,7 @@ export default function HomePage() {
     const [homepageBackground, setHomepageBackground] = useState<string | null>(null);
     const [homepageVideo, setHomepageVideo] = useState<string | null>(null);
     const [homepageSlider, setHomepageSlider] = useState<string[]>([]);
+    const [recentNews, setRecentNews] = useState<any[]>([]);
 
     useEffect(() => {
         loadEvents();
@@ -51,10 +53,11 @@ export default function HomePage() {
 
     const loadEvents = async () => {
         try {
-            const [featuredRes, allEventsRes, settingsRes] = await Promise.all([
+            const [featuredRes, allEventsRes, settingsRes, newsResData] = await Promise.all([
                 eventsAPI.getAll({ featured: true }),
                 eventsAPI.getAll(), // Fetch all to include live + upcoming
                 settingsAPI.getSettings(),
+                newsAPI.getAll({ limit: 3, status: 'published' })
             ]);
 
             setFeaturedEvents(featuredRes.data.data.slice(0, 1));
@@ -85,6 +88,11 @@ export default function HomePage() {
                 setHomepageBackground(settingsData.homepage_background || null);
                 setHomepageVideo(settingsData.homepage_video || null);
                 setHomepageSlider(settingsData.homepage_slider || []);
+            }
+
+            const newsRes = newsResData;
+            if (newsRes && newsRes.data) {
+                setRecentNews(newsRes.data.data);
             }
         } catch (error) {
             console.error('Error loading events:', error);
@@ -266,6 +274,69 @@ export default function HomePage() {
                             </Link>
                         </div>
 
+                    </div>
+                </section>
+            )}
+
+            {/* Recent News Section - UFC Style */}
+            {recentNews.length > 0 && (
+                <section className="py-20 bg-zinc-950 border-t border-zinc-900">
+                    <div className="container-custom">
+                        <div className="flex justify-between items-end mb-12">
+                            <div>
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-1 h-8 bg-red-600" />
+                                    <h2 className="font-display text-sm font-bold uppercase tracking-widest text-gray-500">
+                                        ÚLTIMAS NOTICIAS
+                                    </h2>
+                                </div>
+                                <h3 className="font-display text-4xl md:text-5xl font-black text-white uppercase">
+                                    MMA ECUADOR & MUNDO
+                                </h3>
+                            </div>
+                            <Link
+                                href="/noticias"
+                                className="hidden md:flex items-center gap-2 text-red-500 hover:text-red-400 transition-colors font-bold uppercase text-sm tracking-wider"
+                            >
+                                VER TODAS LAS NOTICIAS
+                                <ArrowRight className="w-5 h-5" />
+                            </Link>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {recentNews.map((post) => (
+                                <Link
+                                    key={post.id}
+                                    href={`/noticias/${post.slug}`}
+                                    className="group flex flex-col bg-black border border-zinc-900 rounded-xl overflow-hidden hover:border-red-600/50 transition-all shadow-xl"
+                                >
+                                    <div className="relative h-48 overflow-hidden">
+                                        <Image
+                                            src={getImageUrl(post.thumbnail_url || '')}
+                                            alt={post.title}
+                                            fill
+                                            className="object-cover group-hover:scale-110 transition-transform duration-500"
+                                        />
+                                        <div className="absolute top-4 left-4">
+                                            <span className="bg-red-600 text-white px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+                                                {post.category}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="p-6">
+                                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-3 block">
+                                            {formatDate(post.created_at)}
+                                        </span>
+                                        <h4 className="text-lg font-bold mb-3 uppercase leading-tight group-hover:text-red-500 transition-colors line-clamp-2">
+                                            {post.title}
+                                        </h4>
+                                        <div className="flex items-center gap-2 text-white font-black uppercase text-[10px] tracking-widest">
+                                            Leer mas <ArrowRight className="w-4 h-4 text-red-600" />
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
                     </div>
                 </section>
             )}

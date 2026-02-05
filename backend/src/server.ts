@@ -20,6 +20,7 @@ import newsletterRoutes from './routes/newsletter';
 import promoterRoutes from './routes/promoters';
 import publicStatsRoutes from './routes/public-stats';
 import notificationRoutes from './routes/notifications';
+import newsRoutes from './routes/newsRoutes';
 import { query } from './config/database';
 import { verifyAccessToken } from './middleware/auth';
 import { userHasAccessToEvent } from './services/eventService';
@@ -138,6 +139,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/streaming', streamingRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/news', newsRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/cleanup', cleanupRoutes); // Temporary cleanup route
 app.use('/api/newsletter', newsletterRoutes);

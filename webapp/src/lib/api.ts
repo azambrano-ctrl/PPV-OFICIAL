@@ -275,6 +275,23 @@ export const notificationsAPI = {
         api.patch('/notifications/read-all'),
 };
 
+export const newsAPI = {
+    getAll: (params?: { status?: string; category?: string; featured?: boolean; limit?: number; offset?: number }) =>
+        api.get('/news', { params }),
+
+    getBySlug: (slug: string) =>
+        api.get(`/news/${slug}`),
+
+    create: (data: any) =>
+        api.post('/news', data),
+
+    update: (id: string, data: any) =>
+        api.put(`/news/${id}`, data),
+
+    delete: (id: string) =>
+        api.delete(`/news/${id}`),
+};
+
 // Error handler helper
 export const handleAPIError = (error: any): string => {
     if (axios.isAxiosError(error)) {

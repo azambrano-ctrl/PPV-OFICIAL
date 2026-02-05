@@ -33,6 +33,7 @@ export default function Navbar() {
         { name: t('nav.home'), href: '/' },
         { name: t('nav.events'), href: '/events' },
         { name: t('nav.promoters'), href: '/promoters' },
+        { name: t('nav.news'), href: '/noticias' },
         { name: t('nav.about'), href: '/about' },
     ];
 
