@@ -13,7 +13,7 @@ export default function ContactPage() {
                     <div className="card p-8 flex flex-col items-center">
                         <Mail className="w-12 h-12 text-primary-500 mb-4" />
                         <h3 className="text-lg font-semibold mb-2">Email</h3>
-                        <p className="text-dark-400">soporte@troncal.net</p>
+                        <p className="text-dark-400">soporte@arenafightpass.com</p>
                     </div>
                     <div className="card p-8 flex flex-col items-center">
                         <MessageSquare className="w-12 h-12 text-primary-500 mb-4" />
