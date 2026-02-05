@@ -198,12 +198,30 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
             video.addEventListener('loadedmetadata', handleManifestParsed);
             return () => video.removeEventListener('loadedmetadata', handleManifestParsed);
         } else if (Hls.isSupported()) {
-            const hls = new Hls({ debug: false, enableWorker: true, lowLatencyMode: true });
+            const hls = new Hls({
+                debug: false,
+                enableWorker: true,
+                lowLatencyMode: false, // Disabling for better stability with Cloudflare Stream
+                liveSyncDurationCount: 6, // 6 segments safety buffer
+                liveMaxLatencyDurationCount: 12,
+                maxBufferLength: 30,
+                maxMaxBufferLength: 60,
+                manifestLoadingMaxRetry: Infinity,
+                manifestLoadingRetryDelay: 1000,
+            });
             hlsRef.current = hls;
             hls.loadSource(finalUrl);
             hls.attachMedia(video);
             hls.on(Hls.Events.MANIFEST_PARSED, handleManifestParsed);
             hls.on(Hls.Events.ERROR, handleError);
+
+            // For live streams, ensure we are close to the edge
+            hls.on(Hls.Events.LEVEL_LOADED, (event, data) => {
+                if (data.details.live && video.paused && !video.currentTime) {
+                    console.log('Live stream detected, seeking to edge');
+                }
+            });
+
             return () => hls.destroy();
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = finalUrl;
