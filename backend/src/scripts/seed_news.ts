@@ -11,7 +11,7 @@ const newsItems = [
         category: 'Nacional',
         status: 'published',
         is_featured: true,
-        thumbnail_url: '/images/news/nacional_action.png'
+        thumbnail_url: 'https://images.unsplash.com/photo-1595078475328-1ab05d0a6a0e?q=80&w=2000&auto=format&fit=crop'
     },
     {
         title: 'Chito Vera regresa al octágono: Duelo confirmado contra David Martínez en CDMX',
@@ -21,7 +21,7 @@ const newsItems = [
         category: 'Nacional',
         status: 'published',
         is_featured: true,
-        thumbnail_url: '/images/news/chito_vera.png'
+        thumbnail_url: 'https://images.unsplash.com/photo-1552072805-2a9039d00e57?q=80&w=2000&auto=format&fit=crop'
     },
     {
         title: 'Michael Morales alcanza el Top 3 mundial: El ascenso imparable del guerrero de Pasaje',
@@ -31,7 +31,7 @@ const newsItems = [
         category: 'Nacional',
         status: 'published',
         is_featured: true,
-        thumbnail_url: 'https://images.unsplash.com/photo-1594381898411-846e7d193883?q=80&w=2000&auto=format&fit=crop'
+        thumbnail_url: 'https://images.unsplash.com/photo-1590283423859-3f862849c177?q=80&w=2000&auto=format&fit=crop'
     },
     {
         title: 'MMA en Ecuador: Arena Fight Pass se consolida como la plataforma líder para el combate',
@@ -41,7 +41,7 @@ const newsItems = [
         category: 'Nacional',
         status: 'published',
         is_featured: false,
-        thumbnail_url: 'https://cdn.millions.co/media-post/jorge-yepez-mma-image-1723626197406-0.png'
+        thumbnail_url: 'https://images.unsplash.com/photo-1510673398445-94f476ef2cbc?q=80&w=2000&auto=format&fit=crop'
     },
     {
         title: 'Análisis UFC 325: Los resultados que cambiaron el panorama divisionario',
@@ -51,7 +51,7 @@ const newsItems = [
         category: 'Resultados',
         status: 'published',
         is_featured: false,
-        thumbnail_url: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=2000&auto=format&fit=crop'
+        thumbnail_url: 'https://images.unsplash.com/photo-1511886929837-3e117449bc94?q=80&w=2000&auto=format&fit=crop'
     },
     {
         title: 'Arena Fight Pass: Confirmada la Noche de Campeones con Transmisión Global',
@@ -61,7 +61,7 @@ const newsItems = [
         category: 'Arena FP',
         status: 'published',
         is_featured: true,
-        thumbnail_url: 'https://cdn.millions.co/video-edit-request/247e1e14-d38d-4ed8-b970-b5fa3f93d3c0-0.jpg'
+        thumbnail_url: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=2000&auto=format&fit=crop'
     },
     {
         title: 'UFC México Preview: ¿Qué esperar del choque Vera vs Martínez?',
@@ -71,7 +71,7 @@ const newsItems = [
         category: 'Nacional',
         status: 'published',
         is_featured: false,
-        thumbnail_url: '/images/news/chito_vera.png'
+        thumbnail_url: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=2000&auto=format&fit=crop'
     },
     {
         title: 'Resultados Arena FP Open: Nuevos talentos emergen en la Sierra Norte',
@@ -81,7 +81,7 @@ const newsItems = [
         category: 'Nacional',
         status: 'published',
         is_featured: false,
-        thumbnail_url: '/images/news/nacional_action.png'
+        thumbnail_url: 'https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?q=80&w=2000&auto=format&fit=crop'
     }
 ];
 

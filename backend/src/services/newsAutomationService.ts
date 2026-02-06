@@ -24,6 +24,7 @@ const FEEDS = [
 ];
 
 const ADMIN_ID = 'e5a029b5-6f6a-4d2f-9f5f-8d1219e49e6e';
+const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1595078475328-1ab05d0a6a0e?q=80&w=2000';
 
 /**
  * Fallback to extract image from OG tags if missing in RSS
@@ -127,7 +128,7 @@ export class NewsAutomationService {
                     }
 
                     if (!thumbnail_url) {
-                        thumbnail_url = 'https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?q=80&w=2000&auto=format&fit=crop';
+                        thumbnail_url = DEFAULT_IMAGE;
                     }
 
                     // Process text content
