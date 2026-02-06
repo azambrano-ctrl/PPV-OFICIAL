@@ -144,6 +144,9 @@ export class NewsAutomationService {
                         content = item.contentSnippet;
                     }
 
+                    // Smart Categorization
+                    const category = this.detectCategory(title, content);
+
                     const slug = this.generateSlug(title);
 
                     const result = await query(
@@ -159,7 +162,7 @@ export class NewsAutomationService {
                             slug,
                             content,
                             excerpt,
-                            'UFC',
+                            category,
                             thumbnail_url,
                             ADMIN_ID,
                             'published',
@@ -184,6 +187,20 @@ export class NewsAutomationService {
             logger.error(`[NewsAutomation] Error processing feed ${feedConfig.name}: ${error.message}`);
         }
         return addedCount;
+    }
+
+    private static detectCategory(title: string, content: string): string {
+        const localKeywords = [
+            'ecuador', 'ecuatoriano', 'ecuatoriana',
+            'tfl', 'troncal fight league', 'la troncal',
+            'chito vera', 'michael morales', 'marlon vera'
+        ];
+
+        const combinedText = (title + ' ' + content).toLowerCase();
+
+        const isLocal = localKeywords.some(keyword => combinedText.includes(keyword));
+
+        return isLocal ? 'Nacional' : 'UFC';
     }
 
     private static generateSlug(title: string): string {
