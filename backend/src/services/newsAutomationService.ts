@@ -124,7 +124,7 @@ export const NewsAutomationService = {
                             slug,
                             content,
                             excerpt,
-                            'Internacional',
+                            'UFC',
                             thumbnail_url,
                             ADMIN_ID,
                             'published',

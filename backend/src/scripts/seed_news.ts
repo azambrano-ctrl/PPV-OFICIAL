@@ -54,36 +54,6 @@ const newsItems = [
         thumbnail_url: 'https://images.unsplash.com/photo-1511886929837-3e117449bc94?q=80&w=1974&auto=format&fit=crop'
     },
     {
-        title: 'Guía de Reglas: ¿Cómo puntúan los jueces las peleas de MMA?',
-        slug: 'guia-reglas-puntuacion-mma-jueces-10-9',
-        content: 'Entender el sistema de puntuación de 10 puntos obligatorios es fundamental para cualquier fan de las MMA. Los jueces evalúan el golpeo efectivo, el grappling dominante, la agresividad y el control del octágono. Un asalto 10-9 es lo estándar para una victoria clara, mientras que un 10-8 denota una dominación total. Esta guía técnica explica por qué a veces las decisiones de los jueces pueden ser polémicas y qué criterios deben prevalecer según las últimas actualizaciones de las reglas unificadas.',
-        excerpt: 'Aprende cómo funciona el arbitraje en las MMA para disfrutar mejor de los eventos en Arena Fight Pass y la UFC.',
-        category: 'Educación',
-        status: 'published',
-        is_featured: false,
-        thumbnail_url: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=2000&auto=format&fit=crop'
-    },
-    {
-        title: 'Gimnasios Recomendados: Dónde empezar a entrenar MMA en Guayaquil y Quito',
-        slug: 'mejores-gimnasios-mma-ecuador-guayaquil-quito',
-        content: 'El auge de Chito Vera y Michael Morales ha despertado el interés de miles de jóvenes ecuatorianos por las artes marciales. Desde academias de renombre en Guayaquil especializadas en Muay Thai y BJJ, hasta centros de alto rendimiento en Quito, Ecuador cuenta con infraestructuras de primer nivel. Es importante buscar instructores certificados y ambientes que prioricen la seguridad del alumno. Aquí te presentamos una lista de los Dojos donde se están forjando los futuros campeones del mañana.',
-        excerpt: 'Si buscas dar tus primeros pasos en el octágono, te mostramos los mejores lugares para entrenar MMA profesionalmente en Ecuador.',
-        category: 'Local',
-        status: 'published',
-        is_featured: false,
-        thumbnail_url: 'https://cdn.millions.co/video-edit-request/45145670-9922-4951-a57a-4ed1b55eb7cc-0.jpg'
-    },
-    {
-        title: 'Nutrición para Peleadores: El secreto del corte de peso seguro',
-        slug: 'nutricion-mma-corte-peso-saludable-arena-fp',
-        content: 'El peso es el primer rival de cualquier peleador. En Arena Fight Pass promovemos la salud competitiva y el deporte responsable. Una dieta rica en macro y micronutrientes, junto con una hidratación estratégica, permite que el atleta llegue al pesaje oficial sin comprometer su salud ni su rendimiento en la jaula. En este artículo, expertos en nutrición deportiva comparten consejos sobre qué comer durante el campamento de entrenamiento y cómo recuperar energías después de la báscula.',
-        excerpt: 'Descubre cómo los profesionales manejan su alimentación para dar el peso exacto y mantener la potencia máxima.',
-        category: 'Salud',
-        status: 'published',
-        is_featured: false,
-        thumbnail_url: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?q=80&w=2071&auto=format&fit=crop'
-    },
-    {
         title: 'Arena Fight Pass: Confirmada la Noche de Campeones con Transmisión Global',
         slug: 'arena-fight-pass-noche-campeones-marzo-2026',
         content: 'La espera terminó. Arena Fight Pass anuncia oficialmente su evento estelar para el mes de marzo. La cartelera contará con peleas de alto nivel y el regreso de veteranos muy queridos por la afición. Los boletos y el acceso PPV estarán disponibles próximamente a través de nuestra plataforma oficial. Prepárate para una noche de adrenalina pura donde el honor y el cinturón estarán en juego, todo desde la comodidad de tu hogar.',
@@ -92,56 +62,6 @@ const newsItems = [
         status: 'published',
         is_featured: true,
         thumbnail_url: 'https://cdn.millions.co/video-edit-request/247e1e14-d38d-4ed8-b970-b5fa3f93d3c0-0.jpg'
-    },
-    {
-        title: 'La Historia de Michael Morales: De Pasaje a la Cima del Mundo',
-        slug: 'biografia-michael-morales-ecuador-ufc',
-        content: 'Michael Morales no llegó a la UFC por casualidad. Su historia nace en los cantones de El Oro, donde bajo la guía de sus padres (ambos con trayectoria en deportes de combate) comenzó a forjar su disciplina. Desde sus peleas en eventos regionales en Ecuador hasta su debut soñado en el Dana White\'s Contender Series, este artículo recorre el sacrificio y la humildad que lo han llevado a estar hoy entre los cinco mejores del planeta. Un ejemplo de perseverancia para toda la juventud ecuatoriana.',
-        excerpt: 'Un viaje inspirador por la vida de Michael Morales, el peleador invicto que está redefiniendo el MMA latinoamericano.',
-        category: 'Perfiles',
-        status: 'published',
-        is_featured: false,
-        thumbnail_url: 'https://images.unsplash.com/photo-1517438476312-10d79c67750d?q=80&w=2034&auto=format&fit=crop'
-    },
-    {
-        title: 'MMA Femenil en Ascenso: Las guerreras que dominan la jaula en Ecuador',
-        slug: 'mma-femenino-ecuador-arena-fp-estrellas-ascendentes',
-        content: 'El talento femenino en las artes marciales mixtas de Ecuador está viviendo su mejor momento. Peleadoras técnicas con un corazón inmenso están protagonizando las carteleras de primer nivel y ganando espacios en ligas internacionales. Analizamos el crecimiento de las divisiones de peso paja y mosca, y cómo el apoyo de los gimnasios locales ha permitido que más mujeres vean en el MMA un camino profesional viable y respetado.',
-        excerpt: 'El poder femenino llega con fuerza al octágono: conoce a las peleadoras que están rompiendo esquemas en el país.',
-        category: 'Local',
-        status: 'published',
-        is_featured: false,
-        thumbnail_url: 'https://cdn.millions.co/video-edit-request/15370095-c092-4344-9cd5-e233fa866c6a-0.jpg'
-    },
-    {
-        title: 'Jason Parillo y el Team Vera: El equipo detrás del éxito de "Chito"',
-        slug: 'jason-parillo-team-vera-entrenamiento-chito',
-        content: 'Nadie llega a la cima solo. Marlon Vera ha encontrado en el RVCA Training Center de California y en su entrenador Jason Parillo, la fórmula perfecta para pulir su boxeo y su estrategia. Este reportaje detalla cómo trascurre un día de campamento de Chito, la importancia de su equipo de recuperación y cómo la mentalidad de campeón se cultiva en cada sesión de sparring. No es solo pelear, es ajedrez humano al más alto nivel.',
-        excerpt: 'Entramos al campamento de entrenamiento de Marlon Vera para descubrir cómo se prepara el máximo exponente del MMA nacional.',
-        category: 'Perfiles',
-        status: 'published',
-        is_featured: false,
-        thumbnail_url: 'https://cdn.millions.co/video-edit-request/2e6490fe-378c-43d5-a485-48231a5683a8-0.jpg'
-    },
-    {
-        title: 'Previas del Mes: Combates imperdibles en el calendario 2026',
-        slug: 'previas-combates-mma-arena-fp-marzo-abril-2026',
-        content: 'El 2026 arrancó con todo y los próximos meses prometen no dar respiro. En Arena Fight Pass, estamos monitoreando de cerca el choque de pesos pesados que podría definir al próximo contendiente número uno. Además, la división bantamweight está al rojo vivo con la llegada de talentos internacionales. Mantente conectado a nuestra sección de noticias para no perderte ni un solo detalle de los careos y pesajes oficiales que publicamos semanalmente.',
-        excerpt: 'Prepara tu agenda: estos son los enfrentamientos que todo fan de las MMA en Ecuador debe seguir de cerca.',
-        category: 'Resultados',
-        status: 'published',
-        is_featured: false,
-        thumbnail_url: 'https://cdn.millions.co/video-edit-request/896dab88-56e7-4a14-bb70-43e4e0cb9124-0.jpg'
-    },
-    {
-        title: 'Tutorial: Cómo comprar y ver eventos en Arena Fight Pass',
-        slug: 'tutorial-compra-acceso-arena-fight-pass-eventos-envivo',
-        content: 'Disfrutar de los mejores eventos de MMA es más fácil que nunca. En nuestra plataforma, puedes registrarte en segundos y adquirir tu acceso digital mediante Stripe o PayPal. Una vez realizada la compra, tendrás acceso inmediato al streaming en alta definición, chat en vivo y reacciones animadas. Este tutorial paso a paso te guía desde el registro hasta la visualización en tu Smart TV o dispositivo móvil, asegurando que no te pierdas ni un golpe.',
-        excerpt: 'Guía rápida para usuarios nuevos: accede a la mejor experiencia del streaming de combate en un par de clics.',
-        category: 'Educación',
-        status: 'published',
-        is_featured: false,
-        thumbnail_url: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=2070&auto=format&fit=crop'
     },
     {
         title: 'UFC México Preview: ¿Qué esperar del choque Vera vs Martínez?',
