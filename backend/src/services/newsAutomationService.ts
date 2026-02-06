@@ -1,8 +1,17 @@
 import Parser from 'rss-parser';
 import { query } from '../config/database';
 import logger from '../config/logger';
+import axios from 'axios';
 
 const parser = new Parser({
+    customFields: {
+        item: [
+            ['content:encoded', 'contentEncoded'],
+            ['media:content', 'mediaContent'],
+            ['media:thumbnail', 'mediaThumbnail'],
+            ['enclosure', 'enclosure'],
+        ],
+    },
     headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
     }
@@ -16,101 +25,127 @@ const FEEDS = [
 
 const ADMIN_ID = 'e5a029b5-6f6a-4d2f-9f5f-8d1219e49e6e';
 
-export const NewsAutomationService = {
+/**
+ * Fallback to extract image from OG tags if missing in RSS
+ */
+async function fetchOGImage(url: string): Promise<string> {
+    try {
+        const response = await axios.get(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            },
+            timeout: 5000
+        });
+        const html = response.data;
+        const ogImageMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
+            html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+
+        return ogImageMatch ? ogImageMatch[1].replace(/&amp;/g, '&') : '';
+    } catch (error: any) {
+        logger.debug(`[NewsAutomation] Failed to fetch OG image for ${url}: ${error.message}`);
+        return '';
+    }
+}
+
+export class NewsAutomationService {
     /**
      * Fetch news from RSS feeds and update the database
      */
-    async updateNews() {
+    static async updateNews() {
         logger.info('🔄 Starting MMA news automation update...');
+        let totalAddedCount = 0;
 
-        // We want recent news (last 72 hours for better coverage)
-        const ninetySixHoursAgo = new Date(Date.now() - (96 * 60 * 60 * 1000));
+        try {
+            for (const feedConfig of FEEDS) {
+                try {
+                    totalAddedCount += await this.processFeed(feedConfig);
+                } catch (error: any) {
+                    logger.error(`Error fetching feed ${feedConfig.name}: ${error.message}`);
+                }
+            }
+        } catch (error: any) {
+            logger.error(`[NewsAutomation] Global error: ${error.message}`);
+        }
+
+        logger.info(`✅ MMA news update completed. Added ${totalAddedCount} new articles.`);
+        return totalAddedCount;
+    }
+
+    private static async processFeed(feedConfig: any): Promise<number> {
         let addedCount = 0;
+        try {
+            const response = await axios.get(feedConfig.url, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                },
+                timeout: 30000
+            });
+            const feed = await parser.parseString(response.data);
+            logger.info(`[NewsAutomation] Fetching feed: ${feedConfig.name} (${feed.items.length} items)`);
 
-        for (const feedConfig of FEEDS) {
-            try {
-                logger.info(`[NewsAutomation] Fetching feed: ${feedConfig.name}`);
-                const feed = await parser.parseURL(feedConfig.url);
+            // 96 hours window
+            const ninetySixHoursAgo = new Date(Date.now() - (96 * 60 * 60 * 1000));
 
-                for (const item of feed.items) {
-                    let pubDate: Date;
-                    try {
-                        pubDate = item.pubDate ? new Date(item.pubDate) : new Date();
-                        if (isNaN(pubDate.getTime())) {
-                            pubDate = new Date();
-                        }
-                    } catch (e) {
+            for (const item of feed.items) {
+                try {
+                    let pubDate = new Date(item.pubDate || item.isoDate || '');
+                    if (isNaN(pubDate.getTime())) {
                         pubDate = new Date();
                     }
-
-                    // Filter old news
                     if (pubDate < ninetySixHoursAgo) continue;
 
                     const title = item.title || 'Sin título';
                     const link = item.link || '';
-                    const rawContent = item['content:encoded'] || item.content || item.description || '';
 
-                    // Strip all HTML but try to preserve some line breaks by replacing </p> and <br> with newlines
-                    let content = rawContent
-                        .replace(/<\/p>/gi, '\n\n')
-                        .replace(/<br\s*\/?>/gi, '\n')
-                        .replace(/<[^>]*>/g, '') // Strip remaining tags
-                        .replace(/&nbsp;/g, ' ')
-                        .replace(/\n{3,}/g, '\n\n') // Max 2 newlines
-                        .trim();
+                    // Get raw content for image extraction before stripping HTML
+                    let rawContent = (item as any).contentEncoded || item.content || (item as any).description || '';
 
-                    // If it's too short, use the snippet
-                    if (content.length < 100 && item.contentSnippet) {
-                        content = item.contentSnippet;
+                    // Extract image URL from various tags
+                    let thumbnail_url = item.enclosure?.url || (item as any).mediaContent?.url || '';
+
+                    if (!thumbnail_url && rawContent) {
+                        const imgMatch = rawContent.match(/<img[^>]+src=["']([^"']+)["']/i);
+                        thumbnail_url = imgMatch ? imgMatch[1] : '';
                     }
 
-                    // Strip HTML for excerpt
-                    const excerpt = (item.contentSnippet || content.replace(/<[^>]*>/g, ''))
-                        .slice(0, 180)
-                        .trim() + '...';
+                    if (!thumbnail_url && (item as any).mediaThumbnail) {
+                        thumbnail_url = (item as any).mediaThumbnail.$.url;
+                    }
 
-                    // Generate slug from title
-                    const slug = this.generateSlug(title);
+                    // Fallback to OG Image
+                    if (!thumbnail_url && link) {
+                        logger.debug(`[NewsAutomation] Image missing for "${title}", trying OG fallback...`);
+                        thumbnail_url = await fetchOGImage(link);
+                    }
 
-                    // Extract image
-                    let thumbnail_url = '';
-                    if (item.enclosure?.url) {
-                        thumbnail_url = item.enclosure.url;
-                    } else if (item['media:content']) {
-                        // @ts-ignore
-                        thumbnail_url = item['media:content'].$.url;
-                    } else {
-                        // Improved Regex for images in content
-                        const imgMatch = rawContent.match(/<img[^>]+src=["']([^"']+)["']/i);
-                        if (imgMatch) {
-                            thumbnail_url = imgMatch[1];
+                    // Cleanup image URL
+                    if (thumbnail_url) {
+                        thumbnail_url = thumbnail_url.replace(/&#038;/g, '&').replace(/&amp;/g, '&');
+                        if (thumbnail_url.includes('pixel') || thumbnail_url.includes('scorecardresearch')) {
+                            thumbnail_url = '';
                         }
                     }
 
-                    // Specific handling for Mundo Deportivo / AS which might have images in other tags
-                    if (!thumbnail_url && item['media:thumbnail']) {
-                        // @ts-ignore
-                        thumbnail_url = item['media:thumbnail'].$.url;
-                    }
-
-                    // Filter out tiny tracking pixels
-                    if (thumbnail_url && (thumbnail_url.includes('pixel') || thumbnail_url.includes('scorecardresearch'))) {
-                        thumbnail_url = '';
-                    }
-
-                    // Unescape HTML entities in URL (common in WordPress content)
-                    if (thumbnail_url) {
-                        thumbnail_url = thumbnail_url
-                            .replace(/&#038;/g, '&')
-                            .replace(/&amp;/g, '&');
-                    }
-
-                    // Default image if none found
                     if (!thumbnail_url) {
                         thumbnail_url = 'https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?q=80&w=2000&auto=format&fit=crop';
                     }
 
-                    // Insert into DB
+                    // Process text content
+                    const excerpt = (item.contentSnippet || (item as any).description || '').substring(0, 180).trim() + '...';
+                    let content = rawContent
+                        .replace(/<\/p>/gi, '\n\n')
+                        .replace(/<br\s*\/?>/gi, '\n')
+                        .replace(/<[^>]*>/g, '')
+                        .replace(/&nbsp;/g, ' ')
+                        .replace(/\n{3,}/g, '\n\n')
+                        .trim();
+
+                    if (content.length < 100 && item.contentSnippet) {
+                        content = item.contentSnippet;
+                    }
+
+                    const slug = this.generateSlug(title);
+
                     const result = await query(
                         `INSERT INTO news_posts (
                             title, slug, content, excerpt, category, thumbnail_url, banner_url,
@@ -141,27 +176,24 @@ export const NewsAutomationService = {
                         addedCount++;
                         logger.info(`[NewsAutomation] Added new article: ${title}`);
                     }
+                } catch (itemError: any) {
+                    logger.error(`[NewsAutomation] Error processing item: ${itemError.message}`);
                 }
-            } catch (error) {
-                logger.error(`[NewsAutomation] Error processing feed ${feedConfig.name}:`, error);
             }
+        } catch (error: any) {
+            logger.error(`[NewsAutomation] Error processing feed ${feedConfig.name}: ${error.message}`);
         }
-
-        logger.info(`✅ MMA news update completedly. Added ${addedCount} new articles.`);
         return addedCount;
-    },
+    }
 
-    /**
-     * Generate a URL-friendly slug
-     */
-    generateSlug(title: string): string {
+    private static generateSlug(title: string): string {
         return title
             .toLowerCase()
             .trim()
             .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "") // Remove accents
+            .replace(/[\u0300-\u036f]/g, "")
             .replace(/[^\w\s-]/g, '')
             .replace(/[\s_-]+/g, '-')
             .replace(/^-+|-+$/g, '');
     }
-};
+}
