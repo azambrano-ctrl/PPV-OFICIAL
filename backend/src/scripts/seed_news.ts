@@ -8,7 +8,7 @@ const newsItems = [
         slug: 'tfl-calendario-2026-nueve-eventos-mma-ecuador',
         content: 'La promotora Troncal Fight League (TFL) ha sacudido el panorama del MMA nacional al anunciar su ambicioso calendario para el 2026. Con un total de nueve eventos programados a lo largo del año, la organización busca consolidar su presencia en diversas ciudades del país. Estos eventos no solo prometen careos de alto nivel, sino que también servirán como plataforma para que los guerreros locales acumulen la experiencia necesaria para el salto internacional. El primero de estos nueve encuentros se llevará a cabo a finales de febrero en La Troncal.',
         excerpt: 'TFL anuncia un calendario sin precedentes con 9 eventos confirmados para 2026, reafirmando su rol clave en el desarrollo del MMA en Ecuador.',
-        category: 'TFL',
+        category: 'Nacional',
         status: 'published',
         is_featured: true,
         thumbnail_url: 'https://cdn.millions.co/stream/83ef170d-609f-4f51-9e25-6c23ebb2e9a9-1723045236730.png'

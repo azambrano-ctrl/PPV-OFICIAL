@@ -27,7 +27,7 @@ export default function NewsPage() {
     const [loading, setLoading] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
-    const categories = ['All', 'UFC', 'TFL', 'Arena FP', 'Resultados'];
+    const categories = ['All', 'UFC', 'Nacional', 'Arena FP', 'Resultados'];
 
     useEffect(() => {
         loadPosts();
