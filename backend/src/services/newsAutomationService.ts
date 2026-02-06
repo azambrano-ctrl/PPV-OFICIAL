@@ -10,8 +10,8 @@ const parser = new Parser({
 
 const FEEDS = [
     { name: 'MMA al Día', url: 'https://mmaaldia.com/feed/' },
-    { name: 'UFC News', url: 'https://www.ufc.com/rss/news' }
-    // Add more reliable feeds here
+    { name: 'Marca MMA', url: 'https://e00-marca.uecdn.es/rss/boxeo/mma.xml' },
+    { name: 'Diario AS', url: 'https://as.com/rss/deportes/otros_deportes.xml' }
 ];
 
 const ADMIN_ID = 'e5a029b5-6f6a-4d2f-9f5f-8d1219e49e6e';
@@ -23,8 +23,8 @@ export const NewsAutomationService = {
     async updateNews() {
         logger.info('🔄 Starting MMA news automation update...');
 
-        // We only want recent news (last 48 hours for automation)
-        const fortyEightHoursAgo = new Date(Date.now() - (48 * 60 * 60 * 1000));
+        // We want recent news (last 72 hours for better coverage)
+        const ninetySixHoursAgo = new Date(Date.now() - (96 * 60 * 60 * 1000));
         let addedCount = 0;
 
         for (const feedConfig of FEEDS) {
@@ -44,12 +44,30 @@ export const NewsAutomationService = {
                     }
 
                     // Filter old news
-                    if (pubDate < fortyEightHoursAgo) continue;
+                    if (pubDate < ninetySixHoursAgo) continue;
 
                     const title = item.title || 'Sin título';
                     const link = item.link || '';
-                    const content = item['content:encoded'] || item.content || item.description || '';
-                    const excerpt = item.contentSnippet?.slice(0, 160) || '';
+                    const rawContent = item['content:encoded'] || item.content || item.description || '';
+
+                    // Strip all HTML but try to preserve some line breaks by replacing </p> and <br> with newlines
+                    let content = rawContent
+                        .replace(/<\/p>/gi, '\n\n')
+                        .replace(/<br\s*\/?>/gi, '\n')
+                        .replace(/<[^>]*>/g, '') // Strip remaining tags
+                        .replace(/&nbsp;/g, ' ')
+                        .replace(/\n{3,}/g, '\n\n') // Max 2 newlines
+                        .trim();
+
+                    // If it's too short, use the snippet
+                    if (content.length < 100 && item.contentSnippet) {
+                        content = item.contentSnippet;
+                    }
+
+                    // Strip HTML for excerpt
+                    const excerpt = (item.contentSnippet || content.replace(/<[^>]*>/g, ''))
+                        .slice(0, 180)
+                        .trim() + '...';
 
                     // Generate slug from title
                     const slug = this.generateSlug(title);
@@ -62,8 +80,29 @@ export const NewsAutomationService = {
                         // @ts-ignore
                         thumbnail_url = item['media:content'].$.url;
                     } else {
-                        const imgMatch = content.match(/<img[^>]+src="([^">]+)"/);
-                        if (imgMatch) thumbnail_url = imgMatch[1];
+                        // Improved Regex for images in content
+                        const imgMatch = rawContent.match(/<img[^>]+src=["']([^"']+)["']/i);
+                        if (imgMatch) {
+                            thumbnail_url = imgMatch[1];
+                        }
+                    }
+
+                    // Specific handling for Mundo Deportivo / AS which might have images in other tags
+                    if (!thumbnail_url && item['media:thumbnail']) {
+                        // @ts-ignore
+                        thumbnail_url = item['media:thumbnail'].$.url;
+                    }
+
+                    // Filter out tiny tracking pixels
+                    if (thumbnail_url && (thumbnail_url.includes('pixel') || thumbnail_url.includes('scorecardresearch'))) {
+                        thumbnail_url = '';
+                    }
+
+                    // Unescape HTML entities in URL (common in WordPress content)
+                    if (thumbnail_url) {
+                        thumbnail_url = thumbnail_url
+                            .replace(/&#038;/g, '&')
+                            .replace(/&amp;/g, '&');
                     }
 
                     // Default image if none found
