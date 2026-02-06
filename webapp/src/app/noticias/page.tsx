@@ -18,6 +18,8 @@ interface NewsPost {
     thumbnail_url: string;
     created_at: string;
     is_featured: boolean;
+    source_name?: string;
+    source_url?: string;
 }
 
 export default function NewsPage() {
@@ -153,15 +155,17 @@ export default function NewsPage() {
                                         </div>
                                     </div>
                                     <div className="p-6 flex flex-col flex-grow">
-                                        <div className="flex items-center gap-4 mb-4 text-gray-500 text-[10px] font-bold uppercase tracking-widest">
+                                        <div className="flex flex-wrap items-center gap-4 mb-4 text-gray-500 text-[10px] font-bold uppercase tracking-widest">
                                             <div className="flex items-center gap-1">
                                                 <Calendar className="w-3 h-3" />
                                                 {formatDate(post.created_at)}
                                             </div>
-                                            <div className="flex items-center gap-1">
-                                                <Clock className="w-3 h-3" />
-                                                5 MIN READ
-                                            </div>
+                                            {post.source_name && (
+                                                <div className="flex items-center gap-1 text-red-500">
+                                                    <Newspaper className="w-3 h-3" />
+                                                    {post.source_name}
+                                                </div>
+                                            )}
                                         </div>
                                         <h3 className="text-xl font-bold mb-4 uppercase leading-tight group-hover:text-red-500 transition-colors">
                                             {post.title}

@@ -24,6 +24,8 @@ interface NewsPost {
     view_count: number;
     meta_title: string;
     meta_description: string;
+    source_name?: string;
+    source_url?: string;
 }
 
 export default function SingleNewsPage() {
@@ -151,6 +153,30 @@ export default function SingleNewsPage() {
                             <div className="text-gray-400 text-lg leading-loose space-y-6 whitespace-pre-line">
                                 {post.content}
                             </div>
+
+                            {post.source_name && (
+                                <div className="mt-12 p-6 bg-zinc-900/30 border border-zinc-800 rounded-2xl flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center text-red-500">
+                                            <Newspaper className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Fuente de la noticia</p>
+                                            <h4 className="text-lg font-black uppercase text-white">{post.source_name}</h4>
+                                        </div>
+                                    </div>
+                                    {post.source_url && (
+                                        <a
+                                            href={post.source_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="px-6 py-2 bg-red-600 text-white font-black uppercase text-xs tracking-widest rounded-lg hover:bg-red-700 transition-colors"
+                                        >
+                                            Leer Original
+                                        </a>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         {/* Google Ads Placeholder - Bottom */}

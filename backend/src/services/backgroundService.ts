@@ -4,6 +4,7 @@ import { updateEventStatus } from './eventService';
 import { CloudflareService } from './cloudflareService';
 import { bunnyService } from './bunnyService';
 import { muxService } from './muxService';
+import { NewsAutomationService } from './newsAutomationService';
 
 /**
  * Background Service to handle automatic event status transitions
@@ -11,7 +12,7 @@ import { muxService } from './muxService';
 export const startBackgroundService = () => {
     logger.info('🚀 Starting background event monitor...');
 
-    // Run every 60 seconds
+    // Run every 60 seconds for events
     setInterval(async () => {
         try {
             await Promise.all([
@@ -22,6 +23,22 @@ export const startBackgroundService = () => {
             logger.error('[BackgroundService] Error in monitor loop:', error);
         }
     }, 60000);
+
+    // Run news update every 4 hours
+    setInterval(async () => {
+        try {
+            await NewsAutomationService.updateNews();
+        } catch (error) {
+            logger.error('[BackgroundService] Error in news automation loop:', error);
+        }
+    }, 4 * 60 * 60 * 1000);
+
+    // Run once on startup after a short delay
+    setTimeout(() => {
+        NewsAutomationService.updateNews().catch(err => {
+            logger.error('[BackgroundService] Error in initial news update:', err);
+        });
+    }, 10000);
 };
 
 /**
