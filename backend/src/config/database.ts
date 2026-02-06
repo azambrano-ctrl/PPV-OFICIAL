@@ -17,8 +17,8 @@ pool.on('connect', () => {
 });
 
 pool.on('error', (err: any) => {
-    console.error('❌ Unexpected database error:', err);
-    process.exit(-1);
+    console.error('❌ Unexpected database error on idle client:', err);
+    // Don't exit process, let the pool handle reconnection or other clients continue
 });
 
 /**

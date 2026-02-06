@@ -26,6 +26,19 @@ import { verifyAccessToken } from './middleware/auth';
 import { userHasAccessToEvent } from './services/eventService';
 import { startBackgroundService } from './services/backgroundService';
 
+// Global error handlers
+process.on('unhandledRejection', (reason, promise) => {
+    logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    // Don't exit, but log it properly
+});
+
+process.on('uncaughtException', (error) => {
+    logger.error('Uncaught Exception:', error);
+    // For uncaught exceptions, we should probably exit after a brief delay
+    // but in some cases keeping it up might be better if it's transient
+    // process.exit(1); 
+});
+
 // Load environment variables
 dotenv.config();
 
