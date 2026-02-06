@@ -11,7 +11,7 @@ const newsItems = [
         category: 'Nacional',
         status: 'published',
         is_featured: true,
-        thumbnail_url: 'https://cdn.millions.co/stream/83ef170d-609f-4f51-9e25-6c23ebb2e9a9-1723045236730.png'
+        thumbnail_url: '/images/news/nacional_action.png'
     },
     {
         title: 'Chito Vera regresa al octágono: Duelo confirmado contra David Martínez en CDMX',
@@ -21,7 +21,7 @@ const newsItems = [
         category: 'Nacional',
         status: 'published',
         is_featured: true,
-        thumbnail_url: 'https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?q=80&w=2000&auto=format&fit=crop'
+        thumbnail_url: '/images/news/chito_vera.png'
     },
     {
         title: 'Michael Morales alcanza el Top 3 mundial: El ascenso imparable del guerrero de Pasaje',
@@ -31,7 +31,7 @@ const newsItems = [
         category: 'Nacional',
         status: 'published',
         is_featured: true,
-        thumbnail_url: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=2000&auto=format&fit=crop'
+        thumbnail_url: 'https://images.unsplash.com/photo-1594381898411-846e7d193883?q=80&w=2000&auto=format&fit=crop'
     },
     {
         title: 'MMA en Ecuador: Arena Fight Pass se consolida como la plataforma líder para el combate',
@@ -51,7 +51,7 @@ const newsItems = [
         category: 'Resultados',
         status: 'published',
         is_featured: false,
-        thumbnail_url: 'https://images.unsplash.com/photo-1511886929837-3e117449bc94?q=80&w=1974&auto=format&fit=crop'
+        thumbnail_url: 'https://images.unsplash.com/photo-1590283423859-3f862849c177?q=80&w=2000&auto=format&fit=crop'
     },
     {
         title: 'Arena Fight Pass: Confirmada la Noche de Campeones con Transmisión Global',
@@ -71,7 +71,7 @@ const newsItems = [
         category: 'Nacional',
         status: 'published',
         is_featured: false,
-        thumbnail_url: 'https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?q=80&w=2000&auto=format&fit=crop'
+        thumbnail_url: '/images/news/chito_vera.png'
     },
     {
         title: 'Resultados Arena FP Open: Nuevos talentos emergen en la Sierra Norte',
@@ -81,7 +81,7 @@ const newsItems = [
         category: 'Nacional',
         status: 'published',
         is_featured: false,
-        thumbnail_url: 'https://cdn.millions.co/athlete/29a08485-fa45-45e1-8b01-8994c2e55d77-1722535665450.jpg'
+        thumbnail_url: '/images/news/nacional_action.png'
     }
 ];
 
@@ -95,7 +95,9 @@ async function seedNews() {
                     title, slug, content, excerpt, category, thumbnail_url, banner_url,
                     author_id, status, is_featured, meta_title, meta_description
                 ) VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $8, $9, $10, $11)
-                ON CONFLICT (slug) DO UPDATE SET category = EXCLUDED.category`,
+                ON CONFLICT (slug) DO UPDATE SET 
+                    category = EXCLUDED.category,
+                    thumbnail_url = EXCLUDED.thumbnail_url`,
                 [
                     post.title,
                     post.slug,
