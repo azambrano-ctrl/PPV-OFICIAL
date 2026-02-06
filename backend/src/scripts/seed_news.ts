@@ -51,7 +51,7 @@ const newsItems = [
         category: 'Resultados',
         status: 'published',
         is_featured: false,
-        thumbnail_url: 'https://images.unsplash.com/photo-1590283423859-3f862849c177?q=80&w=2000&auto=format&fit=crop'
+        thumbnail_url: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=2000&auto=format&fit=crop'
     },
     {
         title: 'Arena Fight Pass: Confirmada la Noche de Campeones con Transmisión Global',

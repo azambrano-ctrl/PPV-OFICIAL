@@ -10,8 +10,13 @@ export function getImageUrl(relativePath?: string | null): string | undefined {
     if (!relativePath) return undefined;
     if (relativePath.startsWith('http')) return relativePath;
 
-    // Ensure relative paths start with / to avoid relative resolution from current URL
+    // Ensure relative paths start with /
     const cleanPath = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
+
+    // If it's a public image (e.g. in /images/ folder in webapp/public), return path as is for Next.js
+    if (cleanPath.startsWith('/images/')) {
+        return cleanPath;
+    }
 
     // If it's a local upload, ensure it goes through the /uploads/ proxy
     const finalPath = cleanPath.startsWith('/uploads/') ? cleanPath : `/uploads${cleanPath}`;
