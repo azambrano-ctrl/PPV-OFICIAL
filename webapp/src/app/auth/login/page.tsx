@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -56,6 +56,49 @@ export default function LoginPage() {
             setLoading(false);
         }
     };
+
+    const handleSocialLogin = (provider: 'google' | 'facebook') => {
+        const width = 500;
+        const height = 600;
+        const left = window.screenX + (window.outerWidth - width) / 2;
+        const top = window.screenY + (window.outerHeight - height) / 2;
+
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/${provider}`;
+        const windowFeatures = `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=yes, copyhistory=no, width=${width}, height=${height}, top=${top}, left=${left}`;
+
+        window.open(url, `Login with ${provider}`, windowFeatures);
+    };
+
+    useEffect(() => {
+        const handleMessage = (event: MessageEvent) => {
+            // Verify origin for security
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+            const origin = new URL(apiUrl).origin;
+
+            if (event.origin !== window.location.origin) return;
+
+            if (event.data?.type === 'AUTH_SUCCESS') {
+                const { user, accessToken, refreshToken } = event.data;
+
+                setAuth(user, accessToken, refreshToken);
+                toast.success('¡Bienvenido de vuelta!');
+
+                // Redirect based on role
+                if (user.role === 'admin') {
+                    router.push('/admin');
+                } else if (user.role === 'promoter') {
+                    router.push('/promoter-dashboard');
+                } else {
+                    router.push('/events');
+                }
+            } else if (event.data?.type === 'AUTH_ERROR') {
+                toast.error(event.data.error || 'Error al iniciar sesión');
+            }
+        };
+
+        window.addEventListener('message', handleMessage);
+        return () => window.removeEventListener('message', handleMessage);
+    }, [router, setAuth]);
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-dark-950 py-12 px-4 sm:px-6 lg:px-8">
@@ -188,9 +231,7 @@ export default function LoginPage() {
                     <div className="grid grid-cols-2 gap-3">
                         <button
                             type="button"
-                            onClick={() => {
-                                window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/google`;
-                            }}
+                            onClick={() => handleSocialLogin('google')}
                             className="btn btn-secondary bg-white hover:bg-gray-50 text-gray-700" // Changed background to white for Google standard feel
                         >
                             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -203,9 +244,7 @@ export default function LoginPage() {
                         </button>
                         <button
                             type="button"
-                            onClick={() => {
-                                window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/facebook`;
-                            }}
+                            onClick={() => handleSocialLogin('facebook')}
                             className="btn btn-secondary bg-[#1877F2] hover:bg-[#1864D9] text-white border-none"
                         >
                             <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">

@@ -15,8 +15,12 @@ function AuthCallbackContent() {
         const error = searchParams.get('error');
 
         if (error) {
-            // Redirect to login with error
-            router.push(`/auth/login?error=${error}`);
+            if (window.opener) {
+                window.opener.postMessage({ type: 'AUTH_ERROR', error }, window.location.origin);
+                window.close();
+            } else {
+                router.push(`/auth/login?error=${error}`);
+            }
             return;
         }
 
@@ -25,23 +29,40 @@ function AuthCallbackContent() {
                 // Parse user data first
                 const user = JSON.parse(decodeURIComponent(userStr));
 
-                // Use store action to set auth state consistently
-                // This handles localStorage and state updates
-                // Note: backend sends 'token' param but store expects 'accessToken'
-                useAuthStore.getState().setAuth(user, token, refresh);
-
-                // Redirect based on role
-                if (user.role === 'admin') {
-                    router.push('/admin');
+                if (window.opener) {
+                    // If we are in a popup, send data back and close
+                    window.opener.postMessage({
+                        type: 'AUTH_SUCCESS',
+                        user,
+                        accessToken: token,
+                        refreshToken: refresh
+                    }, window.location.origin);
+                    window.close();
                 } else {
-                    router.push('/');
+                    // Regular redirect flow
+                    useAuthStore.getState().setAuth(user, token, refresh);
+                    if (user.role === 'admin') {
+                        router.push('/admin');
+                    } else {
+                        router.push('/');
+                    }
                 }
             } catch (err) {
                 console.error('Error processing OAuth callback:', err);
-                router.push('/auth/login?error=invalid_callback');
+                if (window.opener) {
+                    window.opener.postMessage({ type: 'AUTH_ERROR', error: 'invalid_callback' }, window.location.origin);
+                    window.close();
+                } else {
+                    router.push('/auth/login?error=invalid_callback');
+                }
             }
         } else {
-            router.push('/auth/login?error=missing_params');
+            if (window.opener) {
+                window.opener.postMessage({ type: 'AUTH_ERROR', error: 'missing_params' }, window.location.origin);
+                window.close();
+            } else {
+                router.push('/auth/login?error=missing_params');
+            }
         }
     }, [searchParams, router]);
 
