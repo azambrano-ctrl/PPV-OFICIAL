@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Swords } from 'lucide-react';
 import { authAPI, handleAPIError } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import toast from 'react-hot-toast';
@@ -41,7 +41,6 @@ export default function LoginPage() {
             setAuth(user, accessToken, refreshToken);
             toast.success('¡Bienvenido de vuelta!');
 
-            // Redirect based on role
             if (user.role === 'admin') {
                 router.push('/admin');
             } else if (user.role === 'promoter') {
@@ -62,179 +61,150 @@ export default function LoginPage() {
         const height = 600;
         const left = window.screenX + (window.outerWidth - width) / 2;
         const top = window.screenY + (window.outerHeight - height) / 2;
-
         const url = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/${provider}`;
         const windowFeatures = `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=yes, copyhistory=no, width=${width}, height=${height}, top=${top}, left=${left}`;
-
         window.open(url, `Login with ${provider}`, windowFeatures);
     };
 
     useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
-            // Verify origin for security
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-            const origin = new URL(apiUrl).origin;
-
             if (event.origin !== window.location.origin) return;
-
             if (event.data?.type === 'AUTH_SUCCESS') {
                 const { user, accessToken, refreshToken } = event.data;
-
                 setAuth(user, accessToken, refreshToken);
                 toast.success('¡Bienvenido de vuelta!');
-
-                // Redirect based on role
-                if (user.role === 'admin') {
-                    router.push('/admin');
-                } else if (user.role === 'promoter') {
-                    router.push('/promoter-dashboard');
-                } else {
-                    router.push('/events');
-                }
+                if (user.role === 'admin') router.push('/admin');
+                else if (user.role === 'promoter') router.push('/promoter-dashboard');
+                else router.push('/events');
             } else if (event.data?.type === 'AUTH_ERROR') {
                 toast.error(event.data.error || 'Error al iniciar sesión');
             }
         };
-
         window.addEventListener('message', handleMessage);
         return () => window.removeEventListener('message', handleMessage);
     }, [router, setAuth]);
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-dark-950 py-12 px-4 sm:px-6 lg:px-8">
-            {/* Background Effects */}
-            <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-600/10 rounded-full blur-3xl" />
-                <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary-700/10 rounded-full blur-3xl" />
+        <div className="min-h-screen flex items-center justify-center bg-black py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+            {/* Cinematic Background Layers */}
+            <div className="absolute inset-0 z-0">
+                {/* 5 Dynamic Spotlights to match mockup */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[60vh] flex justify-between px-10 pointer-events-none opacity-40">
+                    <div className="w-[300px] h-[500px] spotlight rounded-full rotate-[15deg] -translate-x-20" />
+                    <div className="w-[300px] h-[500px] spotlight rounded-full rotate-[5deg]" />
+                    <div className="w-[400px] h-[600px] spotlight rounded-full -translate-y-20" />
+                    <div className="w-[300px] h-[500px] spotlight rounded-full -rotate-[5deg]" />
+                    <div className="w-[300px] h-[500px] spotlight rounded-full -rotate-[15deg] translate-x-20" />
+                </div>
+
+                {/* Honeycomb Octagon Floor Effect */}
+                <div className="absolute inset-x-0 bottom-0 h-1/2 honeycomb-grid opacity-30 [mask-image:linear-gradient(to_top,black,transparent)]" />
+
+                {/* Atmospheric elements */}
+                <div className="absolute inset-0 opacity-10 pointer-events-none overflow-hidden">
+                    <div className="absolute top-1/2 left-0 w-[200%] h-[200%] bg-[url('https://www.transparenttextures.com/patterns/asfalt-light.png')] opacity-20 blur-sm animate-[drift_40s_linear_infinite]" />
+                </div>
             </div>
 
-            <div className="max-w-md w-full relative z-10">
-                {/* Logo */}
+            <div className="max-w-md w-full relative z-10 animate-float">
+                {/* Red Octagon Glow Border Background */}
+                <div className="absolute inset-0 -m-12 flex items-center justify-center pointer-events-none">
+                    <div className="w-full h-full opacity-60 filter blur-md">
+                        <svg viewBox="0 0 100 100" className="w-full h-full stroke-red-600 stroke-[0.5] fill-none">
+                            <polygon points="30,0 70,0 100,30 100,70 70,100 30,100 0,70 0,30" />
+                        </svg>
+                    </div>
+                </div>
+
+                {/* Logo / Title Area (Text removed as requested, using logo) */}
                 <div className="text-center mb-8">
-                    <h2 className="text-3xl font-display font-bold text-white mb-2">
-                        Iniciar Sesión
-                    </h2>
-                    <p className="text-dark-400">
-                        Accede a tu cuenta para ver tus eventos
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-600/20 border border-red-600/40 mb-4 shadow-[0_0_30px_rgba(220,38,38,0.3)]">
+                        <Swords className="w-8 h-8 text-white" />
+                    </div>
+                    <p className="text-dark-400 text-[10px] font-black tracking-[0.4em] uppercase opacity-80 scale-110">
+                        Welcome Fighter
                     </p>
                 </div>
 
-                {/* Form */}
-                <div className="card p-8">
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                {/* Form Wrapper */}
+                <div className="glass p-8 rounded-2xl border border-white/10 relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 relative z-10">
                         {/* Email */}
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-dark-300 mb-2">
-                                Email
-                            </label>
                             <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Mail className="h-5 w-5 text-dark-500" />
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <Mail className="h-4 w-4 text-dark-500" />
                                 </div>
                                 <input
                                     {...register('email')}
                                     type="email"
-                                    id="email"
-                                    className="input pl-10"
-                                    placeholder="tu@email.com"
+                                    className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-dark-600 focus:outline-none focus:ring-1 focus:ring-red-600 transition-all uppercase text-[10px] tracking-widest font-bold"
+                                    placeholder="EMAIL ADDRESS"
                                 />
                             </div>
-                            {errors.email && (
-                                <p className="mt-1 text-sm text-red-400">{errors.email.message}</p>
-                            )}
                         </div>
 
                         {/* Password */}
                         <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-dark-300 mb-2">
-                                Contraseña
-                            </label>
                             <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Lock className="h-5 w-5 text-dark-500" />
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <Lock className="h-4 w-4 text-dark-500" />
                                 </div>
                                 <input
                                     {...register('password')}
                                     type={showPassword ? 'text' : 'password'}
-                                    id="password"
-                                    className="input pl-10 pr-10"
-                                    placeholder="••••••••"
+                                    className="w-full pl-12 pr-12 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-dark-600 focus:outline-none focus:ring-1 focus:ring-red-600 transition-all uppercase text-[10px] tracking-widest font-bold"
+                                    placeholder="PASSWORD"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-dark-500 hover:text-white transition-colors"
                                 >
-                                    {showPassword ? (
-                                        <EyeOff className="h-5 w-5 text-dark-500 hover:text-dark-300" />
-                                    ) : (
-                                        <Eye className="h-5 w-5 text-dark-500 hover:text-dark-300" />
-                                    )}
+                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                 </button>
                             </div>
-                            {errors.password && (
-                                <p className="mt-1 text-sm text-red-400">{errors.password.message}</p>
-                            )}
                         </div>
 
-                        {/* Remember & Forgot */}
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                                <input
-                                    id="remember"
-                                    type="checkbox"
-                                    className="h-4 w-4 rounded border-dark-700 bg-dark-800 text-primary-600 focus:ring-primary-600"
-                                />
-                                <label htmlFor="remember" className="ml-2 block text-sm text-dark-400">
-                                    Recordarme
-                                </label>
-                            </div>
+                        {/* Submit Button (Instruction: Move 'Ingresa al octagono' here) */}
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full py-4 bg-white hover:bg-gray-100 text-black font-black uppercase tracking-[0.2em] text-xs rounded shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all transform active:scale-[0.98] disabled:opacity-50"
+                        >
+                            {loading ? 'CARGANDO...' : 'INGRESA AL OCTÁGONO'}
+                        </button>
+
+                        <div className="text-center">
                             <Link
                                 href="/auth/forgot-password"
-                                className="text-sm text-primary-500 hover:text-primary-400"
+                                className="text-[10px] text-dark-500 hover:text-white uppercase font-black tracking-widest transition-colors"
                             >
                                 ¿Olvidaste tu contraseña?
                             </Link>
                         </div>
-
-                        {/* Submit */}
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full flex items-center justify-center px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold rounded-lg shadow-lg shadow-primary-500/30 hover:shadow-xl hover:shadow-primary-500/40 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {loading ? (
-                                <div className="flex items-center gap-2">
-                                    <div className="spinner border-white"></div>
-                                    <span>Iniciando sesión...</span>
-                                </div>
-                            ) : (
-                                <>
-                                    <LogIn className="w-5 h-5 mr-2" />
-                                    Iniciar Sesión
-                                </>
-                            )}
-                        </button>
                     </form>
 
-                    {/* Divider */}
-                    <div className="relative my-6">
+                    {/* Social Divider */}
+                    <div className="relative my-8">
                         <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-dark-800" />
+                            <div className="w-full border-t border-white/5" />
                         </div>
-                        <div className="relative flex justify-center text-sm">
-                            <span className="px-2 bg-dark-900 text-dark-400">O continúa con</span>
+                        <div className="relative flex justify-center text-[7px] font-black uppercase tracking-[0.5em]">
+                            <span className="px-4 bg-[#0a0a0a] text-dark-600">Secure Access</span>
                         </div>
                     </div>
 
-                    {/* Social Login */}
-                    <div className="grid grid-cols-2 gap-3">
+                    {/* Social Login Buttons */}
+                    <div className="grid grid-cols-2 gap-4">
                         <button
                             type="button"
                             onClick={() => handleSocialLogin('google')}
-                            className="btn btn-secondary bg-white hover:bg-gray-50 text-gray-700" // Changed background to white for Google standard feel
+                            className="flex items-center justify-center py-3 bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 rounded-lg transition-all text-white text-[9px] font-black uppercase tracking-widest"
                         >
-                            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
                                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
                                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
@@ -245,9 +215,9 @@ export default function LoginPage() {
                         <button
                             type="button"
                             onClick={() => handleSocialLogin('facebook')}
-                            className="btn btn-secondary bg-[#1877F2] hover:bg-[#1864D9] text-white border-none"
+                            className="flex items-center justify-center py-3 bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 rounded-lg transition-all text-white text-[9px] font-black uppercase tracking-widest"
                         >
-                            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                             </svg>
                             Facebook
@@ -255,20 +225,18 @@ export default function LoginPage() {
                     </div>
                 </div>
 
-                {/* Sign Up Link */}
-                <div className="mt-6 text-center space-y-2">
-                    <p className="text-sm text-dark-400">
+                {/* Footer Links */}
+                <div className="mt-12 text-center space-y-6">
+                    <p className="text-[10px] text-dark-600 uppercase font-black tracking-[0.4em]">
                         ¿No tienes una cuenta?{' '}
-                        <Link href="/auth/register" className="text-primary-500 hover:text-primary-400 font-semibold">
-                            Regístrate gratis
+                        <Link href="/auth/register" className="text-white hover:text-red-500 transition-colors">
+                            Regístrate
                         </Link>
                     </p>
-                    <p className="text-sm text-dark-500">
-                        ¿Quieres organizar eventos?{' '}
-                        <Link href="/promoter/register" className="text-blue-400 hover:text-blue-300 font-semibold uppercase italic tracking-tighter">
-                            Regístrate como Promotora
-                        </Link>
-                    </p>
+                    <div className="h-px w-8 bg-white/5 mx-auto" />
+                    <Link href="/promoter/register" className="inline-block text-[8px] text-red-600 hover:text-red-400 uppercase font-black tracking-[0.5em] border border-red-950 px-6 py-2 rounded transition-all">
+                        REGÍSTRATE COMO PROMOTORA
+                    </Link>
                 </div>
             </div>
         </div>
