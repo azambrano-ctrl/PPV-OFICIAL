@@ -85,115 +85,104 @@ export default function LoginPage() {
     }, [router, setAuth]);
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-black py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-            {/* Cinematic Background Layers */}
-            <div className="absolute inset-0 z-0">
-                {/* 5 Dynamic Spotlights to match mockup */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[60vh] flex justify-between px-10 pointer-events-none opacity-40">
-                    <div className="w-[300px] h-[500px] spotlight rounded-full rotate-[15deg] -translate-x-20" />
-                    <div className="w-[300px] h-[500px] spotlight rounded-full rotate-[5deg]" />
-                    <div className="w-[400px] h-[600px] spotlight rounded-full -translate-y-20" />
-                    <div className="w-[300px] h-[500px] spotlight rounded-full -rotate-[5deg]" />
-                    <div className="w-[300px] h-[500px] spotlight rounded-full -rotate-[15deg] translate-x-20" />
-                </div>
-
-                {/* Honeycomb Octagon Floor Effect */}
-                <div className="absolute inset-x-0 bottom-0 h-1/2 honeycomb-grid opacity-30 [mask-image:linear-gradient(to_top,black,transparent)]" />
-
-                {/* Atmospheric elements */}
-                <div className="absolute inset-0 opacity-10 pointer-events-none overflow-hidden">
-                    <div className="absolute top-1/2 left-0 w-[200%] h-[200%] bg-[url('https://www.transparenttextures.com/patterns/asfalt-light.png')] opacity-20 blur-sm animate-[drift_40s_linear_infinite]" />
-                </div>
+        <div className="min-h-screen flex items-center justify-center bg-black py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden font-display">
+            {/* High-Fidelity Background Image */}
+            <div
+                className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-80"
+                style={{ backgroundImage: "url('/images/octagon-bg.png')" }}
+            >
+                {/* Dark overlay to ensure contrast */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
             </div>
 
-            <div className="max-w-md w-full relative z-10 animate-float">
-                {/* Red Octagon Glow Border Background */}
-                <div className="absolute inset-0 -m-12 flex items-center justify-center pointer-events-none">
-                    <div className="w-full h-full opacity-60 filter blur-md">
-                        <svg viewBox="0 0 100 100" className="w-full h-full stroke-red-600 stroke-[0.5] fill-none">
-                            <polygon points="30,0 70,0 100,30 100,70 70,100 30,100 0,70 0,30" />
-                        </svg>
+            <div className="max-w-md w-full relative z-10">
+                {/* Logo / Header Area */}
+                <div className="text-center mb-6">
+                    <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-red-600/10 border border-red-600/30 mb-4 shadow-[0_0_20px_rgba(220,38,38,0.2)] animate-pulse">
+                        <Swords className="w-7 h-7 text-white" />
                     </div>
-                </div>
-
-                {/* Logo / Title Area (Text removed as requested, using logo) */}
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-600/20 border border-red-600/40 mb-4 shadow-[0_0_30px_rgba(220,38,38,0.3)]">
-                        <Swords className="w-8 h-8 text-white" />
-                    </div>
-                    <p className="text-dark-400 text-[10px] font-black tracking-[0.4em] uppercase opacity-80 scale-110">
+                    <p className="text-gray-300 text-[10px] font-black tracking-[0.5em] uppercase opacity-90">
                         Welcome Fighter
                     </p>
                 </div>
 
-                {/* Form Wrapper */}
-                <div className="glass p-8 rounded-2xl border border-white/10 relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]">
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+                {/* Form Wrapper - Ultra Dark Glass */}
+                <div className="bg-[#111118]/80 backdrop-blur-2xl p-8 rounded-2xl border border-white/5 relative overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)]">
+                    {/* Interior Glows */}
+                    <div className="absolute -top-24 -right-24 w-48 h-48 bg-red-600/10 rounded-full blur-[60px]" />
+                    <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-blue-600/5 rounded-full blur-[60px]" />
 
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 relative z-10">
                         {/* Email */}
                         <div>
-                            <div className="relative">
+                            <div className="relative group">
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <Mail className="h-4 w-4 text-dark-500" />
+                                    <Mail className="h-4 w-4 text-gray-500 group-focus-within:text-white transition-colors" />
                                 </div>
                                 <input
                                     {...register('email')}
                                     type="email"
-                                    className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-dark-600 focus:outline-none focus:ring-1 focus:ring-red-600 transition-all uppercase text-[10px] tracking-widest font-bold"
+                                    className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-red-600/50 focus:bg-white/[0.08] transition-all uppercase text-[10px] tracking-widest font-bold"
                                     placeholder="EMAIL ADDRESS"
                                 />
                             </div>
+                            {errors.email && (
+                                <p className="mt-2 text-[9px] text-red-500 font-bold uppercase tracking-widest pl-2">{errors.email.message}</p>
+                            )}
                         </div>
 
                         {/* Password */}
                         <div>
-                            <div className="relative">
+                            <div className="relative group">
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <Lock className="h-4 w-4 text-dark-500" />
+                                    <Lock className="h-4 w-4 text-gray-500 group-focus-within:text-white transition-colors" />
                                 </div>
                                 <input
                                     {...register('password')}
                                     type={showPassword ? 'text' : 'password'}
-                                    className="w-full pl-12 pr-12 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-dark-600 focus:outline-none focus:ring-1 focus:ring-red-600 transition-all uppercase text-[10px] tracking-widest font-bold"
+                                    className="w-full pl-12 pr-12 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-red-600/50 focus:bg-white/[0.08] transition-all uppercase text-[10px] tracking-widest font-bold"
                                     placeholder="PASSWORD"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-dark-500 hover:text-white transition-colors"
+                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-white transition-colors"
                                 >
                                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                 </button>
                             </div>
+                            {errors.password && (
+                                <p className="mt-2 text-[9px] text-red-500 font-bold uppercase tracking-widest pl-2">{errors.password.message}</p>
+                            )}
                         </div>
 
-                        {/* Submit Button (Instruction: Move 'Ingresa al octagono' here) */}
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full py-4 bg-white hover:bg-gray-100 text-black font-black uppercase tracking-[0.2em] text-xs rounded shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all transform active:scale-[0.98] disabled:opacity-50"
-                        >
-                            {loading ? 'CARGANDO...' : 'INGRESA AL OCTÁGONO'}
-                        </button>
-
+                        {/* Forgot Password */}
                         <div className="text-center">
                             <Link
                                 href="/auth/forgot-password"
-                                className="text-[10px] text-dark-500 hover:text-white uppercase font-black tracking-widest transition-colors"
+                                className="text-[10px] text-gray-500 hover:text-white uppercase font-black tracking-widest transition-colors"
                             >
                                 ¿Olvidaste tu contraseña?
                             </Link>
                         </div>
+
+                        {/* Submit Button */}
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full py-4 bg-white hover:bg-gray-100 text-black font-black uppercase tracking-[0.3em] text-[11px] rounded transition-all transform active:scale-[0.98] disabled:opacity-50 shadow-[0_4px_20px_rgba(255,255,255,0.1)]"
+                        >
+                            {loading ? 'CARGANDO...' : 'INGRESA AL OCTÁGONO'}
+                        </button>
                     </form>
 
                     {/* Social Divider */}
-                    <div className="relative my-8">
+                    <div className="relative my-10">
                         <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-white/5" />
+                            <div className="w-full border-t border-white/[0.05]" />
                         </div>
-                        <div className="relative flex justify-center text-[7px] font-black uppercase tracking-[0.5em]">
-                            <span className="px-4 bg-[#0a0a0a] text-dark-600">Secure Access</span>
+                        <div className="relative flex justify-center text-[7px] font-black uppercase tracking-[0.6em]">
+                            <span className="px-5 bg-[#111118] text-gray-600">Secure Access</span>
                         </div>
                     </div>
 
@@ -202,7 +191,7 @@ export default function LoginPage() {
                         <button
                             type="button"
                             onClick={() => handleSocialLogin('google')}
-                            className="flex items-center justify-center py-3 bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 rounded-lg transition-all text-white text-[9px] font-black uppercase tracking-widest"
+                            className="flex items-center justify-center py-4 bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 rounded-xl transition-all text-white text-[9px] font-black uppercase tracking-widest"
                         >
                             <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
                                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -215,7 +204,7 @@ export default function LoginPage() {
                         <button
                             type="button"
                             onClick={() => handleSocialLogin('facebook')}
-                            className="flex items-center justify-center py-3 bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 rounded-lg transition-all text-white text-[9px] font-black uppercase tracking-widest"
+                            className="flex items-center justify-center py-4 bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 rounded-xl transition-all text-white text-[9px] font-black uppercase tracking-widest"
                         >
                             <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
@@ -226,15 +215,15 @@ export default function LoginPage() {
                 </div>
 
                 {/* Footer Links */}
-                <div className="mt-12 text-center space-y-6">
-                    <p className="text-[10px] text-dark-600 uppercase font-black tracking-[0.4em]">
+                <div className="mt-10 text-center space-y-5">
+                    <p className="text-[10px] text-gray-500 uppercase font-black tracking-[0.3em]">
                         ¿No tienes una cuenta?{' '}
                         <Link href="/auth/register" className="text-white hover:text-red-500 transition-colors">
                             Regístrate
                         </Link>
                     </p>
                     <div className="h-px w-8 bg-white/5 mx-auto" />
-                    <Link href="/promoter/register" className="inline-block text-[8px] text-red-600 hover:text-red-400 uppercase font-black tracking-[0.5em] border border-red-950 px-6 py-2 rounded transition-all">
+                    <Link href="/promoter/register" className="inline-block text-[8px] text-red-600/80 hover:text-red-500 uppercase font-black tracking-[0.4em] border border-red-950/30 px-6 py-2 rounded-lg transition-all">
                         REGÍSTRATE COMO PROMOTORA
                     </Link>
                 </div>
