@@ -5,7 +5,7 @@ import { settingsAPI } from '@/lib/api';
 import { Save, AlertCircle, Layout, FileText, Image as ImageIcon, X, CreditCard, Facebook, Instagram, Twitter, Video, Plus, Trash2 } from 'lucide-react';
 import ImageUpload from '@/components/admin/ImageUpload';
 
-type Tab = 'general' | 'about' | 'gallery' | 'payments' | 'season-pass';
+type Tab = 'general' | 'about' | 'gallery' | 'payments' | 'season-pass' | 'login';
 
 export default function AdminSettingsPage() {
     const [loading, setLoading] = useState(true);
@@ -24,7 +24,8 @@ export default function AdminSettingsPage() {
         about_history_image_3: null as File | null,
         about_gallery: [] as File[],
         site_logo: null as File | null,
-        site_favicon: null as File | null
+        site_favicon: null as File | null,
+        login_background: null as File | null
     });
 
     const [form, setForm] = useState({
@@ -71,7 +72,11 @@ export default function AdminSettingsPage() {
         season_pass_title: '',
         season_pass_description: '',
         season_pass_price: 0,
-        season_pass_button_text: ''
+        season_pass_button_text: '',
+
+        // Login Page
+        login_background_url: '',
+        login_background_position: 'center' as 'top' | 'center' | 'bottom'
     });
 
     useEffect(() => {
@@ -121,7 +126,10 @@ export default function AdminSettingsPage() {
                 season_pass_title: d.season_pass_title || '',
                 season_pass_description: d.season_pass_description || '',
                 season_pass_price: d.season_pass_price || 0,
-                season_pass_button_text: d.season_pass_button_text || ''
+                season_pass_button_text: d.season_pass_button_text || '',
+
+                login_background_url: d.login_background_url || '',
+                login_background_position: (d.login_background_position || 'center') as 'top' | 'center' | 'bottom'
             });
         } catch (error) {
             console.error('Error loading settings:', error);
@@ -188,6 +196,12 @@ export default function AdminSettingsPage() {
                 formData.append('site_favicon', form.site_favicon);
             }
 
+            if (fileState.login_background) {
+                formData.append('login_background_url', fileState.login_background);
+            } else if (form.login_background_url) {
+                formData.append('login_background_url', form.login_background_url);
+            }
+
             // General
             formData.append('site_name', form.site_name);
             formData.append('site_description', form.site_description);
@@ -222,6 +236,9 @@ export default function AdminSettingsPage() {
             formData.append('season_pass_price', String(form.season_pass_price));
             formData.append('season_pass_button_text', form.season_pass_button_text);
 
+            // Login Page
+            formData.append('login_background_position', form.login_background_position);
+
             await settingsAPI.update(formData);
             setMessage({ type: 'success', text: 'Configuración guardada correctamente' });
 
@@ -235,7 +252,8 @@ export default function AdminSettingsPage() {
                 about_history_image_3: null,
                 about_gallery: [],
                 site_logo: null,
-                site_favicon: null
+                site_favicon: null,
+                login_background: null
             });
             await loadSettings();
         } catch (error) {
@@ -260,6 +278,7 @@ export default function AdminSettingsPage() {
         { id: 'gallery', label: 'Galería', icon: ImageIcon },
         { id: 'payments', label: 'Pagos', icon: CreditCard },
         { id: 'season-pass', label: 'Pase de Temporada', icon: Save },
+        { id: 'login', label: 'Página Login', icon: Layout },
     ];
 
     return (
@@ -1000,6 +1019,40 @@ export default function AdminSettingsPage() {
                                     placeholder="Comprar Pase"
                                 />
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Tab: Login Page */}
+                {activeTab === 'login' && (
+                    <div className="bg-dark-900 p-6 rounded-xl border border-dark-800 space-y-6">
+                        <h2 className="text-xl font-bold mb-4 text-white">Configuración de Página de Login</h2>
+                        <p className="text-sm text-dark-400 mb-6">Personaliza el fondo de la página de inicio de sesión.</p>
+
+                        <ImageUpload
+                            label="Imagen de Fondo (Login)"
+                            value={form.login_background_url}
+                            maxSize={50}
+                            onChange={(file, previewUrl) => {
+                                if (file) {
+                                    setFileState(prev => ({ ...prev, login_background: file }));
+                                }
+                                setForm({ ...form, login_background_url: previewUrl || '' });
+                            }}
+                        />
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-dark-300">Posición del Fondo</label>
+                            <select
+                                className="input w-full"
+                                value={form.login_background_position}
+                                onChange={(e) => setForm({ ...form, login_background_position: e.target.value as 'top' | 'center' | 'bottom' })}
+                            >
+                                <option value="top">Arriba (Top)</option>
+                                <option value="center">Centro (Center)</option>
+                                <option value="bottom">Abajo (Bottom)</option>
+                            </select>
+                            <p className="text-xs text-dark-500">Selecciona cómo se posiciona la imagen de fondo en la página de login.</p>
                         </div>
                     </div>
                 )}

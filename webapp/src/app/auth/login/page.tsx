@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import { authAPI, handleAPIError } from '@/lib/api';
+import { authAPI, handleAPIError, settingsAPI } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import toast from 'react-hot-toast';
 
@@ -23,6 +23,8 @@ export default function LoginPage() {
     const { setAuth } = useAuthStore();
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [backgroundUrl, setBackgroundUrl] = useState('/images/octagon-bg.png');
+    const [backgroundPosition, setBackgroundPosition] = useState<'top' | 'center' | 'bottom'>('center');
 
     const {
         register,
@@ -84,12 +86,33 @@ export default function LoginPage() {
         return () => window.removeEventListener('message', handleMessage);
     }, [router, setAuth]);
 
+    useEffect(() => {
+        const loadSettings = async () => {
+            try {
+                const { data } = await settingsAPI.get();
+                const settings = data.data;
+                if (settings.login_background_url) {
+                    setBackgroundUrl(settings.login_background_url);
+                }
+                if (settings.login_background_position) {
+                    setBackgroundPosition(settings.login_background_position as 'top' | 'center' | 'bottom');
+                }
+            } catch (error) {
+                console.error('Error loading login settings:', error);
+            }
+        };
+        loadSettings();
+    }, []);
+
     return (
         <div className="h-screen w-full flex items-center justify-center bg-black relative overflow-hidden px-4">
             {/* Background Image */}
             <div
-                className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-90"
-                style={{ backgroundImage: "url('/images/octagon-bg.png')" }}
+                className="absolute inset-0 z-0 bg-cover bg-no-repeat opacity-90"
+                style={{
+                    backgroundImage: `url('${backgroundUrl}')`,
+                    backgroundPosition: backgroundPosition
+                }}
             >
                 <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70" />
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)]" />

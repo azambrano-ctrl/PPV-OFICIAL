@@ -29,6 +29,10 @@ export interface Settings {
     site_logo_offset_y: number;
     site_favicon: string | null;
 
+    // Login Page
+    login_background_url: string | null;
+    login_background_position: string;
+
     // Payments
     stripe_enabled: boolean;
     stripe_public_key: string;
@@ -75,6 +79,10 @@ export interface UpdateSettingsDTO {
     site_logo_offset_x?: number;
     site_logo_offset_y?: number;
     site_favicon?: string | null;
+
+    // Login Page
+    login_background_url?: string | null;
+    login_background_position?: string;
 
     // Payments
     stripe_enabled?: boolean;
@@ -151,7 +159,9 @@ export const updateSettings = async (updates: UpdateSettingsDTO): Promise<Settin
         'season_pass_title',
         'season_pass_description',
         'season_pass_price',
-        'season_pass_button_text'
+        'season_pass_button_text',
+        'login_background_url',
+        'login_background_position'
     ];
 
     for (const key of keys) {
