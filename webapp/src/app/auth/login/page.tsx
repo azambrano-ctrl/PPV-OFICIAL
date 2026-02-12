@@ -104,7 +104,7 @@ export default function LoginPage() {
                 <div className="w-[150px] h-[300px] bg-white opacity-10 blur-[80px] rounded-full -rotate-[25deg] -translate-y-20" />
             </div>
 
-            <div className="max-w-sm w-full relative z-10 flex flex-col items-center">
+            <div className="max-w-md w-full relative z-10 flex flex-col items-center">
                 {/* Logo / Title Area */}
                 <div className="text-center mb-6">
                     <h1 className="text-3xl font-display font-black text-white mb-1 uppercase tracking-tighter italic scale-y-110 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
