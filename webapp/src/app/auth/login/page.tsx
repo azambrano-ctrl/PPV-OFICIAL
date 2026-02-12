@@ -229,7 +229,7 @@ export default function LoginPage() {
                         </Link>
                     </p>
                     <div className="h-px w-6 bg-white/5 mx-auto" />
-                    <Link href="/promoter/register" className="inline-block text-[9px] text-red-500 hover:text-red-400 uppercase font-black tracking-[0.3em] border border-red-600/30 px-5 py-2 rounded-lg transition-all bg-red-600/10">
+                    <Link href="/promoter/register" className="inline-block text-[9px] text-white hover:text-red-400 uppercase font-black tracking-[0.3em] border border-red-600/30 px-5 py-2 rounded-lg transition-all bg-red-600/10">
                         REGÍSTRATE COMO PROMOTORA
                     </Link>
                 </div>
