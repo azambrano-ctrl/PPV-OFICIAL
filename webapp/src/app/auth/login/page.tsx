@@ -83,8 +83,27 @@ export default function LoginPage() {
                 toast.error(event.data.error || 'Error al iniciar sesión');
             }
         };
+
+        // BroadcastChannel as a more robust alternative to window.opener/postMessage
+        const bc = new BroadcastChannel('auth_channel');
+        bc.onmessage = (event) => {
+            if (event.data?.type === 'AUTH_SUCCESS') {
+                const { user, accessToken, refreshToken } = event.data;
+                setAuth(user, accessToken, refreshToken);
+                toast.success('¡Bienvenido de vuelta!');
+                if (user.role === 'admin') router.push('/admin');
+                else if (user.role === 'promoter') router.push('/promoter-dashboard');
+                else router.push('/events');
+            } else if (event.data?.type === 'AUTH_ERROR') {
+                toast.error(event.data.error || 'Error al iniciar sesión');
+            }
+        };
+
         window.addEventListener('message', handleMessage);
-        return () => window.removeEventListener('message', handleMessage);
+        return () => {
+            window.removeEventListener('message', handleMessage);
+            bc.close();
+        };
     }, [router, setAuth]);
 
     useEffect(() => {
