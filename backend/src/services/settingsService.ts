@@ -32,6 +32,7 @@ export interface Settings {
     // Login Page
     login_background_url: string | null;
     login_background_position: string;
+    login_background_video: string | null;
 
     // Payments
     stripe_enabled: boolean;
@@ -83,6 +84,7 @@ export interface UpdateSettingsDTO {
     // Login Page
     login_background_url?: string | null;
     login_background_position?: string;
+    login_background_video?: string | null;
 
     // Payments
     stripe_enabled?: boolean;
@@ -161,7 +163,8 @@ export const updateSettings = async (updates: UpdateSettingsDTO): Promise<Settin
         'season_pass_price',
         'season_pass_button_text',
         'login_background_url',
-        'login_background_position'
+        'login_background_position',
+        'login_background_video'
     ];
 
     for (const key of keys) {

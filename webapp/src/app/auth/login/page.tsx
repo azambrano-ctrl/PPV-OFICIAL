@@ -25,6 +25,7 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [backgroundUrl, setBackgroundUrl] = useState('/images/octagon-bg.png');
     const [backgroundPosition, setBackgroundPosition] = useState<'top' | 'center' | 'bottom'>('center');
+    const [backgroundVideo, setBackgroundVideo] = useState<string | null>(null);
 
     const {
         register,
@@ -97,6 +98,9 @@ export default function LoginPage() {
                 if (settings.login_background_position) {
                     setBackgroundPosition(settings.login_background_position as 'top' | 'center' | 'bottom');
                 }
+                if (settings.login_background_video) {
+                    setBackgroundVideo(settings.login_background_video);
+                }
             } catch (error) {
                 console.error('Error loading login settings:', error);
             }
@@ -106,9 +110,27 @@ export default function LoginPage() {
 
     return (
         <div className="h-screen w-full flex items-center justify-center bg-black relative overflow-hidden px-4">
+
+            {/* Background Video (priority over image) */}
+            {backgroundVideo && (
+                <div className="absolute inset-0 z-0">
+                    <video
+                        src={backgroundVideo}
+                        className="w-full h-full object-cover opacity-90"
+                        style={{ objectPosition: backgroundPosition }}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)]" />
+                </div>
+            )}
+
             {/* Background Image */}
             <div
-                className="absolute inset-0 z-0 bg-cover bg-no-repeat opacity-90"
+                className={`absolute inset-0 z-0 bg-cover bg-no-repeat opacity-90 ${backgroundVideo ? 'hidden' : ''}`}
                 style={{
                     backgroundImage: `url('${backgroundUrl}')`,
                     backgroundPosition: backgroundPosition

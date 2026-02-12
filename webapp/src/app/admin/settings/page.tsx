@@ -25,7 +25,8 @@ export default function AdminSettingsPage() {
         about_gallery: [] as File[],
         site_logo: null as File | null,
         site_favicon: null as File | null,
-        login_background: null as File | null
+        login_background: null as File | null,
+        login_background_video: null as File | null
     });
 
     const [form, setForm] = useState({
@@ -76,7 +77,8 @@ export default function AdminSettingsPage() {
 
         // Login Page
         login_background_url: '',
-        login_background_position: 'center' as 'top' | 'center' | 'bottom'
+        login_background_position: 'center' as 'top' | 'center' | 'bottom',
+        login_background_video: ''
     });
 
     useEffect(() => {
@@ -129,7 +131,8 @@ export default function AdminSettingsPage() {
                 season_pass_button_text: d.season_pass_button_text || '',
 
                 login_background_url: d.login_background_url || '',
-                login_background_position: (d.login_background_position || 'center') as 'top' | 'center' | 'bottom'
+                login_background_position: (d.login_background_position || 'center') as 'top' | 'center' | 'bottom',
+                login_background_video: d.login_background_video || ''
             });
         } catch (error) {
             console.error('Error loading settings:', error);
@@ -202,6 +205,12 @@ export default function AdminSettingsPage() {
                 formData.append('login_background_url', form.login_background_url);
             }
 
+            if (fileState.login_background_video) {
+                formData.append('login_background_video', fileState.login_background_video);
+            } else if (form.login_background_video) {
+                formData.append('login_background_video', form.login_background_video);
+            }
+
             // General
             formData.append('site_name', form.site_name);
             formData.append('site_description', form.site_description);
@@ -253,7 +262,8 @@ export default function AdminSettingsPage() {
                 about_gallery: [],
                 site_logo: null,
                 site_favicon: null,
-                login_background: null
+                login_background: null,
+                login_background_video: null
             });
             await loadSettings();
         } catch (error) {
@@ -1040,6 +1050,55 @@ export default function AdminSettingsPage() {
                                 setForm({ ...form, login_background_url: previewUrl || '' });
                             }}
                         />
+
+                        {/* Video Background Section */}
+                        <div className="space-y-4 p-4 bg-dark-950 rounded-lg border border-dark-800">
+                            <div className="flex items-center gap-2 text-white font-bold">
+                                <Video className="w-5 h-5 text-primary-500" />
+                                <span>Video de Fondo (Opcional)</span>
+                            </div>
+                            <p className="text-xs text-dark-500">Si se sube un video, este tendrá prioridad sobre la imagen. MP4/WebM máx 50MB.</p>
+
+                            {form.login_background_video || fileState.login_background_video ? (
+                                <div className="relative aspect-video rounded-lg overflow-hidden bg-black group">
+                                    <video
+                                        src={fileState.login_background_video ? URL.createObjectURL(fileState.login_background_video) : form.login_background_video}
+                                        className="w-full h-full object-cover"
+                                        autoPlay
+                                        muted
+                                        loop
+                                    />
+                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setFileState({ ...fileState, login_background_video: null });
+                                                setForm({ ...form, login_background_video: '' });
+                                            }}
+                                            className="p-2 bg-red-600 rounded-full text-white hover:bg-red-700 transition-colors"
+                                        >
+                                            <Trash2 className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="border-2 border-dashed border-dark-800 rounded-lg p-8 text-center hover:border-primary-500 transition-colors cursor-pointer relative">
+                                    <input
+                                        type="file"
+                                        accept="video/mp4,video/webm"
+                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                setFileState({ ...fileState, login_background_video: file });
+                                            }
+                                        }}
+                                    />
+                                    <Video className="w-8 h-8 text-dark-600 mx-auto mb-2" />
+                                    <span className="text-sm text-dark-400">Seleccionar Video</span>
+                                </div>
+                            )}
+                        </div>
 
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-dark-300">Posición del Fondo</label>
