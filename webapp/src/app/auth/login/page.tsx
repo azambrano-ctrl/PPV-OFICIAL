@@ -113,7 +113,7 @@ export default function LoginPage() {
                     </h1>
                     <div className="h-[2px] w-24 bg-red-600 mx-auto mb-2" />
                     <p className="text-gray-300 text-[9px] font-black tracking-[0.4em] uppercase opacity-90">
-                        Welcome Fighter
+                        Bienvenido
                     </p>
                 </div>
 
