@@ -175,7 +175,7 @@ export default function LoginPage() {
                         <div className="text-center">
                             <Link
                                 href="/auth/forgot-password"
-                                className="text-[9px] text-gray-500 hover:text-white uppercase font-black tracking-widest transition-colors"
+                                className="text-[9px] text-gray-300 hover:text-white uppercase font-black tracking-widest transition-colors"
                             >
                                 ¿Olvidaste tu contraseña?
                             </Link>
@@ -222,14 +222,14 @@ export default function LoginPage() {
 
                 {/* Footer Links */}
                 <div className="mt-6 text-center space-y-3">
-                    <p className="text-[10px] text-gray-500 uppercase font-black tracking-[0.2em]">
+                    <p className="text-[10px] text-gray-300 uppercase font-black tracking-[0.2em]">
                         ¿No tienes una cuenta?{' '}
                         <Link href="/auth/register" className="text-white hover:text-red-500 transition-colors">
                             Regístrate
                         </Link>
                     </p>
                     <div className="h-px w-6 bg-white/5 mx-auto" />
-                    <Link href="/promoter/register" className="inline-block text-[7px] text-red-600/80 hover:text-red-500 uppercase font-black tracking-[0.3em] border border-red-950/30 px-5 py-2 rounded-lg transition-all bg-red-600/5">
+                    <Link href="/promoter/register" className="inline-block text-[9px] text-red-500 hover:text-red-400 uppercase font-black tracking-[0.3em] border border-red-600/30 px-5 py-2 rounded-lg transition-all bg-red-600/10">
                         REGÍSTRATE COMO PROMOTORA
                     </Link>
                 </div>
