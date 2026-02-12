@@ -42,20 +42,34 @@ function AuthCallbackContent() {
 
                 // 2. Try window.opener.postMessage (Classic)
                 if (window.opener) {
-                    window.opener.postMessage(authData, window.location.origin);
+                    try {
+                        window.opener.postMessage(authData, window.location.origin);
+                    } catch (e) {
+                        console.warn('Failed to postMessage to opener', e);
+                    }
                 }
 
-                // Close if we are definitely in a popup
-                if (window.opener || window.name.includes('Login')) {
+                // Detect if we are in a popup
+                const isPopup = window.opener || window.name.includes('Login') || window.innerWidth < 800;
+
+                if (isPopup) {
+                    // AGGRESSIVE CLOSING: Try to close multiple times
                     window.close();
+                    setTimeout(() => window.close(), 100);
+                    setTimeout(() => window.close(), 500);
+                    setTimeout(() => window.close(), 1000);
+
+                    // Do NOT redirect if it's a popup, just stay on the "Authenticating" UI
+                    // until it closes. This prevents the "duplicate site" inside the popup.
+                    return;
+                }
+
+                // If NOT a popup (regular redirect), then definitely push to home
+                useAuthStore.getState().setAuth(user, token, refresh);
+                if (user.role === 'admin') {
+                    router.push('/admin');
                 } else {
-                    // Regular redirect flow (fallback)
-                    useAuthStore.getState().setAuth(user, token, refresh);
-                    if (user.role === 'admin') {
-                        router.push('/admin');
-                    } else {
-                        router.push('/');
-                    }
+                    router.push('/');
                 }
             } catch (err) {
                 console.error('Error processing OAuth callback:', err);
