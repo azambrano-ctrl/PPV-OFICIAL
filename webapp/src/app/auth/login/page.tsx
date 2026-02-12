@@ -86,12 +86,22 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-black py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-            {/* Cinematic Background Image (Corrected to user-provided image) */}
+            {/* Cinematic Background Image (Ensuring top visibility for spotlights) */}
             <div
-                className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-80"
+                className="absolute inset-0 z-0 bg-cover bg-top bg-no-repeat transition-opacity duration-1000"
                 style={{ backgroundImage: "url('/images/octagon-bg.png')" }}
             >
-                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
+                {/* Subtle dark gradient to focus on center card while keeping top lights clear */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
+            </div>
+
+            {/* Enhanced CSS Spotlights on top of image to make them POP */}
+            <div className="absolute top-0 left-0 right-0 h-[40vh] z-[1] pointer-events-none flex justify-between px-10">
+                <div className="w-[150px] h-[300px] bg-white opacity-20 blur-[60px] rounded-full rotate-[20deg] -translate-y-10" />
+                <div className="w-[150px] h-[300px] bg-white opacity-25 blur-[50px] rounded-full rotate-[10deg] -translate-y-10" />
+                <div className="w-[150px] h-[300px] bg-white opacity-30 blur-[40px] rounded-full -translate-y-10" />
+                <div className="w-[150px] h-[300px] bg-white opacity-25 blur-[50px] rounded-full -rotate-[10deg] -translate-y-10" />
+                <div className="w-[150px] h-[300px] bg-white opacity-20 blur-[60px] rounded-full -rotate-[20deg] -translate-y-10" />
             </div>
 
             <div className="max-w-md w-full relative z-10 animate-float">
@@ -157,6 +167,16 @@ export default function LoginPage() {
                             )}
                         </div>
 
+                        {/* Sign Up Links */}
+                        <div className="text-center mt-2">
+                            <p className="text-[10px] text-dark-600 uppercase font-black tracking-[0.3em]">
+                                ¿No tienes una cuenta?{' '}
+                                <Link href="/auth/register" className="text-white hover:text-red-500 transition-colors">
+                                    Regístrate
+                                </Link>
+                            </p>
+                        </div>
+
                         {/* Submit Button */}
                         <button
                             type="submit"
@@ -214,15 +234,8 @@ export default function LoginPage() {
                     </div>
                 </div>
 
-                {/* Footer Links */}
-                <div className="mt-12 text-center space-y-6">
-                    <p className="text-[9px] text-dark-600 uppercase font-black tracking-[0.3em]">
-                        ¿No tienes una cuenta?{' '}
-                        <Link href="/auth/register" className="text-white hover:text-red-500 transition-colors">
-                            Regístrate
-                        </Link>
-                    </p>
-                    <div className="h-px w-8 bg-white/5 mx-auto" />
+                {/* Footer Link Promoter */}
+                <div className="mt-8 text-center">
                     <Link href="/promoter/register" className="inline-block text-[8px] text-red-600 hover:text-red-400 uppercase font-black tracking-[0.4em] border border-red-950 px-6 py-2 rounded transition-all">
                         REGÍSTRATE COMO PROMOTORA
                     </Link>
