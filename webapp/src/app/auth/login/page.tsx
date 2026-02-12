@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { authAPI, handleAPIError, settingsAPI } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
+import { useLanguage } from '@/components/providers/LanguageProvider';
 import toast from 'react-hot-toast';
 
 const loginSchema = z.object({
@@ -21,6 +22,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function LoginPage() {
     const router = useRouter();
     const { setAuth } = useAuthStore();
+    const { t } = useLanguage();
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [backgroundUrl, setBackgroundUrl] = useState('/images/octagon-bg.png');
@@ -42,7 +44,7 @@ export default function LoginPage() {
             const { user, accessToken, refreshToken } = response.data.data;
 
             setAuth(user, accessToken, refreshToken);
-            toast.success('¡Bienvenido de vuelta!');
+            toast.success(t('login.welcome_back'));
 
             if (user.role === 'admin') {
                 router.push('/admin');
@@ -75,12 +77,12 @@ export default function LoginPage() {
             if (event.data?.type === 'AUTH_SUCCESS') {
                 const { user, accessToken, refreshToken } = event.data;
                 setAuth(user, accessToken, refreshToken);
-                toast.success('¡Bienvenido de vuelta!');
+                toast.success(t('login.welcome_back'));
                 if (user.role === 'admin') router.push('/admin');
                 else if (user.role === 'promoter') router.push('/promoter-dashboard');
                 else router.push('/events');
             } else if (event.data?.type === 'AUTH_ERROR') {
-                toast.error(event.data.error || 'Error al iniciar sesión');
+                toast.error(event.data.error || t('login.login_error'));
             }
         };
 
@@ -90,12 +92,12 @@ export default function LoginPage() {
             if (event.data?.type === 'AUTH_SUCCESS') {
                 const { user, accessToken, refreshToken } = event.data;
                 setAuth(user, accessToken, refreshToken);
-                toast.success('¡Bienvenido de vuelta!');
+                toast.success(t('login.welcome_back'));
                 if (user.role === 'admin') router.push('/admin');
                 else if (user.role === 'promoter') router.push('/promoter-dashboard');
                 else router.push('/events');
             } else if (event.data?.type === 'AUTH_ERROR') {
-                toast.error(event.data.error || 'Error al iniciar sesión');
+                toast.error(event.data.error || t('login.login_error'));
             }
         };
 
@@ -172,12 +174,12 @@ export default function LoginPage() {
                 {/* Logo / Title Area */}
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-display font-black text-white mb-1 uppercase tracking-tighter italic scale-y-110 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
-                        INGRESA AL<br />
-                        <span className="text-5xl tracking-tight">OCTÁGONO</span>
+                        {t('login.title_line1')}<br />
+                        <span className="text-5xl tracking-tight">{t('login.title_line2')}</span>
                     </h1>
                     <div className="h-[2px] w-28 bg-red-600 mx-auto mb-3" />
                     <p className="text-gray-300 text-[11px] font-black tracking-[0.4em] uppercase opacity-90">
-                        Bienvenido
+                        {t('login.welcome')}
                     </p>
                 </div>
 
@@ -194,7 +196,7 @@ export default function LoginPage() {
                                     {...register('email')}
                                     type="email"
                                     className="w-full pl-11 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-red-600/40 transition-all uppercase text-xs tracking-widest font-bold"
-                                    placeholder="CORREO ELECTRÓNICO"
+                                    placeholder={t('login.email_placeholder')}
                                 />
                             </div>
                             {errors.email && (
@@ -212,7 +214,7 @@ export default function LoginPage() {
                                     {...register('password')}
                                     type={showPassword ? 'text' : 'password'}
                                     className="w-full pl-11 pr-11 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-red-600/40 transition-all uppercase text-xs tracking-widest font-bold"
-                                    placeholder="CONTRASEÑA"
+                                    placeholder={t('login.password_placeholder')}
                                 />
                                 <button
                                     type="button"
@@ -233,7 +235,7 @@ export default function LoginPage() {
                             disabled={loading}
                             className="w-full py-4 bg-white hover:bg-gray-100 text-black font-black uppercase tracking-[0.2em] text-sm rounded-lg transition-all transform active:scale-[0.98] disabled:opacity-50 shadow-lg"
                         >
-                            {loading ? 'CARGANDO...' : 'INGRESAR'}
+                            {loading ? t('login.loading') : t('login.submit')}
                         </button>
 
                         <div className="text-center">
@@ -241,7 +243,7 @@ export default function LoginPage() {
                                 href="/auth/forgot-password"
                                 className="text-xs text-gray-300 hover:text-white uppercase font-black tracking-widest transition-colors"
                             >
-                                ¿Olvidaste tu contraseña?
+                                {t('login.forgot_password')}
                             </Link>
                         </div>
                     </form>
@@ -252,7 +254,7 @@ export default function LoginPage() {
                             <div className="w-full border-t border-white/[0.05]" />
                         </div>
                         <div className="relative flex justify-center text-[9px] font-black uppercase tracking-[0.4em]">
-                            <span className="px-3 bg-[#1a1a20] text-gray-500">Acceso Social</span>
+                            <span className="px-3 bg-[#1a1a20] text-gray-500">{t('login.social_divider')}</span>
                         </div>
                     </div>
 
@@ -288,14 +290,14 @@ export default function LoginPage() {
                 {/* Footer Links */}
                 <div className="mt-8 text-center space-y-4">
                     <p className="text-xs text-gray-300 uppercase font-black tracking-[0.2em]">
-                        ¿No tienes una cuenta?{' '}
+                        {t('login.no_account')}{' '}
                         <Link href="/auth/register" className="text-white hover:text-red-500 transition-colors">
-                            Regístrate
+                            {t('login.register')}
                         </Link>
                     </p>
                     <div className="h-px w-8 bg-white/5 mx-auto" />
                     <Link href="/promoter/register" className="inline-block text-[11px] text-white hover:text-red-400 uppercase font-black tracking-[0.3em] border border-red-600/30 px-6 py-2.5 rounded-lg transition-all bg-red-600/10">
-                        REGÍSTRATE COMO PROMOTORA
+                        {t('login.register_promoter')}
                     </Link>
                 </div>
             </div>

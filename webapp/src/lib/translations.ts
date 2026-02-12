@@ -140,6 +140,23 @@ export const translations = {
                 subtitle: 'Únete a la comunidad más grande de fanáticos del combate. No te pierdas ni un solo momento.',
                 explore: 'EXPLORAR EVENTOS',
             }
+        },
+        // Login Page
+        login: {
+            title_line1: 'INGRESA AL',
+            title_line2: 'OCTÁGONO',
+            welcome: 'Bienvenido',
+            email_placeholder: 'CORREO ELECTRÓNICO',
+            password_placeholder: 'CONTRASEÑA',
+            submit: 'INGRESAR',
+            loading: 'CARGANDO...',
+            forgot_password: '¿Olvidaste tu contraseña?',
+            social_divider: 'Acceso Social',
+            no_account: '¿No tienes una cuenta?',
+            register: 'Regístrate',
+            register_promoter: 'REGÍSTRATE COMO PROMOTORA',
+            welcome_back: '¡Bienvenido de vuelta!',
+            login_error: 'Error al iniciar sesión',
         }
     },
     en: {
@@ -281,6 +298,23 @@ export const translations = {
                 subtitle: 'Join the largest community of fight fans. Don\'t miss a single moment.',
                 explore: 'EXPLORE EVENTS',
             }
+        },
+        // Login Page
+        login: {
+            title_line1: 'ENTER THE',
+            title_line2: 'OCTAGON',
+            welcome: 'Welcome',
+            email_placeholder: 'EMAIL ADDRESS',
+            password_placeholder: 'PASSWORD',
+            submit: 'LOG IN',
+            loading: 'LOADING...',
+            forgot_password: 'Forgot your password?',
+            social_divider: 'Social Login',
+            no_account: 'Don\'t have an account?',
+            register: 'Sign Up',
+            register_promoter: 'REGISTER AS PROMOTER',
+            welcome_back: 'Welcome back!',
+            login_error: 'Login failed',
         }
     }
 };
