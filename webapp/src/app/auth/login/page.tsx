@@ -86,9 +86,9 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-black py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-            {/* Cinematic Background Image */}
+            {/* Cinematic Background Image (Corrected to user-provided image) */}
             <div
-                className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-70"
+                className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-80"
                 style={{ backgroundImage: "url('/images/octagon-bg.png')" }}
             >
                 <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
@@ -109,7 +109,7 @@ export default function LoginPage() {
                     </p>
                 </div>
 
-                {/* Form Wrapper - Reverted to Glassmorphic Style */}
+                {/* Form Wrapper - Glassmorphic Style */}
                 <div className="glass p-8 rounded-2xl border border-white/10 relative overflow-hidden shadow-2xl">
                     <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
 
