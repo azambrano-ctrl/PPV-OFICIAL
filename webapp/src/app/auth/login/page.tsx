@@ -104,7 +104,7 @@ export default function LoginPage() {
                 <div className="w-[150px] h-[300px] bg-white opacity-10 blur-[80px] rounded-full -rotate-[25deg] -translate-y-20" />
             </div>
 
-            <div className="max-w-md w-full relative z-10 flex flex-col items-center">
+            <div className="max-w-sm w-full relative z-10 flex flex-col items-center">
                 {/* Logo / Title Area */}
                 <div className="text-center mb-6">
                     <h1 className="text-3xl font-display font-black text-white mb-1 uppercase tracking-tighter italic scale-y-110 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
@@ -130,7 +130,7 @@ export default function LoginPage() {
                                     {...register('email')}
                                     type="email"
                                     className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-red-600/40 transition-all uppercase text-[9px] tracking-widest font-bold"
-                                    placeholder="EMAIL ADDRESS"
+                                    placeholder="CORREO ELECTRÓNICO"
                                 />
                             </div>
                             {errors.email && (
@@ -148,7 +148,7 @@ export default function LoginPage() {
                                     {...register('password')}
                                     type={showPassword ? 'text' : 'password'}
                                     className="w-full pl-10 pr-10 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-red-600/40 transition-all uppercase text-[9px] tracking-widest font-bold"
-                                    placeholder="PASSWORD"
+                                    placeholder="CONTRASEÑA"
                                 />
                                 <button
                                     type="button"
@@ -169,7 +169,7 @@ export default function LoginPage() {
                             disabled={loading}
                             className="w-full py-3.5 bg-white hover:bg-gray-100 text-black font-black uppercase tracking-[0.2em] text-[10px] rounded transition-all transform active:scale-[0.98] disabled:opacity-50 shadow-lg"
                         >
-                            {loading ? 'CARGANDO...' : 'LOG IN'}
+                            {loading ? 'CARGANDO...' : 'INGRESAR'}
                         </button>
 
                         <div className="text-center">
@@ -188,7 +188,7 @@ export default function LoginPage() {
                             <div className="w-full border-t border-white/[0.05]" />
                         </div>
                         <div className="relative flex justify-center text-[7px] font-black uppercase tracking-[0.4em]">
-                            <span className="px-3 bg-[#1a1a20] text-gray-500">Social Access</span>
+                            <span className="px-3 bg-[#1a1a20] text-gray-500">Acceso Social</span>
                         </div>
                     </div>
 
