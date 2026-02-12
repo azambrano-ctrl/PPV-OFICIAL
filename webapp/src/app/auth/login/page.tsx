@@ -195,7 +195,7 @@ export default function LoginPage() {
                                 <input
                                     {...register('email')}
                                     type="email"
-                                    className="w-full pl-11 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-red-600/40 transition-all uppercase text-xs tracking-widest font-bold"
+                                    className="w-full pl-11 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-red-600/40 transition-all text-xs tracking-widest font-bold placeholder:uppercase"
                                     placeholder={t('login.email_placeholder')}
                                 />
                             </div>
@@ -213,7 +213,7 @@ export default function LoginPage() {
                                 <input
                                     {...register('password')}
                                     type={showPassword ? 'text' : 'password'}
-                                    className="w-full pl-11 pr-11 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-red-600/40 transition-all uppercase text-xs tracking-widest font-bold"
+                                    className="w-full pl-11 pr-11 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-red-600/40 transition-all text-xs tracking-widest font-bold placeholder:uppercase"
                                     placeholder={t('login.password_placeholder')}
                                 />
                                 <button
