@@ -8,5 +8,4 @@ ADD COLUMN IF NOT EXISTS login_background_position TEXT DEFAULT 'center' CHECK (
 -- Update existing row to have default values
 UPDATE settings 
 SET login_background_url = '/images/octagon-bg.png',
-    login_background_position = 'center'
-WHERE id = 1;
+    login_background_position = 'center';

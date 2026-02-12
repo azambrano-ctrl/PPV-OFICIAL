@@ -6,5 +6,4 @@ ADD COLUMN IF NOT EXISTS login_background_video TEXT;
 
 -- Set default to null (no video by default)
 UPDATE settings 
-SET login_background_video = NULL
-WHERE id = 1;
+SET login_background_video = NULL;
