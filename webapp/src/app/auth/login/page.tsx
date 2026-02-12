@@ -85,85 +85,81 @@ export default function LoginPage() {
     }, [router, setAuth]);
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-black py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-            {/* Background Image - Centered to show both floor and lights */}
+        <div className="h-screen w-full flex items-center justify-center bg-black relative overflow-hidden px-4">
+            {/* Background Image */}
             <div
-                className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-90 transition-opacity duration-1000"
+                className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-90"
                 style={{ backgroundImage: "url('/images/octagon-bg.png')" }}
             >
-                {/* Vignette overlay: Darker on edges, clearer in center/floor */}
                 <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70" />
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)]" />
             </div>
 
-            {/* Enhanced CSS Spotlights (aligned with image lights) */}
-            <div className="absolute top-0 left-0 right-0 h-[50vh] z-[1] pointer-events-none flex justify-between px-10">
-                <div className="w-[200px] h-[400px] bg-white opacity-10 blur-[80px] rounded-full rotate-[25deg] -translate-y-20" />
-                <div className="w-[180px] h-[400px] bg-white opacity-15 blur-[60px] rounded-full rotate-[12deg] -translate-y-20" />
-                <div className="w-[180px] h-[400px] bg-white opacity-20 blur-[50px] rounded-full -translate-y-20" />
-                <div className="w-[180px] h-[400px] bg-white opacity-15 blur-[60px] rounded-full -rotate-[12deg] -translate-y-20" />
-                <div className="w-[200px] h-[400px] bg-white opacity-10 blur-[80px] rounded-full -rotate-[25deg] -translate-y-20" />
+            {/* Enhanced CSS Spotlights */}
+            <div className="absolute top-0 left-0 right-0 h-[40vh] z-[1] pointer-events-none flex justify-between px-10">
+                <div className="w-[150px] h-[300px] bg-white opacity-10 blur-[80px] rounded-full rotate-[25deg] -translate-y-20" />
+                <div className="w-[130px] h-[300px] bg-white opacity-15 blur-[60px] rounded-full rotate-[12deg] -translate-y-20" />
+                <div className="w-[130px] h-[300px] bg-white opacity-20 blur-[50px] rounded-full -translate-y-20" />
+                <div className="w-[130px] h-[300px] bg-white opacity-15 blur-[60px] rounded-full -rotate-[12deg] -translate-y-20" />
+                <div className="w-[150px] h-[300px] bg-white opacity-10 blur-[80px] rounded-full -rotate-[25deg] -translate-y-20" />
             </div>
 
-            <div className="max-w-xl w-full relative z-10">
+            <div className="max-w-md w-full relative z-10 flex flex-col items-center">
                 {/* Logo / Title Area */}
                 <div className="text-center mb-6">
-                    <h1 className="text-4xl font-display font-black text-white mb-2 uppercase tracking-tighter italic scale-y-110 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+                    <h1 className="text-3xl font-display font-black text-white mb-1 uppercase tracking-tighter italic scale-y-110 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
                         INGRESA AL<br />
-                        <span className="text-5xl tracking-tight">OCTÁGONO</span>
+                        <span className="text-4xl tracking-tight">OCTÁGONO</span>
                     </h1>
-                    <div className="h-[3px] w-32 bg-red-600 mx-auto mb-4" />
-                    <p className="text-gray-300 text-[10px] font-black tracking-[0.5em] uppercase opacity-90">
+                    <div className="h-[2px] w-24 bg-red-600 mx-auto mb-2" />
+                    <p className="text-gray-300 text-[9px] font-black tracking-[0.4em] uppercase opacity-90">
                         Welcome Fighter
                     </p>
                 </div>
 
-                {/* Form Card - Keep high contrast but refined padding */}
-                <div className="bg-[#1a1a20]/90 backdrop-blur-2xl p-8 rounded-2xl border border-white/5 relative shadow-[0_0_80px_rgba(0,0,0,0.9)]">
-                    {/* Red pulse glow inside card edges */}
-                    <div className="absolute inset-0 border border-red-600/10 rounded-2xl animate-pulse pointer-events-none" />
-
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 relative z-10">
+                {/* Form Card - Narrower and more compact */}
+                <div className="w-full bg-[#1a1a20]/90 backdrop-blur-2xl p-7 rounded-2xl border border-white/5 relative shadow-[0_0_80px_rgba(0,0,0,0.9)]">
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 relative z-10">
                         {/* Email */}
                         <div>
                             <div className="relative group">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <Mail className="h-4 w-4 text-gray-500 group-focus-within:text-white transition-colors" />
+                                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                    <Mail className="h-3.5 w-3.5 text-gray-500 group-focus-within:text-white transition-colors" />
                                 </div>
                                 <input
                                     {...register('email')}
                                     type="email"
-                                    className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-red-600/40 transition-all uppercase text-[10px] tracking-widest font-bold"
+                                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-red-600/40 transition-all uppercase text-[9px] tracking-widest font-bold"
                                     placeholder="EMAIL ADDRESS"
                                 />
                             </div>
                             {errors.email && (
-                                <p className="mt-2 text-[9px] text-red-500 font-bold uppercase tracking-widest pl-2">{errors.email.message}</p>
+                                <p className="mt-1 text-[8px] text-red-500 font-bold uppercase tracking-widest pl-2">{errors.email.message}</p>
                             )}
                         </div>
 
                         {/* Password */}
                         <div>
                             <div className="relative group">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <Lock className="h-4 w-4 text-gray-500 group-focus-within:text-white transition-colors" />
+                                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                    <Lock className="h-3.5 w-3.5 text-gray-500 group-focus-within:text-white transition-colors" />
                                 </div>
                                 <input
                                     {...register('password')}
                                     type={showPassword ? 'text' : 'password'}
-                                    className="w-full pl-12 pr-12 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-red-600/40 transition-all uppercase text-[10px] tracking-widest font-bold"
+                                    className="w-full pl-10 pr-10 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-red-600/40 transition-all uppercase text-[9px] tracking-widest font-bold"
                                     placeholder="PASSWORD"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-white transition-colors"
+                                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-500 hover:text-white transition-colors"
                                 >
-                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                                 </button>
                             </div>
                             {errors.password && (
-                                <p className="mt-2 text-[9px] text-red-500 font-bold uppercase tracking-widest pl-2">{errors.password.message}</p>
+                                <p className="mt-1 text-[8px] text-red-500 font-bold uppercase tracking-widest pl-2">{errors.password.message}</p>
                             )}
                         </div>
 
@@ -171,7 +167,7 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-4.5 bg-white hover:bg-gray-100 text-black font-black uppercase tracking-[0.3em] text-[11px] rounded transition-all transform active:scale-[0.98] disabled:opacity-50 shadow-xl"
+                            className="w-full py-3.5 bg-white hover:bg-gray-100 text-black font-black uppercase tracking-[0.2em] text-[10px] rounded transition-all transform active:scale-[0.98] disabled:opacity-50 shadow-lg"
                         >
                             {loading ? 'CARGANDO...' : 'LOG IN'}
                         </button>
@@ -179,7 +175,7 @@ export default function LoginPage() {
                         <div className="text-center">
                             <Link
                                 href="/auth/forgot-password"
-                                className="text-[10px] text-gray-500 hover:text-white uppercase font-black tracking-widest transition-colors"
+                                className="text-[9px] text-gray-500 hover:text-white uppercase font-black tracking-widest transition-colors"
                             >
                                 ¿Olvidaste tu contraseña?
                             </Link>
@@ -187,36 +183,36 @@ export default function LoginPage() {
                     </form>
 
                     {/* Social Divider */}
-                    <div className="relative my-8">
+                    <div className="relative my-7">
                         <div className="absolute inset-0 flex items-center">
                             <div className="w-full border-t border-white/[0.05]" />
                         </div>
-                        <div className="relative flex justify-center text-[8px] font-black uppercase tracking-[0.5em]">
-                            <span className="px-4 bg-[#1a1a20] text-gray-500">Social Access</span>
+                        <div className="relative flex justify-center text-[7px] font-black uppercase tracking-[0.4em]">
+                            <span className="px-3 bg-[#1a1a20] text-gray-500">Social Access</span>
                         </div>
                     </div>
 
                     {/* Social Login Buttons */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                         <button
                             type="button"
                             onClick={() => handleSocialLogin('google')}
-                            className="flex items-center justify-center py-3.5 bg-white/5 border border-white/5 hover:bg-white/10 rounded-xl transition-all text-white text-[10px] font-black uppercase tracking-widest"
+                            className="flex items-center justify-center py-3 bg-white/5 border border-white/5 hover:bg-white/10 rounded-xl transition-all text-white text-[9px] font-black uppercase tracking-widest"
                         >
-                            <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
+                            <svg className="w-3.5 h-3.5 mr-2" viewBox="0 0 24 24">
                                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
                                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                             </svg>
                             Google
                         </button>
                         <button
                             type="button"
                             onClick={() => handleSocialLogin('facebook')}
-                            className="flex items-center justify-center py-3.5 bg-white/5 border border-white/5 hover:bg-white/10 rounded-xl transition-all text-white text-[10px] font-black uppercase tracking-widest"
+                            className="flex items-center justify-center py-3 bg-white/5 border border-white/5 hover:bg-white/10 rounded-xl transition-all text-white text-[9px] font-black uppercase tracking-widest"
                         >
-                            <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-3.5 h-3.5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                             </svg>
                             Facebook
@@ -225,15 +221,15 @@ export default function LoginPage() {
                 </div>
 
                 {/* Footer Links */}
-                <div className="mt-8 text-center space-y-4">
-                    <p className="text-[11px] text-gray-500 uppercase font-black tracking-[0.3em]">
+                <div className="mt-6 text-center space-y-3">
+                    <p className="text-[10px] text-gray-500 uppercase font-black tracking-[0.2em]">
                         ¿No tienes una cuenta?{' '}
                         <Link href="/auth/register" className="text-white hover:text-red-500 transition-colors">
                             Regístrate
                         </Link>
                     </p>
-                    <div className="h-px w-8 bg-white/5 mx-auto" />
-                    <Link href="/promoter/register" className="inline-block text-[8px] text-red-600/80 hover:text-red-500 uppercase font-black tracking-[0.4em] border border-red-950/30 px-6 py-2 rounded-lg transition-all bg-red-600/5">
+                    <div className="h-px w-6 bg-white/5 mx-auto" />
+                    <Link href="/promoter/register" className="inline-block text-[7px] text-red-600/80 hover:text-red-500 uppercase font-black tracking-[0.3em] border border-red-950/30 px-5 py-2 rounded-lg transition-all bg-red-600/5">
                         REGÍSTRATE COMO PROMOTORA
                     </Link>
                 </div>
