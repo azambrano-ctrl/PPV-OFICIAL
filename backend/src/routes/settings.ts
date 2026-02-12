@@ -147,6 +147,18 @@ router.put(
                 if (files.about_history_image_3 && files.about_history_image_3[0]) {
                     updates.about_history_image_3 = files.about_history_image_3[0].path;
                 }
+
+                // Login Page Background - Image upload
+                if (files.login_background_url && files.login_background_url[0]) {
+                    console.log('🖼️ Updating login_background_url:', files.login_background_url[0].path);
+                    updates.login_background_url = files.login_background_url[0].path;
+                }
+
+                // Login Page Background - Video upload
+                if (files.login_background_video && files.login_background_video[0]) {
+                    console.log('🎬 Updating login_background_video:', files.login_background_video[0].path);
+                    updates.login_background_video = files.login_background_video[0].path;
+                }
             }
 
             // 3. Assign final merged list to updates
@@ -160,6 +172,17 @@ router.put(
 
             if (req.body.homepage_video === null || req.body.homepage_video === '') {
                 updates.homepage_video = null;
+            }
+
+            // Handle Login Page fields from body (if no new files uploaded or for position)
+            if (req.body.login_background_url && !updates.login_background_url) {
+                updates.login_background_url = req.body.login_background_url;
+            }
+            if (req.body.login_background_video && !updates.login_background_video) {
+                updates.login_background_video = req.body.login_background_video;
+            }
+            if (req.body.login_background_position) {
+                updates.login_background_position = req.body.login_background_position;
             }
 
             // Handle About Page fields

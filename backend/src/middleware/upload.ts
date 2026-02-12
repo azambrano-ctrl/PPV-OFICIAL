@@ -165,7 +165,9 @@ export const uploadSettingsImages = handleUploads([
     { name: 'about_history_image_2', maxCount: 1 },
     { name: 'about_history_image_3', maxCount: 1 },
     { name: 'site_logo', maxCount: 1 },
-    { name: 'site_favicon', maxCount: 1 }
+    { name: 'site_favicon', maxCount: 1 },
+    { name: 'login_background_url', maxCount: 1 },
+    { name: 'login_background_video', maxCount: 1 }
 ]);
 
 // Promoter image fields definition
