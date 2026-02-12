@@ -14,6 +14,7 @@ export const repairSchema = async () => {
         const queries = [
             `ALTER TABLE settings ADD COLUMN IF NOT EXISTS site_logo TEXT DEFAULT ''`,
             `ALTER TABLE settings ADD COLUMN IF NOT EXISTS site_logo_width INTEGER DEFAULT 40`,
+            `ALTER TABLE settings ADD COLUMN IF NOT EXISTS homepage_video TEXT`,
             `ALTER TABLE settings ADD COLUMN IF NOT EXISTS site_logo_offset_x INTEGER DEFAULT 0`,
             `ALTER TABLE settings ADD COLUMN IF NOT EXISTS site_logo_offset_y INTEGER DEFAULT 0`,
             `ALTER TABLE settings ADD COLUMN IF NOT EXISTS login_background_url TEXT DEFAULT '/images/octagon-bg.png'`,
