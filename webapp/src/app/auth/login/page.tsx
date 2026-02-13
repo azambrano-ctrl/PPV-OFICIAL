@@ -131,7 +131,7 @@ export default function LoginPage() {
     }, []);
 
     return (
-        <div className="min-h-screen w-full flex items-center justify-center bg-black relative overflow-y-auto px-4 py-4 md:py-20">
+        <div className="min-h-screen w-full flex items-start justify-center bg-black relative overflow-y-auto px-4 pt-4 pb-10 md:items-center md:pt-0">
 
             {/* Background Video (priority over image) */}
             {backgroundVideo && (

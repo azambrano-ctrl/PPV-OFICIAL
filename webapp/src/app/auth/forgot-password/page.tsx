@@ -64,7 +64,7 @@ export default function ForgotPasswordPage() {
     }
 
     return (
-        <div className="min-h-screen bg-black flex items-center justify-center pt-10 pb-8 px-4 relative overflow-y-auto">
+        <div className="min-h-screen bg-black flex items-start justify-center pt-4 pb-8 px-4 relative overflow-y-auto md:items-center md:pt-0">
             <div className="max-w-md w-full relative z-10">
                 {/* Logo Area */}
                 <div className="mb-2 text-center">
