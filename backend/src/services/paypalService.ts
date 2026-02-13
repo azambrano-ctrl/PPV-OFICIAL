@@ -5,20 +5,31 @@ import { getSettings } from './settingsService';
 
 // PayPal environment setup
 const getPayPalClient = async () => {
-    const settings = await getSettings();
-    const clientId = settings.paypal_client_id;
-    const clientSecret = settings.paypal_secret_key;
-    const isLive = process.env.PAYPAL_MODE === 'live';
+    try {
+        const settings = await getSettings();
+        const clientId = settings.paypal_client_id;
+        const clientSecret = settings.paypal_secret_key;
+        const isLive = process.env.PAYPAL_MODE === 'live';
 
-    if (!clientId || !clientSecret) {
-        throw new Error('PayPal credentials are missing in database settings');
+        logger.info('Initializing PayPal Client', {
+            mode: isLive ? 'live' : 'sandbox',
+            hasClientId: !!clientId,
+            hasSecret: !!clientSecret
+        });
+
+        if (!clientId || !clientSecret) {
+            throw new Error('PayPal credentials are missing in database settings');
+        }
+
+        const environment = isLive
+            ? new paypal.core.LiveEnvironment(clientId, clientSecret)
+            : new paypal.core.SandboxEnvironment(clientId, clientSecret);
+
+        return new paypal.core.PayPalHttpClient(environment);
+    } catch (error: any) {
+        logger.error('Failed to initialize PayPal Client:', error.message);
+        throw error;
     }
-
-    const environment = isLive
-        ? new paypal.core.LiveEnvironment(clientId, clientSecret)
-        : new paypal.core.SandboxEnvironment(clientId, clientSecret);
-
-    return new paypal.core.PayPalHttpClient(environment);
 };
 // Module level client is removed in favor of dynamic fetch
 
