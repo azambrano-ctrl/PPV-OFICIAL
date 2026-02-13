@@ -1,28 +1,27 @@
 const paypal = require('@paypal/checkout-server-sdk');
 import { query, transaction } from '../config/database';
 import logger from '../config/logger';
+import { getSettings } from './settingsService';
 
 // PayPal environment setup
-const getPayPalEnvironment = () => {
-    const clientId = process.env.PAYPAL_CLIENT_ID;
-    const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+const getPayPalClient = async () => {
+    const settings = await getSettings();
+    const clientId = settings.paypal_client_id;
+    const clientSecret = settings.paypal_secret_key;
+    const isLive = process.env.PAYPAL_MODE === 'live';
 
-    if (!clientId || !clientSecret || clientId.includes('your_paypal') || clientSecret.includes('your_paypal')) {
-        throw new Error('PayPal credentials are missing or invalid in .env file');
+    if (!clientId || !clientSecret) {
+        throw new Error('PayPal credentials are missing in database settings');
     }
 
-    return process.env.PAYPAL_MODE === 'live'
+    const environment = isLive
         ? new paypal.core.LiveEnvironment(clientId, clientSecret)
         : new paypal.core.SandboxEnvironment(clientId, clientSecret);
-};
-let client: any;
 
-try {
-    const environment = getPayPalEnvironment();
-    client = new paypal.core.PayPalHttpClient(environment);
-} catch (error: any) {
-    logger.error('Failed to initialize PayPal client:', error.message);
-}
+    return new paypal.core.PayPalHttpClient(environment);
+};
+// Module level client is removed in favor of dynamic fetch
+let client: any = null;
 
 export interface CreatePayPalOrderInput {
     userId: string;
@@ -39,9 +38,7 @@ export interface CreatePayPalOrderInput {
 export const createPayPalOrder = async (
     input: CreatePayPalOrderInput
 ): Promise<{ orderId: string; amount: number; approvalUrl: string }> => {
-    if (!client) {
-        throw new Error('PayPal client is not initialized. Please check credentials.');
-    }
+    const client = await getPayPalClient();
 
     try {
         let finalAmount = Number(input.amount);
@@ -199,6 +196,7 @@ export const createPayPalOrder = async (
  */
 export const capturePayPalOrder = async (orderId: string): Promise<void> => {
     try {
+        const client = await getPayPalClient();
         const request = new paypal.orders.OrdersCaptureRequest(orderId);
         request.requestBody({});
 
@@ -218,7 +216,7 @@ export const capturePayPalOrder = async (orderId: string): Promise<void> => {
 /**
  * Handle successful PayPal payment
  */
-const handlePayPalSuccess = async (orderId: string, _orderDetails: any) => {
+async function handlePayPalSuccess(orderId: string, _orderDetails: any) {
     await transaction(async (client) => {
         // Update purchase status
         const result = await client.query(
@@ -316,6 +314,24 @@ const handlePayPalSuccess = async (orderId: string, _orderDetails: any) => {
             // Don't throw here to avoid rolling back the transaction for an email failure
         }
     });
+}
+
+/**
+ * Handle failed PayPal payment
+ */
+const handlePayPalFailed = async (resource: any) => {
+    const orderId = resource.supplementary_data?.related_ids?.order_id;
+
+    if (orderId) {
+        await query(
+            `UPDATE purchases 
+       SET payment_status = 'failed'
+       WHERE payment_intent_id = $1`,
+            [orderId]
+        );
+
+        logger.warn('PayPal payment failed', { orderId });
+    }
 };
 
 /**
@@ -347,22 +363,4 @@ export const handlePayPalWebhook = async (webhookBody: any): Promise<void> => {
     }
 };
 
-/**
- * Handle failed PayPal payment
- */
-const handlePayPalFailed = async (resource: any) => {
-    const orderId = resource.supplementary_data?.related_ids?.order_id;
-
-    if (orderId) {
-        await query(
-            `UPDATE purchases 
-       SET payment_status = 'failed'
-       WHERE payment_intent_id = $1`,
-            [orderId]
-        );
-
-        logger.warn('PayPal payment failed', { orderId });
-    }
-};
-
-export { client as paypalClient };
+export { getPayPalClient as paypalClient };
