@@ -159,15 +159,18 @@ function PaymentFormContent({ event, purchaseType = 'event', onClose, stripe, el
                         <button
                             type="button"
                             onClick={() => setPaymentMethod('paypal')}
-                            className={`p-4 rounded-lg border-2 transition-all ${paymentMethod === 'paypal'
+                            className={`p-4 rounded-lg border-2 transition-all flex items-center justify-center gap-3 ${paymentMethod === 'paypal'
                                 ? 'border-primary-500 bg-primary-500/10'
                                 : 'border-dark-700 hover:border-dark-600'
                                 }`}
                         >
-                            <svg className="w-6 h-6 mx-auto mb-2" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 4.47a.77.77 0 0 1 .758-.631h6.3c2.325 0 4.122.58 5.338 1.724 1.087 1.023 1.629 2.496 1.629 4.415 0 3.306-1.686 5.64-5.078 7.027l-.199.066c-1.444.48-2.812.72-4.078.72H7.076z" />
+                            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 4.47a.77.77 0 0 1 .758-.631h6.3c2.325 0 4.122.58 5.338 1.724 1.087 1.023 1.629 2.496 1.629 4.415 0 3.306-1.686 5.64-5.078 7.027l-.199.066-1.444.48-2.812.72-4.078.72H7.076z" />
                             </svg>
-                            <span className="text-sm font-medium">PayPal</span>
+                            <div className="flex flex-col items-start leading-tight">
+                                <span className="text-sm font-bold">PayPal</span>
+                                <span className="text-[10px] text-dark-400 uppercase font-black">o Tarjeta Deb/Cred</span>
+                            </div>
                         </button>
                     )}
                 </div>
