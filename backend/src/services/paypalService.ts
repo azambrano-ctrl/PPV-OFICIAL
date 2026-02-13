@@ -21,7 +21,6 @@ const getPayPalClient = async () => {
     return new paypal.core.PayPalHttpClient(environment);
 };
 // Module level client is removed in favor of dynamic fetch
-let client: any = null;
 
 export interface CreatePayPalOrderInput {
     userId: string;
