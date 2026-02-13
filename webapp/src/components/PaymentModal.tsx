@@ -117,6 +117,11 @@ function PaymentFormContent({ event, purchaseType = 'event', onClose, stripe, el
 
             const { approvalUrl } = response.data.data;
 
+            // Save event ID so the success page can redirect back to it
+            if (event?.id) {
+                sessionStorage.setItem('lastPurchasedEventId', event.id);
+            }
+
             // Redirect to PayPal
             window.location.href = approvalUrl;
         } catch (error) {

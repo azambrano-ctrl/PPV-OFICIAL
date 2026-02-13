@@ -12,6 +12,7 @@ function PaymentSuccessContent() {
     const router = useRouter();
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
     const [message, setMessage] = useState('Procesando tu pago...');
+    const [eventId, setEventId] = useState<string | null>(null);
 
     // Use a ref to prevent double execution in React Strict Mode
     const processedRef = useRef(false);
@@ -38,6 +39,13 @@ function PaymentSuccessContent() {
                 setStatus('success');
                 setMessage('¡Pago completado con éxito!');
                 toast.success('Pago procesado correctamente');
+
+                // Retrieve the purchased event ID
+                const storedEventId = sessionStorage.getItem('lastPurchasedEventId');
+                if (storedEventId) {
+                    setEventId(storedEventId);
+                    sessionStorage.removeItem('lastPurchasedEventId');
+                }
             } catch (error: any) {
                 console.error('Payment capture error:', error);
                 setStatus('error');
@@ -67,9 +75,9 @@ function PaymentSuccessContent() {
                     <p className="text-dark-400 mb-8">
                         Ya tienes acceso al evento. Disfruta del combate.
                     </p>
-                    <Link href="/events" className="btn btn-primary w-full flex items-center justify-center gap-2">
+                    <Link href={eventId ? `/event/${eventId}` : '/events'} className="btn btn-primary w-full flex items-center justify-center gap-2">
                         <Play className="w-5 h-5" />
-                        Ir a mis Eventos
+                        {eventId ? 'Ver mi Evento' : 'Ir a mis Eventos'}
                     </Link>
                 </div>
             )}

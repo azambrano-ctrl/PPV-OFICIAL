@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Calendar, Clock, Play, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Calendar, Clock, Play, ArrowRight, ShieldCheck, CheckCircle } from 'lucide-react';
 import { formatDate, formatCurrency, getEventStatusColor, getEventStatusText, getImageUrl } from '@/lib/utils';
 import { useLanguage } from '@/components/providers/LanguageProvider';
 
@@ -21,9 +21,10 @@ interface EventCardProps {
         promoter_name?: string;
         promoter_logo_url?: string;
     };
+    isPurchased?: boolean;
 }
 
-export default function EventCard({ event }: EventCardProps) {
+export default function EventCard({ event, isPurchased = false }: EventCardProps) {
     const { t } = useLanguage();
     const isFree = parseFloat(String(event.price)) === 0;
 
@@ -56,6 +57,13 @@ export default function EventCard({ event }: EventCardProps) {
                     {event.is_featured && (
                         <span className="badge bg-yellow-500/20 text-yellow-400 border-yellow-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
                             Destaque
+                        </span>
+                    )}
+
+                    {isPurchased && (
+                        <span className="badge bg-green-500/20 text-green-400 border-green-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center gap-1">
+                            <CheckCircle className="w-3 h-3" />
+                            COMPRADO
                         </span>
                     )}
                 </div>

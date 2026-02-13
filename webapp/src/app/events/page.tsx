@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Calendar, Clock, Search, Filter } from 'lucide-react';
-import { eventsAPI } from '@/lib/api';
+import { eventsAPI, authAPI } from '@/lib/api';
+import { useAuthStore } from '@/lib/store';
 import { getImageUrl } from '@/lib/utils';
 import Footer from '@/components/Footer';
 import EventCard from '@/components/events/EventCard';
@@ -26,15 +27,20 @@ interface Event {
 }
 
 export default function EventsPage() {
+    const { isAuthenticated } = useAuthStore();
     const [events, setEvents] = useState<Event[]>([]);
     const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [purchasedEventIds, setPurchasedEventIds] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         loadEvents();
-    }, []);
+        if (isAuthenticated) {
+            loadPurchases();
+        }
+    }, [isAuthenticated]);
 
     useEffect(() => {
         filterEvents();
@@ -49,6 +55,18 @@ export default function EventsPage() {
             toast.error('Error al cargar eventos');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadPurchases = async () => {
+        try {
+            const response = await authAPI.getPurchases();
+            const ids = new Set<string>(
+                (response.data.data || []).map((p: any) => p.event_id)
+            );
+            setPurchasedEventIds(ids);
+        } catch (error) {
+            console.error('Error loading purchases:', error);
         }
     };
 
@@ -162,7 +180,7 @@ export default function EventsPage() {
                     ) : (
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {filteredEvents.map((event) => (
-                                <EventCard key={event.id} event={event} />
+                                <EventCard key={event.id} event={event} isPurchased={purchasedEventIds.has(event.id)} />
                             ))}
                         </div>
                     )}
