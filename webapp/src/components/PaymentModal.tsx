@@ -45,72 +45,78 @@ function PaymentFormContent({ event, purchaseType = 'event', onClose }: PaymentM
 
     return (
         <div className="space-y-6">
-            {/* Event Summary */}
-            <div className="bg-dark-800 rounded-lg p-4">
-                <h3 className="font-semibold mb-2">{event?.title || 'Pase de Temporada'}</h3>
-                <div className="flex items-center justify-between">
-                    <span className="text-dark-400">Total a pagar:</span>
-                    <span className="text-2xl font-bold gradient-text">
-                        ${Number(event?.price || 0).toFixed(2)} {event?.currency || 'USD'}
-                    </span>
+            {/* Event Summary - Glass Card */}
+            <div className="bg-white/5 border border-white/10 rounded-xl p-5 relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-transparent opacity-50" />
+                <div className="relative">
+                    <p className="text-[10px] text-primary-400 font-black uppercase tracking-[0.2em] mb-1">Tu Selección</p>
+                    <h3 className="font-display font-black text-xl text-white uppercase tracking-tighter italic leading-none mb-3">
+                        {event?.title || 'Pase de Temporada'}
+                    </h3>
+                    <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                        <span className="text-xs text-dark-400 font-bold uppercase tracking-widest">Inversión Final:</span>
+                        <span className="text-2xl font-black text-white tracking-tighter italic">
+                            ${Number(event?.price || 0).toFixed(2)} <span className="text-xs text-dark-500 not-italic ml-1">{event?.currency || 'USD'}</span>
+                        </span>
+                    </div>
                 </div>
             </div>
 
             {/* Payment Method Selection */}
             <div>
-                <label className="block text-sm font-medium text-dark-300 mb-3">
-                    Selecciona tu Método de Pago
+                <label className="block text-[10px] font-black text-dark-400 uppercase tracking-[0.2em] mb-4">
+                    Método de Pago
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                     <button
                         type="button"
                         onClick={() => setPaymentMethod('card')}
-                        className={`p-4 rounded-lg border-2 transition-all flex flex-col items-center justify-center gap-2 ${paymentMethod === 'card'
+                        className={`group p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-2 relative overflow-hidden ${paymentMethod === 'card'
                             ? 'border-primary-500 bg-primary-500/10'
-                            : 'border-dark-700 hover:border-dark-600'
+                            : 'border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/10'
                             }`}
                     >
-                        <CreditCard className={`w-6 h-6 ${paymentMethod === 'card' ? 'text-primary-400' : 'text-dark-400'}`} />
-                        <span className="text-sm font-bold">Tarjeta</span>
-                        <span className="text-[10px] text-dark-400 uppercase font-black">Débito / Crédito</span>
+                        <div className={`p-2 rounded-lg transition-colors ${paymentMethod === 'card' ? 'bg-primary-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' : 'bg-white/5 text-dark-400'}`}>
+                            <CreditCard className="w-5 h-5" />
+                        </div>
+                        <div className="text-center">
+                            <span className={`block text-xs font-black uppercase tracking-widest ${paymentMethod === 'card' ? 'text-white' : 'text-dark-300'}`}>Tarjeta</span>
+                            <span className="text-[9px] text-dark-500 uppercase font-bold tracking-tighter">Débito / Crédito</span>
+                        </div>
                     </button>
 
                     <button
                         type="button"
                         onClick={() => setPaymentMethod('paypal')}
-                        className={`p-4 rounded-lg border-2 transition-all flex flex-col items-center justify-center gap-2 ${paymentMethod === 'paypal'
-                            ? 'border-primary-500 bg-primary-500/10'
-                            : 'border-dark-700 hover:border-dark-600'
+                        className={`group p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-2 relative overflow-hidden ${paymentMethod === 'paypal'
+                            ? 'border-blue-500 bg-blue-500/10'
+                            : 'border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/10'
                             }`}
                     >
-                        <svg className={`w-6 h-6 ${paymentMethod === 'paypal' ? 'text-blue-400' : 'text-dark-400'}`} fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 4.47a.77.77 0 0 1 .758-.631h6.3c2.325 0 4.122.58 5.338 1.724 1.087 1.023 1.629 2.496 1.629 4.415 0 3.306-1.686 5.64-5.078 7.027l-.199.066-1.444.48-2.812.72-4.078.72H7.076z" />
-                        </svg>
-                        <span className="text-sm font-bold">PayPal</span>
-                        <span className="text-[10px] text-dark-400 uppercase font-black">Cuenta PayPal</span>
+                        <div className={`p-2 rounded-lg transition-colors ${paymentMethod === 'paypal' ? 'bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]' : 'bg-white/5 text-dark-400'}`}>
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 4.47a.77.77 0 0 1 .758-.631h6.3c2.325 0 4.122.58 5.338 1.724 1.087 1.023 1.629 2.496 1.629 4.415 0 3.306-1.686 5.64-5.078 7.027l-.199.066-1.444.48-2.812.72-4.078.72H7.076z" />
+                            </svg>
+                        </div>
+                        <div className="text-center">
+                            <span className={`block text-xs font-black uppercase tracking-widest ${paymentMethod === 'paypal' ? 'text-white' : 'text-dark-300'}`}>PayPal</span>
+                            <span className="text-[9px] text-dark-500 uppercase font-bold tracking-tighter">Cuenta Oficial</span>
+                        </div>
                     </button>
                 </div>
             </div>
 
             {/* PayPal Buttons Integration */}
-            <div className="space-y-4">
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-                    <p className="text-sm text-blue-400">
-                        {paymentMethod === 'card'
-                            ? 'Paga directamente con tu tarjeta de forma segura'
-                            : 'Inicia sesión en PayPal para completar tu compra'}
-                    </p>
-                </div>
-
+            <div className="space-y-4 pt-2">
                 <div className="relative z-0">
                     <PayPalButtons
-                        key={paymentMethod} // Re-mount when switching to clear state
+                        key={paymentMethod}
                         style={{
                             layout: "vertical",
                             color: paymentMethod === 'card' ? "black" : "blue",
                             shape: "rect",
                             label: "pay",
-                            height: 45
+                            height: 48
                         }}
                         fundingSource={paymentMethod === 'card' ? "card" : "paypal"}
                         disabled={loading}
@@ -146,40 +152,41 @@ function PaymentFormContent({ event, purchaseType = 'event', onClose }: PaymentM
                         }}
                     />
                 </div>
-            </div>
 
-            {/* Cancel Button */}
-            <button
-                type="button"
-                onClick={onClose}
-                disabled={loading}
-                className="w-full btn btn-secondary mt-2"
-            >
-                Cancelar
-            </button>
+                <p className="text-[9px] text-dark-500 uppercase font-bold tracking-[0.2em] text-center">
+                    Transacción segura encriptada punto a punto
+                </p>
+            </div>
         </div>
     );
 }
 
 export default function PaymentModal({ event, purchaseType = 'event', onClose }: PaymentModalProps) {
     return (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-            <div className="card max-w-lg w-full p-8 relative">
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 text-dark-400 hover:text-white transition-colors"
-                >
-                    <X className="w-6 h-6" />
-                </button>
-
-                <div className="mb-6">
-                    <h2 className="text-2xl font-bold mb-2">Completar Compra</h2>
-                    <p className="text-dark-400">
-                        Selecciona cómo deseas realizar el pago
-                    </p>
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
+            <div className="bg-dark-900/90 border border-white/10 backdrop-blur-md max-w-lg w-full rounded-2xl relative shadow-2xl flex flex-col max-h-[95vh] animate-in zoom-in-95 duration-300">
+                {/* Header - Fixed */}
+                <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                    <div>
+                        <h2 className="text-xl font-display font-black text-white uppercase tracking-tighter italic">
+                            Completar Compra
+                        </h2>
+                        <p className="text-xs text-dark-400 font-bold uppercase tracking-widest mt-0.5">
+                            Seguridad Garantizada 🔒
+                        </p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="p-2 text-dark-400 hover:text-white hover:bg-white/5 rounded-full transition-all"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
                 </div>
 
-                <PaymentFormContent event={event} purchaseType={purchaseType} onClose={onClose} />
+                {/* Scrollable Content */}
+                <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                    <PaymentFormContent event={event} purchaseType={purchaseType} onClose={onClose} />
+                </div>
             </div>
         </div>
     );
