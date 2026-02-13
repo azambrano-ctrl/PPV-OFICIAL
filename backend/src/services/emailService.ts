@@ -111,7 +111,7 @@ export const sendTicketEmail = async (
     price: string,
     seatNumber: number
 ) => {
-    const brandName = process.env.EMAIL_FROM_NAME || 'Knockout Pass';
+    const brandName = process.env.EMAIL_FROM_NAME || 'Arena Fight Pass';
     const webUrl = process.env.WEB_URL || 'http://localhost:3000';
 
     // Format date for display
@@ -121,7 +121,8 @@ export const sendTicketEmail = async (
         month: 'long',
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
+        timeZone: 'America/Guayaquil'
     });
 
     const subject = `🎫 ¡Tu Ticket para ${eventTitle}! - ${brandName}`;
@@ -182,7 +183,7 @@ export const sendTicketEmail = async (
  * Send promoter approval email
  */
 export const sendApprovalEmail = async (to: string, promoterName: string) => {
-    const brandName = process.env.EMAIL_FROM_NAME || 'Knockout Pass';
+    const brandName = process.env.EMAIL_FROM_NAME || 'Arena Fight Pass';
     const webUrl = process.env.WEB_URL || 'http://localhost:3000';
 
     const subject = `✅ ¡Felicidades! Tu cuenta de promotora ha sido aprobada - ${brandName}`;
