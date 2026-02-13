@@ -183,7 +183,7 @@ export default function AdminPage() {
                                     <div className="text-3xl">💰</div>
                                 </div>
                                 <p className="text-3xl font-bold text-white">
-                                    ${(stats?.totalRevenue || 0).toFixed(2)}
+                                    ${Number(stats?.totalRevenue || 0).toFixed(2)}
                                 </p>
                             </div>
 
@@ -219,7 +219,7 @@ export default function AdminPage() {
                                                     <td className="py-3 px-4 text-white">{purchase.user_email}</td>
                                                     <td className="py-3 px-4 text-white">{purchase.event_title}</td>
                                                     <td className="py-3 px-4 text-white">
-                                                        ${purchase.amount.toFixed(2)} {purchase.currency}
+                                                        ${Number(purchase.amount || 0).toFixed(2)} {purchase.currency}
                                                     </td>
                                                     <td className="py-3 px-4 text-dark-300">
                                                         {new Date(purchase.purchased_at).toLocaleDateString()}
