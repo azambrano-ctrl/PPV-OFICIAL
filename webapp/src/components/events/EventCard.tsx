@@ -128,9 +128,16 @@ export default function EventCard({ event, isPurchased = false }: EventCardProps
                 </div>
 
                 <div className="flex items-center justify-between pt-4 border-t border-dark-800">
-                    <span className="text-2xl font-black bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent uppercase tracking-tighter">
-                        {isFree ? t('landing.hero.free_pass') : formatCurrency(Number(event.price), event.currency)}
-                    </span>
+                    {isPurchased ? (
+                        <span className="text-lg font-black text-green-400 flex items-center gap-1.5 uppercase tracking-tight">
+                            <CheckCircle className="w-5 h-5" />
+                            Acceso Comprado
+                        </span>
+                    ) : (
+                        <span className="text-2xl font-black bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent uppercase tracking-tighter">
+                            {isFree ? t('landing.hero.free_pass') : formatCurrency(Number(event.price), event.currency)}
+                        </span>
+                    )}
 
                     <Link
                         href={`/event/${event.id}`}
