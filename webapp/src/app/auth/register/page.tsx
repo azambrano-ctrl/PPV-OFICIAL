@@ -71,14 +71,19 @@ export default function RegisterPage() {
                 <div className="mb-6 text-center">
                     <Link href="/" className="inline-block hover:scale-105 transition-transform duration-300">
                         <div className="relative flex items-center justify-center mx-auto" style={{ width: '120px' }}>
-                            <img
-                                src="/images/logo.png"
-                                alt="Logo"
-                                className="max-w-full h-auto object-contain drop-shadow-[0_0_15px_rgba(255,0,0,0.3)]"
-                                onError={(e) => {
-                                    (e.target as HTMLImageElement).classList.add('hidden');
-                                }}
-                            />
+                            {settings?.site_logo ? (
+                                <img
+                                    src={settings.site_logo}
+                                    alt={settings?.site_name || 'Logo'}
+                                    className="max-w-full h-auto object-contain drop-shadow-[0_0_15px_rgba(255,0,0,0.3)]"
+                                />
+                            ) : (
+                                <div className="p-4 bg-primary-600 rounded-xl shadow-lg">
+                                    <span className="text-white font-black text-2xl uppercase italic">
+                                        {settings?.site_name?.charAt(0) || 'A'}
+                                    </span>
+                                </div>
+                            )}
                         </div>
                     </Link>
                 </div>
