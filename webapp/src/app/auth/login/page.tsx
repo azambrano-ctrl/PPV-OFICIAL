@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { authAPI, handleAPIError, settingsAPI } from '@/lib/api';
-import { useAuthStore } from '@/lib/store';
+import { useAuthStore, useSettingsStore } from '@/lib/store';
 import { useLanguage } from '@/components/providers/LanguageProvider';
 import toast from 'react-hot-toast';
 
@@ -22,6 +22,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function LoginPage() {
     const router = useRouter();
     const { setAuth } = useAuthStore();
+    const { settings } = useSettingsStore();
     const { t } = useLanguage();
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
