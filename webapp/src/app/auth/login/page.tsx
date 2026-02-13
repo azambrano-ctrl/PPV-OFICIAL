@@ -130,7 +130,7 @@ export default function LoginPage() {
     }, []);
 
     return (
-        <div className="h-screen w-full flex items-center justify-center bg-black relative overflow-hidden px-4">
+        <div className="min-h-screen w-full flex items-center justify-center bg-black relative overflow-y-auto px-4 py-20">
 
             {/* Background Video (priority over image) */}
             {backgroundVideo && (
@@ -171,7 +171,35 @@ export default function LoginPage() {
             </div>
 
             <div className="max-w-md w-full relative z-10 flex flex-col items-center px-4 md:px-0">
-                {/* Logo / Title Area */}
+                {/* Logo Area */}
+                <div className="mb-10 text-center">
+                    {backgroundVideo ? (
+                        <div className="w-24 h-24 bg-red-600/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-600/40 backdrop-blur-md">
+                            <Lock className="w-10 h-10 text-red-500" />
+                        </div>
+                    ) : (
+                        <Link href="/" className="inline-block hover:scale-105 transition-transform duration-300">
+                            <div
+                                className="relative flex items-center justify-center mx-auto"
+                                style={{
+                                    width: '160px'
+                                }}
+                            >
+                                <img
+                                    src="/images/logo.png" // Standard logo path, fallback to text if missing
+                                    alt="Logo"
+                                    className="max-w-full h-auto object-contain drop-shadow-[0_0_15px_rgba(255,0,0,0.3)]"
+                                    onError={(e) => {
+                                        // Hide if image fails
+                                        (e.target as HTMLImageElement).classList.add('hidden');
+                                    }}
+                                />
+                            </div>
+                        </Link>
+                    )}
+                </div>
+
+                {/* Title Area */}
                 <div className="text-center mb-6 md:mb-8">
                     <h1 className="text-5xl md:text-4xl font-display font-black text-white mb-1 uppercase tracking-tighter italic scale-y-110 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
                         {t('login.title_line1')}<br />

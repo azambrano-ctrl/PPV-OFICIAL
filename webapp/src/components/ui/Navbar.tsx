@@ -59,36 +59,39 @@ export default function Navbar() {
             <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-20">
                     {/* Brand / Logo - Production Style */}
-                    <Link href="/" className="flex items-center gap-3 group">
-                        {!hasHydrated ? (
-                            <div className="w-10 h-10 bg-dark-800 rounded-lg animate-pulse" />
-                        ) : settings?.site_logo ? (
-                            <div
-                                className="relative transition-transform group-hover:scale-105 flex items-center justify-center"
-                                style={{
-                                    width: settings.site_logo_width ? `${settings.site_logo_width}px` : '40px',
-                                    transform: `translate(${settings.site_logo_offset_x || 0}px, ${settings.site_logo_offset_y || 0}px)`
-                                }}
-                            >
-                                <img
-                                    src={settings.site_logo}
-                                    alt={settings?.site_name || 'Logo'}
-                                    className="max-w-full h-auto object-contain"
-                                />
-                            </div>
-                        ) : (
-                            <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center shadow-lg shadow-primary-600/20 group-hover:scale-105 transition-transform">
-                                <span className="text-white font-bold text-xl">
-                                    {settings?.site_name?.charAt(0) || 'P'}
+                    {!isAuthPage && (
+                        <Link href="/" className="flex items-center gap-3 group">
+                            {!hasHydrated ? (
+                                <div className="w-10 h-10 bg-dark-800 rounded-lg animate-pulse" />
+                            ) : settings?.site_logo ? (
+                                <div
+                                    className="relative transition-transform group-hover:scale-105 flex items-center justify-center"
+                                    style={{
+                                        width: settings.site_logo_width ? `${settings.site_logo_width}px` : '40px',
+                                        maxWidth: '180px', // Prevent massive logos on mobile
+                                        transform: `translate(${settings.site_logo_offset_x || 0}px, ${settings.site_logo_offset_y || 0}px)`
+                                    }}
+                                >
+                                    <img
+                                        src={settings.site_logo}
+                                        alt={settings?.site_name || 'Logo'}
+                                        className="max-w-full max-h-[50px] md:max-h-none h-auto object-contain"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center shadow-lg shadow-primary-600/20 group-hover:scale-105 transition-transform">
+                                    <span className="text-white font-bold text-xl">
+                                        {settings?.site_name?.charAt(0) || 'P'}
+                                    </span>
+                                </div>
+                            )}
+                            {hasHydrated && (
+                                <span className="text-2xl font-bold text-primary-600 tracking-tight group-hover:text-primary-500 transition-colors">
+                                    {settings?.site_name || ''}
                                 </span>
-                            </div>
-                        )}
-                        {hasHydrated && (
-                            <span className="text-2xl font-bold text-primary-600 tracking-tight group-hover:text-primary-500 transition-colors">
-                                {settings?.site_name || ''}
-                            </span>
-                        )}
-                    </Link>
+                            )}
+                        </Link>
+                    )}
 
                     {/* Desktop Navigation - Centered like reference */}
                     <div className="hidden md:flex items-center space-x-10">
