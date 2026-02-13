@@ -48,6 +48,7 @@ import SettingsProvider from '@/components/providers/SettingsProvider';
 import { LanguageProvider } from '@/components/providers/LanguageProvider';
 import SessionWatcher from '@/components/providers/SessionWatcher';
 import CookieBanner from '@/components/ui/CookieBanner';
+import PayPalProvider from '@/components/providers/PayPalProvider';
 import Script from 'next/script';
 
 export default function RootLayout({
@@ -82,10 +83,12 @@ export default function RootLayout({
                 />
                 <LanguageProvider>
                     <SettingsProvider>
-                        <SessionWatcher />
-                        <Navbar />
-                        {children}
-                        <CookieBanner />
+                        <PayPalProvider>
+                            <SessionWatcher />
+                            <Navbar />
+                            {children}
+                            <CookieBanner />
+                        </PayPalProvider>
                     </SettingsProvider>
                 </LanguageProvider>
 

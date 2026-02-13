@@ -8,6 +8,7 @@ import { paymentsAPI, handleAPIError } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { useSettingsStore } from '@/lib/store';
+import { PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
 
 const getStripePromise = (settings: any) => {
     const key = settings?.stripe_public_key || process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
@@ -48,8 +49,6 @@ function PaymentFormContent({ event, purchaseType = 'event', onClose, stripe, el
                 return;
             }
             await handleStripePayment();
-        } else {
-            await handlePayPalPayment();
         }
     };
 
@@ -105,30 +104,23 @@ function PaymentFormContent({ event, purchaseType = 'event', onClose, stripe, el
         }
     };
 
-    const handlePayPalPayment = async () => {
-        setLoading(true);
+    const handlePayPalSuccess = (orderId: string) => {
+        toast.success('¡Pago exitoso! Redirigiendo...');
 
-        try {
-            const response = await paymentsAPI.createPayment({
-                eventId: event?.id,
-                purchaseType,
-                paymentMethod: 'paypal',
-            });
-
-            const { approvalUrl } = response.data.data;
-
-            // Save event ID so the success page can redirect back to it
-            if (event?.id) {
-                sessionStorage.setItem('lastPurchasedEventId', event.id);
-            }
-
-            // Redirect to PayPal
-            window.location.href = approvalUrl;
-        } catch (error) {
-            const message = handleAPIError(error);
-            toast.error(message);
-            setLoading(false);
+        // Save event ID so the success page (if they reload) or others know
+        if (event?.id) {
+            sessionStorage.setItem('lastPurchasedEventId', event.id);
         }
+
+        setTimeout(() => {
+            if (purchaseType === 'season_pass') {
+                window.location.reload();
+            } else if (event?.id) {
+                router.push(`/watch/${event.id}`);
+            } else {
+                onClose();
+            }
+        }, 1500);
     };
 
     return (
@@ -218,16 +210,61 @@ function PaymentFormContent({ event, purchaseType = 'event', onClose, stripe, el
                 </div>
             )}
 
-            {/* PayPal Info */}
+            {/* PayPal Buttons Integration */}
             {paymentMethod === 'paypal' && (
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-                    <p className="text-sm text-blue-400">
-                        Serás redirigido a PayPal para completar tu pago de forma segura
-                    </p>
+                <div className="space-y-4">
+                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-4">
+                        <p className="text-sm text-blue-400">
+                            Completa tu pago de forma segura con PayPal o Tarjeta
+                        </p>
+                    </div>
+
+                    <div className="relative z-0">
+                        <PayPalButtons
+                            style={{
+                                layout: "vertical",
+                                color: "blue",
+                                shape: "rect",
+                                label: "pay",
+                                height: 45
+                            }}
+                            disabled={loading}
+                            createOrder={async () => {
+                                try {
+                                    const response = await paymentsAPI.createPayment({
+                                        eventId: event?.id,
+                                        purchaseType,
+                                        paymentMethod: 'paypal',
+                                    });
+                                    return response.data.data.orderId;
+                                } catch (error) {
+                                    const message = handleAPIError(error);
+                                    toast.error(message);
+                                    throw error;
+                                }
+                            }}
+                            onApprove={async (data) => {
+                                setLoading(true);
+                                try {
+                                    await paymentsAPI.capturePayPal(data.orderID);
+                                    handlePayPalSuccess(data.orderID);
+                                } catch (error) {
+                                    const message = handleAPIError(error);
+                                    toast.error(message);
+                                } finally {
+                                    setLoading(false);
+                                }
+                            }}
+                            onError={(err) => {
+                                console.error('PayPal Error:', err);
+                                toast.error('Error al procesar el pago con PayPal');
+                            }}
+                        />
+                    </div>
                 </div>
             )}
 
-            {/* Submit Button */}
+            {/* Submit Button (Only for Stripe) */}
             <div className="flex gap-3">
                 <button
                     type="button"
@@ -237,20 +274,22 @@ function PaymentFormContent({ event, purchaseType = 'event', onClose, stripe, el
                 >
                     Cancelar
                 </button>
-                <button
-                    type="submit"
-                    disabled={loading || (paymentMethod === 'stripe' && !stripe)}
-                    className="flex-1 btn btn-primary"
-                >
-                    {loading ? (
-                        <div className="flex items-center gap-2">
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            <span>Procesando...</span>
-                        </div>
-                    ) : (
-                        `Pagar ${event?.currency || 'USD'} $${Number(event?.price || 0).toFixed(2)}`
-                    )}
-                </button>
+                {paymentMethod === 'stripe' && (
+                    <button
+                        type="submit"
+                        disabled={loading || !stripe}
+                        className="flex-1 btn btn-primary"
+                    >
+                        {loading ? (
+                            <div className="flex items-center gap-2">
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                <span>Procesando...</span>
+                            </div>
+                        ) : (
+                            `Pagar ${event?.currency || 'USD'} $${Number(event?.price || 0).toFixed(2)}`
+                        )}
+                    </button>
+                )}
             </div>
         </form>
     );
