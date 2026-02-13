@@ -59,7 +59,7 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-dark-950 pt-16 pb-10 px-4 sm:px-6 lg:px-8 relative overflow-y-auto">
+        <div className="min-h-screen flex items-center justify-center bg-dark-950 pt-10 pb-8 px-4 sm:px-6 lg:px-8 relative overflow-y-auto">
             {/* Background Effects */}
             <div className="absolute inset-0 overflow-hidden">
                 <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-600/10 rounded-full blur-3xl" />
@@ -68,7 +68,7 @@ export default function RegisterPage() {
 
             <div className="max-w-md w-full relative z-10">
                 {/* Logo Area */}
-                <div className="mb-6 text-center">
+                <div className="mb-2 text-center">
                     <Link href="/" className="inline-block hover:scale-105 transition-transform duration-300">
                         <div className="relative flex items-center justify-center mx-auto" style={{ width: '120px' }}>
                             {settings?.site_logo ? (
@@ -89,8 +89,8 @@ export default function RegisterPage() {
                 </div>
 
                 {/* Title Area */}
-                <div className="text-center mb-6">
-                    <h2 className="text-3xl font-display font-bold text-white mb-2">
+                <div className="text-center mb-4">
+                    <h2 className="text-2xl font-display font-bold text-white mb-1">
                         Crear Cuenta
                     </h2>
                     <p className="text-dark-400 text-xs uppercase tracking-widest font-bold opacity-80">

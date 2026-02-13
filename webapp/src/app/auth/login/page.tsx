@@ -131,7 +131,7 @@ export default function LoginPage() {
     }, []);
 
     return (
-        <div className="min-h-screen w-full flex items-center justify-center bg-black relative overflow-y-auto px-4 py-8 md:py-20">
+        <div className="min-h-screen w-full flex items-center justify-center bg-black relative overflow-y-auto px-4 py-4 md:py-20">
 
             {/* Background Video (priority over image) */}
             {backgroundVideo && (
@@ -173,7 +173,7 @@ export default function LoginPage() {
 
             <div className="max-w-md w-full relative z-10 flex flex-col items-center px-4 md:px-0">
                 {/* Logo Area */}
-                <div className="mb-6 text-center">
+                <div className="mb-2 text-center">
                     <Link href="/" className="inline-block hover:scale-105 transition-transform duration-300">
                         <div
                             className="relative flex items-center justify-center mx-auto"
@@ -199,10 +199,10 @@ export default function LoginPage() {
                 </div>
 
                 {/* Title Area */}
-                <div className="text-center mb-6">
-                    <h1 className="text-4xl md:text-4xl font-display font-black text-white mb-1 uppercase tracking-tighter italic scale-y-110 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+                <div className="text-center mb-4">
+                    <h1 className="text-3xl md:text-4xl font-display font-black text-white mb-0.5 uppercase tracking-tighter italic scale-y-110 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
                         {t('login.title_line1')}<br />
-                        <span className="text-5xl md:text-5xl tracking-tight">{t('login.title_line2')}</span>
+                        <span className="text-4xl md:text-5xl tracking-tight">{t('login.title_line2')}</span>
                     </h1>
                     <div className="h-[2px] w-20 bg-red-600 mx-auto mb-2" />
                     <p className="text-gray-300 text-[10px] font-black tracking-[0.4em] uppercase opacity-90">

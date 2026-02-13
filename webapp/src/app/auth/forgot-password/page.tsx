@@ -64,10 +64,10 @@ export default function ForgotPasswordPage() {
     }
 
     return (
-        <div className="min-h-screen bg-black flex items-center justify-center pt-16 pb-10 px-4 relative overflow-y-auto">
+        <div className="min-h-screen bg-black flex items-center justify-center pt-10 pb-8 px-4 relative overflow-y-auto">
             <div className="max-w-md w-full relative z-10">
                 {/* Logo Area */}
-                <div className="mb-6 text-center">
+                <div className="mb-2 text-center">
                     <Link href="/" className="inline-block hover:scale-105 transition-transform duration-300">
                         <div className="relative flex items-center justify-center mx-auto" style={{ width: '120px' }}>
                             {settings?.site_logo ? (
@@ -87,7 +87,7 @@ export default function ForgotPasswordPage() {
                     </Link>
                 </div>
 
-                <div className="card p-8 space-y-6">
+                <div className="card p-8 space-y-4">
                     <div className="text-center">
                         <h1 className="text-3xl font-display font-bold text-white">Recuperar Contraseña</h1>
                         <p className="text-gray-400 mt-2">
