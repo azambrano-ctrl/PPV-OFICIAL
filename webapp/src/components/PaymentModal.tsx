@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { useSettingsStore } from '@/lib/store';
 import { PayPalButtons } from '@paypal/react-paypal-js';
+import { isToday, parseISO, isFuture } from 'date-fns';
 
 interface PaymentModalProps {
     event?: {
@@ -14,6 +15,8 @@ interface PaymentModalProps {
         title: string;
         price: number;
         currency: string;
+        date?: string;
+        status?: string;
     };
     purchaseType?: 'event' | 'season_pass';
     onClose: () => void;
@@ -36,7 +39,21 @@ function PaymentFormContent({ event, purchaseType = 'event', onClose }: PaymentM
             if (purchaseType === 'season_pass') {
                 window.location.reload();
             } else if (event?.id) {
-                router.push(`/watch/${event.id}`);
+                // Determine redirection based on event date
+                const eventDate = event.date ? parseISO(event.date) : null;
+                const isEventToday = eventDate ? isToday(eventDate) : false;
+                const isEventLive = event.status === 'live';
+
+                if (isEventToday || isEventLive) {
+                    toast.success('¡Evento en curso! Redirigiendo al reproductor...');
+                    router.push(`/watch/${event.id}`);
+                } else if (eventDate && isFuture(eventDate)) {
+                    toast.success('Compra exitosa. El evento estará disponible pronto.');
+                    router.push('/profile?tab=purchases');
+                } else {
+                    // Fallback for finished events or missing date
+                    router.push(`/watch/${event.id}`);
+                }
             } else {
                 onClose();
             }

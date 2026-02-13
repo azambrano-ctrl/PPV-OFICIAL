@@ -374,6 +374,8 @@ export default function EventDetailPage() {
                         title: event.title,
                         price: event.price,
                         currency: event.currency,
+                        date: event.event_date,
+                        status: event.status,
                     }}
                     onClose={() => setShowPaymentModal(false)}
                 />
