@@ -17,6 +17,7 @@ export default function PayPalProvider({ children }: PayPalProviderProps) {
         intent: "capture",
         components: "buttons",
         enableFunding: "card", // Explicitly enable card funding
+        locale: "es_MX" // Using Mexico locale to ensure "Ciudad" instead of "Población"
     }), [settings?.paypal_client_id]);
 
     // If we don't have settings yet, just render children to avoid blocking
