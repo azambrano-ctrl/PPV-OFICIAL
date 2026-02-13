@@ -130,7 +130,7 @@ export default function LoginPage() {
     }, []);
 
     return (
-        <div className="min-h-screen w-full flex items-center justify-center bg-black relative overflow-y-auto px-4 py-20">
+        <div className="min-h-screen w-full flex items-center justify-center bg-black relative overflow-y-auto px-4 py-8 md:py-20">
 
             {/* Background Video (priority over image) */}
             {backgroundVideo && (
@@ -172,48 +172,41 @@ export default function LoginPage() {
 
             <div className="max-w-md w-full relative z-10 flex flex-col items-center px-4 md:px-0">
                 {/* Logo Area */}
-                <div className="mb-10 text-center">
-                    {backgroundVideo ? (
-                        <div className="w-24 h-24 bg-red-600/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-600/40 backdrop-blur-md">
-                            <Lock className="w-10 h-10 text-red-500" />
-                        </div>
-                    ) : (
-                        <Link href="/" className="inline-block hover:scale-105 transition-transform duration-300">
-                            <div
-                                className="relative flex items-center justify-center mx-auto"
-                                style={{
-                                    width: '160px'
+                <div className="mb-6 text-center">
+                    <Link href="/" className="inline-block hover:scale-105 transition-transform duration-300">
+                        <div
+                            className="relative flex items-center justify-center mx-auto"
+                            style={{
+                                width: '120px'
+                            }}
+                        >
+                            <img
+                                src="/images/logo.png"
+                                alt="Logo"
+                                className="max-w-full h-auto object-contain drop-shadow-[0_0_15px_rgba(255,0,0,0.3)]"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).classList.add('hidden');
                                 }}
-                            >
-                                <img
-                                    src="/images/logo.png" // Standard logo path, fallback to text if missing
-                                    alt="Logo"
-                                    className="max-w-full h-auto object-contain drop-shadow-[0_0_15px_rgba(255,0,0,0.3)]"
-                                    onError={(e) => {
-                                        // Hide if image fails
-                                        (e.target as HTMLImageElement).classList.add('hidden');
-                                    }}
-                                />
-                            </div>
-                        </Link>
-                    )}
+                            />
+                        </div>
+                    </Link>
                 </div>
 
                 {/* Title Area */}
-                <div className="text-center mb-6 md:mb-8">
-                    <h1 className="text-5xl md:text-4xl font-display font-black text-white mb-1 uppercase tracking-tighter italic scale-y-110 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+                <div className="text-center mb-6">
+                    <h1 className="text-4xl md:text-4xl font-display font-black text-white mb-1 uppercase tracking-tighter italic scale-y-110 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
                         {t('login.title_line1')}<br />
-                        <span className="text-6xl md:text-5xl tracking-tight">{t('login.title_line2')}</span>
+                        <span className="text-5xl md:text-5xl tracking-tight">{t('login.title_line2')}</span>
                     </h1>
-                    <div className="h-[2px] w-28 bg-red-600 mx-auto mb-3" />
-                    <p className="text-gray-300 text-sm md:text-[11px] font-black tracking-[0.4em] uppercase opacity-90">
+                    <div className="h-[2px] w-20 bg-red-600 mx-auto mb-2" />
+                    <p className="text-gray-300 text-[10px] font-black tracking-[0.4em] uppercase opacity-90">
                         {t('login.welcome')}
                     </p>
                 </div>
 
-                {/* Form Card - Narrower and more compact */}
+                {/* Form Card */}
                 <div className="w-full bg-[#1a1a20]/90 backdrop-blur-2xl p-6 md:p-10 rounded-2xl border border-white/5 relative shadow-[0_0_80px_rgba(0,0,0,0.9)]">
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 relative z-10">
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 relative z-10">
                         {/* Email */}
                         <div>
                             <div className="relative group">
@@ -277,11 +270,11 @@ export default function LoginPage() {
                     </form>
 
                     {/* Social Divider */}
-                    <div className="relative my-8">
+                    <div className="relative my-6">
                         <div className="absolute inset-0 flex items-center">
                             <div className="w-full border-t border-white/[0.05]" />
                         </div>
-                        <div className="relative flex justify-center text-xs md:text-[9px] font-black uppercase tracking-[0.4em]">
+                        <div className="relative flex justify-center text-[8px] font-black uppercase tracking-[0.4em]">
                             <span className="px-3 bg-[#1a1a20] text-gray-500">{t('login.social_divider')}</span>
                         </div>
                     </div>
@@ -316,8 +309,8 @@ export default function LoginPage() {
                 </div>
 
                 {/* Footer Links */}
-                <div className="mt-8 text-center space-y-4">
-                    <p className="text-sm md:text-xs text-gray-300 uppercase font-black tracking-[0.2em]">
+                <div className="mt-6 text-center space-y-3">
+                    <p className="text-xs text-gray-300 uppercase font-black tracking-[0.2em]">
                         {t('login.no_account')}{' '}
                         <Link href="/auth/register" className="text-white hover:text-red-500 transition-colors">
                             {t('login.register')}
