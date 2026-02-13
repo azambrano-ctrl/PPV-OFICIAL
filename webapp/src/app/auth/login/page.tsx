@@ -170,37 +170,37 @@ export default function LoginPage() {
                 <div className="w-[150px] h-[300px] bg-white opacity-10 blur-[80px] rounded-full -rotate-[25deg] -translate-y-20" />
             </div>
 
-            <div className="max-w-md w-full relative z-10 flex flex-col items-center">
+            <div className="max-w-md w-full relative z-10 flex flex-col items-center px-4 md:px-0">
                 {/* Logo / Title Area */}
-                <div className="text-center mb-8">
-                    <h1 className="text-4xl font-display font-black text-white mb-1 uppercase tracking-tighter italic scale-y-110 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+                <div className="text-center mb-6 md:mb-8">
+                    <h1 className="text-5xl md:text-4xl font-display font-black text-white mb-1 uppercase tracking-tighter italic scale-y-110 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
                         {t('login.title_line1')}<br />
-                        <span className="text-5xl tracking-tight">{t('login.title_line2')}</span>
+                        <span className="text-6xl md:text-5xl tracking-tight">{t('login.title_line2')}</span>
                     </h1>
                     <div className="h-[2px] w-28 bg-red-600 mx-auto mb-3" />
-                    <p className="text-gray-300 text-[11px] font-black tracking-[0.4em] uppercase opacity-90">
+                    <p className="text-gray-300 text-sm md:text-[11px] font-black tracking-[0.4em] uppercase opacity-90">
                         {t('login.welcome')}
                     </p>
                 </div>
 
                 {/* Form Card - Narrower and more compact */}
-                <div className="w-full bg-[#1a1a20]/90 backdrop-blur-2xl p-10 rounded-2xl border border-white/5 relative shadow-[0_0_80px_rgba(0,0,0,0.9)]">
+                <div className="w-full bg-[#1a1a20]/90 backdrop-blur-2xl p-6 md:p-10 rounded-2xl border border-white/5 relative shadow-[0_0_80px_rgba(0,0,0,0.9)]">
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 relative z-10">
                         {/* Email */}
                         <div>
                             <div className="relative group">
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <Mail className="h-4 w-4 text-gray-500 group-focus-within:text-white transition-colors" />
+                                    <Mail className="h-5 w-5 md:h-4 md:w-4 text-gray-500 group-focus-within:text-white transition-colors" />
                                 </div>
                                 <input
                                     {...register('email')}
                                     type="email"
-                                    className="w-full pl-11 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-red-600/40 transition-all text-xs tracking-widest font-bold placeholder:uppercase"
+                                    className="w-full pl-11 pr-4 py-4 md:py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-red-600/40 transition-all text-sm md:text-xs tracking-widest font-bold placeholder:uppercase"
                                     placeholder={t('login.email_placeholder')}
                                 />
                             </div>
                             {errors.email && (
-                                <p className="mt-1.5 text-[10px] text-red-500 font-bold uppercase tracking-widest pl-2">{errors.email.message}</p>
+                                <p className="mt-1.5 text-xs md:text-[10px] text-red-500 font-bold uppercase tracking-widest pl-2">{errors.email.message}</p>
                             )}
                         </div>
 
@@ -208,12 +208,12 @@ export default function LoginPage() {
                         <div>
                             <div className="relative group">
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <Lock className="h-4 w-4 text-gray-500 group-focus-within:text-white transition-colors" />
+                                    <Lock className="h-5 w-5 md:h-4 md:w-4 text-gray-500 group-focus-within:text-white transition-colors" />
                                 </div>
                                 <input
                                     {...register('password')}
                                     type={showPassword ? 'text' : 'password'}
-                                    className="w-full pl-11 pr-11 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-red-600/40 transition-all text-xs tracking-widest font-bold placeholder:uppercase"
+                                    className="w-full pl-11 pr-11 py-4 md:py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-red-600/40 transition-all text-sm md:text-xs tracking-widest font-bold placeholder:uppercase"
                                     placeholder={t('login.password_placeholder')}
                                 />
                                 <button
@@ -221,11 +221,11 @@ export default function LoginPage() {
                                     onClick={() => setShowPassword(!showPassword)}
                                     className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-white transition-colors"
                                 >
-                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    {showPassword ? <EyeOff className="h-5 w-5 md:h-4 md:w-4" /> : <Eye className="h-5 w-5 md:h-4 md:w-4" />}
                                 </button>
                             </div>
                             {errors.password && (
-                                <p className="mt-1.5 text-[10px] text-red-500 font-bold uppercase tracking-widest pl-2">{errors.password.message}</p>
+                                <p className="mt-1.5 text-xs md:text-[10px] text-red-500 font-bold uppercase tracking-widest pl-2">{errors.password.message}</p>
                             )}
                         </div>
 
@@ -233,7 +233,7 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-4 bg-white hover:bg-gray-100 text-black font-black uppercase tracking-[0.2em] text-sm rounded-lg transition-all transform active:scale-[0.98] disabled:opacity-50 shadow-lg"
+                            className="w-full py-4 md:py-4 bg-white hover:bg-gray-100 text-black font-black uppercase tracking-[0.2em] text-base md:text-sm rounded-lg transition-all transform active:scale-[0.98] disabled:opacity-50 shadow-lg"
                         >
                             {loading ? t('login.loading') : t('login.submit')}
                         </button>
@@ -241,7 +241,7 @@ export default function LoginPage() {
                         <div className="text-center">
                             <Link
                                 href="/auth/forgot-password"
-                                className="text-xs text-gray-300 hover:text-white uppercase font-black tracking-widest transition-colors"
+                                className="text-sm md:text-xs text-gray-300 hover:text-white uppercase font-black tracking-widest transition-colors"
                             >
                                 {t('login.forgot_password')}
                             </Link>
@@ -253,7 +253,7 @@ export default function LoginPage() {
                         <div className="absolute inset-0 flex items-center">
                             <div className="w-full border-t border-white/[0.05]" />
                         </div>
-                        <div className="relative flex justify-center text-[9px] font-black uppercase tracking-[0.4em]">
+                        <div className="relative flex justify-center text-xs md:text-[9px] font-black uppercase tracking-[0.4em]">
                             <span className="px-3 bg-[#1a1a20] text-gray-500">{t('login.social_divider')}</span>
                         </div>
                     </div>
@@ -263,7 +263,7 @@ export default function LoginPage() {
                         <button
                             type="button"
                             onClick={() => handleSocialLogin('google')}
-                            className="flex items-center justify-center py-3.5 bg-white/5 border border-white/5 hover:bg-white/10 rounded-xl transition-all text-white text-xs font-black uppercase tracking-widest"
+                            className="flex items-center justify-center py-4 md:py-3.5 bg-white/5 border border-white/5 hover:bg-white/10 rounded-xl transition-all text-white text-sm md:text-xs font-black uppercase tracking-widest"
                         >
                             <svg className="w-6 h-6 mr-2" viewBox="0 0 24 24">
                                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -276,7 +276,7 @@ export default function LoginPage() {
                         <button
                             type="button"
                             onClick={() => handleSocialLogin('facebook')}
-                            className="flex items-center justify-center py-3.5 bg-white/5 border border-white/5 hover:bg-white/10 rounded-xl transition-all text-white text-xs font-black uppercase tracking-widest"
+                            className="flex items-center justify-center py-4 md:py-3.5 bg-white/5 border border-white/5 hover:bg-white/10 rounded-xl transition-all text-white text-sm md:text-xs font-black uppercase tracking-widest"
                         >
                             <svg className="w-6 h-6 mr-2" fill="#1877F2" viewBox="0 0 24 24">
                                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" fill="#1877F2" />
@@ -289,14 +289,14 @@ export default function LoginPage() {
 
                 {/* Footer Links */}
                 <div className="mt-8 text-center space-y-4">
-                    <p className="text-xs text-gray-300 uppercase font-black tracking-[0.2em]">
+                    <p className="text-sm md:text-xs text-gray-300 uppercase font-black tracking-[0.2em]">
                         {t('login.no_account')}{' '}
                         <Link href="/auth/register" className="text-white hover:text-red-500 transition-colors">
                             {t('login.register')}
                         </Link>
                     </p>
                     <div className="h-px w-8 bg-white/5 mx-auto" />
-                    <Link href="/promoter/register" className="inline-block text-[11px] text-white hover:text-red-400 uppercase font-black tracking-[0.3em] border border-red-600/30 px-6 py-2.5 rounded-lg transition-all bg-red-600/10">
+                    <Link href="/promoter/register" className="inline-block text-sm md:text-[11px] text-white hover:text-red-400 uppercase font-black tracking-[0.3em] border border-red-600/30 px-6 py-3 md:py-2.5 rounded-lg transition-all bg-red-600/10">
                         {t('login.register_promoter')}
                     </Link>
                 </div>
