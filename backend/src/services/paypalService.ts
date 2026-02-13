@@ -7,18 +7,19 @@ import { getSettings } from './settingsService';
 const getPayPalClient = async () => {
     try {
         const settings = await getSettings();
-        const clientId = settings.paypal_client_id;
-        const clientSecret = settings.paypal_secret_key;
+        const clientId = settings.paypal_client_id?.trim();
+        const clientSecret = settings.paypal_secret_key?.trim();
         const isLive = process.env.PAYPAL_MODE === 'live';
 
         logger.info('Initializing PayPal Client', {
             mode: isLive ? 'live' : 'sandbox',
             hasClientId: !!clientId,
-            hasSecret: !!clientSecret
+            hasSecret: !!clientSecret,
+            idStart: clientId ? clientId.substring(0, 5) : 'N/A'
         });
 
         if (!clientId || !clientSecret) {
-            throw new Error('PayPal credentials are missing in database settings');
+            throw new Error('PayPal credentials are missing or empty in database settings');
         }
 
         const environment = isLive
@@ -27,7 +28,10 @@ const getPayPalClient = async () => {
 
         return new paypal.core.PayPalHttpClient(environment);
     } catch (error: any) {
-        logger.error('Failed to initialize PayPal Client:', error.message);
+        logger.error('Failed to initialize PayPal Client:', {
+            error: error.message,
+            stack: error.stack
+        });
         throw error;
     }
 };

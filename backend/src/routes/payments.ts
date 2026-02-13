@@ -30,6 +30,54 @@ const capturePayPalSchema = z.object({
 });
 
 /**
+ * GET /api/payments/paypal-diag
+ * Diagnostic endpoint for PayPal
+ */
+router.get(
+    '/paypal-diag',
+    authenticate,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        // Only admins should see details, but for now we'll allow it for debugging
+        if (req.user!.role !== 'admin') {
+            res.status(403).json({ success: false, message: 'Admin only' });
+            return;
+        }
+
+        const { getPayPalClient } = require('../services/paypalService');
+        const paypal = require('@paypal/checkout-server-sdk');
+
+        try {
+            const client = await getPayPalClient();
+            const request = new paypal.orders.OrdersGetRequest('DUMMY_ID');
+            let authSuccess = false;
+            let errorDetails = null;
+
+            try {
+                await client.execute(request);
+            } catch (err: any) {
+                // 404 means auth worked but order not found
+                if (err.statusCode === 404) authSuccess = true;
+                else errorDetails = err.message || JSON.parse(err.message || '{}');
+            }
+
+            res.json({
+                success: true,
+                mode: process.env.PAYPAL_MODE,
+                authenticated: authSuccess,
+                error: errorDetails,
+                node_env: process.env.NODE_ENV
+            });
+        } catch (error: any) {
+            res.status(500).json({
+                success: false,
+                message: error.message,
+                mode: process.env.PAYPAL_MODE
+            });
+        }
+    })
+);
+
+/**
  * POST /api/payments/create
  * Create payment intent/order
  */
