@@ -69,7 +69,7 @@ export default function ForgotPasswordPage() {
                 {/* Logo Area */}
                 <div className="mb-2 text-center">
                     <Link href="/" className="inline-block hover:scale-105 transition-transform duration-300">
-                        <div className="relative flex items-center justify-center mx-auto" style={{ width: '120px' }}>
+                        <div className="relative flex items-center justify-center mx-auto" style={{ width: '180px' }}>
                             {settings?.site_logo ? (
                                 <img
                                     src={settings.site_logo}

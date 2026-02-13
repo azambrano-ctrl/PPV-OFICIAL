@@ -178,7 +178,7 @@ export default function LoginPage() {
                         <div
                             className="relative flex items-center justify-center mx-auto"
                             style={{
-                                width: '120px'
+                                width: '180px'
                             }}
                         >
                             {settings?.site_logo ? (
