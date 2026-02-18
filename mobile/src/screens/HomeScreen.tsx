@@ -120,9 +120,28 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#334155',
     },
-    thumbnail: {
+    thumbnailContainer: {
+        position: 'relative',
         width: '100%',
         height: 200,
+    },
+    thumbnail: {
+        width: '100%',
+        height: '100%',
+    },
+    statusBadge: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        backgroundColor: '#ef4444',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 4,
+    },
+    statusBadgeText: {
+        color: '#ffffff',
+        fontSize: 10,
+        fontWeight: 'bold',
     },
     eventInfo: {
         padding: 16,
