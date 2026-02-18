@@ -6,6 +6,7 @@ import { ChevronLeft, Info, Maximize, Minimize } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../store/authStore';
 import api from '../services/api';
+import { getImageUrl } from '../config/constants';
 
 export default function WatchScreen({ route, navigation }: any) {
     const { eventId } = route.params;
@@ -71,25 +72,30 @@ export default function WatchScreen({ route, navigation }: any) {
         );
     }
 
+    // Ensure streamUrl is properly formatted
+    const streamUri = streamData.streamUrl.startsWith('http')
+        ? streamData.streamUrl
+        : getImageUrl(streamData.streamUrl);
+
     return (
         <View style={styles.container}>
             <StatusBar hidden={isFullscreen} />
 
             {/* Minimal Header - Hidden in fullscreen */}
             {!isFullscreen && (
-                <View style={styles.header}>
+                <SafeAreaView edges={['top']} style={styles.header}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backIcon}>
                         <ChevronLeft color="#fff" size={28} />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle} numberOfLines={1}>Streaming en Vivo</Text>
-                </View>
+                </SafeAreaView>
             )}
 
             <View style={[styles.videoWrapper, isFullscreen && styles.videoWrapperFullscreen]}>
                 <Video
                     ref={videoRef}
                     source={{
-                        uri: streamData.streamUrl,
+                        uri: streamUri,
                         headers: {
                             'Authorization': `Bearer ${streamData.token}`
                         }
@@ -184,7 +190,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 16,
         backgroundColor: '#0f172a',
-        marginTop: 40, // SafeArea margin
     },
     backIcon: {
         marginRight: 16,

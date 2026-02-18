@@ -5,6 +5,7 @@ import { Calendar, Clock, DollarSign, Play, ArrowLeft, CheckCircle } from 'lucid
 import { eventService } from '../services';
 import api from '../services/api';
 import { useAuthStore } from '../store/authStore';
+import { getImageUrl } from '../config/constants';
 import PaymentModal from '../components/PaymentModal';
 
 export default function EventDetailScreen({ route, navigation }: any) {
@@ -19,10 +20,10 @@ export default function EventDetailScreen({ route, navigation }: any) {
         try {
             const [eventData, accessData] = await Promise.all([
                 eventService.getById(eventId),
-                isAuthenticated ? eventService.checkAccess(eventId) : { data: { hasAccess: false } }
+                isAuthenticated ? eventService.checkAccess(eventId) : { success: true, data: { hasAccess: false } }
             ]);
             setEvent(eventData.data || null);
-            setHasAccess(accessData.data.hasAccess);
+            setHasAccess(accessData.data?.hasAccess || false);
         } catch (error) {
             console.error('Error loading event detail:', error);
         } finally {
@@ -72,12 +73,13 @@ export default function EventDetailScreen({ route, navigation }: any) {
     }
 
     const isFree = parseFloat(event.price) === 0;
+    const bannerUri = getImageUrl(event.banner_url || event.thumbnail_url);
 
     return (
         <ScrollView style={styles.container} bounces={false}>
             <View style={styles.hero}>
                 <Image
-                    source={{ uri: event.banner_url || event.thumbnail_url || 'https://via.placeholder.com/800x400' }}
+                    source={{ uri: bannerUri || 'https://via.placeholder.com/800x400' }}
                     style={styles.banner}
                 />
                 <View style={styles.overlay} />
