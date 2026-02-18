@@ -103,7 +103,10 @@ export default function EventDetailScreen({ route, navigation }: any) {
                                 <CheckCircle size={20} color="#22c55e" />
                                 <Text style={styles.successText}>Tienes acceso a este evento</Text>
                             </View>
-                            <TouchableOpacity style={styles.watchBtn}>
+                            <TouchableOpacity
+                                style={styles.watchBtn}
+                                onPress={() => navigation.navigate('Watch', { eventId: event.id })}
+                            >
                                 <Play size={20} color="#fff" />
                                 <Text style={styles.watchBtnText}>Ver Ahora</Text>
                             </TouchableOpacity>
