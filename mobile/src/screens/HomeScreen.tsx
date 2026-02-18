@@ -31,17 +31,19 @@ export default function HomeScreen({ navigation }: any) {
         loadEvents();
     };
 
-    const renderEvent = ({ item }: any) => (
+    const renderEvent = ({ item }: { item: any }) => (
         <TouchableOpacity
             style={styles.eventCard}
             onPress={() => navigation.navigate('EventDetail', { eventId: item.id })}
         >
-            <Image
-                source={{ uri: item.thumbnail_url || 'https://via.placeholder.com/400x200' }}
-                style={styles.thumbnail}
-            />
-            <View className="absolute top-2 right-2 bg-red-600 px-2 py-1 rounded">
-                <Text className="text-white text-xs font-bold uppercase">{item.status}</Text>
+            <View style={styles.thumbnailContainer}>
+                <Image
+                    source={{ uri: item.thumbnail_url || 'https://via.placeholder.com/400x200' }}
+                    style={styles.thumbnail}
+                />
+                <View style={styles.statusBadge}>
+                    <Text style={styles.statusBadgeText}>{item.status.toUpperCase()}</Text>
+                </View>
             </View>
             <View style={styles.eventInfo}>
                 <Text style={styles.eventTitle}>{item.title}</Text>
