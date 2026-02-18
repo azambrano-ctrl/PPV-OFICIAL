@@ -29,3 +29,10 @@ export const eventService = {
         return response.data;
     }
 };
+
+export const settingsService = {
+    get: async () => {
+        const response = await api.get('/settings');
+        return response.data;
+    }
+};

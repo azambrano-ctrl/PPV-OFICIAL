@@ -4,9 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar, Clock, ChevronRight, User } from 'lucide-react-native';
 import { eventService } from '../services';
 import { useAuthStore } from '../store/authStore';
+import { useSettingsStore } from '../store/settingsStore';
+import { getImageUrl } from '../config/constants';
 
 export default function HomeScreen({ navigation }: any) {
     const { isAuthenticated, logout } = useAuthStore();
+    const { settings } = useSettingsStore();
     const [events, setEvents] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
     const [refreshing, setRefreshing] = React.useState(false);
@@ -32,6 +35,10 @@ export default function HomeScreen({ navigation }: any) {
         loadEvents();
     };
 
+    const logoSource = settings.site_logo
+        ? { uri: getImageUrl(settings.site_logo) }
+        : require('../../assets/images/logo.png');
+
     const renderEvent = ({ item }: { item: any }) => (
         <TouchableOpacity
             style={styles.eventCard}
@@ -39,7 +46,7 @@ export default function HomeScreen({ navigation }: any) {
         >
             <View style={styles.thumbnailContainer}>
                 <Image
-                    source={{ uri: item.thumbnail_url || 'https://via.placeholder.com/400x200' }}
+                    source={{ uri: getImageUrl(item.thumbnail_url) || 'https://via.placeholder.com/400x200' }}
                     style={styles.thumbnail}
                 />
                 <View style={styles.statusBadge}>
@@ -72,7 +79,7 @@ export default function HomeScreen({ navigation }: any) {
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
                 <Image
-                    source={require('../../assets/images/logo.png')}
+                    source={logoSource}
                     style={styles.logo}
                     resizeMode="contain"
                 />

@@ -1,33 +1,42 @@
 import React from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Image, ImageBackground, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Image, ImageBackground, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
+import { Mail, Lock, User, Phone, ArrowLeft } from 'lucide-react-native';
 import { authService } from '../services';
-import { useAuthStore } from '../store/authStore';
 import { useSettingsStore } from '../store/settingsStore';
-import { getImageUrl } from '../config/constants';
 
-export default function LoginScreen({ navigation }: any) {
+export default function RegisterScreen({ navigation }: any) {
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
-    const [showPassword, setShowPassword] = React.useState(false);
+    const [fullName, setFullName] = React.useState('');
+    const [phone, setPhone] = React.useState('');
     const [loading, setLoading] = React.useState(false);
     const [error, setError] = React.useState('');
-    const setAuth = useAuthStore(state => state.setAuth);
     const { settings } = useSettingsStore();
 
-    const handleLogin = async () => {
-        if (!email || !password) return;
+    const handleRegister = async () => {
+        if (!email || !password || !fullName) {
+            setError('Por favor completa los campos obligatorios');
+            return;
+        }
 
         setLoading(true);
         setError('');
 
         try {
-            const data = await authService.login(email, password);
+            const data = await authService.register({
+                email,
+                password,
+                full_name: fullName,
+                phone
+            });
+
             if (data.success) {
-                await setAuth(data.data.user, data.data.accessToken);
+                Alert.alert('Éxito', 'Cuenta creada correctamente. Ya puedes iniciar sesión.', [
+                    { text: 'OK', onPress: () => navigation.navigate('Login') }
+                ]);
             } else {
-                setError(data.message || 'Error al iniciar sesión');
+                setError(data.message || 'Error al registrarse');
             }
         } catch (err: any) {
             setError(err.response?.data?.message || 'Error de conexión');
@@ -35,10 +44,6 @@ export default function LoginScreen({ navigation }: any) {
             setLoading(false);
         }
     };
-
-    const logoSource = settings.site_logo
-        ? { uri: getImageUrl(settings.site_logo) }
-        : require('../../assets/images/logo.png');
 
     return (
         <ImageBackground
@@ -52,24 +57,31 @@ export default function LoginScreen({ navigation }: any) {
                         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                         style={{ flex: 1 }}
                     >
-                        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                            <View style={styles.logoContainer}>
-                                <Image
-                                    source={logoSource}
-                                    style={styles.logo}
-                                    resizeMode="contain"
-                                />
-                            </View>
+                        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+                            <ArrowLeft color="#fff" size={24} />
+                        </TouchableOpacity>
 
+                        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                             <View style={styles.headerTextContainer}>
-                                <Text style={styles.mainTitle}>INGRESA AL</Text>
-                                <Text style={styles.octTitle}>OCTÁGONO</Text>
+                                <Text style={styles.mainTitle}>NUEVA</Text>
+                                <Text style={styles.octTitle}>CUENTA</Text>
                                 <View style={styles.titleUnderline} />
-                                <Text style={styles.welcomeText}>{settings.site_name?.toUpperCase() || 'BIENVENIDO'}</Text>
+                                <Text style={styles.welcomeText}>ÚNETE A {settings.site_name?.toUpperCase() || 'ARENA'}</Text>
                             </View>
 
                             <View style={styles.card}>
                                 {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+                                <View style={styles.inputWrapper}>
+                                    <User size={20} color="#94a3b8" style={styles.inputIcon} />
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="NOMBRE COMPLETO"
+                                        placeholderTextColor="#64748b"
+                                        value={fullName}
+                                        onChangeText={setFullName}
+                                    />
+                                </View>
 
                                 <View style={styles.inputWrapper}>
                                     <Mail size={20} color="#94a3b8" style={styles.inputIcon} />
@@ -85,6 +97,18 @@ export default function LoginScreen({ navigation }: any) {
                                 </View>
 
                                 <View style={styles.inputWrapper}>
+                                    <Phone size={20} color="#94a3b8" style={styles.inputIcon} />
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="TELÉFONO (OPCIONAL)"
+                                        placeholderTextColor="#64748b"
+                                        value={phone}
+                                        onChangeText={setPhone}
+                                        keyboardType="phone-pad"
+                                    />
+                                </View>
+
+                                <View style={styles.inputWrapper}>
                                     <Lock size={20} color="#94a3b8" style={styles.inputIcon} />
                                     <TextInput
                                         style={styles.input}
@@ -92,60 +116,28 @@ export default function LoginScreen({ navigation }: any) {
                                         placeholderTextColor="#64748b"
                                         value={password}
                                         onChangeText={setPassword}
-                                        secureTextEntry={!showPassword}
+                                        secureTextEntry
                                     />
-                                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                                        {showPassword ? (
-                                            <EyeOff size={20} color="#94a3b8" />
-                                        ) : (
-                                            <Eye size={20} color="#94a3b8" />
-                                        )}
-                                    </TouchableOpacity>
                                 </View>
 
                                 <TouchableOpacity
                                     style={[styles.loginBtn, loading && styles.disabledBtn]}
-                                    onPress={handleLogin}
+                                    onPress={handleRegister}
                                     disabled={loading}
                                 >
                                     {loading ? (
                                         <ActivityIndicator color="#000" />
                                     ) : (
-                                        <Text style={styles.loginBtnText}>INGRESAR</Text>
+                                        <Text style={styles.loginBtnText}>REGISTRARSE</Text>
                                     )}
                                 </TouchableOpacity>
-
-                                <TouchableOpacity style={styles.forgotBtn}>
-                                    <Text style={styles.forgotText}>¿OLVIDASTE TU CONTRASEÑA?</Text>
-                                </TouchableOpacity>
-
-                                <View style={styles.socialDivider}>
-                                    <View style={styles.dividerLine} />
-                                    <Text style={styles.dividerText}>ACCESO SOCIAL</Text>
-                                    <View style={styles.dividerLine} />
-                                </View>
-
-                                <View style={styles.socialRow}>
-                                    <TouchableOpacity style={styles.socialBtn}>
-                                        <Image source={{ uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png' }} style={styles.socialIcon} />
-                                        <Text style={styles.socialBtnText}>GOOGLE</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity style={styles.socialBtn}>
-                                        <Image source={{ uri: 'https://cdn-icons-png.flaticon.com/512/733/733547.png' }} style={styles.socialIcon} />
-                                        <Text style={styles.socialBtnText}>FACEBOOK</Text>
-                                    </TouchableOpacity>
-                                </View>
                             </View>
 
                             <View style={styles.footer}>
-                                <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
                                     <Text style={styles.footerText}>
-                                        ¿NO TIENES UNA CUENTA? <Text style={styles.registerLink}>REGÍSTRATE</Text>
+                                        ¿YA TIENES UNA CUENTA? <Text style={styles.registerLink}>INICIA SESIÓN</Text>
                                     </Text>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity style={styles.promoterBtn}>
-                                    <Text style={styles.promoterBtnText}>REGÍSTRATE COMO PROMOTORA</Text>
                                 </TouchableOpacity>
                             </View>
                         </ScrollView>
@@ -164,23 +156,22 @@ const styles = StyleSheet.create({
     },
     overlay: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
     },
     container: {
         flex: 1,
     },
+    backBtn: {
+        padding: 16,
+        position: 'absolute',
+        top: 20,
+        left: 0,
+        zIndex: 10,
+    },
     scrollContent: {
         padding: 24,
         alignItems: 'center',
-        paddingTop: 40,
-    },
-    logoContainer: {
-        marginBottom: 30,
-        alignItems: 'center',
-    },
-    logo: {
-        width: 180,
-        height: 80,
+        paddingTop: 80,
     },
     headerTextContainer: {
         alignItems: 'center',
@@ -270,58 +261,6 @@ const styles = StyleSheet.create({
         fontWeight: '900',
         letterSpacing: 2,
     },
-    forgotBtn: {
-        marginTop: 20,
-        alignItems: 'center',
-    },
-    forgotText: {
-        color: '#fff',
-        fontSize: 12,
-        fontWeight: '900',
-        letterSpacing: 1,
-    },
-    socialDivider: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: 30,
-    },
-    dividerLine: {
-        flex: 1,
-        height: 1,
-        backgroundColor: 'rgba(148, 163, 184, 0.2)',
-    },
-    dividerText: {
-        color: '#64748b',
-        fontSize: 10,
-        fontWeight: 'bold',
-        marginHorizontal: 10,
-        letterSpacing: 2,
-    },
-    socialRow: {
-        flexDirection: 'row',
-        gap: 12,
-    },
-    socialBtn: {
-        flex: 1,
-        flexDirection: 'row',
-        backgroundColor: 'rgba(51, 65, 85, 0.5)',
-        height: 50,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: 'rgba(148, 163, 184, 0.1)',
-        gap: 8,
-    },
-    socialIcon: {
-        width: 20,
-        height: 20,
-    },
-    socialBtnText: {
-        color: '#fff',
-        fontSize: 12,
-        fontWeight: 'bold',
-    },
     footer: {
         marginTop: 40,
         alignItems: 'center',
@@ -336,22 +275,5 @@ const styles = StyleSheet.create({
     registerLink: {
         color: '#fff',
         fontWeight: '900',
-    },
-    promoterBtn: {
-        marginTop: 24,
-        width: '100%',
-        height: 50,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: 'rgba(239, 68, 68, 0.5)',
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    promoterBtnText: {
-        color: '#fff',
-        fontSize: 12,
-        fontWeight: '900',
-        letterSpacing: 1,
     },
 });
