@@ -32,6 +32,9 @@ export const metadata: Metadata = {
         statusBarStyle: 'default',
         title: 'Arena PPV',
     },
+    other: {
+        'mobile-web-app-capable': 'yes',
+    },
     openGraph: {
         title: 'Arena Fight Pass - Streaming de Combate',
         description: 'Disfruta de las mejores peleas en vivo y en alta definición.',
