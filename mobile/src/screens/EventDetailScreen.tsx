@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar, Clock, DollarSign, Play, ArrowLeft, CheckCircle } from 'lucide-react-native';
 import { eventService } from '../services';
 import { useAuthStore } from '../store/authStore';
+import PaymentModal from '../components/PaymentModal';
 
 export default function EventDetailScreen({ route, navigation }: any) {
     const { eventId } = route.params;
@@ -11,6 +12,7 @@ export default function EventDetailScreen({ route, navigation }: any) {
     const [event, setEvent] = React.useState<any>(null);
     const [loading, setLoading] = React.useState(true);
     const [hasAccess, setHasAccess] = React.useState(false);
+    const [showPaymentModal, setShowPaymentModal] = React.useState(false);
 
     const loadEventData = async () => {
         try {
@@ -117,13 +119,29 @@ export default function EventDetailScreen({ route, navigation }: any) {
                             <Text style={styles.priceValue}>
                                 {parseFloat(event.price) === 0 ? 'GRATIS' : `$${event.price} ${event.currency}`}
                             </Text>
-                            <TouchableOpacity style={styles.buyBtn}>
+                            <TouchableOpacity
+                                style={styles.buyBtn}
+                                onPress={() => {
+                                    if (isAuthenticated) {
+                                        setShowPaymentModal(true);
+                                    } else {
+                                        navigation.navigate('Login');
+                                    }
+                                }}
+                            >
                                 <Text style={styles.buyBtnText}>Comprar Pase</Text>
                             </TouchableOpacity>
                         </View>
                     )}
                 </View>
             </View>
+
+            <PaymentModal
+                visible={showPaymentModal}
+                onClose={() => setShowPaymentModal(false)}
+                event={event}
+                onSuccess={() => loadEventData()}
+            />
         </ScrollView>
     );
 }
