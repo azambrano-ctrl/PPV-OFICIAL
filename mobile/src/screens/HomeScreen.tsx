@@ -71,7 +71,11 @@ export default function HomeScreen({ navigation }: any) {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>ARENA FIGHT PASS</Text>
+                <Image
+                    source={require('../../assets/images/logo.png')}
+                    style={styles.logo}
+                    resizeMode="contain"
+                />
                 <TouchableOpacity
                     onPress={() => isAuthenticated ? Alert.alert('Perfil', '¿Deseas cerrar sesión?', [
                         { text: 'Cancelar', style: 'cancel' },
@@ -110,12 +114,18 @@ const styles = StyleSheet.create({
         backgroundColor: '#0f172a', // dark-950
     },
     header: {
-        padding: 20,
+        paddingHorizontal: 20,
+        paddingVertical: 10,
         borderBottomWidth: 1,
         borderBottomColor: '#1e293b',
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        height: 80,
+    },
+    logo: {
+        width: 140,
+        height: 60,
     },
     profileBtn: {
         padding: 8,
@@ -123,13 +133,6 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         borderWidth: 1,
         borderColor: '#334155',
-    },
-    headerTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#ffffff',
-        letterSpacing: 1,
-        fontFamily: 'System',
     },
     listContent: {
         padding: 16,
