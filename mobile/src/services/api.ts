@@ -1,13 +1,6 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-import Constants from 'expo-constants';
-
-// Detectar la IP del servidor automáticamente para que funcione en dispositivos físicos
-const debuggerHost = Constants.expoConfig?.hostUri;
-const localhost = debuggerHost?.split(':')[0] || 'localhost';
-
-const API_URL = `http://${localhost}:5000/api`;
+import { API_URL } from '../config/constants';
 
 const api = axios.create({
     baseURL: API_URL,
