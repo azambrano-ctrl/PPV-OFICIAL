@@ -46,17 +46,15 @@ const app = express();
 const httpServer = createServer(app);
 
 // Socket.io setup for real-time chat
-// Socket.io setup for real-time chat
 const allowedOrigins = [
     process.env.WEB_URL,
     'http://localhost:3000',
     'http://localhost:5173',
-    '*' // Fallback for debugging, though specific origins are better
-];
+].filter(Boolean) as string[];
 
 const io = new Server(httpServer, {
     cors: {
-        origin: true, // Allow any origin
+        origin: allowedOrigins.length > 0 ? allowedOrigins : true,
         credentials: true,
     },
 });
@@ -74,15 +72,21 @@ app.use(helmet({
             mediaSrc: ["'self'", "blob:", "*"],
             connectSrc: ["'self'", "*"],
         }
+    },
+    hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true
     }
 }));
 
-// Manual CORS to fix persistent issues
+// Manual CORS to fix persistent issues - restricted to allowedOrigins
 app.use((req, res, next) => {
     const origin = req.headers.origin;
-    if (origin) {
+
+    if (origin && (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production')) {
         res.setHeader('Access-Control-Allow-Origin', origin);
-    } else {
+    } else if (!origin && process.env.NODE_ENV !== 'production') {
         res.setHeader('Access-Control-Allow-Origin', '*');
     }
 
@@ -105,6 +109,19 @@ const limiter = rateLimit({
 });
 
 app.use('/api/', limiter);
+
+// Strict rate limiting for auth routes (Brute force protection)
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20, // Limit each IP to 20 requests per window
+    message: 'Demasiados intentos desde esta IP, por favor intenta de nuevo en 15 minutos.',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/forgot-password', authLimiter);
 
 // Body parsing middleware
 // Note: For Stripe webhooks, we need raw body

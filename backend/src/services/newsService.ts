@@ -181,15 +181,29 @@ export const NewsService = {
         const values: any[] = [];
         let paramCount = 1;
 
+        const allowedFields = [
+            'title',
+            'content',
+            'excerpt',
+            'category',
+            'thumbnail_url',
+            'banner_url',
+            'status',
+            'scheduled_for',
+            'meta_title',
+            'meta_description',
+            'is_featured'
+        ];
+
         for (const [key, value] of Object.entries(updates)) {
-            if (value !== undefined) {
+            if (allowedFields.includes(key) && value !== undefined) {
                 fields.push(`${key} = $${paramCount++}`);
                 values.push(value);
             }
         }
 
         if (fields.length === 0) {
-            throw new Error('No fields to update');
+            throw new Error('No valid fields to update');
         }
 
         // Handle slug update if title changed

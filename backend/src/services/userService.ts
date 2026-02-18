@@ -159,14 +159,17 @@ export const updateUserProfile = async (
     const values: any[] = [];
     let paramCount = 1;
 
-    if (updates.full_name !== undefined) {
-        fields.push(`full_name = $${paramCount++}`);
-        values.push(updates.full_name);
+    const allowedFields = ['full_name', 'phone'];
+
+    for (const [key, value] of Object.entries(updates)) {
+        if (allowedFields.includes(key) && value !== undefined) {
+            fields.push(`${key} = $${paramCount++}`);
+            values.push(value);
+        }
     }
 
-    if (updates.phone !== undefined) {
-        fields.push(`phone = $${paramCount++}`);
-        values.push(updates.phone);
+    if (fields.length === 0) {
+        throw new Error('No valid fields to update');
     }
 
     values.push(userId);
