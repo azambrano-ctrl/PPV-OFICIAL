@@ -6,7 +6,7 @@ async function applySearchPathFix() {
     try {
         console.log('🚀 Iniciando corrección de Search Path Mutable...');
 
-        const migrationPath = path.join(__dirname, '../../migrations', '029_fix_function_search_path.sql');
+        const migrationPath = path.join(__dirname, '../../migrations', '1771400000001_fix_function_search_path.sql');
 
         if (!fs.existsSync(migrationPath)) {
             console.error(`❌ No se encontró el archivo de migración en: ${migrationPath}`);

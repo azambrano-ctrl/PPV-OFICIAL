@@ -6,7 +6,7 @@ async function applyMasterRLS() {
     try {
         console.log('🚀 Iniciando aplicación de Seguridad RLS Global...');
 
-        const migrationPath = path.join(__dirname, '../../migrations', '028_global_rls_fix.sql');
+        const migrationPath = path.join(__dirname, '../../migrations', '1771400000000_global_rls_fix.sql');
 
         if (!fs.existsSync(migrationPath)) {
             console.error(`❌ No se encontró el archivo de migración en: ${migrationPath}`);

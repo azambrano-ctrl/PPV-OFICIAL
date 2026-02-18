@@ -6,7 +6,7 @@ async function applyAnalyticsRefinement() {
     try {
         console.log('🚀 Iniciando refinamiento de seguridad en Analytics...');
 
-        const migrationPath = path.join(__dirname, '../../migrations', '030_refine_analytics_rls.sql');
+        const migrationPath = path.join(__dirname, '../../migrations', '1771400000002_refine_analytics_rls.sql');
 
         if (!fs.existsSync(migrationPath)) {
             console.error(`❌ No se encontró el archivo de migración en: ${migrationPath}`);
