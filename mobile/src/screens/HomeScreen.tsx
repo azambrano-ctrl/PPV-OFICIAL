@@ -1,97 +1,107 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, RefreshControl, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Calendar, Clock, DollarSign, ChevronRight, User } from 'lucide-react-native';
+import { Calendar, Clock, ChevronRight, User } from 'lucide-react-native';
 import { eventService } from '../services';
 import { useAuthStore } from '../store/authStore';
 
-const { isAuthenticated, logout } = useAuthStore();
-const [events, setEvents] = React.useState([]);
-const [loading, setLoading] = React.useState(true);
-const [refreshing, setRefreshing] = React.useState(false);
+export default function HomeScreen({ navigation }: any) {
+    const { isAuthenticated, logout } = useAuthStore();
+    const [events, setEvents] = React.useState([]);
+    const [loading, setLoading] = React.useState(true);
+    const [refreshing, setRefreshing] = React.useState(false);
 
-const loadEvents = async () => {
-    try {
-        const data = await eventService.getAll();
-        setEvents(data.data || []);
-    } catch (error) {
-        console.error('Error loading events:', error);
-    } finally {
-        setLoading(false);
-        setRefreshing(false);
-    }
-};
+    const loadEvents = async () => {
+        try {
+            const data = await eventService.getAll();
+            setEvents(data.data || []);
+        } catch (error) {
+            console.error('Error loading events:', error);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    };
 
-React.useEffect(() => {
-    loadEvents();
-}, []);
+    React.useEffect(() => {
+        loadEvents();
+    }, []);
 
-const onRefresh = () => {
-    setRefreshing(true);
-    loadEvents();
-};
+    const onRefresh = () => {
+        setRefreshing(true);
+        loadEvents();
+    };
 
-const renderEvent = ({ item }: { item: any }) => (
-    <TouchableOpacity
-        style={styles.eventCard}
-        onPress={() => navigation.navigate('EventDetail', { eventId: item.id })}
-    >
-        <View style={styles.thumbnailContainer}>
-            <Image
-                source={{ uri: item.thumbnail_url || 'https://via.placeholder.com/400x200' }}
-                style={styles.thumbnail}
-            />
-            <View style={styles.statusBadge}>
-                <Text style={styles.statusBadgeText}>{item.status.toUpperCase()}</Text>
-            </View>
-        </View>
-        <View style={styles.eventInfo}>
-            <Text style={styles.eventTitle}>{item.title}</Text>
-            <View style={styles.detailsRow}>
-                <View style={styles.detailItem}>
-                    <Calendar size={14} color="#94a3b8" />
-                    <Text style={styles.detailText}>{new Date(item.event_date).toLocaleDateString()}</Text>
-                </View>
-                <View style={styles.detailItem}>
-                    <Clock size={14} color="#94a3b8" />
-                    <Text style={styles.detailText}>{new Date(item.event_date).toLocaleDateString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+    const renderEvent = ({ item }: { item: any }) => (
+        <TouchableOpacity
+            style={styles.eventCard}
+            onPress={() => navigation.navigate('EventDetail', { eventId: item.id })}
+        >
+            <View style={styles.thumbnailContainer}>
+                <Image
+                    source={{ uri: item.thumbnail_url || 'https://via.placeholder.com/400x200' }}
+                    style={styles.thumbnail}
+                />
+                <View style={styles.statusBadge}>
+                    <Text style={styles.statusBadgeText}>{item.status.toUpperCase()}</Text>
                 </View>
             </View>
-            <View style={styles.priceRow}>
-                <Text style={styles.priceText}>
-                    {parseFloat(item.price) === 0 ? 'PASE LIBRE' : `$${item.price} ${item.currency}`}
-                </Text>
-                <ChevronRight size={20} color="#ef4444" />
-            </View>
-        </View>
-    </TouchableOpacity>
-);
-
-return (
-    <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-            <Text style={styles.headerTitle}>ARENA FIGHT PASS</Text>
-        </View>
-        {loading ? (
-            <ActivityIndicator size="large" color="#ef4444" style={{ flex: 1 }} />
-        ) : (
-            <FlatList
-                data={events}
-                renderItem={renderEvent}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.listContent}
-                refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#ef4444" />
-                }
-                ListEmptyComponent={
-                    <View style={styles.emptyContainer}>
-                        <Text style={styles.emptyText}>No hay eventos disponibles actualmente</Text>
+            <View style={styles.eventInfo}>
+                <Text style={styles.eventTitle}>{item.title}</Text>
+                <View style={styles.detailsRow}>
+                    <View style={styles.detailItem}>
+                        <Calendar size={14} color="#94a3b8" />
+                        <Text style={styles.detailText}>{new Date(item.event_date).toLocaleDateString()}</Text>
                     </View>
-                }
-            />
-        )}
-    </SafeAreaView>
-);
+                    <View style={styles.detailItem}>
+                        <Clock size={14} color="#94a3b8" />
+                        <Text style={styles.detailText}>{new Date(item.event_date).toLocaleDateString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+                    </View>
+                </View>
+                <View style={styles.priceRow}>
+                    <Text style={styles.priceText}>
+                        {parseFloat(item.price) === 0 ? 'PASE LIBRE' : `$${item.price} ${item.currency}`}
+                    </Text>
+                    <ChevronRight size={20} color="#ef4444" />
+                </View>
+            </View>
+        </TouchableOpacity>
+    );
+
+    return (
+        <SafeAreaView style={styles.container}>
+            <View style={styles.header}>
+                <Text style={styles.headerTitle}>ARENA FIGHT PASS</Text>
+                <TouchableOpacity
+                    onPress={() => isAuthenticated ? Alert.alert('Perfil', '¿Deseas cerrar sesión?', [
+                        { text: 'Cancelar', style: 'cancel' },
+                        { text: 'Cerrar Sesión', onPress: logout, style: 'destructive' }
+                    ]) : navigation.navigate('Login')}
+                    style={styles.profileBtn}
+                >
+                    <User color={isAuthenticated ? "#22c55e" : "#fff"} size={24} />
+                </TouchableOpacity>
+            </View>
+            {loading ? (
+                <ActivityIndicator size="large" color="#ef4444" style={{ flex: 1 }} />
+            ) : (
+                <FlatList
+                    data={events}
+                    renderItem={renderEvent}
+                    keyExtractor={(item) => item.id}
+                    contentContainerStyle={styles.listContent}
+                    refreshControl={
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#ef4444" />
+                    }
+                    ListEmptyComponent={
+                        <View style={styles.emptyContainer}>
+                            <Text style={styles.emptyText}>No hay eventos disponibles actualmente</Text>
+                        </View>
+                    }
+                />
+            )}
+        </SafeAreaView>
+    );
 }
 
 const styles = StyleSheet.create({
@@ -119,7 +129,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#ffffff',
         letterSpacing: 1,
-        fontFamily: 'System', // Adjust once fonts are loaded
+        fontFamily: 'System',
     },
     listContent: {
         padding: 16,

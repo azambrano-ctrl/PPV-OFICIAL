@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar, Clock, DollarSign, Play, ArrowLeft, CheckCircle } from 'lucide-react-native';
 import { eventService } from '../services';
@@ -34,6 +34,24 @@ export default function EventDetailScreen({ route, navigation }: any) {
         loadEventData();
     }, [eventId, isAuthenticated]);
 
+    const handleFreeAccess = async () => {
+        setLoading(true);
+        try {
+            await api.post('/payments/create', {
+                eventId: event.id,
+                purchaseType: 'event',
+                paymentMethod: 'paypal',
+            });
+            await loadEventData();
+            Alert.alert('¡Éxito!', 'Ya tienes acceso gratuito a este evento.');
+        } catch (error: any) {
+            console.error('Error getting free access:', error);
+            Alert.alert('Error', error.response?.data?.message || 'No se pudo obtener el acceso gratuito.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
@@ -52,6 +70,8 @@ export default function EventDetailScreen({ route, navigation }: any) {
             </View>
         );
     }
+
+    const isFree = parseFloat(event.price) === 0;
 
     return (
         <ScrollView style={styles.container} bounces={false}>
@@ -99,69 +119,46 @@ export default function EventDetailScreen({ route, navigation }: any) {
                     <Text style={styles.description}>{event.description || 'No hay descripción disponible para este evento.'}</Text>
                 </View>
 
-    const handleFreeAccess = async () => {
-                    setLoading(true);
-                try {
-                    await eventService.getById(eventId); // Just to be sure
-                await api.post('/payments/create', {
-                    eventId: event.id,
-                purchaseType: 'event',
-                paymentMethod: 'paypal', // Backend handles amount 0 automatically
-            });
-                await loadEventData();
-        } catch (error) {
-                    console.error('Error getting free access:', error);
-        } finally {
-                    setLoading(false);
-        }
-    };
-
-                const isFree = parseFloat(event.price) === 0;
-
-                return (
-                <ScrollView style={styles.container} bounces={false}>
-                    {/* ... rest of existing code ... */}
-                    {/* Find the action card part */}
-                    <View style={styles.actionCard}>
-                        {hasAccess ? (
-                            <View style={styles.accessContainer}>
-                                <View style={styles.successRow}>
-                                    <CheckCircle size={20} color="#22c55e" />
-                                    <Text style={styles.successText}>Tienes acceso a este evento</Text>
-                                </View>
-                                <TouchableOpacity
-                                    style={styles.watchBtn}
-                                    onPress={() => navigation.navigate('Watch', { eventId: event.id })}
-                                >
-                                    <Play size={20} color="#fff" />
-                                    <Text style={styles.watchBtnText}>Ver Ahora</Text>
-                                </TouchableOpacity>
+                <View style={styles.actionCard}>
+                    {hasAccess ? (
+                        <View style={styles.accessContainer}>
+                            <View style={styles.successRow}>
+                                <CheckCircle size={20} color="#22c55e" />
+                                <Text style={styles.successText}>Tienes acceso a este evento</Text>
                             </View>
-                        ) : (
-                            <View style={styles.purchaseContainer}>
-                                <Text style={styles.priceLabel}>{isFree ? 'Evento Gratuito' : 'Acceso Total'}</Text>
-                                <Text style={styles.priceValue}>
-                                    {isFree ? 'LO TENEMOS' : `$${event.price} ${event.currency}`}
-                                </Text>
-                                <TouchableOpacity
-                                    style={styles.buyBtn}
-                                    onPress={() => {
-                                        if (isAuthenticated) {
-                                            if (isFree) {
-                                                handleFreeAccess();
-                                            } else {
-                                                setShowPaymentModal(true);
-                                            }
+                            <TouchableOpacity
+                                style={styles.watchBtn}
+                                onPress={() => navigation.navigate('Watch', { eventId: event.id })}
+                            >
+                                <Play size={20} color="#fff" />
+                                <Text style={styles.watchBtnText}>Ver Ahora</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ) : (
+                        <View style={styles.purchaseContainer}>
+                            <Text style={styles.priceLabel}>{isFree ? 'Evento Gratuito' : 'Acceso Total'}</Text>
+                            <Text style={styles.priceValue}>
+                                {isFree ? 'GRATIS' : `$${event.price} ${event.currency}`}
+                            </Text>
+                            <TouchableOpacity
+                                style={styles.buyBtn}
+                                onPress={() => {
+                                    if (isAuthenticated) {
+                                        if (isFree) {
+                                            handleFreeAccess();
                                         } else {
-                                            navigation.navigate('Login');
+                                            setShowPaymentModal(true);
                                         }
-                                    }}
-                                >
-                                    <Text style={styles.buyBtnText}>{isFree ? 'Obtener Acceso Gratis' : 'Comprar Pase'}</Text>
-                                </TouchableOpacity>
-                            </View>
-                        )}
-                    </View>
+                                    } else {
+                                        navigation.navigate('Login');
+                                    }
+                                }}
+                            >
+                                <Text style={styles.buyBtnText}>{isFree ? 'Obtener Acceso Gratis' : 'Comprar Pase'}</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                </View>
             </View>
 
             <PaymentModal
