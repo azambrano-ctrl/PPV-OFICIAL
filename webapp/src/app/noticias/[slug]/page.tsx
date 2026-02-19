@@ -9,7 +9,6 @@ import { newsAPI } from '@/lib/api';
 import { formatDate, getImageUrl } from '@/lib/utils';
 import Navbar from '@/components/ui/Navbar';
 import Footer from '@/components/Footer';
-import AdSense from '@/components/ui/AdSense';
 import toast from 'react-hot-toast';
 
 interface NewsPost {
@@ -138,8 +137,6 @@ export default function SingleNewsPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
                     {/* Article Content */}
                     <article className="lg:col-span-8">
-                        {/* Google Ads - Top Banner */}
-                        <AdSense slot="1234567890" format="horizontal" className="mb-10" />
 
                         <div className="prose prose-invert prose-red max-w-none">
                             <p className="text-xl text-gray-300 font-medium leading-relaxed mb-10 first-letter:text-5xl first-letter:font-black first-letter:text-red-600 first-letter:mr-3 first-letter:float-left">
@@ -174,9 +171,6 @@ export default function SingleNewsPage() {
                                 </div>
                             )}
                         </div>
-
-                        {/* Google Ads - Bottom - Multiplex/Related */}
-                        <AdSense slot="0987654321" format="fluid" className="mt-16" />
 
                         {/* Article Footer */}
                         <footer className="mt-20 pt-10 border-t border-zinc-900">
@@ -245,7 +239,6 @@ export default function SingleNewsPage() {
 
                         {/* Square Ad Box */}
                         <div className="sticky top-32">
-                            <AdSense slot="5678901234" format="rectangle" />
                         </div>
                     </aside>
                 </div>
