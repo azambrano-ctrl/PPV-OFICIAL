@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Calendar, Clock, ArrowRight, Newspaper, ChevronRight } from 'lucide-react';
@@ -8,6 +8,7 @@ import { newsAPI } from '@/lib/api';
 import { formatDate, getImageUrl } from '@/lib/utils';
 import Navbar from '@/components/ui/Navbar';
 import Footer from '@/components/Footer';
+import AdSense from '@/components/ui/AdSense';
 
 interface NewsPost {
     id: string;
@@ -99,7 +100,7 @@ export default function NewsPage() {
                 ) : (
                     <>
                         {/* Featured Post */}
-                        {featuredPost && selectedCategory === 'All' && (
+                        {featuredPost && selectedCategory === 'All' ? (
                             <Link href={`/noticias/${featuredPost.slug}`} className="group mb-16 block">
                                 <div className="relative h-[400px] md:h-[600px] rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl">
                                     <Image
@@ -131,53 +132,66 @@ export default function NewsPage() {
                                     </div>
                                 </div>
                             </Link>
+                        ) : null}
+
+                        {/* Ad after featured post */}
+                        {featuredPost && selectedCategory === 'All' && (
+                            <AdSense slot="1122334455" format="horizontal" className="mb-16" />
                         )}
 
                         {/* Recent News Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {regularPosts.map((post) => (
-                                <Link
-                                    key={post.id}
-                                    href={`/noticias/${post.slug}`}
-                                    className="group flex flex-col bg-zinc-950 border border-zinc-900 rounded-xl overflow-hidden hover:border-red-600/50 transition-all shadow-xl"
-                                >
-                                    <div className="relative h-56 overflow-hidden">
-                                        <Image
-                                            src={getImageUrl(post.thumbnail_url || '') || ''}
-                                            alt={post.title}
-                                            fill
-                                            className="object-cover group-hover:scale-105 transition-transform duration-500"
-                                        />
-                                        <div className="absolute top-4 left-4">
-                                            <span className="bg-white text-black px-3 py-1 text-[10px] font-black uppercase tracking-widest">
-                                                {post.category}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="p-6 flex flex-col flex-grow">
-                                        <div className="flex flex-wrap items-center gap-4 mb-4 text-gray-500 text-[10px] font-bold uppercase tracking-widest">
-                                            <div className="flex items-center gap-1">
-                                                <Calendar className="w-3 h-3" />
-                                                {formatDate(post.created_at)}
+                            {regularPosts.map((post, index) => (
+                                <React.Fragment key={post.id}>
+                                    <Link
+                                        href={`/noticias/${post.slug}`}
+                                        className="group flex flex-col bg-zinc-950 border border-zinc-900 rounded-xl overflow-hidden hover:border-red-600/50 transition-all shadow-xl"
+                                    >
+                                        <div className="relative h-56 overflow-hidden">
+                                            <Image
+                                                src={getImageUrl(post.thumbnail_url || '') || ''}
+                                                alt={post.title}
+                                                fill
+                                                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                            />
+                                            <div className="absolute top-4 left-4">
+                                                <span className="bg-white text-black px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+                                                    {post.category}
+                                                </span>
                                             </div>
-                                            {post.source_name && (
-                                                <div className="flex items-center gap-1 text-red-500">
-                                                    <Newspaper className="w-3 h-3" />
-                                                    {post.source_name}
+                                        </div>
+                                        <div className="p-6 flex flex-col flex-grow">
+                                            <div className="flex flex-wrap items-center gap-4 mb-4 text-gray-500 text-[10px] font-bold uppercase tracking-widest">
+                                                <div className="flex items-center gap-1">
+                                                    <Calendar className="w-3 h-3" />
+                                                    {formatDate(post.created_at)}
                                                 </div>
-                                            )}
+                                                {post.source_name && (
+                                                    <div className="flex items-center gap-1 text-red-500">
+                                                        <Newspaper className="w-3 h-3" />
+                                                        {post.source_name}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <h3 className="text-xl font-bold mb-4 uppercase leading-tight group-hover:text-red-500 transition-colors">
+                                                {post.title}
+                                            </h3>
+                                            <p className="text-gray-500 text-sm line-clamp-3 mb-6 flex-grow">
+                                                {post.excerpt}
+                                            </p>
+                                            <div className="flex items-center gap-2 text-white font-black uppercase text-[11px] tracking-widest group-hover:gap-4 transition-all">
+                                                Ver más <ChevronRight className="w-4 h-4 text-red-600" />
+                                            </div>
                                         </div>
-                                        <h3 className="text-xl font-bold mb-4 uppercase leading-tight group-hover:text-red-500 transition-colors">
-                                            {post.title}
-                                        </h3>
-                                        <p className="text-gray-500 text-sm line-clamp-3 mb-6 flex-grow">
-                                            {post.excerpt}
-                                        </p>
-                                        <div className="flex items-center gap-2 text-white font-black uppercase text-[11px] tracking-widest group-hover:gap-4 transition-all">
-                                            Ver más <ChevronRight className="w-4 h-4 text-red-600" />
+                                    </Link>
+
+                                    {/* Insert an ad after every 6 posts */}
+                                    {(index + 1) % 6 === 0 && (
+                                        <div className="col-span-1 md:col-span-2 lg:col-span-3">
+                                            <AdSense slot="2233445566" format="horizontal" />
                                         </div>
-                                    </div>
-                                </Link>
+                                    )}
+                                </React.Fragment>
                             ))}
                         </div>
 

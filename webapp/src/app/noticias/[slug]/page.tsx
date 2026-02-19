@@ -9,6 +9,7 @@ import { newsAPI } from '@/lib/api';
 import { formatDate, getImageUrl } from '@/lib/utils';
 import Navbar from '@/components/ui/Navbar';
 import Footer from '@/components/Footer';
+import AdSense from '@/components/ui/AdSense';
 import toast from 'react-hot-toast';
 
 interface NewsPost {
@@ -137,13 +138,8 @@ export default function SingleNewsPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
                     {/* Article Content */}
                     <article className="lg:col-span-8">
-                        {/* Google Ads Placeholder - Top */}
-                        <div className="mb-10 p-4 bg-zinc-900/50 border border-zinc-800 border-dashed rounded-xl text-center">
-                            <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest block mb-1">Publicidad de Google</span>
-                            <div className="h-[90px] flex items-center justify-center text-zinc-700 italic text-sm">
-                                Espacio reservado para Banner Ads (728x90)
-                            </div>
-                        </div>
+                        {/* Google Ads - Top Banner */}
+                        <AdSense slot="1234567890" format="horizontal" className="mb-10" />
 
                         <div className="prose prose-invert prose-red max-w-none">
                             <p className="text-xl text-gray-300 font-medium leading-relaxed mb-10 first-letter:text-5xl first-letter:font-black first-letter:text-red-600 first-letter:mr-3 first-letter:float-left">
@@ -179,14 +175,8 @@ export default function SingleNewsPage() {
                             )}
                         </div>
 
-                        {/* Google Ads Placeholder - Bottom */}
-                        <div className="mt-16 p-8 bg-zinc-900/50 border border-zinc-800 border-dashed rounded-xl text-center">
-                            <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest block mb-2">Sugerido por Google</span>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="h-[250px] bg-zinc-800/30 rounded flex items-center justify-center text-zinc-700 italic text-xs">Anuncio Nativo 1</div>
-                                <div className="h-[250px] bg-zinc-800/30 rounded flex items-center justify-center text-zinc-700 italic text-xs">Anuncio Nativo 2</div>
-                            </div>
-                        </div>
+                        {/* Google Ads - Bottom - Multiplex/Related */}
+                        <AdSense slot="0987654321" format="fluid" className="mt-16" />
 
                         {/* Article Footer */}
                         <footer className="mt-20 pt-10 border-t border-zinc-900">
@@ -254,11 +244,8 @@ export default function SingleNewsPage() {
                         </div>
 
                         {/* Square Ad Box */}
-                        <div className="sticky top-32 p-4 bg-zinc-900/50 border border-zinc-800 border-dashed rounded-xl text-center aspect-square flex flex-col items-center justify-center">
-                            <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest block mb-4">Ad de Google</span>
-                            <div className="h-full w-full flex items-center justify-center text-zinc-700 italic text-sm border border-zinc-800/50 rounded">
-                                Box Ad (300x250)
-                            </div>
+                        <div className="sticky top-32">
+                            <AdSense slot="5678901234" format="rectangle" />
                         </div>
                     </aside>
                 </div>
