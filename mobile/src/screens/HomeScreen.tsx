@@ -84,10 +84,7 @@ export default function HomeScreen({ navigation }: any) {
                     resizeMode="contain"
                 />
                 <TouchableOpacity
-                    onPress={() => isAuthenticated ? Alert.alert('Perfil', '¿Deseas cerrar sesión?', [
-                        { text: 'Cancelar', style: 'cancel' },
-                        { text: 'Cerrar Sesión', onPress: logout, style: 'destructive' }
-                    ]) : navigation.navigate('Login')}
+                    onPress={() => isAuthenticated ? navigation.navigate('Profile') : navigation.navigate('Login')}
                     style={styles.profileBtn}
                 >
                     <User color={isAuthenticated ? "#22c55e" : "#fff"} size={24} />

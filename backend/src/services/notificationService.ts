@@ -1,4 +1,9 @@
 import { query } from '../config/database';
+import { Expo } from 'expo-server-sdk';
+import logger from '../config/logger';
+
+// Create a new Expo SDK client
+const expo = new Expo();
 
 export interface Notification {
     id: string;
@@ -34,7 +39,53 @@ export const createNotification = async (
         (global as any).io.to(`user_notifications_${userId}`).emit('new_notification', notification);
     }
 
+    // Send Push Notification if user has a token
+    try {
+        const userResult = await query('SELECT push_token FROM users WHERE id = $1', [userId]);
+        const pushToken = userResult.rows[0]?.push_token;
+
+        if (pushToken && Expo.isExpoPushToken(pushToken)) {
+            await sendPushNotification(pushToken, title, message, { type, link });
+        }
+    } catch (error) {
+        logger.error('Error sending push notification in createNotification:', error);
+    }
+
     return notification;
+};
+
+/**
+ * Send a push notification via Expo
+ */
+export const sendPushNotification = async (
+    targetToken: string,
+    title: string,
+    body: string,
+    data: any = {}
+): Promise<void> => {
+    if (!Expo.isExpoPushToken(targetToken)) {
+        logger.error(`Push token ${targetToken} is not a valid Expo push token`);
+        return;
+    }
+
+    const messages = [{
+        to: targetToken,
+        sound: 'default' as const,
+        title,
+        body,
+        data,
+    }];
+
+    try {
+        const chunks = expo.chunkPushNotifications(messages);
+        for (const chunk of chunks) {
+            const ticketChunk = await expo.sendPushNotificationsAsync(chunk);
+            logger.info('Push notification sent successfully', { ticketChunk });
+            // NOTE: In a production app, you should handle tickets (check for errors/receipts)
+        }
+    } catch (error) {
+        logger.error('Error sending push notification via Expo SDK:', error);
+    }
 };
 
 /**

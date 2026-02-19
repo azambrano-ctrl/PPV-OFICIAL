@@ -10,7 +10,23 @@ export const authService = {
         return response.data;
     },
     getProfile: async () => {
-        const response = await api.get('/auth/profile');
+        const response = await api.get('/auth/me');
+        return response.data;
+    },
+    getPurchases: async () => {
+        const response = await api.get('/auth/purchases');
+        return response.data;
+    },
+    changePassword: async (currentPassword: string, newPassword: string) => {
+        const response = await api.post('/auth/change-password', { currentPassword, newPassword });
+        return response.data;
+    },
+    socialLogin: async (provider: string, token: string) => {
+        const response = await api.post('/oauth/login', { provider, token });
+        return response.data;
+    },
+    updatePushToken: async (token: string | null) => {
+        const response = await api.post('/auth/push-token', { token });
         return response.data;
     }
 };

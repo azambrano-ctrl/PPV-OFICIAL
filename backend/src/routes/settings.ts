@@ -241,6 +241,12 @@ router.put(
             }
             if (req.body.season_pass_button_text) updates.season_pass_button_text = req.body.season_pass_button_text;
 
+            // Handle OAuth Credentials
+            if (req.body.google_client_id_android !== undefined) updates.google_client_id_android = req.body.google_client_id_android;
+            if (req.body.google_client_id_ios !== undefined) updates.google_client_id_ios = req.body.google_client_id_ios;
+            if (req.body.google_client_id_web !== undefined) updates.google_client_id_web = req.body.google_client_id_web;
+            if (req.body.facebook_app_id !== undefined) updates.facebook_app_id = req.body.facebook_app_id;
+
             console.log('Updates object prepared:', JSON.stringify(updates, null, 2));
 
             const settings = await settingsService.updateSettings(updates);

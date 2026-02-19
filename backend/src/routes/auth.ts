@@ -13,6 +13,7 @@ import {
     getUserPurchases,
     createPasswordResetToken,
     resetPassword,
+    updatePushToken,
 } from '../services/userService';
 import { sendPasswordResetEmail } from '../services/emailService';
 import {
@@ -492,6 +493,25 @@ router.delete(
             success: true,
             message: 'Usuario eliminado exitosamente.',
             data: result.rows[0],
+        });
+    })
+);
+
+/**
+ * POST /api/auth/push-token
+ * Update user's push notification token
+ */
+router.post(
+    '/push-token',
+    authenticate,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { token } = req.body;
+
+        await updatePushToken(req.user!.userId, token);
+
+        res.json({
+            success: true,
+            message: 'Push token updated successfully',
         });
     })
 );

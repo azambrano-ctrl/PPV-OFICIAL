@@ -8,6 +8,10 @@ interface Settings {
     site_description: string | null;
     primary_color: string;
     secondary_color: string;
+    google_client_id_android: string | null;
+    google_client_id_ios: string | null;
+    google_client_id_web: string | null;
+    facebook_app_id: string | null;
 }
 
 interface SettingsState {
@@ -21,6 +25,10 @@ const defaultSettings: Settings = {
     site_description: null,
     primary_color: '#ef4444',
     secondary_color: '#0f172a',
+    google_client_id_android: null,
+    google_client_id_ios: null,
+    google_client_id_web: null,
+    facebook_app_id: null,
 };
 
 export const useSettingsStore = create<SettingsState>()(

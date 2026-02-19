@@ -2,10 +2,14 @@ import React from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Image, ImageBackground, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
 import { authService } from '../services';
 import { useAuthStore } from '../store/authStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { getImageUrl } from '../config/constants';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen({ navigation }: any) {
     const [email, setEmail] = React.useState('');
@@ -15,6 +19,21 @@ export default function LoginScreen({ navigation }: any) {
     const [error, setError] = React.useState('');
     const setAuth = useAuthStore(state => state.setAuth);
     const { settings } = useSettingsStore();
+
+    const handleSocialLogin = async (provider: string, token: any) => {
+        setLoading(true);
+        setError('');
+        try {
+            const res = await authService.socialLogin(provider, token);
+            if (res.success) {
+                await setAuth(res.data.user, res.data.accessToken);
+            }
+        } catch (err: any) {
+            setError('Error al conectar con ' + provider);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleLogin = async () => {
         if (!email || !password) return;
@@ -126,10 +145,17 @@ export default function LoginScreen({ navigation }: any) {
                                 </View>
 
                                 <View style={styles.socialRow}>
-                                    <TouchableOpacity style={styles.socialBtn}>
-                                        <Image source={{ uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png' }} style={styles.socialIcon} />
-                                        <Text style={styles.socialBtnText}>GOOGLE</Text>
-                                    </TouchableOpacity>
+                                    {settings.google_client_id_android ? (
+                                        <GoogleLoginButton
+                                            settings={settings}
+                                            onLogin={handleSocialLogin}
+                                        />
+                                    ) : (
+                                        <View style={[styles.socialBtn, { opacity: 0.5 }]}>
+                                            <Image source={{ uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png' }} style={styles.socialIcon} />
+                                            <Text style={styles.socialBtnText}>GOOGLE</Text>
+                                        </View>
+                                    )}
                                     <TouchableOpacity style={styles.socialBtn}>
                                         <Image source={{ uri: 'https://cdn-icons-png.flaticon.com/512/733/733547.png' }} style={styles.socialIcon} />
                                         <Text style={styles.socialBtnText}>FACEBOOK</Text>
@@ -355,3 +381,33 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
     },
 });
+
+// Componente para manejar el Login de Google de forma segura
+function GoogleLoginButton({ settings, onLogin }: { settings: any, onLogin: (provider: string, token: any) => void }) {
+    const [request, response, promptAsync] = Google.useAuthRequest({
+        androidClientId: settings.google_client_id_android,
+        iosClientId: settings.google_client_id_ios,
+        webClientId: settings.google_client_id_web,
+    });
+
+    React.useEffect(() => {
+        if (response?.type === 'success') {
+            const { authentication } = response;
+            onLogin('google', authentication?.accessToken);
+        }
+    }, [response]);
+
+    return (
+        <TouchableOpacity
+            style={styles.socialBtn}
+            onPress={() => promptAsync()}
+            disabled={!request}
+        >
+            <Image
+                source={{ uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png' }}
+                style={styles.socialIcon}
+            />
+            <Text style={styles.socialBtnText}>GOOGLE</Text>
+        </TouchableOpacity>
+    );
+}

@@ -5,7 +5,7 @@ import { settingsAPI } from '@/lib/api';
 import { Save, AlertCircle, Layout, FileText, Image as ImageIcon, X, CreditCard, Facebook, Instagram, Twitter, Video, Plus, Trash2 } from 'lucide-react';
 import ImageUpload from '@/components/admin/ImageUpload';
 
-type Tab = 'general' | 'about' | 'gallery' | 'payments' | 'season-pass' | 'login';
+type Tab = 'general' | 'about' | 'gallery' | 'payments' | 'season-pass' | 'login' | 'social';
 
 export default function AdminSettingsPage() {
     const [loading, setLoading] = useState(true);
@@ -78,7 +78,13 @@ export default function AdminSettingsPage() {
         // Login Page
         login_background_url: '',
         login_background_position: 'center' as 'top' | 'center' | 'bottom',
-        login_background_video: ''
+        login_background_video: '',
+
+        // Social Login
+        google_client_id_android: '',
+        google_client_id_ios: '',
+        google_client_id_web: '',
+        facebook_app_id: ''
     });
 
     useEffect(() => {
@@ -132,7 +138,12 @@ export default function AdminSettingsPage() {
 
                 login_background_url: d.login_background_url || '',
                 login_background_position: (d.login_background_position || 'center') as 'top' | 'center' | 'bottom',
-                login_background_video: d.login_background_video || ''
+                login_background_video: d.login_background_video || '',
+
+                google_client_id_android: d.google_client_id_android || '',
+                google_client_id_ios: d.google_client_id_ios || '',
+                google_client_id_web: d.google_client_id_web || '',
+                facebook_app_id: d.facebook_app_id || ''
             });
         } catch (error) {
             console.error('Error loading settings:', error);
@@ -248,6 +259,12 @@ export default function AdminSettingsPage() {
             // Login Page
             formData.append('login_background_position', form.login_background_position);
 
+            // Social Login
+            formData.append('google_client_id_android', form.google_client_id_android);
+            formData.append('google_client_id_ios', form.google_client_id_ios);
+            formData.append('google_client_id_web', form.google_client_id_web);
+            formData.append('facebook_app_id', form.facebook_app_id);
+
             await settingsAPI.update(formData);
             setMessage({ type: 'success', text: 'Configuración guardada correctamente' });
 
@@ -284,6 +301,7 @@ export default function AdminSettingsPage() {
 
     const tabs = [
         { id: 'general', label: 'General', icon: Layout },
+        { id: 'social', label: 'Social Login', icon: Facebook },
         { id: 'about', label: 'Página Nosotros', icon: FileText },
         { id: 'gallery', label: 'Galería', icon: ImageIcon },
         { id: 'payments', label: 'Pagos', icon: CreditCard },
@@ -1112,6 +1130,72 @@ export default function AdminSettingsPage() {
                                 <option value="bottom">Abajo (Bottom)</option>
                             </select>
                             <p className="text-xs text-dark-500">Selecciona cómo se posiciona la imagen de fondo en la página de login.</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Tab: Social Login */}
+                {activeTab === 'social' && (
+                    <div className="bg-dark-900 p-6 rounded-xl border border-dark-800 space-y-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                <Plus className="w-6 h-6 text-primary-500" /> Configuración Social Login
+                            </h2>
+                        </div>
+                        <p className="text-sm text-dark-400 mb-6">Configura las credenciales de Google y Facebook para la aplicación móvil.</p>
+
+                        <div className="space-y-6">
+                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                <img src="https://www.google.com/favicon.ico" className="w-4 h-4" alt="Google" /> Google Login
+                            </h3>
+                            <div className="grid md:grid-cols-1 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-dark-300">Android Client ID</label>
+                                    <input
+                                        type="text"
+                                        className="input w-full font-mono text-sm"
+                                        placeholder="123456789-abc.apps.googleusercontent.com"
+                                        value={form.google_client_id_android}
+                                        onChange={(e) => setForm({ ...form, google_client_id_android: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-dark-300">iOS Client ID</label>
+                                    <input
+                                        type="text"
+                                        className="input w-full font-mono text-sm"
+                                        placeholder="123456789-ios.apps.googleusercontent.com"
+                                        value={form.google_client_id_ios}
+                                        onChange={(e) => setForm({ ...form, google_client_id_ios: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-dark-300">Web Client ID</label>
+                                    <input
+                                        type="text"
+                                        className="input w-full font-mono text-sm"
+                                        placeholder="123456789-web.apps.googleusercontent.com"
+                                        value={form.google_client_id_web}
+                                        onChange={(e) => setForm({ ...form, google_client_id_web: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            <hr className="border-dark-800 my-6" />
+
+                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                <Facebook className="w-5 h-5 text-blue-600" /> Facebook Login
+                            </h3>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-dark-300">Facebook App ID</label>
+                                <input
+                                    type="text"
+                                    className="input w-full font-mono text-sm"
+                                    placeholder="8293847583920..."
+                                    value={form.facebook_app_id}
+                                    onChange={(e) => setForm({ ...form, facebook_app_id: e.target.value })}
+                                />
+                            </div>
                         </div>
                     </div>
                 )}

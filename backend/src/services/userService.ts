@@ -13,6 +13,7 @@ export interface User {
     promoter_id?: string;
     current_session_id?: string;
     is_verified: boolean;
+    push_token?: string | null;
     created_at: Date;
     updated_at: Date;
 }
@@ -288,5 +289,15 @@ export const resetPassword = async (token: string, newPassword: string): Promise
              reset_password_expires = NULL 
          WHERE id = $2`,
         [newPasswordHash, user.id]
+    );
+};
+
+/**
+ * Update user's push notification token
+ */
+export const updatePushToken = async (userId: string, token: string | null): Promise<void> => {
+    await query(
+        'UPDATE users SET push_token = $1 WHERE id = $2',
+        [token, userId]
     );
 };

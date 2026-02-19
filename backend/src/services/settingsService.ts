@@ -49,6 +49,12 @@ export interface Settings {
     season_pass_price: number;
     season_pass_button_text: string;
 
+    // OAuth Credentials
+    google_client_id_android: string | null;
+    google_client_id_ios: string | null;
+    google_client_id_web: string | null;
+    facebook_app_id: string | null;
+
     created_at: Date;
     updated_at: Date;
 }
@@ -100,6 +106,12 @@ export interface UpdateSettingsDTO {
     season_pass_description?: string;
     season_pass_price?: number;
     season_pass_button_text?: string;
+
+    // OAuth Credentials
+    google_client_id_android?: string | null;
+    google_client_id_ios?: string | null;
+    google_client_id_web?: string | null;
+    facebook_app_id?: string | null;
 }
 
 /**
@@ -111,11 +123,14 @@ export const getSettings = async (): Promise<Settings> => {
         ['00000000-0000-0000-0000-000000000001']
     );
 
-    if (result.rows.length === 0) {
-        throw new Error('Settings not found');
-    }
-
-    return result.rows[0];
+    const dbSettings = result.rows[0];
+    return {
+        ...dbSettings,
+        google_client_id_android: dbSettings.google_client_id_android || process.env.GOOGLE_CLIENT_ID_ANDROID || null,
+        google_client_id_ios: dbSettings.google_client_id_ios || process.env.GOOGLE_CLIENT_ID_IOS || null,
+        google_client_id_web: dbSettings.google_client_id_web || process.env.GOOGLE_CLIENT_ID_WEB || null,
+        facebook_app_id: dbSettings.facebook_app_id || process.env.FACEBOOK_APP_ID || null
+    };
 };
 
 /**
@@ -164,7 +179,11 @@ export const updateSettings = async (updates: UpdateSettingsDTO): Promise<Settin
         'season_pass_button_text',
         'login_background_url',
         'login_background_position',
-        'login_background_video'
+        'login_background_video',
+        'google_client_id_android',
+        'google_client_id_ios',
+        'google_client_id_web',
+        'facebook_app_id'
     ];
 
     for (const key of keys) {
