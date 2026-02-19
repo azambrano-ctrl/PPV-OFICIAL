@@ -12,6 +12,7 @@ import { useAuthStore } from '@/lib/store';
 import { useLanguage } from '@/components/providers/LanguageProvider';
 import Footer from '@/components/Footer';
 import Navbar from '@/components/ui/Navbar';
+import AdSense from '@/components/ui/AdSense';
 import EventCard from '@/components/events/EventCard';
 import { newsAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -340,6 +341,13 @@ export default function HomePage() {
                     </div>
                 </section>
             )}
+
+            {/* Ad between News and Features */}
+            <section className="py-10 bg-zinc-950">
+                <div className="container-custom">
+                    <AdSense slot="5992307942" format="horizontal" />
+                </div>
+            </section>
 
             {/* Features Section - UFC Style */}
             <section className="py-20 bg-dark-950 border-y border-gray-900">
