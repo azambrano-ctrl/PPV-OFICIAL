@@ -8,6 +8,7 @@ import { newsAPI } from '@/lib/api';
 import { formatDate, getImageUrl } from '@/lib/utils';
 import Navbar from '@/components/ui/Navbar';
 import Footer from '@/components/Footer';
+import AdSense from '@/components/ui/AdSense';
 
 interface NewsPost {
     id: string;
@@ -133,6 +134,9 @@ export default function NewsPage() {
                             </Link>
                         ) : null}
 
+                        {/* Ad after featured post */}
+                        <AdSense slot="5992307942" format="horizontal" />
+
                         {/* Recent News Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {regularPosts.map((post) => (
@@ -180,6 +184,9 @@ export default function NewsPage() {
                                 </Link>
                             ))}
                         </div>
+
+                        {/* Ad after news grid */}
+                        <AdSense slot="5992307942" />
 
                         {posts.length === 0 && !loading && (
                             <div className="text-center py-20 bg-zinc-950 border border-zinc-900 rounded-2xl">

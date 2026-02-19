@@ -9,6 +9,7 @@ import { newsAPI } from '@/lib/api';
 import { formatDate, getImageUrl } from '@/lib/utils';
 import Navbar from '@/components/ui/Navbar';
 import Footer from '@/components/Footer';
+import AdSense from '@/components/ui/AdSense';
 import toast from 'react-hot-toast';
 
 interface NewsPost {
@@ -188,6 +189,9 @@ export default function SingleNewsPage() {
                                 )}
                             </div>
                         </footer>
+
+                        {/* Ad after article */}
+                        <AdSense slot="5992307942" />
                     </article>
 
                     {/* Sidebar */}
@@ -237,8 +241,9 @@ export default function SingleNewsPage() {
                             </div>
                         </div>
 
-                        {/* Square Ad Box */}
+                        {/* Sidebar Ad */}
                         <div className="sticky top-32">
+                            <AdSense slot="5992307942" format="rectangle" />
                         </div>
                     </aside>
                 </div>
