@@ -170,40 +170,7 @@ export default function WatchPage() {
 
     return (
         <div className="fixed inset-0 bg-black flex flex-col overflow-hidden text-white font-sans">
-            {/* Ad Overlay for Free Events */}
-            {showAdOverlay && (
-                <div className="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center p-4">
-                    <div className="max-w-2xl w-full text-center">
-                        <div className="mb-6">
-                            <span className="inline-block bg-red-600 px-4 py-1 text-xs font-black uppercase tracking-widest rounded-full mb-4">
-                                PASE LIBRE
-                            </span>
-                            <h2 className="text-2xl md:text-3xl font-black uppercase mb-2">{event.title}</h2>
-                            <p className="text-gray-400 text-sm">Anuncio patrocinado</p>
-                        </div>
 
-                        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-6">
-                            <AdSense slot="5992307942" format="rectangle" />
-                        </div>
-
-                        {adCountdown > 0 ? (
-                            <div className="flex flex-col items-center gap-3">
-                                <div className="w-16 h-16 rounded-full border-4 border-red-600 flex items-center justify-center">
-                                    <span className="text-2xl font-black">{adCountdown}</span>
-                                </div>
-                                <p className="text-gray-400 text-sm">El video comenzará en {adCountdown} segundo{adCountdown !== 1 ? 's' : ''}...</p>
-                            </div>
-                        ) : (
-                            <button
-                                onClick={() => setShowAdOverlay(false)}
-                                className="bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest px-8 py-4 rounded-xl transition-all transform hover:scale-105 text-lg"
-                            >
-                                ▶ Ver Ahora
-                            </button>
-                        )}
-                    </div>
-                </div>
-            )}
             {/* Minimal Header - Hidden in mobile landscape to maximize video space */}
             <header className="flex-shrink-0 h-16 px-4 md:px-6 flex items-center justify-between bg-black/50 backdrop-blur-sm border-b border-white/5 z-20 landscape:max-md:hidden">
                 <div className="flex items-center gap-4">
@@ -275,6 +242,40 @@ export default function WatchPage() {
                             isMp4={streamData.isMp4}
                         />
                         <ReactionLayer socket={socket} eventId={eventId} />
+
+                        {/* Ad Overlay inside video player for free events */}
+                        {showAdOverlay && (
+                            <div className="absolute inset-0 z-40 bg-black/90 flex flex-col items-center justify-center">
+                                <div className="max-w-lg w-full text-center px-4">
+                                    <div className="mb-4">
+                                        <span className="inline-block bg-red-600 px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full mb-3">
+                                            PASE LIBRE
+                                        </span>
+                                        <p className="text-gray-400 text-xs">Anuncio patrocinado</p>
+                                    </div>
+
+                                    <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4 mb-4">
+                                        <AdSense slot="5992307942" format="auto" />
+                                    </div>
+
+                                    {adCountdown > 0 ? (
+                                        <div className="flex items-center justify-center gap-3">
+                                            <div className="w-10 h-10 rounded-full border-2 border-red-600 flex items-center justify-center">
+                                                <span className="text-lg font-black">{adCountdown}</span>
+                                            </div>
+                                            <p className="text-gray-400 text-sm">El video comenzará en {adCountdown}s</p>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => setShowAdOverlay(false)}
+                                            className="bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest px-6 py-3 rounded-lg transition-all hover:scale-105"
+                                        >
+                                            ▶ Ver Ahora
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
 
