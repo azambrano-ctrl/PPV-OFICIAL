@@ -297,7 +297,7 @@ export default function WatchPage() {
                     className={`
                         w-full md:w-96 bg-dark-950 border-t md:border-t-0 md:border-l border-white/10 
                         transition-all duration-300 z-30 flex flex-col
-                        ${showChat ? 'h-[40vh] md:h-full opacity-100 flex' : 'hidden'}
+                        ${showChat && !showAdOverlay ? 'h-[40vh] md:h-full opacity-100 flex' : showChat && showAdOverlay ? 'hidden md:h-full md:opacity-100 md:flex' : 'hidden'}
                         md:relative
                     `}
                 >
