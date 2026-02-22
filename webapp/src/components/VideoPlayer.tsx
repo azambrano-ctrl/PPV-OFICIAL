@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
 import { useSettingsStore } from '@/lib/store';
 import { authAPI } from '@/lib/api';
+import AdSense from './ui/AdSense';
 
 interface VideoPlayerProps {
     streamUrl: string;
@@ -26,6 +27,11 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     const [resolvedUrl, setResolvedUrl] = useState<string>('');
     const lastStreamUrlRef = useRef<string>('');
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Mid-roll ad state
+    const [showMidroll, setShowMidroll] = useState(false);
+    const [midrollCountdown, setMidrollCountdown] = useState(10);
+    const [lastAdTime, setLastAdTime] = useState(0);
 
     const { settings } = useSettingsStore();
 
@@ -243,6 +249,40 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         return () => { video.removeEventListener('play', onPlay); video.removeEventListener('pause', onPause); };
     }, [isLoading]);
 
+    // Logic for mid-roll ads (only for 'reprise')
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video || status !== 'reprise') return;
+
+        const onTimeUpdate = () => {
+            const currentTime = video.currentTime;
+            // Trigger ad every 15 minutes (900 seconds)
+            if (currentTime >= lastAdTime + 900 && !showMidroll) {
+                video.pause();
+                setShowMidroll(true);
+                setMidrollCountdown(10);
+                setLastAdTime(currentTime);
+            }
+        };
+
+        video.addEventListener('timeupdate', onTimeUpdate);
+        return () => video.removeEventListener('timeupdate', onTimeUpdate);
+    }, [status, lastAdTime, showMidroll]);
+
+    // Countdown timer for mid-roll ad
+    useEffect(() => {
+        if (!showMidroll || midrollCountdown <= 0) return;
+        const timer = setTimeout(() => setMidrollCountdown(c => c - 1), 1000);
+        return () => clearTimeout(timer);
+    }, [showMidroll, midrollCountdown]);
+
+    const handleSkipAd = () => {
+        setShowMidroll(false);
+        if (videoRef.current) {
+            videoRef.current.play();
+        }
+    };
+
     const handleManualPlay = () => {
         if (videoRef.current) {
             videoRef.current.play();
@@ -300,6 +340,48 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
             {settings?.site_logo && (
                 <div className={`absolute top-6 left-6 z-50 transition-opacity pointer-events-none ${showUI ? 'opacity-80' : 'opacity-40'}`} style={{ maxWidth: '100px' }}>
                     <img src={settings.site_logo} alt="Logo" className="w-full h-auto object-contain" />
+                </div>
+            )}
+
+            {/* Overlay de Publicidad Mid-roll (Estilo YouTube) */}
+            {showMidroll && (
+                <div className="absolute inset-0 z-[60] bg-black/40 flex flex-col items-center justify-center pointer-events-none">
+                    {/* El contenedor principal ya no bloquea clics, solo el botón los recibe */}
+
+                    <div className="w-full h-full flex items-center justify-center p-4">
+                        <div className="max-w-xl w-full text-center pointer-events-auto">
+                            <div className="bg-zinc-900/90 backdrop-blur-md border border-zinc-800 rounded-2xl p-4 shadow-2xl">
+                                <AdSense slot="5992307942" format="rectangle" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Botón de Omitir / Countdown Estilo YouTube */}
+                    <div className="absolute bottom-20 right-0 p-4 pointer-events-auto">
+                        {midrollCountdown > 0 ? (
+                            <div className="bg-black/60 backdrop-blur-sm border border-white/10 text-white px-4 py-2 rounded-l-md text-sm font-medium flex items-center gap-3">
+                                <span>El anuncio se puede omitir en</span>
+                                <span className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center text-xs font-bold">{midrollCountdown}</span>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={handleSkipAd}
+                                className="bg-black/80 hover:bg-black border border-white/20 text-white px-6 py-3 rounded-l-md text-sm font-bold flex items-center gap-3 transition-all hover:pl-8 group"
+                            >
+                                <span>Omitir anuncio</span>
+                                <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M5 4l11 8-11 8V4zm11 0h3v16h-3V4z" />
+                                </svg>
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Badge de "Publicidad" arriba a la izquierda */}
+                    <div className="absolute top-4 left-4">
+                        <span className="bg-black/50 backdrop-blur-sm border border-white/10 text-[10px] text-white/70 px-2 py-0.5 rounded-sm uppercase tracking-widest font-bold">
+                            Publicidad
+                        </span>
+                    </div>
                 </div>
             )}
         </div>
