@@ -10,7 +10,8 @@ import {
     LogOut,
     BarChart3,
     Film,
-    Globe
+    Globe,
+    Mail
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/store';
 
@@ -19,6 +20,7 @@ const navigation = [
     { name: 'Eventos', href: '/admin/events', icon: Calendar },
     { name: 'Promotoras', href: '/admin/promoters', icon: Globe },
     { name: 'Usuarios', href: '/admin/users', icon: Users },
+    { name: 'Marketing', href: '/admin/marketing', icon: Mail },
     { name: 'Estadísticas', href: '/admin/stats', icon: BarChart3 },
     { name: 'Configuración', href: '/admin/settings', icon: Settings },
 ];

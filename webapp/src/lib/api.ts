@@ -214,6 +214,9 @@ export const adminAPI = {
 
     getRecentPurchases: (limit?: number) =>
         api.get('/admin/purchases/recent', { params: { limit } }),
+
+    sendMassEmail: (data: { subject: string; body: string; role?: string }) =>
+        api.post('/admin/mass-email', data),
 };
 
 export const newsletterAPI = {

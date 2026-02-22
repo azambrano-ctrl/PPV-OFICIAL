@@ -185,6 +185,67 @@ router.get(
 );
 
 /**
+ * POST /api/admin/mass-email
+ * Send a mass email to all registered users (or a specific role)
+ */
+router.post(
+    '/mass-email',
+    authenticate,
+    requireAdmin,
+    asyncHandler(async (req: any, res: Response) => {
+        const { subject, body, role } = req.body;
+
+        if (!subject || !body) {
+            res.status(400).json({ success: false, message: 'Subject and body are required' });
+            return;
+        }
+
+        try {
+            console.log('[Admin] Preparing mass email...');
+
+            // Build the query to get emails
+            let queryText = 'SELECT email FROM users WHERE email IS NOT NULL';
+            let queryParams: any[] = [];
+
+            if (role && role !== 'all') {
+                queryText += ' AND role = $1';
+                queryParams.push(role);
+            }
+
+            const result = await pool.query(queryText, queryParams);
+            const emails = result.rows.map(row => row.email).filter(e => e && e.includes('@'));
+
+            if (emails.length === 0) {
+                res.status(404).json({ success: false, message: 'No recipients found' });
+                return;
+            }
+
+            console.log(`[Admin] Sending mass email to ${emails.length} users...`);
+
+            // Send the emails using the service
+            const { sendMassEmail } = await import('../services/emailService');
+
+            // Send asynchronously so the admin doesn't have to wait for hundreds of emails
+            sendMassEmail(emails, subject, body).catch(err => {
+                console.error('[Admin] Background mass email failed:', err);
+            });
+
+            res.json({
+                success: true,
+                message: `Email sending process started for ${emails.length} users.`,
+                recipientsCount: emails.length
+            });
+        } catch (error: any) {
+            console.error('[Admin] Error initiating mass email:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to initiate mass email'
+            });
+        }
+    })
+);
+
+/**
  * GET /api/admin/purchases/recent
  * Get recent purchases
  */

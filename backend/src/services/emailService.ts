@@ -73,6 +73,43 @@ export const sendEmail = async (to: string, subject: string, html: string) => {
 };
 
 /**
+ * Send a mass email to multiple recipients
+ */
+export const sendMassEmail = async (recipients: string[], subject: string, html: string) => {
+    logger.info(`Starting mass email to ${recipients.length} recipients...`);
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    // Send emails in batches of 10 to avoid overwhelming the server/SMTP
+    const BATCH_SIZE = 10;
+
+    for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+        const batch = recipients.slice(i, i + BATCH_SIZE);
+
+        await Promise.all(
+            batch.map(async (email) => {
+                try {
+                    await sendEmail(email, subject, html);
+                    successCount++;
+                } catch (error) {
+                    logger.error(`Failed to send email to ${email}:`, error);
+                    errorCount++;
+                }
+            })
+        );
+
+        // Small delay between batches (500ms)
+        if (i + BATCH_SIZE < recipients.length) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+    }
+
+    logger.info(`Mass email completed. Success: ${successCount}, Failed: ${errorCount}`);
+    return { successCount, errorCount };
+};
+
+/**
  * Send password reset email
  */
 export const sendPasswordResetEmail = async (to: string, token: string) => {
