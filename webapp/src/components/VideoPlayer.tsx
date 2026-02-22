@@ -16,6 +16,13 @@ interface VideoPlayerProps {
 }
 
 export default function VideoPlayer({ streamUrl, token, eventTitle, status, poster, isMp4 }: VideoPlayerProps) {
+    // ========================================================
+    // === CONFIGURACIÓN DE PUBLICIDAD (VAST TAG) ===
+    // ========================================================
+    // Reemplaza esta URL de prueba por tu enlace real de Google Ad Manager/AdSense cuando lo tengas.
+    const VAST_TAG_URL = 'https://pubads.g.doubleclick.net/gampad/ads?iu=/23341415522/midroll_video&description_url=https%3A%2F%2Farenafightpass.com%2F&tfcd=0&npa=0&sz=640x480&gdfp_req=1&unviewed_position_start=1&output=vast&env=vp&impl=s&correlator=';
+    // ========================================================
+
     const videoRef = useRef<HTMLVideoElement>(null);
     const hlsRef = useRef<Hls | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -187,8 +194,8 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         if (!google || !adsLoaderRef.current) return;
 
         const adsRequest = new google.ima.AdsRequest();
-        // Google Test VAST Tag for video ads
-        adsRequest.adTagUrl = 'https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/single_preroll_skippable&sz=640x480&ciu_szs=300x250%2C728x90&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator=';
+        // Usar la URL configurada al principio del componente
+        adsRequest.adTagUrl = VAST_TAG_URL;
 
         adsRequest.linearAdSlotWidth = videoRef.current?.clientWidth || 640;
         adsRequest.linearAdSlotHeight = videoRef.current?.clientHeight || 480;
