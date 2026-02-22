@@ -1,3 +1,4 @@
+// Componente de Marketing para el Panel de Administrador
 'use client';
 
 import { useState } from 'react';
