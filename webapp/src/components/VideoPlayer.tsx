@@ -19,6 +19,12 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     // === CONFIGURACIÓN DE PUBLICIDAD (VAST TAG) ===
     // ========================================================
     // Reemplaza esta URL de prueba por tu enlace real de Google Ad Manager/AdSense cuando lo tengas.
+    //
+    // ## Solución de Problemas (Error 303)
+    // Si ves el error **"303: No Ads VAST response"**, ¡felicidades! Significa que:
+    // 1.  **El código funciona perfectamente**: Tu sitio está conectando con Google con éxito.
+    // 2.  **Falta de Inventario**: Google simplemente no tiene un anuncio para mostrarte en este momento (común en cuentas nuevas).
+    // 3.  **Siguiente Paso**: Debes ir a Google Ad Manager y crear un **"Pedido" (Order)** y una **"Línea de pedido" (Line Item)** apuntando a tu bloque `midroll_video` para que Google empiece a enviar anuncios reales.
     const VAST_TAG_URL = 'https://pubads.g.doubleclick.net/gampad/ads?iu=/23341415522/midroll_video&description_url=https%3A%2F%2Farenafightpass.com%2F&tfcd=0&npa=0&sz=640x480&gdfp_req=1&unviewed_position_start=1&output=vast&env=vp&impl=s';
     // ========================================================
 
