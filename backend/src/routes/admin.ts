@@ -213,7 +213,7 @@ router.post(
             }
 
             const result = await pool.query(queryText, queryParams);
-            const emails = result.rows.map(row => row.email).filter(e => e && e.includes('@'));
+            const emails = result.rows.map((row: any) => row.email).filter((e: string) => e && e.includes('@'));
 
             if (emails.length === 0) {
                 res.status(404).json({ success: false, message: 'No recipients found' });
