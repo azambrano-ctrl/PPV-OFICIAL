@@ -5,12 +5,18 @@ import { useState } from 'react';
 import { Send, Users, AlertCircle, CheckCircle2, Shield, User as UserIcon } from 'lucide-react';
 import { adminAPI, handleAPIError } from '@/lib/api';
 import toast from 'react-hot-toast';
+import { useSettingsStore } from '@/lib/store';
 
 export default function AdminMarketingPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [recipientType, setRecipientType] = useState('all');
     const [subject, setSubject] = useState('');
     const [body, setBody] = useState('');
+    const { settings } = useSettingsStore();
+
+    const logoHtml = settings?.site_logo
+        ? `<div style="text-align: center; margin-bottom: 25px;"><img src="${settings.site_logo}" alt="Logo" style="max-height: 60px; max-width: 200px; height: auto;" /></div>\n`
+        : '';
 
     const templates = [
         {
@@ -105,8 +111,8 @@ export default function AdminMarketingPage() {
 
     const applyTemplate = (template: any) => {
         setSubject(template.subject);
-        setBody(template.body);
-        toast.success(`Plantilla "${template.name}" aplicada`);
+        setBody(logoHtml + template.body);
+        toast.success(`Plantilla "${template.name}" aplicada con logo`);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
