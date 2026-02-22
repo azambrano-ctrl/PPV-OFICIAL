@@ -244,7 +244,12 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     };
 
     const onAdError = (adErrorEvent: any) => {
-        console.error('IMA Ad Error:', adErrorEvent.getError());
+        const error = adErrorEvent.getError();
+        console.error('IMA Ad Error:', {
+            code: error.getErrorCode(),
+            message: error.getMessage(),
+            type: error.getType()
+        });
         setIsAdPlaying(false);
         if (adsManagerRef.current) {
             try { adsManagerRef.current.destroy(); } catch (e) { }
