@@ -16,12 +16,15 @@ interface VideoPlayerProps {
 }
 
 export default function VideoPlayer({ streamUrl, token, eventTitle, status, poster, isMp4 }: VideoPlayerProps) {
-    // ========================================================
     // === CONFIGURACIÓN DE PUBLICIDAD (VAST TAG) ===
     // ========================================================
     // Reemplaza esta URL de prueba por tu enlace real de Google Ad Manager/AdSense cuando lo tengas.
     const VAST_TAG_URL = 'https://pubads.g.doubleclick.net/gampad/ads?iu=/23341415522/midroll_video&description_url=https%3A%2F%2Farenafightpass.com%2F&tfcd=0&npa=0&sz=640x480&gdfp_req=1&unviewed_position_start=1&output=vast&env=vp&impl=s';
     // ========================================================
+
+    useEffect(() => {
+        console.log('%c>>> VideoPlayer Version: 1.0.3 (Fixed VAST & Cache) <<<', 'color: #ff00ff; font-weight: bold;');
+    }, []);
 
     const videoRef = useRef<HTMLVideoElement>(null);
     const hlsRef = useRef<Hls | null>(null);
@@ -153,7 +156,8 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         if (typeof window === 'undefined') return;
 
         const script = document.createElement('script');
-        script.src = 'https://imasdk.googleapis.com/js/sdkloader/ima3.js';
+        // Cache busting for the SDK
+        script.src = `https://imasdk.googleapis.com/js/sdkloader/ima3.js?v=${Date.now()}`;
         script.async = true;
         script.onload = () => {
             console.log('Google IMA SDK loaded');
@@ -216,11 +220,15 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         adsManager.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, onAdError);
         adsManager.addEventListener(google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED, () => {
             setIsAdPlaying(true);
-            videoRef.current?.pause();
+            if (videoRef.current) {
+                videoRef.current.pause();
+            }
         });
         adsManager.addEventListener(google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED, () => {
             setIsAdPlaying(false);
-            videoRef.current?.play();
+            if (videoRef.current) {
+                videoRef.current.play().catch(e => console.warn('Main video play interrupted:', e));
+            }
         });
         adsManager.addEventListener(google.ima.AdEvent.Type.ALL_ADS_COMPLETED, () => {
             setIsAdPlaying(false);
@@ -238,8 +246,12 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     const onAdError = (adErrorEvent: any) => {
         console.error('IMA Ad Error:', adErrorEvent.getError());
         setIsAdPlaying(false);
-        if (adsManagerRef.current) adsManagerRef.current.destroy();
-        videoRef.current?.play();
+        if (adsManagerRef.current) {
+            try { adsManagerRef.current.destroy(); } catch (e) { }
+        }
+        if (videoRef.current) {
+            videoRef.current.play().catch(e => console.warn('Video play after error failed:', e));
+        }
     };
 
     useEffect(() => {
