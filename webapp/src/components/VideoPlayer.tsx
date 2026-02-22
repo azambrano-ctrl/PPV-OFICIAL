@@ -28,9 +28,13 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     const lastStreamUrlRef = useRef<string>('');
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+    // IMA SDK Refs & State
+    const adContainerRef = useRef<HTMLDivElement>(null);
+    const adsLoaderRef = useRef<any>(null);
+    const adsManagerRef = useRef<any>(null);
+    const [isAdPlaying, setIsAdPlaying] = useState(false);
+
     // Mid-roll ad state
-    const [showMidroll, setShowMidroll] = useState(false);
-    const [midrollCountdown, setMidrollCountdown] = useState(10);
     const [lastAdTime, setLastAdTime] = useState(0);
 
     const { settings } = useSettingsStore();
@@ -136,6 +140,100 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     };
 
     const handleMouseLeave = () => { if (isPlaying) setShowUI(false); };
+
+    // Load IMA SDK
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        const script = document.createElement('script');
+        script.src = 'https://imasdk.googleapis.com/js/sdkloader/ima3.js';
+        script.async = true;
+        script.onload = () => {
+            console.log('Google IMA SDK loaded');
+            initializeIMA();
+        };
+        document.head.appendChild(script);
+
+        return () => {
+            if (script.parentNode) script.parentNode.removeChild(script);
+            if (adsManagerRef.current) adsManagerRef.current.destroy();
+        };
+    }, []);
+
+    const initializeIMA = () => {
+        const google = (window as any).google;
+        if (!google || !google.ima || !videoRef.current || !adContainerRef.current) return;
+
+        const adDisplayContainer = new google.ima.AdDisplayContainer(adContainerRef.current, videoRef.current);
+        adDisplayContainer.initialize();
+
+        const adsLoader = new google.ima.AdsLoader(adDisplayContainer);
+        adsLoaderRef.current = adsLoader;
+
+        adsLoader.addEventListener(
+            google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
+            onAdsManagerLoaded,
+            false
+        );
+        adsLoader.addEventListener(
+            google.ima.AdErrorEvent.Type.AD_ERROR,
+            onAdError,
+            false
+        );
+    };
+
+    const requestAds = () => {
+        const google = (window as any).google;
+        if (!google || !adsLoaderRef.current) return;
+
+        const adsRequest = new google.ima.AdsRequest();
+        // Google Test VAST Tag for video ads
+        adsRequest.adTagUrl = 'https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/single_preroll_skippable&sz=640x480&ciu_szs=300x250%2C728x90&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator=';
+
+        adsRequest.linearAdSlotWidth = videoRef.current?.clientWidth || 640;
+        adsRequest.linearAdSlotHeight = videoRef.current?.clientHeight || 480;
+        adsRequest.nonLinearAdSlotWidth = videoRef.current?.clientWidth || 640;
+        adsRequest.nonLinearAdSlotHeight = videoRef.current?.clientHeight || 150;
+
+        adsLoaderRef.current.requestAds(adsRequest);
+    };
+
+    const onAdsManagerLoaded = (adsManagerLoadedEvent: any) => {
+        const google = (window as any).google;
+        const adsRenderingSettings = new google.ima.AdsRenderingSettings();
+        adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = true;
+
+        const adsManager = adsManagerLoadedEvent.getAdsManager(videoRef.current, adsRenderingSettings);
+        adsManagerRef.current = adsManager;
+
+        adsManager.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, onAdError);
+        adsManager.addEventListener(google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED, () => {
+            setIsAdPlaying(true);
+            videoRef.current?.pause();
+        });
+        adsManager.addEventListener(google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED, () => {
+            setIsAdPlaying(false);
+            videoRef.current?.play();
+        });
+        adsManager.addEventListener(google.ima.AdEvent.Type.ALL_ADS_COMPLETED, () => {
+            setIsAdPlaying(false);
+            adsManager.destroy();
+        });
+
+        try {
+            adsManager.init(videoRef.current?.clientWidth || 640, videoRef.current?.clientHeight || 480, google.ima.ViewMode.NORMAL);
+            adsManager.start();
+        } catch (adError) {
+            console.error('AdsManager error:', adError);
+        }
+    };
+
+    const onAdError = (adErrorEvent: any) => {
+        console.error('IMA Ad Error:', adErrorEvent.getError());
+        setIsAdPlaying(false);
+        if (adsManagerRef.current) adsManagerRef.current.destroy();
+        videoRef.current?.play();
+    };
 
     useEffect(() => {
         let finalUrl = streamUrl;
@@ -252,36 +350,21 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     // Logic for mid-roll ads (only for 'reprise')
     useEffect(() => {
         const video = videoRef.current;
-        if (!video || status !== 'reprise') return;
+        if (!video || status !== 'reprise' || isAdPlaying) return;
 
         const onTimeUpdate = () => {
             const currentTime = video.currentTime;
             // Trigger ad every 15 minutes (900 seconds)
-            if (currentTime >= lastAdTime + 900 && !showMidroll) {
-                video.pause();
-                setShowMidroll(true);
-                setMidrollCountdown(10);
+            if (currentTime >= lastAdTime + 900) {
+                console.log('Triggering mid-roll video ad');
+                requestAds();
                 setLastAdTime(currentTime);
             }
         };
 
         video.addEventListener('timeupdate', onTimeUpdate);
         return () => video.removeEventListener('timeupdate', onTimeUpdate);
-    }, [status, lastAdTime, showMidroll]);
-
-    // Countdown timer for mid-roll ad
-    useEffect(() => {
-        if (!showMidroll || midrollCountdown <= 0) return;
-        const timer = setTimeout(() => setMidrollCountdown(c => c - 1), 1000);
-        return () => clearTimeout(timer);
-    }, [showMidroll, midrollCountdown]);
-
-    const handleSkipAd = () => {
-        setShowMidroll(false);
-        if (videoRef.current) {
-            videoRef.current.play();
-        }
-    };
+    }, [status, lastAdTime, isAdPlaying]);
 
     const handleManualPlay = () => {
         if (videoRef.current) {
@@ -343,47 +426,12 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
                 </div>
             )}
 
-            {/* Overlay de Publicidad Mid-roll (Estilo YouTube) */}
-            {showMidroll && (
-                <div className="absolute inset-0 z-[60] bg-black/40 flex flex-col items-center justify-center pointer-events-none">
-                    {/* El contenedor principal ya no bloquea clics, solo el botón los recibe */}
-
-                    <div className="w-full h-full flex items-center justify-center p-4">
-                        <div className="max-w-xl w-full text-center pointer-events-auto">
-                            <div className="bg-zinc-900/90 backdrop-blur-md border border-zinc-800 rounded-2xl p-4 shadow-2xl">
-                                <AdSense slot="5992307942" format="rectangle" />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Botón de Omitir / Countdown Estilo YouTube */}
-                    <div className="absolute bottom-20 right-0 p-4 pointer-events-auto">
-                        {midrollCountdown > 0 ? (
-                            <div className="bg-black/60 backdrop-blur-sm border border-white/10 text-white px-4 py-2 rounded-l-md text-sm font-medium flex items-center gap-3">
-                                <span>El anuncio se puede omitir en</span>
-                                <span className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center text-xs font-bold">{midrollCountdown}</span>
-                            </div>
-                        ) : (
-                            <button
-                                onClick={handleSkipAd}
-                                className="bg-black/80 hover:bg-black border border-white/20 text-white px-6 py-3 rounded-l-md text-sm font-bold flex items-center gap-3 transition-all hover:pl-8 group"
-                            >
-                                <span>Omitir anuncio</span>
-                                <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M5 4l11 8-11 8V4zm11 0h3v16h-3V4z" />
-                                </svg>
-                            </button>
-                        )}
-                    </div>
-
-                    {/* Badge de "Publicidad" arriba a la izquierda */}
-                    <div className="absolute top-4 left-4">
-                        <span className="bg-black/50 backdrop-blur-sm border border-white/10 text-[10px] text-white/70 px-2 py-0.5 rounded-sm uppercase tracking-widest font-bold">
-                            Publicidad
-                        </span>
-                    </div>
-                </div>
-            )}
+            {/* Contenedor de Publicidad Google IMA */}
+            <div
+                ref={adContainerRef}
+                className={`absolute inset-0 z-[60] bg-black/40 ${isAdPlaying ? 'block' : 'hidden'}`}
+                style={{ pointerEvents: isAdPlaying ? 'auto' : 'none' }}
+            />
         </div>
     );
 }
