@@ -12,6 +12,103 @@ export default function AdminMarketingPage() {
     const [subject, setSubject] = useState('');
     const [body, setBody] = useState('');
 
+    const templates = [
+        {
+            name: 'Anuncio Nuevo Evento',
+            subject: '🔥 ¡NUEVO EVENTO CONFIRMADO! No te pierdas la pelea del año',
+            body: `<div style="text-align: center; padding: 20px; background-color: #111; border-radius: 10px; border: 1px solid #333;">
+    <h1 style="color: #ef4444; margin-bottom: 5px; text-transform: uppercase;">¡LA ESPERA TERMINÓ!</h1>
+    <h2 style="color: #fff; margin-top: 0;">[NOMBRE DEL EVENTO V.S NOMBRE]</h2>
+    
+    <p style="color: #aaa; font-size: 16px; line-height: 1.6;">
+        Prepárate para la noche más explosiva del año. Los mejores peleadores entran a la jaula y tú puedes vivirlo en primera fila desde cualquier dispositivo.
+    </p>
+
+    <div style="margin: 30px 0;">
+        <p style="color: #fff; font-size: 18px; margin: 5px 0;">📅 <strong>Fecha:</strong> [Fecha del evento]</p>
+        <p style="color: #fff; font-size: 18px; margin: 5px 0;">⏰ <strong>Hora:</strong> [Hora exacta]</p>
+    </div>
+
+    <a href="https://arenafightpass.com/events" style="display: inline-block; background-color: #ef4444; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 18px; text-transform: uppercase;">
+        COMPRAR TICKET PPV AHORA
+    </a>
+</div>`
+        },
+        {
+            name: 'Estamos en Vivo',
+            subject: '🔴 ¡ESTAMOS EN VIVO! Entra ahora a la transmisión',
+            body: `<div style="text-align: center; padding: 30px 20px;">
+    <div style="display: inline-block; background-color: #ef4444; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; margin-bottom: 20px;">
+        ◉ EN DIRECTO
+    </div>
+    
+    <h2 style="color: #111; font-size: 24px;">Las peleas estelares están a punto de comenzar</h2>
+    
+    <p style="color: #444; font-size: 16px; margin-bottom: 30px;">
+        Si ya tienes tu ticket, ingresa a tu cuenta ahora mismo. Si aún no lo tienes, ¡todavía estás a tiempo de comprar el pase y no perderte ni un solo nocaut!
+    </p>
+
+    <a href="https://arenafightpass.com/watch/[ID_DEL_EVENTO]" style="display: inline-block; background-color: #111; color: #fff; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
+        IR A LA TRANSMISIÓN
+    </a>
+</div>`
+        },
+        {
+            name: 'Descuento / Pase',
+            subject: '🎁 Tienes un 20% de descuento para tu próximo PPV',
+            body: `<div style="border: 2px dashed #ef4444; padding: 30px; text-align: center; background-color: #fcfcfc; border-radius: 10px;">
+    <h2 style="color: #111; margin-top: 0;">¡Un regalo para los verdaderos fans del combate!</h2>
+    
+    <p style="color: #333; font-size: 16px;">
+        Queremos agradecerte por ser parte de la comunidad de Arena Fight Pass. Usa este código especial para obtener un <strong>20% de descuento</strong> en el próximo evento de la cartelera.
+    </p>
+
+    <div style="background-color: #111; color: #ef4444; font-size: 28px; font-weight: 900; letter-spacing: 3px; padding: 15px; margin: 25px auto; max-width: 250px; border-radius: 5px;">
+        FIGHT20
+    </div>
+
+    <p style="color: #666; font-size: 12px;">*Válido únicamente para los primeros 50 tickets o hasta el [FECHA LÍMITE].</p>
+
+    <br>
+    <a href="https://arenafightpass.com/events" style="display: inline-block; background-color: #ef4444; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+        CANJEAR CÓDIGO AHORA
+    </a>
+</div>`
+        },
+        {
+            name: 'Actualización App',
+            subject: '🚀 ¡Nuevas funciones increíbles en Arena Fight Pass!',
+            body: `<div style="padding: 20px;">
+    <h2 style="color: #111;">¡Seguimos mejorando para ti!</h2>
+    
+    <p style="color: #444; font-size: 16px;">
+        Hola, luchador. Hemos estado trabajando duro para traerte la mejor experiencia de streaming de deportes de combate en Latinoamérica.
+    </p>
+    
+    <h3 style="color: #ef4444;">¿Qué hay de nuevo?</h3>
+    <ul style="color: #444; font-size: 15px; line-height: 1.8;">
+        <li>✅ <strong>Transmisiones más rápidas:</strong> Ahora con tecnología Cloudflare para cero interrupciones.</li>
+        <li>✅ <strong>Eventos Gratuitos:</strong> Disfruta de la nueva sección "Re-prise" con combates legendarios sin costo.</li>
+        <li>✅ <strong>Mejor reproductor:</strong> Cambia la calidad, pausa y retrocede con nuestro nuevo sistema.</li>
+    </ul>
+
+    <p style="color: #444; font-size: 16px; margin-top: 25px;">
+        Entra ahora y descubre todas las novedades.
+    </p>
+
+    <a href="https://arenafightpass.com" style="display: inline-block; background-color: #111; color: #fff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+        EXPLORAR PLATAFORMA
+    </a>
+</div>`
+        }
+    ];
+
+    const applyTemplate = (template: any) => {
+        setSubject(template.subject);
+        setBody(template.body);
+        toast.success(`Plantilla "${template.name}" aplicada`);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -70,6 +167,28 @@ export default function AdminMarketingPage() {
                     <p className="text-sm text-blue-300">
                         Los correos se envían en segundo plano para no bloquear el panel. Dependiendo de la cantidad de usuarios, el proceso puede tardar unos minutos en completarse a través del servicio SMTP.
                     </p>
+                </div>
+            </div>
+
+            {/* Quick Templates */}
+            <div>
+                <h3 className="text-lg font-medium text-white mb-3">Plantillas Rápidas</h3>
+                <div className="flex flex-wrap gap-2">
+                    {templates.map((template, index) => (
+                        <button
+                            key={index}
+                            onClick={() => applyTemplate(template)}
+                            className="bg-dark-800 hover:bg-dark-700 border border-dark-600 text-gray-300 px-4 py-2 rounded-lg text-sm transition-colors"
+                        >
+                            {template.name}
+                        </button>
+                    ))}
+                    <button
+                        onClick={() => { setSubject(''); setBody(''); toast.success('Formulario limpiado'); }}
+                        className="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-lg text-sm transition-colors border border-red-500/20 ml-auto"
+                    >
+                        Limpiar Todo
+                    </button>
                 </div>
             </div>
 
