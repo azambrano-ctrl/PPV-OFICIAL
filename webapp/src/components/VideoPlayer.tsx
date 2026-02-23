@@ -219,6 +219,8 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         const google = (window as any).google;
         const adsRenderingSettings = new google.ima.AdsRenderingSettings();
         adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = true;
+        // Aumentar el límite de redirecciones para evitar que se rompa la cadena de VAST
+        adsRenderingSettings.maxRedirects = 10;
 
         const adsManager = adsManagerLoadedEvent.getAdsManager(videoRef.current, adsRenderingSettings);
         adsManagerRef.current = adsManager;
