@@ -242,7 +242,9 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         });
 
         try {
+            console.log('AdsManager initializing...');
             adsManager.init(videoRef.current?.clientWidth || 640, videoRef.current?.clientHeight || 480, google.ima.ViewMode.NORMAL);
+            console.log('AdsManager starting...');
             adsManager.start();
         } catch (adError) {
             console.error('AdsManager error:', adError);
@@ -385,8 +387,9 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         const onTimeUpdate = () => {
             const currentTime = video.currentTime;
             // Trigger ad every 15 minutes (900 seconds)
+            // For testing, you can change 900 to 30
             if (currentTime >= lastAdTime + 900) {
-                console.log('Triggering mid-roll video ad');
+                console.log('Triggering mid-roll video ad at:', currentTime);
                 requestAds();
                 setLastAdTime(currentTime);
             }
@@ -394,7 +397,7 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
 
         video.addEventListener('timeupdate', onTimeUpdate);
         return () => video.removeEventListener('timeupdate', onTimeUpdate);
-    }, [status, lastAdTime, isAdPlaying]);
+    }, [lastAdTime, isAdPlaying]);
 
     const handleManualPlay = () => {
         if (videoRef.current) {
