@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { Send, User, Shield, Info, X, UserMinus, MessageSquare } from 'lucide-react';
+import { Send, User, Shield, Info, X, UserMinus, MessageSquare, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/lib/store';
@@ -34,6 +34,7 @@ export default function ChatBox({ eventId, eventTitle, eventStatus = 'live', soc
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [isAutoScroll, setIsAutoScroll] = useState(true);
+    const [viewerCount, setViewerCount] = useState<number>(0);
 
     // Auto-scroll to bottom
     const scrollToBottom = () => {
@@ -112,6 +113,10 @@ export default function ChatBox({ eventId, eventTitle, eventStatus = 'live', soc
             }
         };
 
+        const handleViewersCount = ({ count }: { count: number }) => {
+            setViewerCount(count);
+        };
+
         const handleError = (err: any) => {
             console.error('[CHAT] Socket error:', err);
             if (err.message) toast.error(err.message);
@@ -127,6 +132,7 @@ export default function ChatBox({ eventId, eventTitle, eventStatus = 'live', soc
         socket.on('user_banned', handleUserBanned);
         socket.on('user_muted', handleUserMuted);
         socket.on('user_unmoderated', handleUserUnmoderated);
+        socket.on('viewers_count', handleViewersCount);
         socket.on('error', handleError);
 
         return () => {
@@ -137,6 +143,7 @@ export default function ChatBox({ eventId, eventTitle, eventStatus = 'live', soc
             socket.off('user_banned', handleUserBanned);
             socket.off('user_muted', handleUserMuted);
             socket.off('user_unmoderated', handleUserUnmoderated);
+            socket.off('viewers_count', handleViewersCount);
             socket.off('error', handleError);
         };
     }, [socket, eventId, user]);
@@ -234,9 +241,16 @@ export default function ChatBox({ eventId, eventTitle, eventStatus = 'live', soc
                         {eventStatus === 'live' ? 'CHAT EN VIVO' : 'CHAT DE REPETICIÓN'}
                     </span>
                 </div>
-                {!isConnected && (
-                    <span className="text-xs text-red-400 font-medium">Desconectado</span>
-                )}
+                <div className="flex items-center">
+                    {!isConnected ? (
+                        <span className="text-xs text-red-400 font-medium">Desconectado</span>
+                    ) : eventStatus === 'live' ? (
+                        <div className="flex items-center gap-1.5 text-xs text-green-400 font-medium bg-green-500/10 px-2.5 py-1 rounded-full border border-green-500/20" title="Usuarios viendo la transmisión">
+                            <Users className="w-3.5 h-3.5" />
+                            {viewerCount} viendo
+                        </div>
+                    ) : null}
+                </div>
             </div>
 
             <div

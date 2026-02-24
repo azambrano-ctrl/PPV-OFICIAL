@@ -212,6 +212,12 @@ io.on('connection', (socket) => {
         socketId: socket.id,
     });
 
+    const broadcastViewers = (eventId: string) => {
+        const roomName = `event_${eventId}`;
+        const count = io.sockets.adapter.rooms.get(roomName)?.size || 0;
+        io.to(roomName).emit('viewers_count', { count });
+    };
+
     // Each user joins their own notification room
     const userId = socket.data.user.userId;
     socket.join(`user_notifications_${userId}`);
@@ -257,6 +263,10 @@ io.on('connection', (socket) => {
             });
 
             socket.emit('joined_event', { eventId });
+
+            // Broadcast updated viewers count
+            socket.data.currentEventId = eventId;
+            broadcastViewers(eventId);
         } catch (error) {
             logger.error('[CHAT] Error in join_event:', error);
             socket.emit('error', { message: 'Failed to join event' });
@@ -459,10 +469,23 @@ io.on('connection', (socket) => {
     // Leave event room
     socket.on('leave_event', (eventId: string) => {
         socket.leave(`event_${eventId}`);
+        if (socket.data.currentEventId === eventId) {
+            delete socket.data.currentEventId;
+        }
+        broadcastViewers(eventId);
         logger.info('User left event room', {
             userId: socket.data.user.userId,
             eventId,
         });
+    });
+
+    // Disconnecting (before leaving rooms)
+    socket.on('disconnecting', () => {
+        if (socket.data.currentEventId) {
+            const eventId = socket.data.currentEventId;
+            // Delay broadcast slightly so the socket has actually left the room
+            setTimeout(() => broadcastViewers(eventId), 50);
+        }
     });
 
     // Disconnect
