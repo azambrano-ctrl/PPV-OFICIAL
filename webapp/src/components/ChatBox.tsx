@@ -241,16 +241,9 @@ export default function ChatBox({ eventId, eventTitle, eventStatus = 'live', soc
                         {eventStatus === 'live' ? 'CHAT EN VIVO' : 'CHAT DE REPETICIÓN'}
                     </span>
                 </div>
-                <div className="flex items-center">
-                    {!isConnected ? (
-                        <span className="text-xs text-red-400 font-medium">Desconectado</span>
-                    ) : eventStatus === 'live' ? (
-                        <div className="flex items-center gap-1.5 text-xs text-green-400 font-medium bg-green-500/10 px-2.5 py-1 rounded-full border border-green-500/20" title="Usuarios viendo la transmisión">
-                            <Users className="w-3.5 h-3.5" />
-                            {viewerCount} viendo
-                        </div>
-                    ) : null}
-                </div>
+                {!isConnected && (
+                    <span className="text-xs text-red-400 font-medium">Desconectado</span>
+                )}
             </div>
 
             <div
