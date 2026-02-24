@@ -339,19 +339,21 @@ export default function ChatBox({ eventId, eventTitle, eventStatus = 'live', soc
                 )}
             </AnimatePresence>
 
-            <div className="px-4 py-2 bg-white/5 border-t border-white/10 flex items-center justify-between gap-1 overflow-x-auto no-scrollbar">
-                {['🔥', '🥊', '👏', '💪', '🙌', '🤩'].map((emoji) => (
-                    <button
-                        key={emoji}
-                        onClick={() => sendReaction(emoji)}
-                        className="p-2 hover:bg-white/10 rounded-full transition-all hover:scale-125 text-xl"
-                        title="Reaccionar"
-                        type="button"
-                    >
-                        {emoji}
-                    </button>
-                ))}
-            </div>
+            {eventStatus === 'live' && (
+                <div className="px-4 py-2 bg-white/5 border-t border-white/10 flex items-center justify-between gap-1 overflow-x-auto no-scrollbar">
+                    {['🔥', '🥊', '👏', '💪', '🙌', '🤩'].map((emoji) => (
+                        <button
+                            key={emoji}
+                            onClick={() => sendReaction(emoji)}
+                            className="p-2 hover:bg-white/10 rounded-full transition-all hover:scale-125 text-xl"
+                            title="Reaccionar"
+                            type="button"
+                        >
+                            {emoji}
+                        </button>
+                    ))}
+                </div>
+            )}
 
             <div className="p-4 bg-white/5 border-t border-white/10">
                 <form onSubmit={sendMessage} className="relative">
