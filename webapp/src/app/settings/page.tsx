@@ -259,11 +259,17 @@ export default function SettingsPage() {
                                     </div>
                                     <h2 className="text-2xl font-bold mb-2">Métodos de Pago</h2>
                                     <p className="text-dark-400 max-w-md mx-auto mb-8">
-                                        Actualmente procesamos los pagos de forma segura a través de pasarelas externas. No almacenamos tus tarjetas directamente.
+                                        Actualmente procesamos los pagos de forma segura a través de PayPal. Tus tarjetas y métodos de pago se gestionan directamente en su plataforma.
                                     </p>
-                                    <button className="btn btn-secondary cursor-not-allowed opacity-50">
-                                        Gestionar Tarjetas (Próximamente)
-                                    </button>
+                                    <a
+                                        href="https://www.paypal.com/myaccount/money/"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="btn btn-primary inline-flex items-center gap-2"
+                                    >
+                                        <CreditCard className="w-5 h-5" />
+                                        Gestionar en PayPal
+                                    </a>
                                 </div>
                             )}
                         </div>
