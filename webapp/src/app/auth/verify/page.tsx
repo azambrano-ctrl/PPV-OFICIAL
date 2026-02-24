@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { authAPI } from '@/lib/api';
 
 function VerifyContent() {
     const searchParams = useSearchParams();
@@ -22,28 +23,18 @@ function VerifyContent() {
 
         const verifyToken = async () => {
             try {
-                // Determine base URL dynamically or use NEXT_PUBLIC_API_URL
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-                const response = await fetch(`${apiUrl}/auth/verify-email`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ token }),
-                });
+                const response = await authAPI.verifyEmail(token);
 
-                const data = await response.json();
-
-                if (response.ok && data.success) {
+                if (response.data.success) {
                     setStatus('success');
                     setMessage('¡Tu cuenta ha sido verificada con éxito!');
                 } else {
                     setStatus('error');
-                    setMessage(data.message || 'El enlace de verificación es inválido o ha expirado.');
+                    setMessage(response.data.message || 'El enlace de verificación es inválido o ha expirado.');
                 }
-            } catch (error) {
+            } catch (error: any) {
                 setStatus('error');
-                setMessage('Ocurrió un error al intentar verificar tu cuenta. Por favor, inténtalo más tarde.');
+                setMessage(error.response?.data?.message || 'Ocurrió un error al intentar verificar tu cuenta. Por favor, inténtalo más tarde.');
             }
         };
 

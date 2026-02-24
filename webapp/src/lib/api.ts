@@ -128,6 +128,9 @@ export const authAPI = {
 
     deleteUser: (userId: string) =>
         api.delete(`/auth/users/${userId}`),
+
+    verifyEmail: (token: string) =>
+        api.post('/auth/verify-email', { token }),
 };
 
 export const eventsAPI = {
