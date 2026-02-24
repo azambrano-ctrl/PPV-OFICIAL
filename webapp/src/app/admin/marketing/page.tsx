@@ -134,7 +134,10 @@ export default function AdminMarketingPage() {
         setIsSubmitting(true);
 
         try {
-            const formattedBody = body.replace(/\n/g, '<br>');
+            // Only inject <br> tags if the user is sending plain text.
+            // If they are using a template (which contains HTML tags), standard HTML rendering will handle spacing.
+            const isHtml = /<[a-z][\s\S]*>/i.test(body);
+            const formattedBody = isHtml ? body : body.replace(/\n/g, '<br>');
 
             const htmlMessage = `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
