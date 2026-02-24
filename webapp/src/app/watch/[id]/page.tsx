@@ -84,8 +84,8 @@ export default function WatchPage() {
                 const eventData = await eventRes.json();
                 setEvent(eventData.data);
 
-                // Show ad overlay for free events (pase libre)
-                if (Number(eventData.data.price) === 0) {
+                // Show ad overlay for free events (pase libre) ONLY if they are not live
+                if (Number(eventData.data.price) === 0 && eventData.data.status !== 'live') {
                     setShowAdOverlay(true);
                     setAdCountdown(10);
                 }
