@@ -341,13 +341,15 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
             const hls = new Hls({
                 debug: false,
                 enableWorker: true,
-                lowLatencyMode: false, // Disabling for better stability with Cloudflare Stream
-                liveSyncDurationCount: 6, // 6 segments safety buffer
-                liveMaxLatencyDurationCount: 12,
-                maxBufferLength: 30,
-                maxMaxBufferLength: 60,
+                lowLatencyMode: true, // Enable for faster live playback
+                liveSyncDurationCount: 3, // Reduce safety buffer to keep closer to live edge
+                liveMaxLatencyDurationCount: 10,
+                maxBufferLength: 10, // Reduce buffer length to prevent downloading too far ahead and causing memory/network spikes
+                maxMaxBufferLength: 30,
                 manifestLoadingMaxRetry: Infinity,
                 manifestLoadingRetryDelay: 1000,
+                levelLoadingTimeOut: 10000, // Timeout faster on bad connections to trigger quality drop
+                fragLoadingTimeOut: 10000,
             });
             hlsRef.current = hls;
             hls.loadSource(finalUrl);
