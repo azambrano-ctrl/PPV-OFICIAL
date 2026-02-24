@@ -111,8 +111,8 @@ export default function AdminMarketingPage() {
 
     const applyTemplate = (template: any) => {
         setSubject(template.subject);
-        setBody(logoHtml + template.body);
-        toast.success(`Plantilla "${template.name}" aplicada con logo`);
+        setBody(template.body);
+        toast.success(`Plantilla "${template.name}" aplicada`);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -135,13 +135,21 @@ export default function AdminMarketingPage() {
 
         try {
             // Only inject <br> tags if the user is sending plain text.
-            // If they are using a template (which contains HTML tags), standard HTML rendering will handle spacing.
             const isHtml = /<[a-z][\s\S]*>/i.test(body);
             const formattedBody = isHtml ? body : body.replace(/\n/g, '<br>');
 
+            // Automatically inject logo if not present
+            const bodyHasLogo = body.includes('<img');
+            const finalLogo = (!bodyHasLogo && settings?.site_logo) 
+                ? `<div style="text-align: center; margin-bottom: 25px;"><img src="${settings.site_logo}" alt="Logo" style="max-height: 60px; max-width: 200px; height: auto;" /></div>\n`
+                : '';
+
             const htmlMessage = `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
-                    ${formattedBody}
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0a0a0a; border: 1px solid #222; border-radius: 12px; padding: 30px;">
+                    ${finalLogo}
+                    <div style="color: #e5e5e5; font-size: 16px; line-height: 1.6;">
+                        ${formattedBody}
+                    </div>
                 </div>
             `;
 
@@ -286,7 +294,7 @@ export default function AdminMarketingPage() {
                                 className="input w-full min-h-[300px] resize-y"
                             />
                             <p className="text-xs text-gray-500 mt-2">
-                                Nota: Los saltos de línea se respetarán en el correo final.
+                                Nota: Puedes escribir texto normal y se enviará con el logo de tu plataforma y tema oscuro automáticamente. Si pegas código HTML, se respetará tu diseño.
                             </p>
                         </div>
                     </div>
