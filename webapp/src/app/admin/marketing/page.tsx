@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Send, Users, AlertCircle, CheckCircle2, Shield, User as UserIcon } from 'lucide-react';
+import { Send, Users, AlertCircle, CheckCircle2, Shield, User as UserIcon, Mail } from 'lucide-react';
 import { adminAPI, handleAPIError } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { useSettingsStore } from '@/lib/store';
@@ -10,6 +10,7 @@ import { useSettingsStore } from '@/lib/store';
 export default function AdminMarketingPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [recipientType, setRecipientType] = useState('all');
+    const [specificEmail, setSpecificEmail] = useState('');
     const [subject, setSubject] = useState('');
     const [body, setBody] = useState('');
     const { settings } = useSettingsStore();
@@ -123,9 +124,18 @@ export default function AdminMarketingPage() {
             return;
         }
 
-        const confirmMessage = recipientType === 'all'
-            ? '¿Estás seguro de enviar este correo a TODOS los usuarios registrados?'
-            : `¿Estás seguro de enviar este correo a los usuarios con rol: ${recipientType}?`;
+        if (recipientType === 'specific') {
+            if (!specificEmail.trim() || !specificEmail.includes('@')) {
+                toast.error('Por favor ingresa un correo electrónico válido');
+                return;
+            }
+        }
+
+        const confirmMessage = recipientType === 'specific'
+            ? `¿Estás seguro de enviar este correo a ${specificEmail}?`
+            : recipientType === 'all'
+                ? '¿Estás seguro de enviar este correo a TODOS los usuarios registrados?'
+                : `¿Estás seguro de enviar este correo a los usuarios con rol: ${recipientType}?`;
 
         if (!confirm(confirmMessage)) {
             return;
@@ -140,7 +150,7 @@ export default function AdminMarketingPage() {
 
             // Automatically inject logo if not present
             const bodyHasLogo = body.includes('<img');
-            const finalLogo = (!bodyHasLogo && settings?.site_logo) 
+            const finalLogo = (!bodyHasLogo && settings?.site_logo)
                 ? `<div style="text-align: center; margin-bottom: 25px;"><img src="${settings.site_logo}" alt="Logo" style="max-height: 60px; max-width: 200px; height: auto;" /></div>\n`
                 : '';
 
@@ -156,7 +166,8 @@ export default function AdminMarketingPage() {
             const response = await adminAPI.sendMassEmail({
                 subject,
                 body: htmlMessage,
-                role: recipientType
+                role: recipientType,
+                specificEmail: recipientType === 'specific' ? specificEmail : undefined
             });
 
             toast.success(response.data.message || 'Proceso de envío iniciado');
@@ -217,7 +228,7 @@ export default function AdminMarketingPage() {
                         <label className="block text-sm font-medium text-gray-300 mb-2">
                             Destinatarios
                         </label>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                             <label className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${recipientType === 'all' ? 'border-primary-500 bg-primary-500/10' : 'border-dark-700 bg-dark-800 hover:border-dark-600'}`}>
                                 <input
                                     type="radio"
@@ -262,7 +273,41 @@ export default function AdminMarketingPage() {
                                     <div className={`font-medium ${recipientType === 'user' ? 'text-white' : 'text-gray-300'}`}>Usuarios Normales</div>
                                 </div>
                             </label>
+
+                            <label className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${recipientType === 'specific' ? 'border-orange-500 bg-orange-500/10' : 'border-dark-700 bg-dark-800 hover:border-dark-600'}`}>
+                                <input
+                                    type="radio"
+                                    name="recipientType"
+                                    value="specific"
+                                    checked={recipientType === 'specific'}
+                                    onChange={(e) => setRecipientType(e.target.value)}
+                                    className="sr-only"
+                                />
+                                <Mail className={`w-5 h-5 mr-3 ${recipientType === 'specific' ? 'text-orange-500' : 'text-gray-500'}`} />
+                                <div>
+                                    <div className={`font-medium ${recipientType === 'specific' ? 'text-white' : 'text-gray-300'}`}>Correo Específico</div>
+                                </div>
+                            </label>
                         </div>
+
+                        {recipientType === 'specific' && (
+                            <div className="mt-4 animate-fade-in bg-dark-800 p-4 border border-dark-700 rounded-lg max-w-xl">
+                                <label htmlFor="specificEmail" className="block text-sm font-medium text-gray-300 mb-1">
+                                    Dirección de Correo Destino
+                                </label>
+                                <input
+                                    id="specificEmail"
+                                    type="email"
+                                    value={specificEmail}
+                                    onChange={(e) => setSpecificEmail(e.target.value)}
+                                    placeholder="ejemplo@correo.com"
+                                    className="input w-full"
+                                />
+                                <p className="text-xs text-orange-400 mt-2">
+                                    El mensaje solo se enviará a esta cuenta. Útil para hacer pruebas antes de enviar a todos.
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     <div className="space-y-4">

@@ -193,7 +193,7 @@ router.post(
     authenticate,
     requireAdmin,
     asyncHandler(async (req: any, res: Response) => {
-        const { subject, body, role } = req.body;
+        const { subject, body, role, specificEmail } = req.body;
 
         if (!subject || !body) {
             res.status(400).json({ success: false, message: 'Subject and body are required' });
@@ -203,17 +203,23 @@ router.post(
         try {
             console.log('[Admin] Preparing mass email...');
 
-            // Build the query to get emails
-            let queryText = 'SELECT email FROM users WHERE email IS NOT NULL';
-            let queryParams: any[] = [];
+            let emails: string[] = [];
 
-            if (role && role !== 'all') {
-                queryText += ' AND role = $1';
-                queryParams.push(role);
+            if (role === 'specific' && specificEmail) {
+                emails = [specificEmail];
+            } else {
+                // Build the query to get emails
+                let queryText = 'SELECT email FROM users WHERE email IS NOT NULL';
+                let queryParams: any[] = [];
+
+                if (role && role !== 'all') {
+                    queryText += ' AND role = $1';
+                    queryParams.push(role);
+                }
+
+                const result = await pool.query(queryText, queryParams);
+                emails = result.rows.map((row: any) => row.email).filter((e: string) => e && e.includes('@'));
             }
-
-            const result = await pool.query(queryText, queryParams);
-            const emails = result.rows.map((row: any) => row.email).filter((e: string) => e && e.includes('@'));
 
             if (emails.length === 0) {
                 res.status(404).json({ success: false, message: 'No recipients found' });
