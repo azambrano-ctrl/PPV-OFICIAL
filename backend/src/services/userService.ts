@@ -261,6 +261,55 @@ export const createPasswordResetToken = async (email: string): Promise<string> =
 };
 
 /**
+ * Create email verification token
+ */
+export const createEmailVerificationToken = async (userId: string): Promise<string> => {
+    // Delete any existing tokens for this user first
+    await query('DELETE FROM email_verification_tokens WHERE user_id = $1', [userId]);
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 24 * 3600000); // 24 hours
+
+    await query(
+        'INSERT INTO email_verification_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)',
+        [userId, token, expires]
+    );
+
+    return token;
+};
+
+/**
+ * Verify email token
+ */
+export const verifyEmailToken = async (token: string): Promise<void> => {
+    // Find valid token
+    const result = await query(
+        `SELECT * FROM email_verification_tokens 
+         WHERE token = $1 
+         AND expires_at > NOW()`,
+        [token]
+    );
+
+    const tokenRecord = result.rows[0];
+
+    if (!tokenRecord) {
+        throw new Error('Invalid or expired verification token');
+    }
+
+    // Mark user as verified
+    await query(
+        'UPDATE users SET is_verified = TRUE WHERE id = $1',
+        [tokenRecord.user_id]
+    );
+
+    // Delete token after successful verification
+    await query(
+        'DELETE FROM email_verification_tokens WHERE id = $1',
+        [tokenRecord.id]
+    );
+};
+
+/**
  * Reset password with token
  */
 export const resetPassword = async (token: string, newPassword: string): Promise<void> => {

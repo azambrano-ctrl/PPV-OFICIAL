@@ -14,8 +14,10 @@ import {
     createPasswordResetToken,
     resetPassword,
     updatePushToken,
+    createEmailVerificationToken,
+    verifyEmailToken,
 } from '../services/userService';
-import { sendPasswordResetEmail } from '../services/emailService';
+import { sendPasswordResetEmail, sendVerificationEmail } from '../services/emailService';
 import {
     authenticate,
     AuthRequest,
@@ -81,7 +83,17 @@ router.post(
         }
 
         // Create user
-        await createUser({ email, password, full_name, phone });
+        const newUser = await createUser({ email, password, full_name, phone });
+
+        // Generate verification token and send email
+        try {
+            const token = await createEmailVerificationToken(newUser.id);
+            await sendVerificationEmail(email, full_name, token);
+        } catch (error) {
+            console.error('Error sending verification email during registration:', error);
+            // We don't fail the registration if the email fails to send, 
+            // they can request it again later.
+        }
 
         // Login automatically
         const loginResponse = await loginUser(email, password);
@@ -333,6 +345,72 @@ router.post(
             res.status(400).json({
                 success: false,
                 message: error.message || 'Invalid or expired token',
+            });
+        }
+    })
+);
+
+/**
+ * GET /api/auth/verify-email
+ * Verify email with token
+ */
+router.post(
+    '/verify-email',
+    asyncHandler(async (req: Request, res: Response) => {
+        const { token } = req.body;
+
+        if (!token) {
+            res.status(400).json({ success: false, message: 'Token is required' });
+            return;
+        }
+
+        try {
+            await verifyEmailToken(token);
+            res.json({
+                success: true,
+                message: 'Email verified successfully',
+            });
+        } catch (error: any) {
+            res.status(400).json({
+                success: false,
+                message: error.message || 'Invalid or expired token',
+            });
+        }
+    })
+);
+
+/**
+ * POST /api/auth/resend-verification
+ * Resend verification email
+ */
+router.post(
+    '/resend-verification',
+    authenticate,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const user = await findUserById(req.user!.userId);
+
+        if (!user) {
+            res.status(404).json({ success: false, message: 'User not found' });
+            return;
+        }
+
+        if (user.is_verified) {
+            res.status(400).json({ success: false, message: 'Email is already verified' });
+            return;
+        }
+
+        try {
+            const token = await createEmailVerificationToken(user.id);
+            await sendVerificationEmail(user.email, user.full_name, token);
+
+            res.json({
+                success: true,
+                message: 'Verification email sent successfully',
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: 'Failed to send verification email',
             });
         }
     })

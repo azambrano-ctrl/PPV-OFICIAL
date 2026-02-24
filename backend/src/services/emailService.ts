@@ -138,6 +138,52 @@ export const sendPasswordResetEmail = async (to: string, token: string) => {
 };
 
 /**
+ * Send email verification link
+ */
+export const sendVerificationEmail = async (to: string, userName: string, token: string) => {
+    const brandName = process.env.EMAIL_FROM_NAME || 'Arena Fight Pass';
+    const webUrl = process.env.WEB_URL || 'http://localhost:3000';
+    const verifyLink = `${webUrl}/auth/verify?token=${token}`;
+
+    const subject = `Confirma tu cuenta - ${brandName}`;
+    const html = `
+<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0a0a0a; color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #333;">
+    <div style="background-color: #ef4444; padding: 30px; text-align: center;">
+        <h1 style="margin: 0; font-size: 28px; text-transform: uppercase; letter-spacing: 2px;">¡BIENVENIDO A ARENA FIGHT PASS!</h1>
+    </div>
+    
+    <div style="padding: 40px 30px;">
+        <p style="font-size: 18px; color: #aaa; margin-bottom: 30px;">Hola <strong>${userName}</strong>,</p>
+        <p style="font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+            Gracias por registrarte. Para poder comprar eventos y disfrutar de todo el contenido, por favor verifica tu dirección de correo electrónico haciendo clic en el siguiente botón:
+        </p>
+        
+        <div style="text-align: center; margin: 40px 0;">
+            <a href="${verifyLink}" style="display: inline-block; background-color: #ef4444; color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">
+                CONFIRMAR MI CUENTA
+            </a>
+        </div>
+        
+        <p style="font-size: 14px; line-height: 1.6; color: #888; margin-bottom: 30px;">
+            O copia y pega este enlace en tu navegador:<br>
+            <a href="${verifyLink}" style="color: #ef4444; text-decoration: none;">${verifyLink}</a>
+        </p>
+
+        <p style="font-size: 14px; color: #555; text-align: center; margin-top: 40px;">
+            Si no creaste esta cuenta, puedes ignorar este correo.
+        </p>
+    </div>
+    
+    <div style="padding: 20px; text-align: center; background-color: #000; border-top: 1px solid #111;">
+        <p style="margin: 0; color: #333; font-size: 12px;">&copy; ${new Date().getFullYear()} ${brandName}. Todos los derechos reservados.</p>
+    </div>
+</div>
+    `;
+
+    return sendEmail(to, subject, html);
+};
+
+/**
  * Send ticket confirmation email
  */
 export const sendTicketEmail = async (

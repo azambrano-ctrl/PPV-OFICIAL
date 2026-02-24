@@ -10,6 +10,7 @@ import ChatBox from '@/components/ChatBox';
 import ReactionLayer from '@/components/ReactionLayer';
 import AdSense from '@/components/ui/AdSense';
 import { initSocket, disconnectSocket } from '@/lib/socket';
+import { useAuthStore } from '@/lib/store';
 import type { Socket } from 'socket.io-client';
 
 interface StreamData {
@@ -42,6 +43,7 @@ export default function WatchPage() {
     const [socket, setSocket] = useState<Socket | null>(null);
     const [showAdOverlay, setShowAdOverlay] = useState(false);
     const [adCountdown, setAdCountdown] = useState(10);
+    const { user } = useAuthStore();
 
     const lastFetchedId = useRef<string | null>(null);
 
@@ -58,6 +60,13 @@ export default function WatchPage() {
                     router.push(`/auth/login?redirect=/watch/${eventId}`);
                     return;
                 }
+
+                if (user && !user.is_verified) {
+                    setError('Por favor, verifica tu correo electrónico para poder ver eventos.');
+                    setLoading(false);
+                    return;
+                }
+
                 setLoading(true);
 
                 // Fetch event details

@@ -113,10 +113,18 @@ export default function EventDetailPage() {
             router.push(`/auth/login?redirect=/event/${params.id}`);
             return;
         }
+        if (user && !user.is_verified) {
+            toast.error('Por favor, verifica tu correo electrónico para poder comprar eventos.');
+            return;
+        }
         setShowPaymentModal(true);
     };
 
     const handleWatchNow = () => {
+        if (user && !user.is_verified) {
+            toast.error('Por favor, verifica tu correo electrónico para poder ver eventos.');
+            return;
+        }
         router.push(`/watch/${params.id}`);
     };
 
