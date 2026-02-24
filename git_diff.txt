@@ -1,0 +1,84 @@
+﻿commit fc4ab34aa57c1e48a34b69e4e295364176185e35
+Author: azambrano-ctrl <azambrano.ctrl@gmail.com>
+Date:   Sun Feb 22 23:04:50 2026 -0500
+
+    Optimize: Increase ad maxRedirects and ensure playback continuity on ad error
+
+diff --git a/webapp/src/components/VideoPlayer.tsx b/webapp/src/components/VideoPlayer.tsx
+index dbf0df4..dea0622 100644
+--- a/webapp/src/components/VideoPlayer.tsx
++++ b/webapp/src/components/VideoPlayer.tsx
+@@ -219,6 +219,8 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
+         const google = (window as any).google;
+         const adsRenderingSettings = new google.ima.AdsRenderingSettings();
+         adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = true;
++        // Aumentar el l├¡mite de redirecciones para evitar que se rompa la cadena de VAST
++        adsRenderingSettings.maxRedirects = 10;
+ 
+         const adsManager = adsManagerLoadedEvent.getAdsManager(videoRef.current, adsRenderingSettings);
+         adsManagerRef.current = adsManager;
+
+commit 882cdce7c68ae34c39b563642c388e145c1f3df1
+Author: azambrano-ctrl <azambrano.ctrl@gmail.com>
+Date:   Sun Feb 22 22:59:29 2026 -0500
+
+    Fix: Update ad integration in VideoPlayer and enhance debugging logs
+
+diff --git a/webapp/src/components/VideoPlayer.tsx b/webapp/src/components/VideoPlayer.tsx
+index 194c7ed..dbf0df4 100644
+--- a/webapp/src/components/VideoPlayer.tsx
++++ b/webapp/src/components/VideoPlayer.tsx
+@@ -242,7 +242,9 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
+         });
+ 
+         try {
++            console.log('AdsManager initializing...');
+             adsManager.init(videoRef.current?.clientWidth || 640, videoRef.current?.clientHeight || 480, google.ima.ViewMode.NORMAL);
++            console.log('AdsManager starting...');
+             adsManager.start();
+         } catch (adError) {
+             console.error('AdsManager error:', adError);
+@@ -385,8 +387,9 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
+         const onTimeUpdate = () => {
+             const currentTime = video.currentTime;
+             // Trigger ad every 15 minutes (900 seconds)
++            // For testing, you can change 900 to 30
+             if (currentTime >= lastAdTime + 900) {
+-                console.log('Triggering mid-roll video ad');
++                console.log('Triggering mid-roll video ad at:', currentTime);
+                 requestAds();
+                 setLastAdTime(currentTime);
+             }
+@@ -394,7 +397,7 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
+ 
+         video.addEventListener('timeupdate', onTimeUpdate);
+         return () => video.removeEventListener('timeupdate', onTimeUpdate);
+-    }, [status, lastAdTime, isAdPlaying]);
++    }, [lastAdTime, isAdPlaying]);
+ 
+     const handleManualPlay = () => {
+         if (videoRef.current) {
+
+commit b700d19555eefd5d7afcffa18773987d1bbcb159
+Author: azambrano-ctrl <azambrano.ctrl@gmail.com>
+Date:   Sun Feb 22 00:01:33 2026 -0500
+
+    docs: agregar guia de solucion de error 303 en el codigo
+
+diff --git a/webapp/src/components/VideoPlayer.tsx b/webapp/src/components/VideoPlayer.tsx
+index 59e3893..194c7ed 100644
+--- a/webapp/src/components/VideoPlayer.tsx
++++ b/webapp/src/components/VideoPlayer.tsx
+@@ -19,6 +19,12 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
+     // === CONFIGURACI├ôN DE PUBLICIDAD (VAST TAG) ===
+     // ========================================================
+     // Reemplaza esta URL de prueba por tu enlace real de Google Ad Manager/AdSense cuando lo tengas.
++    //
++    // ## Soluci├│n de Problemas (Error 303)
++    // Si ves el error **"303: No Ads VAST response"**, ┬ífelicidades! Significa que:
++    // 1.  **El c├│digo funciona perfectamente**: Tu sitio est├í conectando con Google con ├®xito.
++    // 2.  **Falta de Inventario**: Google simplemente no tiene un anuncio para mostrarte en este momento (com├║n en cuentas nuevas).
++    // 3.  **Siguiente Paso**: Debes ir a Google Ad Manager y crear un **"Pedido" (Order)** y una **"L├¡nea de pedido" (Line Item)** apuntando a tu bloque `midroll_video` para que Google empiece a enviar anuncios reales.
+     const VAST_TAG_URL = 'https://pubads.g.doubleclick.net/gampad/ads?iu=/23341415522/midroll_video&description_url=https%3A%2F%2Farenafightpass.com%2F&tfcd=0&npa=0&sz=640x480&gdfp_req=1&unviewed_position_start=1&output=vast&env=vp&impl=s';
+     // ========================================================
+ 

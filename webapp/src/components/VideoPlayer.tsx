@@ -162,8 +162,8 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         if (typeof window === 'undefined') return;
 
         const script = document.createElement('script');
-        // Cache busting for the SDK
-        script.src = `https://imasdk.googleapis.com/js/sdkloader/ima3.js?v=${Date.now()}`;
+        // Usar la versión cacheable del SDK para no demorar la carga del reproductor
+        script.src = `https://imasdk.googleapis.com/js/sdkloader/ima3.js`;
         script.async = true;
         script.onload = () => {
             console.log('Google IMA SDK loaded');
@@ -399,7 +399,7 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
 
         video.addEventListener('timeupdate', onTimeUpdate);
         return () => video.removeEventListener('timeupdate', onTimeUpdate);
-    }, [lastAdTime, isAdPlaying]);
+    }, [status, lastAdTime, isAdPlaying]);
 
     const handleManualPlay = () => {
         if (videoRef.current) {
