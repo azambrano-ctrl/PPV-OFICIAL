@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
 import { useSettingsStore } from '@/lib/store';
 import { authAPI } from '@/lib/api';
+import { Users } from 'lucide-react';
 import AdSense from './ui/AdSense';
 
 interface VideoPlayerProps {
@@ -13,9 +14,10 @@ interface VideoPlayerProps {
     status: string;
     poster?: string;
     isMp4?: boolean;
+    viewerCount?: number;
 }
 
-export default function VideoPlayer({ streamUrl, token, eventTitle, status, poster, isMp4 }: VideoPlayerProps) {
+export default function VideoPlayer({ streamUrl, token, eventTitle, status, poster, isMp4, viewerCount = 0 }: VideoPlayerProps) {
     // === CONFIGURACIÓN DE PUBLICIDAD (VAST TAG) ===
     // ========================================================
     // Reemplaza esta URL de prueba por tu enlace real de Google Ad Manager/AdSense cuando lo tengas.
@@ -456,8 +458,18 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
             )}
 
             {settings?.site_logo && (
-                <div className={`absolute top-6 left-6 z-50 transition-opacity pointer-events-none ${showUI ? 'opacity-80' : 'opacity-40'}`} style={{ maxWidth: '100px' }}>
+                <div className={`absolute top-6 left-6 z-40 transition-opacity pointer-events-none ${showUI ? 'opacity-80' : 'opacity-40'}`} style={{ maxWidth: '100px' }}>
                     <img src={settings.site_logo} alt="Logo" className="w-full h-auto object-contain" />
+                </div>
+            )}
+
+            {/* Viewer Count Overlay (TikTok Style) */}
+            {status === 'live' && (
+                <div className={`absolute top-4 right-16 z-40 transition-opacity ${showUI ? 'opacity-100' : 'opacity-70'}`}>
+                    <div className="flex items-center gap-1.5 bg-red-600/90 text-white font-bold px-3 py-1 rounded-sm shadow border border-red-500/50 backdrop-blur-sm">
+                        <Users className="w-4 h-4" />
+                        <span className="text-sm tracking-wide">{viewerCount.toLocaleString()}</span>
+                    </div>
                 </div>
             )}
 

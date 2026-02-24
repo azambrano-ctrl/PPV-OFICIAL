@@ -43,6 +43,7 @@ export default function WatchPage() {
     const [socket, setSocket] = useState<Socket | null>(null);
     const [showAdOverlay, setShowAdOverlay] = useState(false);
     const [adCountdown, setAdCountdown] = useState(10);
+    const [viewerCount, setViewerCount] = useState<number>(0);
     const { user } = useAuthStore();
 
     const lastFetchedId = useRef<string | null>(null);
@@ -118,6 +119,11 @@ export default function WatchPage() {
                 const socketInstance = initSocket(token);
                 setSocket(socketInstance);
 
+                // Listen for viewers directly in watch page to pass to VideoPlayer
+                socketInstance.on('viewers_count', (data: { count: number }) => {
+                    setViewerCount(data.count);
+                });
+
                 setLoading(false);
             } catch (err: any) {
                 console.error('Error loading stream:', err);
@@ -129,6 +135,9 @@ export default function WatchPage() {
         fetchEventAndStream();
 
         return () => {
+            if (socket) {
+                socket.off('viewers_count');
+            }
             disconnectSocket();
         };
     }, [eventId, router]);
@@ -249,6 +258,7 @@ export default function WatchPage() {
                             status={event.status}
                             poster={event.thumbnail_url}
                             isMp4={streamData.isMp4}
+                            viewerCount={viewerCount}
                         />
                         <ReactionLayer socket={socket} eventId={eventId} />
 
