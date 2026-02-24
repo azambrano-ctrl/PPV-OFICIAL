@@ -10,7 +10,7 @@ import { useAuthStore } from '@/lib/store';
  * and the axios interceptor will handle the logout and redirect.
  */
 export default function SessionWatcher() {
-    const { isAuthenticated, logout } = useAuthStore();
+    const { isAuthenticated, setUser, logout } = useAuthStore();
     const checkInterval = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
@@ -19,7 +19,10 @@ export default function SessionWatcher() {
 
             try {
                 // We call /me which is protected by authenticate middleware
-                await authAPI.getProfile();
+                const response = await authAPI.getProfile();
+                if (response.data?.data) {
+                    setUser(response.data.data);
+                }
             } catch (error: any) {
                 // Errors (like 401 SESSION_CONFLICT) are handled by the axios interceptor,
                 // which will call logout() and redirect to login page.
