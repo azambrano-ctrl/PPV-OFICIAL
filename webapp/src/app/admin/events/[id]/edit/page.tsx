@@ -30,6 +30,7 @@ export default function EditEventPage() {
         status: 'upcoming',
         is_featured: false,
         is_free: false,
+        free_viewers_limit: '',
         stream_url: '',
         thumbnail_url: '',
         banner_url: '',
@@ -78,6 +79,7 @@ export default function EditEventPage() {
                 status: event.status || 'upcoming',
                 is_featured: event.is_featured || false,
                 is_free: event.price === '0' || event.price === 0,
+                free_viewers_limit: event.free_viewers_limit !== null ? String(event.free_viewers_limit) : '',
                 stream_url: event.stream_url || '',
                 thumbnail_url: event.thumbnail_url || '',
                 banner_url: event.banner_url || '',
@@ -110,6 +112,11 @@ export default function EditEventPage() {
             }
             if (formData.promoter_id) {
                 data.append('promoter_id', formData.promoter_id);
+            }
+            if (formData.free_viewers_limit !== '') {
+                data.append('free_viewers_limit', formData.free_viewers_limit);
+            } else {
+                data.append('free_viewers_limit', ''); // Will parse as null on backend
             }
 
             // Handle thumbnail
@@ -285,6 +292,26 @@ export default function EditEventPage() {
                             </select>
                         </div>
                     </div>
+
+                    {/* Free Viewers Limit Input */}
+                    {!formData.is_free && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-2 mt-4">
+                                Límite de Espectadores Gratuitos
+                            </label>
+                            <input
+                                type="number"
+                                min="0"
+                                value={formData.free_viewers_limit}
+                                onChange={(e) => setFormData({ ...formData, free_viewers_limit: e.target.value })}
+                                className="input"
+                                placeholder="Ej: 300 (opcional)"
+                            />
+                            <p className="text-xs text-gray-400 mt-1">
+                                Si se establece, esta cantidad de usuarios podrá obtener acceso gratis a un evento de pago. Deja en blanco para no tener cupos gratis.
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Images */}

@@ -14,6 +14,7 @@ export interface Event {
     stream_key?: string;
     stream_url?: string;
     max_viewers?: number;
+    free_viewers_limit?: number | null;
     is_featured: boolean;
     promoter_id?: string;
     created_by?: string;
@@ -31,6 +32,7 @@ export interface CreateEventInput {
     thumbnail_url?: string;
     banner_url?: string;
     max_viewers?: number;
+    free_viewers_limit?: number | null;
     is_featured?: boolean;
     promoter_id?: string;
     created_by: string;
@@ -46,7 +48,8 @@ export const getAllEvents = async (filters?: {
     promoter_id?: string;
 }) => {
     let queryText = `
-        SELECT e.*, p.name as promoter_name, p.logo_url as promoter_logo_url, p.id as promoter_id
+        SELECT e.*, p.name as promoter_name, p.logo_url as promoter_logo_url, p.id as promoter_id,
+            (SELECT COUNT(*) FROM purchases WHERE event_id = e.id AND amount = 0 AND payment_status = 'completed') as claimed_free_spots
         FROM events e
         LEFT JOIN promoters p ON e.promoter_id = p.id
         WHERE 1=1
@@ -85,7 +88,8 @@ export const getAllEvents = async (filters?: {
 export const getEventById = async (id: string): Promise<Event | null> => {
     try {
         const result = await query(
-            `SELECT e.*, p.name as promoter_name, p.logo_url as promoter_logo_url
+            `SELECT e.*, p.name as promoter_name, p.logo_url as promoter_logo_url,
+                (SELECT COUNT(*) FROM purchases WHERE event_id = e.id AND amount = 0 AND payment_status = 'completed') as claimed_free_spots
              FROM events e
              LEFT JOIN promoters p ON e.promoter_id = p.id
              WHERE e.id = $1`,
@@ -109,8 +113,8 @@ export const createEvent = async (input: CreateEventInput): Promise<Event> => {
     const result = await query(
         `INSERT INTO events (
       title, description, event_date, duration_minutes, price, currency,
-      thumbnail_url, banner_url, max_viewers, is_featured, created_by, stream_key, promoter_id
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      thumbnail_url, banner_url, max_viewers, is_featured, created_by, stream_key, promoter_id, free_viewers_limit
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
     RETURNING *`,
         [
             input.title,
@@ -126,6 +130,7 @@ export const createEvent = async (input: CreateEventInput): Promise<Event> => {
             input.created_by,
             streamKey,
             input.promoter_id,
+            input.free_viewers_limit || null,
         ]
     );
 
@@ -154,6 +159,7 @@ export const updateEvent = async (
         'banner_url',
         'status',
         'max_viewers',
+        'free_viewers_limit',
         'is_featured',
         'stream_url',
         'promoter_id',
@@ -239,10 +245,12 @@ export const userHasAccessToEvent = async (
     eventId: string
 ): Promise<boolean> => {
     try {
-        // Check if event is free
+        // Check if event is free and has no limit
         const event = await getEventById(eventId);
         if (event && (event.price === 0 || Number(event.price) === 0)) {
-            return true;
+            if (!event.free_viewers_limit || event.free_viewers_limit === 0) {
+                return true;
+            }
         }
 
         // Check if user has a Season Pass

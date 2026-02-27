@@ -170,6 +170,9 @@ export const eventsAPI = {
     checkAccess: (id: string) =>
         api.get(`/events/${id}/access`),
 
+    claimFree: (id: string) =>
+        api.post(`/events/${id}/claim-free`),
+
     updateStatus: (id: string, status: string) =>
         api.patch(`/events/${id}/status`, { status }),
 };

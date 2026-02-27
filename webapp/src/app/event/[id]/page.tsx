@@ -27,6 +27,8 @@ interface Event {
     status: string;
     is_featured: boolean;
     max_viewers?: number;
+    free_viewers_limit?: number | null;
+    claimed_free_spots?: string;
 }
 
 export default function EventDetailPage() {
@@ -38,6 +40,7 @@ export default function EventDetailPage() {
     const [hasPurchased, setHasPurchased] = useState(false);
     const [checkingAccess, setCheckingAccess] = useState(true);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [claiming, setClaiming] = useState(false);
     const [countdown, setCountdown] = useState('');
     const [isClient, setIsClient] = useState(false);
 
@@ -128,6 +131,32 @@ export default function EventDetailPage() {
         router.push(`/watch/${params.id}`);
     };
 
+    const handleClaimFree = async () => {
+        if (!isAuthenticated) {
+            toast.error('Debes iniciar sesión para reclamar este pase gratis');
+            router.push(`/auth/login?redirect=/event/${params.id}`);
+            return;
+        }
+        if (user && !user.is_verified) {
+            toast.error('Por favor, verifica tu correo electrónico.');
+            return;
+        }
+
+        setClaiming(true);
+        try {
+            const response = await eventsAPI.claimFree(params.id as string);
+            if (response.data.success) {
+                toast.success('¡Pase gratuito reclamado con éxito! Tienes acceso al evento.');
+                setHasPurchased(true); // Grant immediate access visually
+                loadEvent(params.id as string); // Reload event to update spot counts
+            }
+        } catch (error) {
+            toast.error(handleAPIError(error) || 'Error al intentar reclamar el pase gratuito');
+        } finally {
+            setClaiming(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen flex flex-col bg-dark-950">
@@ -160,7 +189,15 @@ export default function EventDetailPage() {
     const isUpcoming = event.status === 'upcoming';
     const isFinished = event.status === 'finished';
 
-    const canWatch = hasPurchased || (isClient && user?.role === 'admin') || Number(event.price) === 0;
+    // Free Spots logic
+    const limit = event.free_viewers_limit || 0;
+    const claimed = event.claimed_free_spots ? parseInt(event.claimed_free_spots) : 0;
+    const freeSpotsRemaining = Math.max(0, limit - claimed);
+    const hasFreeSpotsAvailable = limit > 0 && freeSpotsRemaining > 0;
+
+    // Check if truly free unconditionally or conditionally via pass
+    const isUniversallyFree = parseFloat(String(event.price)) === 0 && (!limit || limit === 0);
+    const canWatch = hasPurchased || (isClient && user?.role === 'admin') || isUniversallyFree;
 
     return (
         <div className="min-h-screen flex flex-col bg-dark-950">
@@ -216,7 +253,11 @@ export default function EventDetailPage() {
                         <div className="flex items-center gap-2">
                             <DollarSign className="w-5 h-5" />
                             <span className="text-2xl font-bold gradient-text">
-                                {parseFloat(String(event.price)) === 0 ? 'PASE LIBRE' : formatCurrency(event.price, event.currency)}
+                                {isUniversallyFree
+                                    ? 'PASE LIBRE'
+                                    : hasFreeSpotsAvailable
+                                        ? '¡Cupos Gratis Disponibles!'
+                                        : formatCurrency(event.price, event.currency)}
                             </span>
                         </div>
                     </div>
@@ -251,7 +292,9 @@ export default function EventDetailPage() {
                                     </div>
                                     <div>
                                         <p className="text-dark-500 text-sm mb-1">Precio</p>
-                                        <p className="font-semibold text-primary-500">{parseFloat(String(event.price)) === 0 ? 'PASE LIBRE' : formatCurrency(event.price, event.currency)}</p>
+                                        <p className="font-semibold text-primary-500">
+                                            {isUniversallyFree ? 'PASE LIBRE' : formatCurrency(event.price, event.currency)}
+                                        </p>
                                     </div>
                                     {event.max_viewers && (
                                         <div>
@@ -315,21 +358,45 @@ export default function EventDetailPage() {
                                     <div className="space-y-4">
                                         <div className="text-center py-4">
                                             <p className="text-3xl font-bold gradient-text mb-2 uppercase">
-                                                {parseFloat(String(event.price)) === 0 ? 'PASE LIBRE' : formatCurrency(event.price, event.currency)}
+                                                {isUniversallyFree
+                                                    ? 'PASE LIBRE'
+                                                    : hasFreeSpotsAvailable
+                                                        ? 'GRATIS'
+                                                        : formatCurrency(event.price, event.currency)}
                                             </p>
-                                            <p className="text-sm text-dark-400">Acceso completo al evento</p>
+                                            <p className="text-sm text-dark-400">
+                                                {hasFreeSpotsAvailable ? `¡Aprovéchalo! Quedan ${freeSpotsRemaining} pases gratuitos.` : 'Acceso completo al evento'}
+                                            </p>
                                         </div>
-                                        <button
-                                            onClick={handlePurchaseClick}
-                                            disabled={event.price > 0 && (isFinished || isPast(eventDate))}
-                                            className="w-full btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            {event.price > 0 && (isFinished || isPast(eventDate))
-                                                ? 'Evento Finalizado'
-                                                : event.price === 0
-                                                    ? 'Ver Ahora'
-                                                    : 'Comprar Acceso'}
-                                        </button>
+
+                                        {hasFreeSpotsAvailable ? (
+                                            <button
+                                                onClick={handleClaimFree}
+                                                disabled={isFinished || claiming}
+                                                className="w-full btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed bg-green-600 hover:bg-green-700 text-white border-none"
+                                            >
+                                                {claiming ? (
+                                                    <><div className="spinner w-4 h-4 mr-2" />Reclamando...</>
+                                                ) : isFinished ? (
+                                                    'Evento Finalizado'
+                                                ) : (
+                                                    'Reclamar Pase Gratis'
+                                                )}
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={handlePurchaseClick}
+                                                disabled={event.price > 0 && (isFinished || isPast(eventDate))}
+                                                className="w-full btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                {event.price > 0 && (isFinished || isPast(eventDate))
+                                                    ? 'Evento Finalizado'
+                                                    : isUniversallyFree
+                                                        ? 'Ver Ahora'
+                                                        : 'Comprar Acceso'}
+                                            </button>
+                                        )}
+
                                         <ul className="space-y-2 text-sm text-dark-400">
                                             <li className="flex items-center gap-2">
                                                 <CheckCircle className="w-4 h-4 text-green-500" />

@@ -25,6 +25,7 @@ export default function NewEventPage() {
         status: 'upcoming',
         is_featured: false,
         is_free: false,
+        free_viewers_limit: '',
         stream_url: '',
         promoter_id: '',
     });
@@ -55,6 +56,9 @@ export default function NewEventPage() {
             }
             if (formData.promoter_id) {
                 data.append('promoter_id', formData.promoter_id);
+            }
+            if (formData.free_viewers_limit) {
+                data.append('free_viewers_limit', formData.free_viewers_limit);
             }
 
             if (thumbnailFile) {
@@ -193,6 +197,26 @@ export default function NewEventPage() {
                             </select>
                         </div>
                     </div>
+
+                    {/* Free Viewers Limit Input */}
+                    {!formData.is_free && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-2 mt-4">
+                                Límite de Espectadores Gratuitos
+                            </label>
+                            <input
+                                type="number"
+                                min="0"
+                                value={formData.free_viewers_limit}
+                                onChange={(e) => setFormData({ ...formData, free_viewers_limit: e.target.value })}
+                                className="input"
+                                placeholder="Ej: 300 (opcional)"
+                            />
+                            <p className="text-xs text-gray-400 mt-1">
+                                Si se establece, esta cantidad de usuarios podrá obtener acceso gratis a un evento de pago. Deja en blanco para no tener cupos gratis.
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Images */}

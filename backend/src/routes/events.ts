@@ -118,6 +118,7 @@ router.post(
             currency: req.body.currency || 'USD',
             status: isPromoter ? 'pending' : (req.body.status || 'upcoming'),
             is_featured: isPromoter ? false : (req.body.is_featured === 'true'),
+            free_viewers_limit: req.body.free_viewers_limit ? parseInt(req.body.free_viewers_limit) : null,
             stream_url: isPromoter ? null : (req.body.stream_url || null),
             thumbnail_url: files?.thumbnail ? files.thumbnail[0].path : undefined,
             banner_url: files?.banner ? files.banner[0].path : undefined,
@@ -212,6 +213,9 @@ router.put(
             // Admin-only fields
             if (isAdmin) {
                 if (req.body.status) updates.status = req.body.status;
+                if (req.body.free_viewers_limit !== undefined) {
+                    updates.free_viewers_limit = req.body.free_viewers_limit ? parseInt(req.body.free_viewers_limit) : null;
+                }
                 if (req.body.is_featured !== undefined) updates.is_featured = req.body.is_featured === 'true';
                 if (req.body.stream_url !== undefined) {
                     updates.stream_url = req.body.stream_url === '' ? null : req.body.stream_url;
@@ -297,6 +301,60 @@ router.get(
         res.json({
             success: true,
             data: stats,
+        });
+    })
+);
+
+/**
+ * POST /api/events/:id/claim-free
+ * Claim a free spot for a limited free event
+ */
+router.post(
+    '/:id/claim-free',
+    authenticate,
+    validateParams(eventIdSchema),
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const userId = req.user!.userId;
+        const eventId = req.params.id;
+
+        // Check if already claimed/purchased
+        const hasAccess = await userHasAccessToEvent(userId, eventId);
+        if (hasAccess) {
+            res.json({ success: true, message: 'Ya tienes acceso a este evento' });
+            return;
+        }
+
+        const event: any = await getEventById(eventId);
+        if (!event) {
+            res.status(404).json({ success: false, message: 'Evento no encontrado' });
+            return;
+        }
+
+        // Must be free or have a limit
+        if (Number(event.price) > 0 && (!event.free_viewers_limit || event.free_viewers_limit === 0)) {
+            res.status(403).json({ success: false, message: 'Este evento no tiene pases gratuitos disponibles' });
+            return;
+        }
+
+        const limit = event.free_viewers_limit || 0;
+        const claimed = event.claimed_free_spots ? parseInt(event.claimed_free_spots) : 0;
+
+        if (limit > 0 && claimed >= limit) {
+            res.status(403).json({ success: false, message: 'Los pases gratuitos se han agotado. Debes comprar tu entrada.' });
+            return;
+        }
+
+        // Insert a "free purchase" record manually
+        const { query } = require('../config/database');
+        await query(
+            `INSERT INTO purchases (user_id, event_id, amount, final_amount, status, payment_status, purchase_type)
+            VALUES ($1, $2, 0, 0, 'completed', 'completed', 'event')`,
+            [userId, eventId]
+        );
+
+        res.json({
+            success: true,
+            message: 'Pase gratuito reclamado exitosamente',
         });
     })
 );
