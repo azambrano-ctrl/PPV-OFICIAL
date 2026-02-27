@@ -64,6 +64,7 @@ if (isGoogleOAuthConfigured) {
                             password: Math.random().toString(36).slice(-8),
                             full_name: profile.displayName || email.split('@')[0],
                             phone: '',
+                            is_verified: true
                         });
                     }
                     return done(null, user);
@@ -100,6 +101,7 @@ if (isFacebookOAuthConfigured) {
                             password: Math.random().toString(36).slice(-8),
                             full_name: profile.displayName || `${profile.name?.givenName} ${profile.name?.familyName}`,
                             phone: '',
+                            is_verified: true
                         });
                     }
                     return done(null, user);

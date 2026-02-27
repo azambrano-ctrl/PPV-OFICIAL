@@ -23,6 +23,7 @@ export interface CreateUserInput {
     password: string;
     full_name: string;
     phone?: string;
+    is_verified?: boolean;
 }
 
 export interface LoginResponse {
@@ -41,10 +42,10 @@ export const createUser = async (input: CreateUserInput): Promise<User> => {
     const password_hash = await bcrypt.hash(password, 10);
 
     const result = await query(
-        `INSERT INTO users (email, password_hash, full_name, phone)
-     VALUES ($1, $2, $3, $4)
+        `INSERT INTO users (email, password_hash, full_name, phone, is_verified)
+     VALUES ($1, $2, $3, $4, COALESCE($5, false))
      RETURNING id, email, full_name, phone, role, is_verified, created_at, updated_at`,
-        [email, password_hash, full_name, phone]
+        [email, password_hash, full_name, phone, input.is_verified]
     );
 
     return result.rows[0];
