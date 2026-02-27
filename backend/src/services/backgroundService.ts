@@ -120,13 +120,16 @@ async function handleLiveToReprise() {
                         }
                     }
                 } else {
-                    // No provider tracking (manual URL), check by duration + 1 hour buffer (decreased from 2h)
-                    shouldEnd = checkIfDurationExceeded(event, 60);
-                    if (shouldEnd) reason = 'No stream detected and safety duration buffer exceeded';
+                    // No provider tracking (manual URL), we DO NOT automatically cut it.
+                    // The admin must manually end the stream or the event duration must strictly pass.
+                    if (event.duration_minutes > 0) {
+                        shouldEnd = checkIfDurationExceeded(event, 60);
+                        if (shouldEnd) reason = 'Safety buffer exceeded for manual stream with set duration';
+                    }
                 }
 
-                // Safety Fallback: Even if provider says connected, if duration is GREATLY exceeded (extra 4 hours), end it.
-                if (!shouldEnd && checkIfDurationExceeded(event, 240)) {
+                // Safety Fallback for provider streams
+                if (!shouldEnd && event.duration_minutes > 0 && checkIfDurationExceeded(event, 240)) {
                     shouldEnd = true;
                     reason = 'Duration greatly exceeded (4h safety buffer)';
                 }
@@ -134,8 +137,10 @@ async function handleLiveToReprise() {
             } catch (providerError) {
                 logger.error(`[BackgroundService] Error checking provider for event ${event.id}:`, providerError);
                 // Fallback to duration check if provider check fails
-                shouldEnd = checkIfDurationExceeded(event, 120);
-                if (shouldEnd) reason = 'Provider check failed and safety buffer exceeded';
+                if (event.duration_minutes > 0) {
+                    shouldEnd = checkIfDurationExceeded(event, 120);
+                    if (shouldEnd) reason = 'Provider check failed and safety buffer exceeded';
+                }
             }
 
             if (shouldEnd) {
@@ -155,6 +160,8 @@ async function handleLiveToReprise() {
  * Helper to check if event duration has been exceeded with an optional buffer
  */
 function checkIfDurationExceeded(event: any, bufferMinutes: number = 30): boolean {
+    if (event.duration_minutes === 0) return false;
+
     const startTime = new Date(event.event_date).getTime();
     const durationMs = (event.duration_minutes || 180) * 60 * 1000;
     const bufferMs = bufferMinutes * 60 * 1000;
