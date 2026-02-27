@@ -369,9 +369,9 @@ export default function HomePage() {
                         <div className="hidden md:block absolute top-[4.5rem] left-[16.66%] right-[16.66%] h-0.5 bg-gradient-to-r from-red-600/0 via-red-600/30 to-red-600/0" />
 
                         <div className="relative text-center group">
-                            <div className="w-24 h-24 bg-dark-900 border-2 border-red-600/30 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:border-red-600 group-hover:bg-red-600/10 transition-all z-10 relative">
-                                <UserPlus className="w-10 h-10 text-red-500 group-hover:text-red-400 group-hover:scale-110 transition-all" />
-                                <div className="absolute -top-2 -right-2 w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-black border-4 border-black">
+                            <div className="w-20 h-20 bg-gradient-to-br from-red-600 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform z-10 relative shadow-lg shadow-red-600/20">
+                                <UserPlus className="w-10 h-10 text-white" />
+                                <div className="absolute -top-2 -right-2 w-8 h-8 bg-dark-900 rounded-full flex items-center justify-center text-red-500 font-black border-4 border-black">
                                     1
                                 </div>
                             </div>
@@ -384,9 +384,9 @@ export default function HomePage() {
                         </div>
 
                         <div className="relative text-center group">
-                            <div className="w-24 h-24 bg-dark-900 border-2 border-red-600/30 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:border-red-600 group-hover:bg-red-600/10 transition-all z-10 relative">
-                                <CreditCard className="w-10 h-10 text-red-500 group-hover:text-red-400 group-hover:scale-110 transition-all" />
-                                <div className="absolute -top-2 -right-2 w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-black border-4 border-black">
+                            <div className="w-20 h-20 bg-gradient-to-br from-red-600 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform z-10 relative shadow-lg shadow-red-600/20">
+                                <CreditCard className="w-10 h-10 text-white" />
+                                <div className="absolute -top-2 -right-2 w-8 h-8 bg-dark-900 rounded-full flex items-center justify-center text-red-500 font-black border-4 border-black">
                                     2
                                 </div>
                             </div>
@@ -399,9 +399,9 @@ export default function HomePage() {
                         </div>
 
                         <div className="relative text-center group">
-                            <div className="w-24 h-24 bg-dark-900 border-2 border-red-600/30 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:border-red-600 group-hover:bg-red-600/10 transition-all z-10 relative">
-                                <MonitorPlay className="w-10 h-10 text-red-500 group-hover:text-red-400 group-hover:scale-110 transition-all" />
-                                <div className="absolute -top-2 -right-2 w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-black border-4 border-black">
+                            <div className="w-20 h-20 bg-gradient-to-br from-red-600 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform z-10 relative shadow-lg shadow-red-600/20">
+                                <MonitorPlay className="w-10 h-10 text-white" />
+                                <div className="absolute -top-2 -right-2 w-8 h-8 bg-dark-900 rounded-full flex items-center justify-center text-red-500 font-black border-4 border-black">
                                     3
                                 </div>
                             </div>
