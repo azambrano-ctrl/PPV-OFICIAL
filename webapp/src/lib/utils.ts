@@ -59,13 +59,13 @@ export const isEventLive = (eventDate: string, durationMinutes: number = 180): b
 };
 
 /**
- * Check if event is urgent (less than 24h away)
+ * Check if event is urgent (less than 48h away)
  */
 export const isEventUrgent = (eventDate: string): boolean => {
     const start = parseISO(eventDate);
     const now = new Date();
-    const hours24 = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    return isFuture(start) && start <= hours24;
+    const hours48 = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+    return isFuture(start) && start <= hours48;
 };
 
 /**

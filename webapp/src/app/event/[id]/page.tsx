@@ -49,7 +49,8 @@ export default function EventDetailPage() {
         setIsClient(true);
 
         const handleScroll = () => {
-            if (window.scrollY > 500) {
+            // Se reduce de 500 a 200 para que aparezca mucho antes al hacer scroll
+            if (window.scrollY > 200) {
                 setShowStickyCTA(true);
             } else {
                 setShowStickyCTA(false);
