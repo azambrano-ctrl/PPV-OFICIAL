@@ -49,7 +49,7 @@ export const getAllEvents = async (filters?: {
 }) => {
     let queryText = `
         SELECT e.*, p.name as promoter_name, p.logo_url as promoter_logo_url, p.id as promoter_id,
-            (SELECT COUNT(*) FROM purchases WHERE event_id = e.id AND amount = 0 AND payment_status = 'completed') as claimed_free_spots
+            (SELECT COUNT(*) FROM purchases WHERE event_id = e.id AND payment_status = 'completed') as claimed_free_spots
         FROM events e
         LEFT JOIN promoters p ON e.promoter_id = p.id
         WHERE 1=1
@@ -89,7 +89,7 @@ export const getEventById = async (id: string): Promise<Event | null> => {
     try {
         const result = await query(
             `SELECT e.*, p.name as promoter_name, p.logo_url as promoter_logo_url,
-                (SELECT COUNT(*) FROM purchases WHERE event_id = e.id AND amount = 0 AND payment_status = 'completed') as claimed_free_spots
+                (SELECT COUNT(*) FROM purchases WHERE event_id = e.id AND payment_status = 'completed') as claimed_free_spots
              FROM events e
              LEFT JOIN promoters p ON e.promoter_id = p.id
              WHERE e.id = $1`,
