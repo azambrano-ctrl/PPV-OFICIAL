@@ -347,8 +347,8 @@ router.post(
         // Insert a "free purchase" record manually
         const { query } = require('../config/database');
         await query(
-            `INSERT INTO purchases (user_id, event_id, amount, final_amount, status, payment_status, purchase_type)
-            VALUES ($1, $2, 0, 0, 'completed', 'completed', 'event')`,
+            `INSERT INTO purchases (user_id, event_id, amount, final_amount, payment_status, purchase_type)
+            VALUES ($1, $2, 0, 0, 'completed', 'event')`,
             [userId, eventId]
         );
 
