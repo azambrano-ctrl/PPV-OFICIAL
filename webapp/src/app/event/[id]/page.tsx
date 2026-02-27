@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Calendar, Clock, DollarSign, Play, ArrowLeft, Users, CheckCircle, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, DollarSign, Play, ArrowLeft, Users, CheckCircle, AlertCircle, Zap, Radio } from 'lucide-react';
 import { eventsAPI, paymentsAPI, handleAPIError } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
-import { formatDate, formatCurrency, getEventStatusColor, getEventStatusText, getImageUrl } from '@/lib/utils';
+import { formatDate, formatCurrency, getEventStatusColor, getEventStatusText, getImageUrl, isEventUrgent } from '@/lib/utils';
 import Footer from '@/components/Footer';
 import PaymentModal from '@/components/PaymentModal';
 import toast from 'react-hot-toast';
@@ -43,9 +43,21 @@ export default function EventDetailPage() {
     const [claiming, setClaiming] = useState(false);
     const [countdown, setCountdown] = useState('');
     const [isClient, setIsClient] = useState(false);
+    const [showStickyCTA, setShowStickyCTA] = useState(false);
 
     useEffect(() => {
         setIsClient(true);
+
+        const handleScroll = () => {
+            if (window.scrollY > 500) {
+                setShowStickyCTA(true);
+            } else {
+                setShowStickyCTA(false);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
     useEffect(() => {
@@ -188,6 +200,15 @@ export default function EventDetailPage() {
     const isLive = event.status === 'live';
     const isUpcoming = event.status === 'upcoming';
     const isFinished = event.status === 'finished';
+    const isUrgent = isEventUrgent(event.event_date) && isUpcoming;
+
+    const getViewerCount = (id: string) => {
+        let hash = 0;
+        for (let i = 0; i < id.length; i++) {
+            hash = id.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        return 120 + (Math.abs(hash) % 500);
+    };
 
     // Free Spots logic
     const limit = event.free_viewers_limit || 0;
@@ -229,14 +250,30 @@ export default function EventDetailPage() {
                 {/* Event Info Overlay */}
                 <div className="absolute bottom-0 left-0 right-0 container-custom pb-8">
                     <div className="flex items-start gap-4">
-                        {event.is_featured && (
+                        {isUrgent && (
+                            <span className="badge bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.6)] px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-1.5 animate-pulse">
+                                <Zap className="w-4 h-4 fill-current" />
+                                ¡Últimos Boletos!
+                            </span>
+                        )}
+
+                        {isLive && (
+                            <span className="badge bg-red-600/90 text-white backdrop-blur-md border border-red-500/50 px-4 py-1.5 rounded-full text-xs font-black tracking-widest flex items-center gap-1.5 shadow-[0_0_20px_rgba(220,38,38,0.4)]">
+                                <Radio className="w-4 h-4 animate-pulse text-white" />
+                                LIVE - {getViewerCount(event.id)} VIENDO
+                            </span>
+                        )}
+
+                        {!isLive && event.is_featured && (
                             <span className="badge bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
                                 Destacado
                             </span>
                         )}
-                        <span className={`badge ${getEventStatusColor(event.status)}`}>
-                            {event.status === 'reprise' && parseFloat(String(event.price)) === 0 ? 'PASE LIBRE' : getEventStatusText(event.status)}
-                        </span>
+                        {!isLive && (
+                            <span className={`badge ${getEventStatusColor(event.status)}`}>
+                                {event.status === 'reprise' && parseFloat(String(event.price)) === 0 ? 'PASE LIBRE' : getEventStatusText(event.status)}
+                            </span>
+                        )}
                     </div>
                     <h1 className="font-display text-4xl md:text-6xl font-bold mt-4 mb-4">
                         {event.title}
@@ -455,6 +492,33 @@ export default function EventDetailPage() {
                     onClose={() => setShowPaymentModal(false)}
                 />
             )}
+
+            {/* Sticky CTA Header (Bottom) */}
+            <div className={`fixed bottom-0 left-0 right-0 z-50 bg-dark-950/90 backdrop-blur-xl border-t border-dark-800 p-4 transition-transform duration-300 ease-in-out ${showStickyCTA && !isFinished && !canWatch ? 'translate-y-0' : 'translate-y-full'}`}>
+                <div className="container-custom flex items-center justify-between gap-4">
+                    <div className="hidden md:block">
+                        <h3 className="font-bold text-white mb-1 truncate max-w-sm">{event.title}</h3>
+                        <p className="text-primary-500 font-bold">
+                            {isUniversallyFree ? 'PASE LIBRE' : formatCurrency(event.price, event.currency)}
+                        </p>
+                    </div>
+                    <div className="w-full md:w-auto flex-1 md:flex-none flex justify-end">
+                        <button
+                            onClick={hasFreeSpotsAvailable ? handleClaimFree : handlePurchaseClick}
+                            disabled={claiming}
+                            className={`w-full md:w-auto btn ${hasFreeSpotsAvailable ? 'bg-green-600 hover:bg-green-700 text-white' : 'btn-primary'} shadow-lg shadow-primary-500/20`}
+                        >
+                            {claiming ? (
+                                <><div className="spinner w-4 h-4 mr-2" />Reclamando...</>
+                            ) : hasFreeSpotsAvailable ? (
+                                `Reclamar Gratis (${freeSpotsRemaining} quedan)`
+                            ) : (
+                                `Comprar ${formatCurrency(event.price, event.currency)}`
+                            )}
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

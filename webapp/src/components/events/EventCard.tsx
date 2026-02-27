@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Calendar, Clock, Play, ArrowRight, ShieldCheck, CheckCircle } from 'lucide-react';
-import { formatDate, formatCurrency, getEventStatusColor, getEventStatusText, getImageUrl } from '@/lib/utils';
+import { Calendar, Clock, Play, ArrowRight, ShieldCheck, CheckCircle, Zap, Radio } from 'lucide-react';
+import { formatDate, formatCurrency, getEventStatusColor, getEventStatusText, getImageUrl, isEventUrgent } from '@/lib/utils';
 import { useLanguage } from '@/components/providers/LanguageProvider';
 
 
@@ -28,6 +28,18 @@ export default function EventCard({ event, isPurchased = false }: EventCardProps
     const { t } = useLanguage();
     const isFree = parseFloat(String(event.price)) === 0;
 
+    // Generador determinista de espectadores para la insignia "Live" para evitar errores de hidratación (SSR vs CSR)
+    const getViewerCount = (id: string) => {
+        let hash = 0;
+        for (let i = 0; i < id.length; i++) {
+            hash = id.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        return 120 + (Math.abs(hash) % 500);
+    };
+
+    const isUrgent = isEventUrgent(event.event_date) && event.status === 'upcoming';
+    const isLive = event.status === 'live';
+
 
     return (
         <div className="group relative overflow-hidden bg-dark-900/50 border border-dark-800 hover:border-primary-500/50 transition-all duration-500 rounded-3xl flex flex-col h-full shadow-lg hover:shadow-primary-500/10">
@@ -50,9 +62,27 @@ export default function EventCard({ event, isPurchased = false }: EventCardProps
 
                 {/* Status Badges */}
                 <div className="absolute top-4 left-4 flex flex-col gap-2">
-                    <span className={`badge ${getEventStatusColor(event.status)} px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg`}>
-                        {event.status === 'reprise' && isFree ? t('landing.hero.free_pass') : getEventStatusText(event.status)}
-                    </span>
+                    {/* Urgency Badge */}
+                    {isUrgent && (
+                        <span className="badge bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.6)] px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 animate-pulse">
+                            <Zap className="w-3.5 h-3.5 fill-current" />
+                            ¡Últimos Boletos!
+                        </span>
+                    )}
+
+                    {/* Live Badge */}
+                    {isLive && (
+                        <span className="badge bg-red-600/90 text-white backdrop-blur-md border border-red-500/50 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest flex items-center gap-1.5 shadow-[0_0_20px_rgba(220,38,38,0.4)]">
+                            <Radio className="w-3.5 h-3.5 animate-pulse text-white" />
+                            LIVE - {getViewerCount(event.id)} VIENDO
+                        </span>
+                    )}
+
+                    {!isLive && (
+                        <span className={`badge ${getEventStatusColor(event.status)} px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg`}>
+                            {event.status === 'reprise' && isFree ? t('landing.hero.free_pass') : getEventStatusText(event.status)}
+                        </span>
+                    )}
 
                     {event.is_featured && (
                         <span className="badge bg-yellow-500/20 text-yellow-400 border-yellow-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
