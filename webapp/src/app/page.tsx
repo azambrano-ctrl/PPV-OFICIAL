@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Calendar, Clock, DollarSign, Play, ArrowRight, Zap, Shield, Users, Star, TrendingUp } from 'lucide-react';
+import { Calendar, Clock, DollarSign, Play, ArrowRight, Zap, Shield, Users, Star, TrendingUp, UserPlus, CreditCard, MonitorPlay } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { eventsAPI } from '@/lib/api';
@@ -346,6 +346,73 @@ export default function HomePage() {
             <section className="py-10 bg-zinc-950">
                 <div className="container-custom">
                     <AdSense slot="5992307942" format="horizontal" />
+                </div>
+            </section>
+
+            {/* How it Works Section */}
+            <section className="py-20 bg-black border-y border-zinc-900">
+                <div className="container-custom">
+                    <div className="text-center max-w-3xl mx-auto mb-16">
+                        <div className="flex items-center justify-center gap-3 mb-3">
+                            <div className="w-1 h-8 bg-gradient-to-b from-red-600 to-orange-500" />
+                            <h2 className="font-display text-sm font-bold uppercase tracking-widest text-gray-500">
+                                Súper Sencillo
+                            </h2>
+                        </div>
+                        <h3 className="font-display text-4xl md:text-5xl font-black text-white uppercase">
+                            ¿CÓMO VER LAS PELEAS?
+                        </h3>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-12 relative">
+                        {/* Connecting Line (Desktop only) */}
+                        <div className="hidden md:block absolute top-[4.5rem] left-[16.66%] right-[16.66%] h-0.5 bg-gradient-to-r from-red-600/0 via-red-600/30 to-red-600/0" />
+
+                        <div className="relative text-center group">
+                            <div className="w-24 h-24 bg-dark-900 border-2 border-red-600/30 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:border-red-600 group-hover:bg-red-600/10 transition-all z-10 relative">
+                                <UserPlus className="w-10 h-10 text-red-500 group-hover:text-red-400 group-hover:scale-110 transition-all" />
+                                <div className="absolute -top-2 -right-2 w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-black border-4 border-black">
+                                    1
+                                </div>
+                            </div>
+                            <h4 className="font-display text-2xl font-bold mb-3 text-white uppercase tracking-wide">
+                                CREA TU CUENTA
+                            </h4>
+                            <p className="text-gray-400 leading-relaxed max-w-xs mx-auto">
+                                Regístrate gratis en menos de 1 minuto usando Google o tu correo electrónico.
+                            </p>
+                        </div>
+
+                        <div className="relative text-center group">
+                            <div className="w-24 h-24 bg-dark-900 border-2 border-red-600/30 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:border-red-600 group-hover:bg-red-600/10 transition-all z-10 relative">
+                                <CreditCard className="w-10 h-10 text-red-500 group-hover:text-red-400 group-hover:scale-110 transition-all" />
+                                <div className="absolute -top-2 -right-2 w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-black border-4 border-black">
+                                    2
+                                </div>
+                            </div>
+                            <h4 className="font-display text-2xl font-bold mb-3 text-white uppercase tracking-wide">
+                                COMPRA TU TICKET
+                            </h4>
+                            <p className="text-gray-400 leading-relaxed max-w-xs mx-auto">
+                                Selecciona el evento que quieres ver y paga de forma 100% segura.
+                            </p>
+                        </div>
+
+                        <div className="relative text-center group">
+                            <div className="w-24 h-24 bg-dark-900 border-2 border-red-600/30 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:border-red-600 group-hover:bg-red-600/10 transition-all z-10 relative">
+                                <MonitorPlay className="w-10 h-10 text-red-500 group-hover:text-red-400 group-hover:scale-110 transition-all" />
+                                <div className="absolute -top-2 -right-2 w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-black border-4 border-black">
+                                    3
+                                </div>
+                            </div>
+                            <h4 className="font-display text-2xl font-bold mb-3 text-white uppercase tracking-wide">
+                                DISFRUTA EL PPV
+                            </h4>
+                            <p className="text-gray-400 leading-relaxed max-w-xs mx-auto">
+                                ¡Listo! Prepárate para la acción en HD desde tu celular, tablet o TV.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </section>
 
