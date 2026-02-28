@@ -50,7 +50,7 @@ export default function SessionWatcher() {
                 clearInterval(checkInterval.current);
             }
         };
-    }, [isAuthenticated]);
+    }, [isAuthenticated, setUser]);
 
     return null; // This component doesn't render anything
 }

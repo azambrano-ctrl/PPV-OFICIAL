@@ -13,6 +13,7 @@ export function middleware(request: NextRequest) {
     // Get auth tokens from cookies or check localStorage (client-side)
     // Since middleware runs on the server, we'll check for the presence of auth data
     const accessToken = request.cookies.get('accessToken')?.value;
+    const refreshToken = request.cookies.get('refreshToken')?.value;
 
     // Protected paths that require authentication
     const protectedPaths = ['/profile', '/watch', '/admin'];
@@ -23,7 +24,7 @@ export function middleware(request: NextRequest) {
     const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route));
 
     // If trying to access a protected route without auth
-    if (isProtectedRoute && !accessToken) {
+    if (isProtectedRoute && !accessToken && !refreshToken) {
         const loginUrl = new URL('/auth/login', request.url);
         loginUrl.searchParams.set('redirect', pathname);
         return NextResponse.redirect(loginUrl);

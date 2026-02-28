@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import Hls from 'hls.js';
 import { useSettingsStore } from '@/lib/store';
 import { authAPI } from '@/lib/api';
 import { Users } from 'lucide-react';
+import Image from 'next/image';
 import AdSense from './ui/AdSense';
 
 interface VideoPlayerProps {
@@ -93,7 +94,7 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         return () => clearInterval(heartbeatInterval);
     }, [isPlaying, isLoading]);
 
-    const handleCast = async () => {
+    const handleCast = useCallback(async () => {
         const currentStreamUrl = lastStreamUrlRef.current || streamUrl;
         if (!currentStreamUrl) return;
 
@@ -142,14 +143,14 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         } else if (!cast) {
             alert('Tu dispositivo no soporta transmisión nativa. Prueba usar Google Chrome desde una PC.');
         }
-    };
+    }, [streamUrl, isMp4, status, eventTitle, poster]);
 
     // Listen for global cast trigger
     useEffect(() => {
         const handleGlobalCast = () => handleCast();
         window.addEventListener('trigger-cast', handleGlobalCast);
         return () => window.removeEventListener('trigger-cast', handleGlobalCast);
-    }, [canCast, streamUrl]);
+    }, [canCast, streamUrl, handleCast]);
 
     const handleMouseMove = () => {
         setShowUI(true);
@@ -159,49 +160,25 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
 
     const handleMouseLeave = () => { if (isPlaying) setShowUI(false); };
 
-    // Load IMA SDK
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
 
-        const script = document.createElement('script');
-        // Usar la versión cacheable del SDK para no demorar la carga del reproductor
-        script.src = `https://imasdk.googleapis.com/js/sdkloader/ima3.js`;
-        script.async = true;
-        script.onload = () => {
-            console.log('Google IMA SDK loaded');
-            initializeIMA();
-        };
-        document.head.appendChild(script);
 
-        return () => {
-            if (script.parentNode) script.parentNode.removeChild(script);
-            if (adsManagerRef.current) adsManagerRef.current.destroy();
-        };
+    const onAdError = useCallback((adErrorEvent: any) => {
+        const error = adErrorEvent.getError();
+        console.error('IMA Ad Error:', {
+            code: error.getErrorCode(),
+            message: error.getMessage(),
+            type: error.getType()
+        });
+        setIsAdPlaying(false);
+        if (adsManagerRef.current) {
+            try { adsManagerRef.current.destroy(); } catch (e) { }
+        }
+        if (videoRef.current) {
+            videoRef.current.play().catch(e => console.warn('Video play after error failed:', e));
+        }
     }, []);
 
-    const initializeIMA = () => {
-        const google = (window as any).google;
-        if (!google || !google.ima || !videoRef.current || !adContainerRef.current) return;
-
-        const adDisplayContainer = new google.ima.AdDisplayContainer(adContainerRef.current, videoRef.current);
-        adDisplayContainer.initialize();
-
-        const adsLoader = new google.ima.AdsLoader(adDisplayContainer);
-        adsLoaderRef.current = adsLoader;
-
-        adsLoader.addEventListener(
-            google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
-            onAdsManagerLoaded,
-            false
-        );
-        adsLoader.addEventListener(
-            google.ima.AdErrorEvent.Type.AD_ERROR,
-            onAdError,
-            false
-        );
-    };
-
-    const requestAds = () => {
+    const requestAds = useCallback(() => {
         const google = (window as any).google;
         if (!google || !adsLoaderRef.current) return;
 
@@ -215,9 +192,9 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         adsRequest.nonLinearAdSlotHeight = videoRef.current?.clientHeight || 150;
 
         adsLoaderRef.current.requestAds(adsRequest);
-    };
+    }, [VAST_TAG_URL]);
 
-    const onAdsManagerLoaded = (adsManagerLoadedEvent: any) => {
+    const onAdsManagerLoaded = useCallback((adsManagerLoadedEvent: any) => {
         const google = (window as any).google;
         const adsRenderingSettings = new google.ima.AdsRenderingSettings();
         adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = true;
@@ -253,23 +230,49 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         } catch (adError) {
             console.error('AdsManager error:', adError);
         }
-    };
+    }, [onAdError]);
 
-    const onAdError = (adErrorEvent: any) => {
-        const error = adErrorEvent.getError();
-        console.error('IMA Ad Error:', {
-            code: error.getErrorCode(),
-            message: error.getMessage(),
-            type: error.getType()
-        });
-        setIsAdPlaying(false);
-        if (adsManagerRef.current) {
-            try { adsManagerRef.current.destroy(); } catch (e) { }
-        }
-        if (videoRef.current) {
-            videoRef.current.play().catch(e => console.warn('Video play after error failed:', e));
-        }
-    };
+    const initializeIMA = useCallback(() => {
+        const google = (window as any).google;
+        if (!google || !google.ima || !videoRef.current || !adContainerRef.current) return;
+
+        const adDisplayContainer = new google.ima.AdDisplayContainer(adContainerRef.current, videoRef.current);
+        adDisplayContainer.initialize();
+
+        const adsLoader = new google.ima.AdsLoader(adDisplayContainer);
+        adsLoaderRef.current = adsLoader;
+
+        adsLoader.addEventListener(
+            google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
+            onAdsManagerLoaded,
+            false
+        );
+        adsLoader.addEventListener(
+            google.ima.AdErrorEvent.Type.AD_ERROR,
+            onAdError,
+            false
+        );
+    }, [onAdsManagerLoaded, onAdError]);
+
+    // Load IMA SDK
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        const script = document.createElement('script');
+        // Usar la versión cacheable del SDK para no demorar la carga del reproductor
+        script.src = `https://imasdk.googleapis.com/js/sdkloader/ima3.js`;
+        script.async = true;
+        script.onload = () => {
+            console.log('Google IMA SDK loaded');
+            initializeIMA();
+        };
+        document.head.appendChild(script);
+
+        return () => {
+            if (script.parentNode) script.parentNode.removeChild(script);
+            if (adsManagerRef.current) adsManagerRef.current.destroy();
+        };
+    }, [initializeIMA]);
 
     useEffect(() => {
         let finalUrl = streamUrl;
@@ -403,7 +406,7 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
 
         video.addEventListener('timeupdate', onTimeUpdate);
         return () => video.removeEventListener('timeupdate', onTimeUpdate);
-    }, [status, lastAdTime, isAdPlaying]);
+    }, [status, lastAdTime, isAdPlaying, requestAds]);
 
     const handleManualPlay = () => {
         if (videoRef.current) {
@@ -461,7 +464,7 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
 
             {settings?.site_logo && (
                 <div className={`absolute top-6 left-6 z-40 transition-opacity pointer-events-none ${showUI ? 'opacity-80' : 'opacity-40'}`} style={{ maxWidth: '100px' }}>
-                    <img src={settings.site_logo} alt="Logo" className="w-full h-auto object-contain" />
+                    <Image src={settings.site_logo} alt="Logo" width={100} height={50} className="w-full h-auto object-contain" />
                 </div>
             )}
 
