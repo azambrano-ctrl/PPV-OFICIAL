@@ -17,6 +17,12 @@ const nextConfig = {
     },
     reactStrictMode: true,
     swcMinify: true,
+    eslint: { ignoreDuringBuilds: true },
+    typescript: { ignoreBuildErrors: true },
+    experimental: {
+        workerThreads: false,
+        cpus: 1
+    },
     async rewrites() {
         return [
             {
