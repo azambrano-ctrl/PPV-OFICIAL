@@ -76,7 +76,11 @@ export const getAllEvents = async (filters?: {
         queryText += ` AND e.event_date > NOW() AND e.status = 'upcoming'`;
     }
 
-    queryText += ' ORDER BY e.event_date ASC';
+    // Prioritize 'live' events, then order by date
+    queryText += ` ORDER BY 
+        CASE WHEN e.status = 'live' THEN 0 ELSE 1 END ASC,
+        e.event_date ASC
+    `;
 
     const result = await query(queryText, params);
     return result.rows;
