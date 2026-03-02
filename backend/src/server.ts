@@ -214,7 +214,20 @@ io.on('connection', (socket) => {
 
     const broadcastViewers = (eventId: string) => {
         const roomName = `event_${eventId}`;
-        const count = io.sockets.adapter.rooms.get(roomName)?.size || 0;
+        // Count UNIQUE users instead of concurrent socket connections
+        const socketsInRoom = io.sockets.adapter.rooms.get(roomName);
+        const uniqueUsers = new Set();
+
+        if (socketsInRoom) {
+            for (const socketId of socketsInRoom) {
+                const clientSocket = io.sockets.sockets.get(socketId);
+                if (clientSocket && clientSocket.data.user) {
+                    uniqueUsers.add(clientSocket.data.user.userId);
+                }
+            }
+        }
+
+        const count = uniqueUsers.size;
         io.to(roomName).emit('viewers_count', { count });
     };
 
@@ -236,6 +249,35 @@ io.on('connection', (socket) => {
                 socket.emit('error', { message: 'Has sido baneado de este chat' });
                 return;
             }
+
+            // --- STRICT 1-TAB/DEVICE POLICY ---
+            // Find if this user already has an active socket in this event room
+            const eventRoomName = `event_${eventId}`;
+            const socketsInRoom = io.sockets.adapter.rooms.get(eventRoomName);
+
+            if (socketsInRoom) {
+                for (const existingSocketId of socketsInRoom) {
+                    const existingSocket = io.sockets.sockets.get(existingSocketId);
+
+                    // If we find another socket belonging to the SAME user, but it's a DIFFERENT socket id
+                    if (existingSocket &&
+                        existingSocket.data.user.userId === userId &&
+                        existingSocket.id !== socket.id) {
+
+                        logger.info(`[CHAT] Enforcing 1-device policy for user ${userId}. Disconnecting old socket ${existingSocket.id}`);
+
+                        // Notify the old socket it's being kicked out
+                        existingSocket.emit('error', {
+                            message: 'Tu sesión fue abierta en otra pestaña o dispositivo. La transmisión se detendrá aquí.'
+                        });
+
+                        // Force the old socket to leave the room and disconnect it
+                        existingSocket.leave(eventRoomName);
+                        existingSocket.disconnect(true);
+                    }
+                }
+            }
+            // ----------------------------------
 
             // Check if user is admin or has purchased the event
             const isAdmin = socket.data.user.role === 'admin';

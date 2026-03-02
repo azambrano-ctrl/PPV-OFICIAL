@@ -324,38 +324,66 @@ router.post(
             return;
         }
 
-        const event: any = await getEventById(eventId);
-        if (!event) {
-            res.status(404).json({ success: false, message: 'Evento no encontrado' });
-            return;
-        }
-
-        // Must be free or have a limit
-        if (Number(event.price) > 0 && (!event.free_viewers_limit || event.free_viewers_limit === 0)) {
-            res.status(403).json({ success: false, message: 'Este evento no tiene pases gratuitos disponibles' });
-            return;
-        }
-
-        const limit = event.free_viewers_limit || 0;
-        const claimed = event.claimed_free_spots ? parseInt(event.claimed_free_spots) : 0;
-
-        if (limit > 0 && claimed >= limit) {
-            res.status(403).json({ success: false, message: 'Los pases gratuitos se han agotado. Debes comprar tu entrada.' });
-            return;
-        }
-
-        // Insert a "free purchase" record manually
         const { query } = require('../config/database');
-        await query(
-            `INSERT INTO purchases (user_id, event_id, amount, final_amount, payment_status, purchase_type)
-            VALUES ($1, $2, 0, 0, 'completed', 'event')`,
-            [userId, eventId]
-        );
 
-        res.json({
-            success: true,
-            message: 'Pase gratuito reclamado exitosamente',
-        });
+        // Empezar transacción
+        await query('BEGIN');
+
+        try {
+            // Obtener el límite del evento
+            const eventRes = await query(`SELECT price, free_viewers_limit FROM events WHERE id = $1`, [eventId]);
+            const event = eventRes.rows[0];
+
+            if (!event) {
+                await query('ROLLBACK');
+                res.status(404).json({ success: false, message: 'Evento no encontrado' });
+                return;
+            }
+
+            // Must be free or have a limit
+            if (Number(event.price) > 0 && (!event.free_viewers_limit || event.free_viewers_limit === 0)) {
+                await query('ROLLBACK');
+                res.status(403).json({ success: false, message: 'Este evento no tiene pases gratuitos disponibles' });
+                return;
+            }
+
+            const limit = event.free_viewers_limit || 0;
+
+            if (limit > 0) {
+                // Verificar cuántos lugares ya han sido ocupados de forma transaccional (bloqueo)
+                const countRes = await query(`
+                    SELECT COUNT(*) as count 
+                    FROM purchases 
+                    WHERE event_id = $1 AND payment_status = 'completed'
+                    FOR UPDATE
+                `, [eventId]);
+
+                const claimed = parseInt(countRes.rows[0].count);
+
+                if (claimed >= limit) {
+                    await query('ROLLBACK');
+                    res.status(403).json({ success: false, message: 'Los pases gratuitos se han agotado. Debes comprar tu entrada.' });
+                    return;
+                }
+            }
+
+            // Insert a "free purchase" record
+            await query(
+                `INSERT INTO purchases (user_id, event_id, amount, final_amount, payment_status, purchase_type)
+                VALUES ($1, $2, 0, 0, 'completed', 'event')`,
+                [userId, eventId]
+            );
+
+            await query('COMMIT');
+
+            res.json({
+                success: true,
+                message: 'Pase gratuito reclamado exitosamente',
+            });
+        } catch (error) {
+            await query('ROLLBACK');
+            throw error;
+        }
     })
 );
 
