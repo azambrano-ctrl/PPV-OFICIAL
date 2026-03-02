@@ -124,6 +124,13 @@ export default function WatchPage() {
                     setViewerCount(data.count);
                 });
 
+                // Escuchar expulsiones forzadas del servidor (Anti-Multi Pestañas)
+                socketInstance.on('force_logout', (data: { message: string }) => {
+                    setError(data.message);
+                    setStreamData(null); // Esto desmontará el reproductor de video instantáneamente
+                    disconnectSocket();
+                });
+
                 setLoading(false);
             } catch (err: any) {
                 console.error('Error loading stream:', err);
@@ -137,6 +144,7 @@ export default function WatchPage() {
         return () => {
             if (socket) {
                 socket.off('viewers_count');
+                socket.off('force_logout');
             }
             disconnectSocket();
         };

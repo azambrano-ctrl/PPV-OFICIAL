@@ -267,7 +267,7 @@ io.on('connection', (socket) => {
                         logger.info(`[CHAT] Enforcing 1-device policy for user ${userId}. Disconnecting old socket ${existingSocket.id}`);
 
                         // Notify the old socket it's being kicked out
-                        existingSocket.emit('error', {
+                        existingSocket.emit('force_logout', {
                             message: 'Tu sesión fue abierta en otra pestaña o dispositivo. La transmisión se detendrá aquí.'
                         });
 
