@@ -25,6 +25,7 @@ import { query } from './config/database';
 import { verifyAccessToken } from './middleware/auth';
 import { userHasAccessToEvent } from './services/eventService';
 import { startBackgroundService } from './services/backgroundService';
+import { sendEmail } from './services/emailService';
 
 // Global error handlers
 process.on('unhandledRejection', (reason, promise) => {
@@ -538,49 +539,100 @@ app.use(errorHandler);
 // Start server
 /**
  * Event Reminder Cron / Interval
- * Checks every 60 seconds for events starting in the next 10 minutes
+ * Checks every 60 seconds for events starting in the next 25 minutes
  */
 const startReminderCron = () => {
-    logger.info('⏰ Starting event reminder cron...');
+    logger.info('⏰ Starting event reminder cron for Push and Emails...');
 
     // Set to store notified event-user pairs for current session to avoid duplicates
-    const notifiedPairs = new Set<string>();
+    const notifiedPushPairs = new Set<string>();
+    const notifiedEmailPairs = new Set<string>();
 
     setInterval(async () => {
         try {
-            // Find events starting in the next 10 minutes that haven't started yet
+            // Find events starting in the next 25 minutes that haven't started yet
             const sql = `
-                SELECT e.id, e.title, e.event_date, p.user_id
+                SELECT e.id, e.title, e.event_date, p.user_id, u.email, u.name as user_name
                 FROM events e
                 JOIN purchases p ON e.id = p.event_id
+                JOIN users u ON p.user_id = u.id
                 WHERE e.event_date > NOW() 
-                AND e.event_date <= NOW() + INTERVAL '10 minutes'
+                AND e.event_date <= NOW() + INTERVAL '25 minutes'
                 AND p.payment_status = 'completed'
                 AND e.status = 'upcoming'
             `;
             const result = await query(sql);
 
             for (const row of result.rows) {
-                const key = `${row.id}-${row.user_id}`;
-                if (!notifiedPairs.has(key)) {
-                    const timeUntil = Math.round((new Date(row.event_date).getTime() - Date.now()) / 60000);
+                const timeUntilMinute = Math.round((new Date(row.event_date).getTime() - Date.now()) / 60000);
 
+                // --- 1. EMAIL REMINDER (25 minutes before) ---
+                const emailKey = `${row.id}-${row.user_id}-email`;
+                if (!notifiedEmailPairs.has(emailKey) && timeUntilMinute <= 25 && timeUntilMinute >= 1) {
+
+                    const brandName = process.env.EMAIL_FROM_NAME || 'Arena Fight Pass';
+                    const webUrl = process.env.WEB_URL || 'http://localhost:3000';
+                    const eventLink = `${webUrl}/watch/${row.id}`;
+
+                    const subject = `🔔 ¡${row.title} está por comenzar en ${timeUntilMinute} minutos!`;
+                    const emailHtml = `
+                        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0a0a0a; color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #333;">
+                            <div style="background-color: #ef4444; padding: 20px; text-align: center;">
+                                <h1 style="margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px;">¡EL EVENTO ESTÁ POR COMENZAR!</h1>
+                            </div>
+                            <div style="padding: 30px;">
+                                <p style="font-size: 16px; color: #aaa;">Hola <strong>${row.user_name || 'Fanático'}</strong>,</p>
+                                <p style="font-size: 16px; line-height: 1.6;">Alista todo porque el evento principal que estás esperando arrancará muy pronto.</p>
+                                
+                                <div style="background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%); padding: 20px; border-radius: 8px; border-left: 4px solid #ef4444; margin: 25px 0;">
+                                    <h2 style="margin: 0 0 10px 0; color: #ffffff;">${row.title}</h2>
+                                    <p style="margin: 0; color: #ef4444; font-weight: bold;">Comienza en: ${timeUntilMinute} minutos</p>
+                                </div>
+                                
+                                <div style="text-align: center; margin: 35px 0;">
+                                    <a href="${eventLink}" style="display: inline-block; background-color: #ef4444; color: #ffffff; padding: 14px 35px; text-decoration: none; border-radius: 6px; font-weight: bold; text-transform: uppercase; transition: 0.3s;">
+                                        👉 IR A LA SALA DE TRANSMISIÓN
+                                    </a>
+                                </div>
+                                
+                                <p style="font-size: 13px; color: #888; text-align: center; margin-top: 30px;">
+                                    ¿Ya estás viéndolo? Genial, ignora este mensaje. ¡Que disfrutes la velada!
+                                </p>
+                            </div>
+                            <div style="padding: 15px; text-align: center; background-color: #000; border-top: 1px solid #111;">
+                                <p style="margin: 0; color: #555; font-size: 11px;">&copy; ${new Date().getFullYear()} ${brandName}. Todos los derechos reservados.</p>
+                            </div>
+                        </div>
+                    `;
+
+                    try {
+                        await sendEmail(row.email, subject, emailHtml);
+                        notifiedEmailPairs.add(emailKey);
+                        logger.info(`[Reminder] Email sent for ${row.title} to ${row.email}`);
+                    } catch (err) {
+                        logger.error(`Failed to send reminder email to ${row.email}:`, err);
+                    }
+                }
+
+                // --- 2. PUSH NOTIFICATION (10 minutes before) ---
+                const pushKey = `${row.id}-${row.user_id}-push`;
+                if (!notifiedPushPairs.has(pushKey) && timeUntilMinute <= 10) {
                     await notificationService.createNotification(
                         row.user_id,
                         '¡Evento por comenzar!',
-                        `"${row.title}" comienza en ${timeUntil} minutos. ¡No te lo pierdas!`,
+                        `"${row.title}" comienza en ${timeUntilMinute} minutos. ¡No te lo pierdas!`,
                         'event_reminder',
                         `/watch/${row.id}`
                     );
 
-                    notifiedPairs.add(key);
-                    logger.info(`Notification sent for event ${row.id} to user ${row.user_id}`);
+                    notifiedPushPairs.add(pushKey);
+                    logger.info(`Notification Push sent for event ${row.id} to user ${row.user_id}`);
                 }
             }
         } catch (error) {
             logger.error('Error in reminder cron:', error);
         }
-    }, 60000);
+    }, 60000); // Check every minute
 };
 
 startReminderCron();
