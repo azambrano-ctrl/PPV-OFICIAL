@@ -124,11 +124,22 @@ export default function WatchPage() {
                     setViewerCount(data.count);
                 });
 
-                // Escuchar expulsiones forzadas del servidor (Anti-Multi Pestañas)
+                // Escuchar expulsiones forzadas del servidor (Política Global Anti-Multiple Dispositivos)
                 socketInstance.on('force_logout', (data: { message: string }) => {
                     setError(data.message);
                     setStreamData(null); // Esto desmontará el reproductor de video instantáneamente
                     disconnectSocket();
+
+                    // Borrar los tokens de la sesión para cerrar la cuenta por completo
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
+                    localStorage.removeItem('user');
+                    useAuthStore.getState().logout();
+
+                    // Redirigir al inicio de sesión luego de dar margen para leer el error
+                    setTimeout(() => {
+                        window.location.href = '/auth/login?msg=multi_device';
+                    }, 4000);
                 });
 
                 setLoading(false);

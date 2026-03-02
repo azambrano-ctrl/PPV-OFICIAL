@@ -250,34 +250,26 @@ io.on('connection', (socket) => {
                 return;
             }
 
-            // --- STRICT 1-TAB/DEVICE POLICY ---
-            // Find if this user already has an active socket in this event room
-            const eventRoomName = `event_${eventId}`;
-            const socketsInRoom = io.sockets.adapter.rooms.get(eventRoomName);
+            // --- STRICT GLOBAL 1-TAB/DEVICE POLICY ---
+            // Find if this user already has an active socket ANYWHERE in the server
+            // (Even if they are watching a different event Reprise vs Live)
+            for (const [_, existingSocket] of io.sockets.sockets.entries()) {
+                if (existingSocket &&
+                    existingSocket.data?.user?.userId === userId &&
+                    existingSocket.id !== socket.id) {
 
-            if (socketsInRoom) {
-                for (const existingSocketId of socketsInRoom) {
-                    const existingSocket = io.sockets.sockets.get(existingSocketId);
+                    logger.info(`[GLOBAL CHAT] Enforcing global 1-device policy for user ${userId}. Kicking old socket ${existingSocket.id}`);
 
-                    // If we find another socket belonging to the SAME user, but it's a DIFFERENT socket id
-                    if (existingSocket &&
-                        existingSocket.data.user.userId === userId &&
-                        existingSocket.id !== socket.id) {
+                    // Notify the old socket it's being kicked out
+                    existingSocket.emit('force_logout', {
+                        message: 'Se ha iniciado sesión en otro dispositivo o has abierto otra transmisión. Tu sesión aquí será cerrada por seguridad.'
+                    });
 
-                        logger.info(`[CHAT] Enforcing 1-device policy for user ${userId}. Disconnecting old socket ${existingSocket.id}`);
-
-                        // Notify the old socket it's being kicked out
-                        existingSocket.emit('force_logout', {
-                            message: 'Tu sesión fue abierta en otra pestaña o dispositivo. La transmisión se detendrá aquí.'
-                        });
-
-                        // Force the old socket to leave the room and disconnect it
-                        existingSocket.leave(eventRoomName);
-                        existingSocket.disconnect(true);
-                    }
+                    // Force the old socket to disconnect
+                    existingSocket.disconnect(true);
                 }
             }
-            // ----------------------------------
+            // -----------------------------------------
 
             // Check if user is admin or has purchased the event
             const isAdmin = socket.data.user.role === 'admin';
