@@ -192,9 +192,19 @@ router.post(
                 return;
             }
 
+            // Extract only the necessary data to avoid injecting old 'iat' and 'exp' into the new token
+            // which causes jsonwebtoken to throw an error silently caught as 401
+            const newPayload = {
+                userId: decoded.userId,
+                email: decoded.email,
+                role: decoded.role,
+                promoterId: decoded.promoterId,
+                sessionId: decoded.sessionId
+            };
+
             // Generate new tokens
-            const newAccessToken = generateAccessToken(decoded);
-            const newRefreshToken = generateRefreshToken(decoded);
+            const newAccessToken = generateAccessToken(newPayload);
+            const newRefreshToken = generateRefreshToken(newPayload);
 
             // Set secure cookies
             setAuthCookies(res, newAccessToken, newRefreshToken);
