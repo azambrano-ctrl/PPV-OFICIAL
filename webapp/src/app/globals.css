@@ -239,3 +239,15 @@
 ::selection {
   @apply bg-primary-600 text-white;
 }
+
+/* Force prevent Google AdSense Auto Ads from pushing the page down */
+html.google-auto-placed, 
+body.google-auto-placed,
+html, body {
+  margin-top: 0 !important;
+  top: 0 !important;
+}
+
+.google-auto-placed {
+  margin-top: 0 !important;
+}
