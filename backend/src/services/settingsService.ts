@@ -58,6 +58,11 @@ export interface Settings {
 
     created_at: Date;
     updated_at: Date;
+
+    // Sponsor
+    sponsor_image: string | null;
+    sponsor_link: string;
+    sponsor_enabled: boolean;
 }
 
 export interface UpdateSettingsDTO {
@@ -114,6 +119,11 @@ export interface UpdateSettingsDTO {
     google_client_id_ios?: string | null;
     google_client_id_web?: string | null;
     facebook_app_id?: string | null;
+
+    // Sponsor
+    sponsor_image?: string | null;
+    sponsor_link?: string;
+    sponsor_enabled?: boolean;
 }
 
 /**
@@ -186,7 +196,10 @@ export const updateSettings = async (updates: UpdateSettingsDTO): Promise<Settin
         'google_client_id_android',
         'google_client_id_ios',
         'google_client_id_web',
-        'facebook_app_id'
+        'facebook_app_id',
+        'sponsor_image',
+        'sponsor_link',
+        'sponsor_enabled'
     ];
 
     for (const key of keys) {

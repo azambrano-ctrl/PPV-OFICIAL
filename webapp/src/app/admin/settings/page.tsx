@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { settingsAPI } from '@/lib/api';
-import { Save, AlertCircle, Layout, FileText, Image as ImageIcon, X, CreditCard, Facebook, Instagram, Twitter, Video, Plus, Trash2 } from 'lucide-react';
+import { Save, AlertCircle, Layout, FileText, Image as ImageIcon, X, CreditCard, Facebook, Instagram, Twitter, Video, Plus, Trash2, Trophy } from 'lucide-react';
 import ImageUpload from '@/components/admin/ImageUpload';
 
-type Tab = 'general' | 'about' | 'gallery' | 'payments' | 'season-pass' | 'login' | 'social';
+type Tab = 'general' | 'about' | 'gallery' | 'payments' | 'season-pass' | 'login' | 'social' | 'sponsor';
 
 export default function AdminSettingsPage() {
     const [loading, setLoading] = useState(true);
@@ -85,7 +85,12 @@ export default function AdminSettingsPage() {
         google_client_id_android: '',
         google_client_id_ios: '',
         google_client_id_web: '',
-        facebook_app_id: ''
+        facebook_app_id: '',
+
+        // Sponsor
+        sponsor_image: '',
+        sponsor_link: '',
+        sponsor_enabled: false
     });
 
     useEffect(() => {
@@ -145,7 +150,11 @@ export default function AdminSettingsPage() {
                 google_client_id_android: d.google_client_id_android || '',
                 google_client_id_ios: d.google_client_id_ios || '',
                 google_client_id_web: d.google_client_id_web || '',
-                facebook_app_id: d.facebook_app_id || ''
+                facebook_app_id: d.facebook_app_id || '',
+
+                sponsor_image: d.sponsor_image || '',
+                sponsor_link: d.sponsor_link || '',
+                sponsor_enabled: d.sponsor_enabled || false
             });
         } catch (error) {
             console.error('Error loading settings:', error);
@@ -268,6 +277,16 @@ export default function AdminSettingsPage() {
             formData.append('google_client_id_web', form.google_client_id_web);
             formData.append('facebook_app_id', form.facebook_app_id);
 
+            // Sponsor
+            formData.append('sponsor_link', form.sponsor_link);
+            formData.append('sponsor_enabled', String(form.sponsor_enabled));
+            if ((window as any).__sponsorImageFile) {
+                formData.append('sponsor_image', (window as any).__sponsorImageFile);
+                (window as any).__sponsorImageFile = null;
+            } else if (form.sponsor_image && form.sponsor_image.startsWith('http')) {
+                formData.append('sponsor_image', form.sponsor_image);
+            }
+
             await settingsAPI.update(formData);
             setMessage({ type: 'success', text: 'Configuración guardada correctamente' });
 
@@ -310,6 +329,7 @@ export default function AdminSettingsPage() {
         { id: 'payments', label: 'Pagos', icon: CreditCard },
         { id: 'season-pass', label: 'Pase de Temporada', icon: Save },
         { id: 'login', label: 'Página Login', icon: Layout },
+        { id: 'sponsor', label: 'Patrocinador', icon: Trophy },
     ];
 
     return (
@@ -1209,6 +1229,86 @@ export default function AdminSettingsPage() {
                                     onChange={(e) => setForm({ ...form, facebook_app_id: e.target.value })}
                                 />
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Tab: Sponsor */}
+                {activeTab === 'sponsor' && (
+                    <div className="bg-dark-900 p-6 rounded-xl border border-dark-800 space-y-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                <Trophy className="w-6 h-6 text-yellow-500" /> Auspiciante / Patrocinador
+                            </h2>
+                        </div>
+                        <p className="text-sm text-dark-400 mb-6">
+                            Configura una imagen de auspiciante que aparecerá como splash al cargar la página. Solo se muestra una vez por sesión del usuario.
+                        </p>
+
+                        {/* Enable Toggle */}
+                        <div className="flex items-center justify-between bg-dark-800/50 p-4 rounded-lg">
+                            <div>
+                                <label className="text-sm font-medium text-white">Activar Splash de Patrocinador</label>
+                                <p className="text-xs text-dark-400 mt-1">Si está activado, la imagen aparecerá al abrir la página</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setForm({ ...form, sponsor_enabled: !form.sponsor_enabled })}
+                                className={`relative w-12 h-6 rounded-full transition-colors ${form.sponsor_enabled ? 'bg-green-600' : 'bg-dark-700'
+                                    }`}
+                            >
+                                <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${form.sponsor_enabled ? 'translate-x-6' : 'translate-x-0.5'
+                                    }`} />
+                            </button>
+                        </div>
+
+                        {/* Sponsor Image */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-dark-300">Imagen del Patrocinador</label>
+                            <p className="text-xs text-dark-500">Recomendado: 1200x800px o similar en formato horizontal</p>
+                            {form.sponsor_image && (
+                                <div className="relative w-full max-w-md">
+                                    <img src={form.sponsor_image} alt="Preview" className="w-full rounded-lg border border-dark-700" />
+                                    <button
+                                        type="button"
+                                        onClick={() => setForm({ ...form, sponsor_image: '' })}
+                                        className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full hover:bg-red-700"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className="input w-full"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                        // Show preview and store file for upload
+                                        const reader = new FileReader();
+                                        reader.onload = (ev) => {
+                                            setForm({ ...form, sponsor_image: ev.target?.result as string });
+                                        };
+                                        reader.readAsDataURL(file);
+                                        // Store in a hidden input-like approach for FormData
+                                        (window as any).__sponsorImageFile = file;
+                                    }
+                                }}
+                            />
+                        </div>
+
+                        {/* Sponsor Link */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-dark-300">Enlace del Patrocinador (opcional)</label>
+                            <p className="text-xs text-dark-500">Si el usuario hace clic en la imagen, será redirigido a este enlace</p>
+                            <input
+                                type="url"
+                                className="input w-full"
+                                placeholder="https://www.sponsor.com"
+                                value={form.sponsor_link}
+                                onChange={(e) => setForm({ ...form, sponsor_link: e.target.value })}
+                            />
                         </div>
                     </div>
                 )}

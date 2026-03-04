@@ -54,6 +54,9 @@ import CookieBanner from '@/components/ui/CookieBanner';
 import PayPalProvider from '@/components/providers/PayPalProvider';
 import Script from 'next/script';
 
+import SponsorSplash from '@/components/SponsorSplash';
+import PageViewTracker from '@/components/PageViewTracker';
+
 export default function RootLayout({
     children,
 }: {
@@ -92,6 +95,8 @@ export default function RootLayout({
                     <SettingsProvider>
                         <PayPalProvider>
                             <SessionWatcher />
+                            <PageViewTracker />
+                            <SponsorSplash />
                             <Navbar />
                             {children}
                             <CookieBanner />

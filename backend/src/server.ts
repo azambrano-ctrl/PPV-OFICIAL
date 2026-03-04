@@ -177,6 +177,9 @@ app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/promoters', promoterRoutes);
 app.use('/api/public-stats', publicStatsRoutes);
 
+import analyticsRoutes from './routes/analytics';
+app.use('/api/analytics', analyticsRoutes);
+
 // Socket.io authentication middleware
 io.use(async (socket, next) => {
     const token = socket.handshake.auth.token;

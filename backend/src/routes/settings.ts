@@ -159,6 +159,12 @@ router.put(
                     console.log('🎬 Updating login_background_video:', files.login_background_video[0].path);
                     updates.login_background_video = files.login_background_video[0].path;
                 }
+
+                // Sponsor Image
+                if (files.sponsor_image && files.sponsor_image[0]) {
+                    console.log('🏆 Updating sponsor_image:', files.sponsor_image[0].path);
+                    updates.sponsor_image = files.sponsor_image[0].path;
+                }
             }
 
             // 3. Assign final merged list to updates
@@ -247,6 +253,11 @@ router.put(
             if (req.body.google_client_id_ios !== undefined) updates.google_client_id_ios = req.body.google_client_id_ios;
             if (req.body.google_client_id_web !== undefined) updates.google_client_id_web = req.body.google_client_id_web;
             if (req.body.facebook_app_id !== undefined) updates.facebook_app_id = req.body.facebook_app_id;
+
+            // Handle Sponsor Settings
+            if (req.body.sponsor_link !== undefined) updates.sponsor_link = req.body.sponsor_link;
+            if (req.body.sponsor_enabled !== undefined) updates.sponsor_enabled = String(req.body.sponsor_enabled) === 'true';
+            if (req.body.sponsor_image && !updates.sponsor_image) updates.sponsor_image = req.body.sponsor_image;
 
             console.log('Updates object prepared:', JSON.stringify(updates, null, 2));
 

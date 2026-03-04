@@ -39,7 +39,22 @@ export const repairSchema = async () => {
             `ALTER TABLE live_streams DROP CONSTRAINT IF EXISTS live_streams_rtmp_url_key`,
             `ALTER TABLE live_streams DROP CONSTRAINT IF EXISTS live_streams_stream_key_key`,
             `ALTER TABLE live_streams DROP CONSTRAINT IF EXISTS live_streams_mux_live_stream_id_key`,
-            `ALTER TABLE events DROP CONSTRAINT IF EXISTS events_stream_key_key`
+            `ALTER TABLE events DROP CONSTRAINT IF EXISTS events_stream_key_key`,
+            // Sponsor
+            `ALTER TABLE settings ADD COLUMN IF NOT EXISTS sponsor_image TEXT`,
+            `ALTER TABLE settings ADD COLUMN IF NOT EXISTS sponsor_link TEXT DEFAULT ''`,
+            `ALTER TABLE settings ADD COLUMN IF NOT EXISTS sponsor_enabled BOOLEAN DEFAULT false`,
+            // Page Views
+            `CREATE TABLE IF NOT EXISTS page_views (
+                id SERIAL PRIMARY KEY,
+                page TEXT NOT NULL,
+                ip_address TEXT,
+                user_agent TEXT,
+                user_id UUID,
+                created_at TIMESTAMP DEFAULT NOW()
+            )`,
+            `CREATE INDEX IF NOT EXISTS idx_page_views_created_at ON page_views(created_at)`,
+            `CREATE INDEX IF NOT EXISTS idx_page_views_page ON page_views(page)`
         ];
 
         for (const sql of queries) {
