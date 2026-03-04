@@ -6,6 +6,7 @@ import { Facebook, Twitter, Instagram, Youtube, Mail } from 'lucide-react';
 import { useSettingsStore } from '@/lib/store';
 import { useLanguage } from '@/components/providers/LanguageProvider';
 import { newsletterAPI, handleAPIError } from '@/lib/api';
+import AdSense from '@/components/ui/AdSense';
 
 import toast from 'react-hot-toast';
 
@@ -64,6 +65,13 @@ export default function Footer() {
 
     return (
         <footer className="bg-dark-900 border-t border-dark-800">
+            {/* Ad Space Section */}
+            <div className="container-custom py-6 flex justify-center border-b border-dark-800/50">
+                <div className="w-full max-w-5xl rounded-xl overflow-hidden bg-dark-950/50 border border-white/5 flex items-center justify-center min-h-[90px]">
+                    <AdSense slot="5992307942" format="horizontal" className="!my-0 w-full" />
+                </div>
+            </div>
+
             <div className="container-custom py-12">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
                     {/* Brand */}
