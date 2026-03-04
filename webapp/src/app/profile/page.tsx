@@ -68,8 +68,11 @@ export default function ProfilePage() {
         return null;
     }
 
-    const upcomingEvents = purchases.filter(p => p.event_status === 'upcoming' || p.event_status === 'live');
-    const pastEvents = purchases.filter(p => p.event_status === 'finished');
+    const upcomingEvents = purchases.filter(p => p.event_status === 'upcoming' || p.event_status === 'live' || p.event_status === 'reprise');
+    const pastEvents = purchases.filter(p => p.event_status === 'finished' || p.event_status === 'cancelled');
+    // Events that don't match any known status go to upcoming as fallback
+    const unclassified = purchases.filter(p => !['upcoming', 'live', 'reprise', 'finished', 'cancelled'].includes(p.event_status));
+    upcomingEvents.push(...unclassified);
 
     return (
         <div className="min-h-screen flex flex-col bg-dark-950">
