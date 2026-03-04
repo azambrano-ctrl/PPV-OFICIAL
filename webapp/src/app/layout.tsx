@@ -66,11 +66,13 @@ export default function RootLayout({
         <html lang="es" className={`${inter.variable} ${outfit.variable}`}>
             <head>
                 <Favicon />
+                <meta name="google-adsense-platform-account" content="ca-pub-3458573665593188" />
                 <Script
                     async
                     src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3458573665593188"
                     crossOrigin="anonymous"
                     strategy="afterInteractive"
+                    data-overlays="bottom"
                 />
             </head>
             <body className="font-sans">
