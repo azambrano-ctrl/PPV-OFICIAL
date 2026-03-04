@@ -22,6 +22,7 @@ export interface Settings {
     site_name: string;
     site_description: string;
     contact_email: string;
+    contact_whatsapp: string;
     social_links: any; // JSONB
     site_logo: string | null;
     site_logo_width: number;
@@ -80,6 +81,7 @@ export interface UpdateSettingsDTO {
     site_name?: string;
     site_description?: string;
     contact_email?: string;
+    contact_whatsapp?: string;
     social_links?: any;
     site_logo?: string | null;
     site_logo_width?: number;
@@ -160,6 +162,7 @@ export const updateSettings = async (updates: UpdateSettingsDTO): Promise<Settin
         'site_name',
         'site_description',
         'contact_email',
+        'contact_whatsapp',
         'social_links',
         'stripe_enabled',
         'stripe_public_key',

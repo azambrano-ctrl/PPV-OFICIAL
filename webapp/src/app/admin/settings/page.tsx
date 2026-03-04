@@ -34,6 +34,7 @@ export default function AdminSettingsPage() {
         site_name: 'PPV Streaming',
         site_description: '',
         contact_email: '',
+        contact_whatsapp: '',
         homepage_background: '',
         homepage_video: '',
         homepage_slider: [] as string[],
@@ -100,6 +101,7 @@ export default function AdminSettingsPage() {
                 site_name: d.site_name || '',
                 site_description: d.site_description || '',
                 contact_email: d.contact_email || '',
+                contact_whatsapp: d.contact_whatsapp || '',
                 homepage_background: d.homepage_background || '',
                 homepage_video: d.homepage_video || '',
                 homepage_slider: typeof d.homepage_slider === 'string' ? JSON.parse(d.homepage_slider) : (d.homepage_slider || []),
@@ -226,6 +228,7 @@ export default function AdminSettingsPage() {
             formData.append('site_name', form.site_name);
             formData.append('site_description', form.site_description);
             formData.append('contact_email', form.contact_email);
+            formData.append('contact_whatsapp', form.contact_whatsapp);
             formData.append('social_links', JSON.stringify(form.social_links));
             formData.append('site_logo_width', String(form.site_logo_width));
             formData.append('site_logo_offset_x', String(form.site_logo_offset_x));
@@ -371,6 +374,16 @@ export default function AdminSettingsPage() {
                                     className="input w-full"
                                     value={form.contact_email}
                                     onChange={(e) => setForm({ ...form, contact_email: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-dark-300">WhatsApp de Contacto</label>
+                                <input
+                                    type="text"
+                                    className="input w-full"
+                                    placeholder="+593 99 999 9999"
+                                    value={form.contact_whatsapp}
+                                    onChange={(e) => setForm({ ...form, contact_whatsapp: e.target.value })}
                                 />
                             </div>
                             <div className="space-y-2 md:col-span-2">

@@ -1,8 +1,14 @@
 'use client';
 
 import { Mail, MessageSquare, Phone } from 'lucide-react';
+import { useSettingsStore } from '@/lib/store';
 
 export default function ContactPage() {
+    const { settings } = useSettingsStore();
+
+    const contactEmail = settings?.contact_email || 'soporte@arenafightpass.com';
+    const contactWhatsapp = settings?.contact_whatsapp || '+593 99 999 9999';
+
     return (
         <div className="min-h-screen bg-dark-950 pt-24 pb-12 px-4">
             <div className="max-w-4xl mx-auto text-center">
@@ -13,7 +19,7 @@ export default function ContactPage() {
                     <div className="card p-8 flex flex-col items-center">
                         <Mail className="w-12 h-12 text-primary-500 mb-4" />
                         <h3 className="text-lg font-semibold mb-2">Email</h3>
-                        <p className="text-dark-400">soporte@arenafightpass.com</p>
+                        <p className="text-dark-400">{contactEmail}</p>
                     </div>
                     <div className="card p-8 flex flex-col items-center">
                         <MessageSquare className="w-12 h-12 text-primary-500 mb-4" />
@@ -23,7 +29,7 @@ export default function ContactPage() {
                     <div className="card p-8 flex flex-col items-center">
                         <Phone className="w-12 h-12 text-primary-500 mb-4" />
                         <h3 className="text-lg font-semibold mb-2">WhatsApp</h3>
-                        <p className="text-dark-400">+593 99 999 9999</p>
+                        <p className="text-dark-400">{contactWhatsapp}</p>
                     </div>
                 </div>
 
