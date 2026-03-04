@@ -9,6 +9,7 @@ import { useAuthStore } from '@/lib/store';
 import { getImageUrl } from '@/lib/utils';
 import Footer from '@/components/Footer';
 import EventCard from '@/components/events/EventCard';
+import AdSense from '@/components/ui/AdSense';
 import toast from 'react-hot-toast';
 
 interface Event {
@@ -189,6 +190,11 @@ export default function EventsPage() {
                         </div>
                     )}
                 </div>
+            </section>
+
+            {/* Ad Banner */}
+            <section className="container-custom">
+                <AdSense slot="5992307942" format="horizontal" />
             </section>
 
             <Footer />

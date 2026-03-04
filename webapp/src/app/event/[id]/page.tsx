@@ -11,6 +11,7 @@ import { formatDate, formatCurrency, getEventStatusColor, getEventStatusText, ge
 import Footer from '@/components/Footer';
 import PaymentModal from '@/components/PaymentModal';
 import toast from 'react-hot-toast';
+import AdSense from '@/components/ui/AdSense';
 import { formatDistanceToNow, isPast, isFuture } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -475,6 +476,11 @@ export default function EventDetailPage() {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            {/* Ad Banner */}
+            <div className="container-custom">
+                <AdSense slot="5992307942" format="horizontal" />
             </div>
 
             <Footer />
