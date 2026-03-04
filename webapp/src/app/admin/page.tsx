@@ -11,6 +11,16 @@ interface Stats {
     activeStreams: number;
 }
 
+interface AnalyticsData {
+    total: number;
+    today: number;
+    week: number;
+    month: number;
+    uniqueVisitors: number;
+    daily: { date: string; views: string }[];
+    topPages: { page: string; views: string }[];
+}
+
 interface RecentPurchase {
     id: string;
     user_email: string;
@@ -35,6 +45,7 @@ export default function AdminPage() {
     const [stats, setStats] = useState<Stats | null>(null);
     const [recentPurchases, setRecentPurchases] = useState<RecentPurchase[]>([]);
     const [events, setEvents] = useState<Event[]>([]);
+    const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'dashboard' | 'events' | 'users'>('dashboard');
 
@@ -84,6 +95,15 @@ export default function AdminPage() {
                 if (eventsRes.ok) {
                     const eventsData = await eventsRes.json();
                     setEvents(eventsData.data || []);
+                }
+
+                // Fetch analytics
+                const analyticsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics/stats`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
+                if (analyticsRes.ok) {
+                    const analyticsData = await analyticsRes.json();
+                    setAnalytics(analyticsData.data);
                 }
 
                 setLoading(false);
@@ -194,6 +214,92 @@ export default function AdminPage() {
                                 </div>
                                 <p className="text-3xl font-bold text-white">{stats?.activeStreams || 0}</p>
                             </div>
+                        </div>
+
+                        {/* Visit Analytics */}
+                        <div className="card p-6">
+                            <h2 className="text-2xl font-bold text-white mb-6">📊 Visitas del Sitio</h2>
+
+                            {analytics ? (
+                                <div className="space-y-6">
+                                    {/* Visit Stats Cards */}
+                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                        <div className="bg-dark-800 p-4 rounded-lg text-center">
+                                            <p className="text-dark-400 text-xs font-medium mb-1">Hoy</p>
+                                            <p className="text-2xl font-bold text-green-400">{analytics.today}</p>
+                                        </div>
+                                        <div className="bg-dark-800 p-4 rounded-lg text-center">
+                                            <p className="text-dark-400 text-xs font-medium mb-1">Últimos 7 días</p>
+                                            <p className="text-2xl font-bold text-blue-400">{analytics.week}</p>
+                                        </div>
+                                        <div className="bg-dark-800 p-4 rounded-lg text-center">
+                                            <p className="text-dark-400 text-xs font-medium mb-1">Últimos 30 días</p>
+                                            <p className="text-2xl font-bold text-purple-400">{analytics.month}</p>
+                                        </div>
+                                        <div className="bg-dark-800 p-4 rounded-lg text-center">
+                                            <p className="text-dark-400 text-xs font-medium mb-1">Total</p>
+                                            <p className="text-2xl font-bold text-white">{analytics.total}</p>
+                                        </div>
+                                        <div className="bg-dark-800 p-4 rounded-lg text-center">
+                                            <p className="text-dark-400 text-xs font-medium mb-1">Visitantes Únicos</p>
+                                            <p className="text-2xl font-bold text-yellow-400">{analytics.uniqueVisitors}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        {/* Daily Breakdown */}
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-white mb-3">Visitas por Día (7 días)</h3>
+                                            <div className="space-y-2">
+                                                {analytics.daily.length === 0 ? (
+                                                    <p className="text-dark-400 text-sm">Sin datos aún</p>
+                                                ) : (
+                                                    analytics.daily.map((d) => {
+                                                        const maxViews = Math.max(...analytics.daily.map(x => parseInt(x.views)));
+                                                        const pct = maxViews > 0 ? (parseInt(d.views) / maxViews) * 100 : 0;
+                                                        return (
+                                                            <div key={d.date} className="flex items-center gap-3">
+                                                                <span className="text-dark-400 text-xs w-20 shrink-0">
+                                                                    {new Date(d.date).toLocaleDateString('es', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                                                </span>
+                                                                <div className="flex-1 bg-dark-800 rounded h-5 overflow-hidden">
+                                                                    <div
+                                                                        className="h-full bg-gradient-to-r from-primary-600 to-primary-400 rounded"
+                                                                        style={{ width: `${pct}%` }}
+                                                                    />
+                                                                </div>
+                                                                <span className="text-white text-sm font-bold w-10 text-right">{d.views}</span>
+                                                            </div>
+                                                        );
+                                                    })
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Top Pages */}
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-white mb-3">Páginas Más Visitadas (30 días)</h3>
+                                            <div className="space-y-1">
+                                                {analytics.topPages.length === 0 ? (
+                                                    <p className="text-dark-400 text-sm">Sin datos aún</p>
+                                                ) : (
+                                                    analytics.topPages.map((p, i) => (
+                                                        <div key={p.page} className="flex items-center justify-between py-2 px-3 rounded hover:bg-dark-800/50">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-dark-500 text-xs font-bold w-5">{i + 1}.</span>
+                                                                <span className="text-dark-200 text-sm truncate max-w-[200px]">{p.page}</span>
+                                                            </div>
+                                                            <span className="text-primary-400 font-bold text-sm">{p.views}</span>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <p className="text-dark-400 text-center py-4">Recopilando datos de visitas...</p>
+                            )}
                         </div>
 
                         {/* Recent Purchases */}
