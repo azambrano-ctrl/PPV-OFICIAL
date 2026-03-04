@@ -64,11 +64,17 @@ export default function HomePage() {
             setFeaturedEvents(featuredRes.data.data.slice(0, 1));
 
             // Filter for live, upcoming, and reprise (only if price is 0 for reprise)
+            // Only show events with future dates (live events always show)
+            const now = new Date();
             const activeEvents = allEventsRes.data.data
                 .filter((e: any) => {
                     const status = (e.status || '').toLowerCase();
-                    if (status === 'live' || status === 'upcoming') return true;
-                    if (status === 'reprise' && parseFloat(e.price) === 0) return true;
+                    const eventDate = new Date(e.event_date);
+                    // Live events always show regardless of date
+                    if (status === 'live') return true;
+                    // Upcoming and free reprise must have a future date
+                    if (status === 'upcoming' && eventDate > now) return true;
+                    if (status === 'reprise' && parseFloat(e.price) === 0 && eventDate > now) return true;
                     return false;
                 })
                 .sort((a: any, b: any) => {

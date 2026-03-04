@@ -49,7 +49,11 @@ export default function EventsPage() {
     const loadEvents = async () => {
         try {
             const response = await eventsAPI.getAll();
-            setEvents(response.data.data);
+            // Exclude draft and pending events from the public page
+            const publicEvents = (response.data.data || []).filter(
+                (e: any) => !['draft', 'pending'].includes((e.status || '').toLowerCase())
+            );
+            setEvents(publicEvents);
         } catch (error) {
             console.error('Error loading events:', error);
             toast.error('Error al cargar eventos');
