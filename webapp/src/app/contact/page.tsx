@@ -26,11 +26,16 @@ export default function ContactPage() {
                         <h3 className="text-lg font-semibold mb-2">Chat en Vivo</h3>
                         <p className="text-dark-400">Disponible durante eventos en vivo.</p>
                     </div>
-                    <div className="card p-8 flex flex-col items-center">
+                    <a
+                        href={`https://wa.me/${contactWhatsapp.replace(/[^0-9]/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="card p-8 flex flex-col items-center hover:border-green-500/50 transition-colors cursor-pointer"
+                    >
                         <Phone className="w-12 h-12 text-primary-500 mb-4" />
                         <h3 className="text-lg font-semibold mb-2">WhatsApp</h3>
-                        <p className="text-dark-400">{contactWhatsapp}</p>
-                    </div>
+                        <p className="text-dark-400 hover:text-green-400 transition-colors">{contactWhatsapp}</p>
+                    </a>
                 </div>
 
                 <div className="mt-12 card p-8 max-w-2xl mx-auto text-left">
