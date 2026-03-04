@@ -12,7 +12,8 @@ router.post('/pageview', async (req: Request, res: Response) => {
     try {
         const { page } = req.body;
         if (!page) {
-            return res.status(400).json({ success: false, message: 'Page is required' });
+            res.status(400).json({ success: false, message: 'Page is required' });
+            return;
         }
 
         const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
