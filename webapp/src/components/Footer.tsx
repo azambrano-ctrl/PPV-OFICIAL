@@ -45,6 +45,7 @@ export default function Footer() {
             { label: 'Términos de Servicio', href: '/terms' },
             { label: 'Política de Privacidad', href: '/privacy' },
             { label: 'Política de Reembolsos', href: '/refunds' },
+            { label: 'Política DMCA', href: '/dmca' },
         ],
         support: [
             { label: 'Centro de Ayuda', href: '/help' },
@@ -212,6 +213,9 @@ export default function Footer() {
                 <div className="mt-8 pt-8 border-t border-dark-800 flex flex-col md:flex-row justify-between items-center gap-4">
                     <p className="text-dark-400 text-sm">
                         © {currentYear} {hasHydrated ? settings?.site_name : ''}. {t('footer.rights')}
+                    </p>
+                    <p className="text-dark-500 text-xs mt-1">
+                        Todo el contenido es propiedad de sus respectivos dueños y promotores. Prohibida la reproducción no autorizada.
                     </p>
 
                     <div className="flex items-center gap-4 text-sm text-dark-400">

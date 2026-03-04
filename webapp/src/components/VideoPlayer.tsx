@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Hls from 'hls.js';
-import { useSettingsStore } from '@/lib/store';
+import { useSettingsStore, useAuthStore } from '@/lib/store';
 import { authAPI } from '@/lib/api';
 import { Users } from 'lucide-react';
 import Image from 'next/image';
@@ -55,8 +55,11 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
 
     // Mid-roll ad state
     const [lastAdTime, setLastAdTime] = useState(0);
+    // Watermark position state
+    const [watermarkPos, setWatermarkPos] = useState({ top: '20%', left: '30%' });
 
     const { settings } = useSettingsStore();
+    const { user } = useAuthStore();
 
     // Detect if browser supports casting/remote playback
     useEffect(() => {
@@ -93,6 +96,26 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
 
         return () => clearInterval(heartbeatInterval);
     }, [isPlaying, isLoading]);
+
+    // Move watermark position periodically (anti-piracy)
+    useEffect(() => {
+        const positions = [
+            { top: '15%', left: '20%' },
+            { top: '60%', left: '70%' },
+            { top: '30%', left: '55%' },
+            { top: '75%', left: '15%' },
+            { top: '45%', left: '40%' },
+            { top: '20%', left: '75%' },
+            { top: '70%', left: '35%' },
+            { top: '50%', left: '60%' },
+        ];
+        let idx = 0;
+        const interval = setInterval(() => {
+            idx = (idx + 1) % positions.length;
+            setWatermarkPos(positions[idx]);
+        }, 30000);
+        return () => clearInterval(interval);
+    }, []);
 
     const handleCast = useCallback(async () => {
         const currentStreamUrl = lastStreamUrlRef.current || streamUrl;
@@ -484,6 +507,21 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
                 className={`absolute inset-0 z-[60] bg-black/40 ${isAdPlaying ? 'block' : 'hidden'}`}
                 style={{ pointerEvents: isAdPlaying ? 'auto' : 'none' }}
             />
+
+            {/* User Watermark - Anti-piracy */}
+            {user?.email && (
+                <div
+                    className="absolute z-[45] pointer-events-none select-none transition-all duration-[5000ms] ease-in-out"
+                    style={{
+                        top: watermarkPos.top,
+                        left: watermarkPos.left,
+                    }}
+                >
+                    <span className="text-white/[0.07] text-sm font-mono tracking-wider" style={{ userSelect: 'none', WebkitUserSelect: 'none' }}>
+                        {user.email}
+                    </span>
+                </div>
+            )}
         </div>
     );
 }
