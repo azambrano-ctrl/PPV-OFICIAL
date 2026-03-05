@@ -8,7 +8,7 @@ export default function StickyBottomAd() {
     const [isMinimized, setIsMinimized] = useState(true);
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col items-center justify-center pointer-events-none">
+        <div className="fixed bottom-0 left-0 right-0 z-50 hidden md:flex flex-col items-center justify-center pointer-events-none">
             {/* The actual visible box that holds the ad */}
             <div
                 className={`relative bg-white border border-gray-200 border-b-0 shadow-[0_-5px_15px_rgba(0,0,0,0.1)] pointer-events-auto w-full max-w-[728px] mx-auto rounded-t-lg transition-all duration-300 ease-in-out ${isMinimized ? 'translate-y-[90px]' : 'translate-y-0'}`}
