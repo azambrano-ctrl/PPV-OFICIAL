@@ -81,7 +81,7 @@ export default function EventsPage() {
         // Filter by status
         if (statusFilter !== 'all') {
             if (statusFilter === 'upcoming') {
-                filtered = filtered.filter((event) => event.status === 'upcoming' || (event.status === 'reprise' && parseFloat(String(event.price)) === 0));
+                filtered = filtered.filter((event) => event.status === 'upcoming' || event.status === 'reprise');
             } else {
                 filtered = filtered.filter((event) => event.status === statusFilter);
             }

@@ -74,7 +74,7 @@ export default function HomePage() {
                     if (status === 'live') return true;
                     // Upcoming and free reprise must have a future date
                     if (status === 'upcoming' && eventDate > now) return true;
-                    if (status === 'reprise' && parseFloat(e.price) === 0 && eventDate > now) return true;
+                    if (status === 'reprise' && eventDate > now) return true;
                     return false;
                 })
                 .sort((a: any, b: any) => {

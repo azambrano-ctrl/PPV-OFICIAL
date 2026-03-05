@@ -376,7 +376,7 @@ export default function EventDetailPage() {
                                                         'Ya compraste este evento'}
                                             </span>
                                         </div>
-                                        {isLive || isPast(eventDate) || isFinished ? (
+                                        {isLive || isPast(eventDate) || isFinished || event.status === 'reprise' ? (
                                             <button
                                                 onClick={handleWatchNow}
                                                 className="w-full btn btn-primary"
@@ -425,10 +425,10 @@ export default function EventDetailPage() {
                                         ) : (
                                             <button
                                                 onClick={handlePurchaseClick}
-                                                disabled={event.price > 0 && (isFinished || isPast(eventDate))}
+                                                disabled={event.price > 0 && event.status !== 'reprise' && (isFinished || isPast(eventDate))}
                                                 className="w-full btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
-                                                {event.price > 0 && (isFinished || isPast(eventDate))
+                                                {event.price > 0 && event.status !== 'reprise' && (isFinished || isPast(eventDate))
                                                     ? 'Evento Finalizado'
                                                     : isUniversallyFree
                                                         ? 'Ver Ahora'
@@ -500,8 +500,7 @@ export default function EventDetailPage() {
                 />
             )}
 
-            {/* Sticky CTA Header (Bottom) */}
-            <div className={`fixed bottom-0 left-0 right-0 z-50 bg-dark-950/90 backdrop-blur-xl border-t border-dark-800 p-4 transition-transform duration-300 ease-in-out ${showStickyCTA && !isFinished && !canWatch ? 'translate-y-0' : 'translate-y-full'}`}>
+            <div className={`fixed bottom-0 left-0 right-0 z-50 bg-dark-950/90 backdrop-blur-xl border-t border-dark-800 p-4 transition-transform duration-300 ease-in-out ${showStickyCTA && event.status !== 'finished' && !canWatch ? 'translate-y-0' : 'translate-y-full'}`}>
                 <div className="container-custom flex items-center justify-between gap-4">
                     <div className="hidden md:block">
                         <h3 className="font-bold text-white mb-1 truncate max-w-sm">{event.title}</h3>
