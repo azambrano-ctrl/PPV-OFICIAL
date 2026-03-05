@@ -2,7 +2,6 @@
 const nextConfig = {
     images: {
         domains: ['localhost', 'via.placeholder.com'],
-        unoptimized: true,
         remotePatterns: [
             {
                 protocol: 'https',

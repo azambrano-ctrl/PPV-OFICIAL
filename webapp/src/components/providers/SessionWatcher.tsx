@@ -32,24 +32,9 @@ export default function SessionWatcher() {
 
         // Start watching if authenticated
         if (isAuthenticated) {
-            // Initial check after mount/login
+            // Initial check after mount/login to ensure session is valid
             checkSession();
-
-            // Set up interval (every 30 seconds is enough to not overload the server 
-            // but still feel "proactive")
-            checkInterval.current = setInterval(checkSession, 30000);
-        } else {
-            // Clean up if not authenticated
-            if (checkInterval.current) {
-                clearInterval(checkInterval.current);
-            }
         }
-
-        return () => {
-            if (checkInterval.current) {
-                clearInterval(checkInterval.current);
-            }
-        };
     }, [isAuthenticated, setUser]);
 
     return null; // This component doesn't render anything
