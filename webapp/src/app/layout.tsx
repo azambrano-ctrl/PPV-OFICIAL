@@ -68,10 +68,18 @@ export default function RootLayout({
                 <Favicon />
                 <Script
                     async
-                    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"
+                    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3458573665593188"
                     crossOrigin="anonymous"
                     strategy="afterInteractive"
                 />
+                <Script id="adsense-no-autoads" strategy="afterInteractive">
+                    {`
+                        (window.adsbygoogle = window.adsbygoogle || []).push({
+                            google_ad_client: "ca-pub-3458573665593188",
+                            enable_page_level_ads: false
+                        });
+                    `}
+                </Script>
             </head>
             <body className="font-sans">
                 <Script
