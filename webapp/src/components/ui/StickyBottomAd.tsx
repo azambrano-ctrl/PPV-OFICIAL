@@ -5,7 +5,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import AdSense from './AdSense';
 
 export default function StickyBottomAd() {
-    const [isMinimized, setIsMinimized] = useState(false);
+    const [isMinimized, setIsMinimized] = useState(true);
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col items-center justify-center pointer-events-none">
