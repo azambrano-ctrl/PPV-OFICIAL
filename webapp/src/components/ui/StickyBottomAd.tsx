@@ -26,15 +26,15 @@ export default function StickyBottomAd() {
                 </div>
 
                 {/* Ad Container */}
-                <div className="w-full h-[90px] block text-center relative bg-gray-50 rounded-b-lg">
+                <div className="w-full h-[90px] max-h-[90px] block text-center relative bg-gray-50 rounded-b-lg overflow-hidden">
                     <span className="text-[9px] text-gray-400 absolute left-2 top-0.5 z-10 text-left bg-transparent px-1 font-sans rounded">Anuncio</span>
                     {/* Constraining AdSense div strictly with block sizing */}
-                    <div className="w-full max-w-[728px] mx-auto h-[90px] block overflow-hidden pt-2">
+                    <div className="w-full max-w-[728px] mx-auto h-[90px] max-h-[90px] block overflow-hidden pt-2">
                         <AdSense
                             slot="5992307942"
-                            format="auto"
-                            className="!my-0 !p-0 mx-auto w-full h-full"
-                            style={{ display: 'block' }}
+                            format="horizontal"
+                            className="!my-0 !p-0 mx-auto w-full h-[90px] !max-h-[90px] overflow-hidden"
+                            style={{ display: 'block', maxHeight: '90px', overflow: 'hidden' }}
                         />
                     </div>
                 </div>
