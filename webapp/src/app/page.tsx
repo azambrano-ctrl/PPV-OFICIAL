@@ -18,6 +18,7 @@ import { newsAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import AuthenticatedHome from '@/components/home/AuthenticatedHome';
 import HeroBackground from '@/components/home/HeroBackground';
+import StickyBottomAd from '@/components/ui/StickyBottomAd';
 
 interface Event {
     id: string;
@@ -496,6 +497,8 @@ export default function HomePage() {
             </section>
 
             <Footer />
+
+            <StickyBottomAd />
         </div>
     );
 }

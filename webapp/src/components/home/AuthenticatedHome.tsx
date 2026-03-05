@@ -12,6 +12,7 @@ import { paymentsAPI } from '@/lib/api';
 import Footer from '@/components/Footer';
 import PaymentModal from '@/components/PaymentModal';
 import EventCard from '@/components/events/EventCard';
+import StickyBottomAd from '@/components/ui/StickyBottomAd';
 
 interface AuthenticatedHomeProps {
     user: any;
@@ -202,6 +203,8 @@ export default function AuthenticatedHome({
                     onClose={() => setShowPaymentModal(false)}
                 />
             )}
+
+            <StickyBottomAd />
         </div>
     );
 }
