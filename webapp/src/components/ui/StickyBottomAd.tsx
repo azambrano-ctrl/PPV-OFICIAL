@@ -23,16 +23,18 @@ export default function StickyBottomAd() {
             </div>
 
             {/* Ad Container */}
-            <div className="w-full max-w-screen-xl mx-auto flex justify-center py-1">
-                <div className="w-full text-center">
-                    <span className="text-[10px] text-gray-400 absolute left-2 top-1">Anuncio</span>
-                    {/* Using a standard horizontal ad slot to simulate the anchor */}
-                    <AdSense
-                        slot="5992307942"
-                        format="horizontal"
-                        className="!my-0 inline-block min-h-[90px]"
-                        style={{ display: 'inline-block', width: '100%', maxHeight: '100px' }}
-                    />
+            <div className="w-full max-w-screen-xl mx-auto flex justify-center py-0">
+                <div className="w-full text-center relative h-[90px] overflow-hidden flex items-center justify-center bg-gray-50">
+                    <span className="text-[9px] text-gray-400 absolute left-2 top-0.5 z-10 w-full text-left bg-gradient-to-r from-gray-50/80 to-transparent pl-1">Anuncio</span>
+                    {/* Constraining AdSense div strictly */}
+                    <div className="w-full h-full flex items-center justify-center overflow-hidden pt-3">
+                        <AdSense
+                            slot="5992307942"
+                            format="horizontal"
+                            className="!my-0 !p-0"
+                            style={{ display: 'inline-block', width: '100%', height: '90px' }}
+                        />
+                    </div>
                 </div>
             </div>
         </div>
