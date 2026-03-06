@@ -27,6 +27,7 @@ export const repairSchema = async () => {
             `ALTER TABLE events ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'upcoming'`,
             `ALTER TABLE events ADD COLUMN IF NOT EXISTS stream_key TEXT`,
             `ALTER TABLE events ADD COLUMN IF NOT EXISTS stream_url TEXT`,
+            `ALTER TABLE events ADD COLUMN IF NOT EXISTS trailer_url TEXT`,
             `ALTER TABLE live_streams ALTER COLUMN mux_live_stream_id DROP NOT NULL`,
             `ALTER TABLE live_streams ALTER COLUMN mux_playback_id DROP NOT NULL`,
             `ALTER TABLE live_streams ALTER COLUMN stream_key DROP NOT NULL`,
