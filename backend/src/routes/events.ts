@@ -120,6 +120,7 @@ router.post(
             is_featured: isPromoter ? false : (req.body.is_featured === 'true'),
             free_viewers_limit: req.body.free_viewers_limit ? parseInt(req.body.free_viewers_limit) : null,
             stream_url: isPromoter ? null : (req.body.stream_url || null),
+            trailer_url: isPromoter ? null : (req.body.trailer_url || null),
             thumbnail_url: files?.thumbnail ? files.thumbnail[0].path : undefined,
             banner_url: files?.banner ? files.banner[0].path : undefined,
             promoter_id: isPromoter ? user.promoterId : (req.body.promoter_id || null),
@@ -219,6 +220,9 @@ router.put(
                 if (req.body.is_featured !== undefined) updates.is_featured = req.body.is_featured === 'true';
                 if (req.body.stream_url !== undefined) {
                     updates.stream_url = req.body.stream_url === '' ? null : req.body.stream_url;
+                }
+                if (req.body.trailer_url !== undefined) {
+                    updates.trailer_url = req.body.trailer_url === '' ? null : req.body.trailer_url;
                 }
                 if (req.body.promoter_id !== undefined) {
                     updates.promoter_id = req.body.promoter_id || null;

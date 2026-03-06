@@ -28,6 +28,7 @@ export default function NewEventPage() {
         free_viewers_limit: '',
         stream_url: '',
         promoter_id: '',
+        trailer_url: '',
     });
     const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
     const [bannerFile, setBannerFile] = useState<File | null>(null);
@@ -54,6 +55,7 @@ export default function NewEventPage() {
             if (formData.stream_url) {
                 data.append('stream_url', formData.stream_url);
             }
+            data.append('trailer_url', formData.trailer_url);
             if (formData.promoter_id) {
                 data.append('promoter_id', formData.promoter_id);
             }
@@ -288,6 +290,22 @@ export default function NewEventPage() {
                         />
                         <p className="text-xs text-gray-400 mt-1">
                             URL del stream HLS/DASH. <b>Requerido</b> si el estado es Reprise.
+                        </p>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                            URL del Trailer (YouTube / Vimeo)
+                        </label>
+                        <input
+                            type="url"
+                            value={formData.trailer_url}
+                            onChange={(e) => setFormData({ ...formData, trailer_url: e.target.value })}
+                            className="input"
+                            placeholder="https://www.youtube.com/watch?v=..."
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                            Trailer de máximo 2 minutos. Pega un enlace de YouTube o Vimeo.
                         </p>
                     </div>
 

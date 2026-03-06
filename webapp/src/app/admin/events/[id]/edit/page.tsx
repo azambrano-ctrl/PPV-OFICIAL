@@ -35,6 +35,7 @@ export default function EditEventPage() {
         thumbnail_url: '',
         banner_url: '',
         promoter_id: '',
+        trailer_url: '',
     });
     const [promoters, setPromoters] = useState<Promoter[]>([]);
     const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
@@ -84,6 +85,7 @@ export default function EditEventPage() {
                 thumbnail_url: event.thumbnail_url || '',
                 banner_url: event.banner_url || '',
                 promoter_id: event.promoter_id || '',
+                trailer_url: event.trailer_url || '',
             });
         } catch (error) {
             const message = handleAPIError(error);
@@ -110,6 +112,7 @@ export default function EditEventPage() {
             if (formData.stream_url) {
                 data.append('stream_url', formData.stream_url);
             }
+            data.append('trailer_url', formData.trailer_url);
             if (formData.promoter_id) {
                 data.append('promoter_id', formData.promoter_id);
             }
@@ -405,6 +408,22 @@ export default function EditEventPage() {
                         />
                         <p className="text-xs text-gray-400 mt-1">
                             URL del stream HLS/DASH. <b>Requerido</b> si el estado es Reprise.
+                        </p>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                            URL del Trailer (YouTube / Vimeo)
+                        </label>
+                        <input
+                            type="url"
+                            value={formData.trailer_url}
+                            onChange={(e) => setFormData({ ...formData, trailer_url: e.target.value })}
+                            className="input"
+                            placeholder="https://www.youtube.com/watch?v=..."
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                            Trailer de máximo 2 minutos. Pega un enlace de YouTube o Vimeo.
                         </p>
                     </div>
 

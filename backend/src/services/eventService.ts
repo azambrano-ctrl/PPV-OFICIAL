@@ -13,6 +13,7 @@ export interface Event {
     status: 'upcoming' | 'live' | 'finished' | 'cancelled' | 'reprise' | 'draft';
     stream_key?: string;
     stream_url?: string;
+    trailer_url?: string;
     max_viewers?: number;
     free_viewers_limit?: number | null;
     is_featured: boolean;
@@ -166,6 +167,7 @@ export const updateEvent = async (
         'free_viewers_limit',
         'is_featured',
         'stream_url',
+        'trailer_url',
         'promoter_id',
     ];
 
