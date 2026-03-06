@@ -25,11 +25,32 @@ interface Event {
     currency: string;
     thumbnail_url?: string;
     banner_url?: string;
+    trailer_url?: string;
     status: string;
     is_featured: boolean;
     max_viewers?: number;
     free_viewers_limit?: number | null;
     claimed_free_spots?: string;
+}
+
+/** Convert a YouTube or Vimeo watch URL to its embed URL, or return null for direct video files */
+function getEmbedUrl(url: string): string | null {
+    try {
+        const u = new URL(url);
+        // YouTube
+        if (u.hostname.includes('youtube.com') || u.hostname.includes('youtu.be')) {
+            const videoId = u.searchParams.get('v') || u.pathname.split('/').pop();
+            return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0` : null;
+        }
+        // Vimeo
+        if (u.hostname.includes('vimeo.com')) {
+            const videoId = u.pathname.split('/').pop();
+            return videoId ? `https://player.vimeo.com/video/${videoId}` : null;
+        }
+        return null; // direct video file
+    } catch {
+        return null;
+    }
 }
 
 export default function EventDetailPage() {
@@ -316,6 +337,38 @@ export default function EventDetailPage() {
                                     {event.description || 'No hay descripción disponible para este evento.'}
                                 </p>
                             </div>
+
+                            {/* Trailer */}
+                            {(event as any).trailer_url && (() => {
+                                const trailerUrl = (event as any).trailer_url as string;
+                                const embedUrl = getEmbedUrl(trailerUrl);
+                                return (
+                                    <div className="card p-6">
+                                        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                            <Play className="w-5 h-5 text-primary-500" />
+                                            Ver Trailer
+                                        </h2>
+                                        <div className="rounded-xl overflow-hidden aspect-video bg-black">
+                                            {embedUrl ? (
+                                                <iframe
+                                                    src={embedUrl}
+                                                    className="w-full h-full"
+                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                    allowFullScreen
+                                                    title="Trailer del evento"
+                                                />
+                                            ) : (
+                                                <video
+                                                    src={trailerUrl}
+                                                    controls
+                                                    className="w-full h-full object-cover"
+                                                    preload="metadata"
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
 
                             {/* Event Details */}
                             <div className="card p-8">
