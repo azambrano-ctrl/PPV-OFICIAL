@@ -151,7 +151,8 @@ export const handleUploads = (fields: { name: string; maxCount?: number }[]) => 
 // Middleware for event images (thumbnail and banner)
 export const uploadEventImages = handleUploads([
     { name: 'thumbnail', maxCount: 1 },
-    { name: 'banner', maxCount: 1 }
+    { name: 'banner', maxCount: 1 },
+    { name: 'trailer_video', maxCount: 1 },
 ]);
 
 // Middleware for settings images (homepage_background)

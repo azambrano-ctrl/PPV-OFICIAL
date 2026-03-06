@@ -40,6 +40,7 @@ export default function EditEventPage() {
     const [promoters, setPromoters] = useState<Promoter[]>([]);
     const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
     const [bannerFile, setBannerFile] = useState<File | null>(null);
+    const [trailerVideoFile, setTrailerVideoFile] = useState<File | null>(null);
     const [removeThumbnail, setRemoveThumbnail] = useState(false);
     const [removeBanner, setRemoveBanner] = useState(false);
 
@@ -134,6 +135,11 @@ export default function EditEventPage() {
                 data.append('banner', bannerFile);
             } else if (removeBanner) {
                 data.append('remove_banner', 'true');
+            }
+
+            // Handle trailer video upload
+            if (trailerVideoFile) {
+                data.append('trailer_video', trailerVideoFile);
             }
 
             await eventsAPI.update(eventId, data);
@@ -413,18 +419,54 @@ export default function EditEventPage() {
 
                     <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">
-                            URL del Trailer (YouTube / Vimeo)
+                            Trailer del Evento
                         </label>
+                        <p className="text-xs text-gray-500 mb-3">
+                            Puedes pegar un enlace de YouTube / Vimeo <strong>o</strong> subir un video directamente (MP4 o WebM, máx. 50MB).
+                        </p>
+
+                        {/* Option A: URL */}
                         <input
                             type="url"
                             value={formData.trailer_url}
                             onChange={(e) => setFormData({ ...formData, trailer_url: e.target.value })}
-                            className="input"
+                            className="input mb-2"
                             placeholder="https://www.youtube.com/watch?v=..."
+                            disabled={!!trailerVideoFile}
                         />
-                        <p className="text-xs text-gray-400 mt-1">
-                            Trailer de máximo 2 minutos. Pega un enlace de YouTube o Vimeo.
-                        </p>
+
+                        <div className="flex items-center gap-3 my-2">
+                            <div className="flex-1 border-t border-dark-600" />
+                            <span className="text-xs text-gray-500">o sube un video</span>
+                            <div className="flex-1 border-t border-dark-600" />
+                        </div>
+
+                        {/* Option B: File upload */}
+                        <input
+                            type="file"
+                            accept="video/mp4,video/webm,video/quicktime"
+                            onChange={(e) => {
+                                const file = e.target.files?.[0] || null;
+                                setTrailerVideoFile(file);
+                                if (file) setFormData({ ...formData, trailer_url: '' });
+                            }}
+                            className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-dark-700 file:text-white hover:file:bg-dark-600 cursor-pointer"
+                        />
+                        {trailerVideoFile && (
+                            <div className="mt-2 flex items-center gap-2 text-sm text-green-400">
+                                <span>✅ {trailerVideoFile.name}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setTrailerVideoFile(null)}
+                                    className="text-red-400 hover:text-red-300 text-xs ml-2"
+                                >
+                                    Quitar
+                                </button>
+                            </div>
+                        )}
+                        {formData.trailer_url && !trailerVideoFile && (
+                            <p className="text-xs text-blue-400 mt-1 truncate">Actual: {formData.trailer_url}</p>
+                        )}
                     </div>
 
                     <div className="flex items-center gap-3">

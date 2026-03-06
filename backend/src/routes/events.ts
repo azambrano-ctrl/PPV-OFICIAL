@@ -120,7 +120,9 @@ router.post(
             is_featured: isPromoter ? false : (req.body.is_featured === 'true'),
             free_viewers_limit: req.body.free_viewers_limit ? parseInt(req.body.free_viewers_limit) : null,
             stream_url: isPromoter ? null : (req.body.stream_url || null),
-            trailer_url: isPromoter ? null : (req.body.trailer_url || null),
+            trailer_url: isPromoter ? null : (
+                files?.trailer_video ? files.trailer_video[0].path : (req.body.trailer_url || null)
+            ),
             thumbnail_url: files?.thumbnail ? files.thumbnail[0].path : undefined,
             banner_url: files?.banner ? files.banner[0].path : undefined,
             promoter_id: isPromoter ? user.promoterId : (req.body.promoter_id || null),
@@ -242,6 +244,12 @@ router.put(
                 updates.banner_url = null;
             }
 
+            // Handle trailer video upload (takes priority over URL text field)
+            if (files?.trailer_video) {
+                updates.trailer_url = files.trailer_video[0].path;
+            } else if (req.body.trailer_url !== undefined) {
+                updates.trailer_url = req.body.trailer_url === '' ? null : req.body.trailer_url;
+            }
             console.log('[DEBUG] Updates object before DB call:', JSON.stringify(updates, null, 2));
 
             const event = await updateEvent(eventId, updates);
