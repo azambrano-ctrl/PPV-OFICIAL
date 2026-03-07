@@ -21,6 +21,7 @@ import promoterRoutes from './routes/promoters';
 import publicStatsRoutes from './routes/public-stats';
 import notificationRoutes from './routes/notifications';
 import newsRoutes from './routes/newsRoutes';
+import fighterRoutes from './routes/fighters';
 import { query } from './config/database';
 import { verifyAccessToken } from './middleware/auth';
 import { userHasAccessToEvent } from './services/eventService';
@@ -176,6 +177,7 @@ app.use('/api/cleanup', cleanupRoutes); // Temporary cleanup route
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/promoters', promoterRoutes);
 app.use('/api/public-stats', publicStatsRoutes);
+app.use('/api/fighters', fighterRoutes);
 
 import analyticsRoutes from './routes/analytics';
 app.use('/api/analytics', analyticsRoutes);

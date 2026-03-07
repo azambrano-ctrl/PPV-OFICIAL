@@ -301,6 +301,26 @@ export const newsAPI = {
         api.delete(`/news/${id}`),
 };
 
+export const fightersAPI = {
+    getAll: () =>
+        api.get('/fighters'),
+
+    getMe: () =>
+        api.get('/fighters/me'),
+
+    getBySlug: (slug: string) =>
+        api.get(`/fighters/${slug}`),
+
+    claim: (data: any) =>
+        api.post('/fighters/claim', data),
+
+    updateMe: (data: any) =>
+        api.put('/fighters/me', data),
+
+    updateStatus: (id: string, status: 'pending' | 'approved' | 'rejected') =>
+        api.put(`/fighters/${id}/status`, { status }),
+};
+
 // Error handler helper
 export const handleAPIError = (error: any): string => {
     if (axios.isAxiosError(error)) {
