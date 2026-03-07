@@ -46,15 +46,16 @@ const uploadToSupabase = async (file: any): Promise<{ publicUrl: string; filenam
     const filename = `${nameWithoutExt}-${uniqueSuffix}${ext}`;
 
     try {
-        // Read file from disk
-        const fileContent = fs.readFileSync(file.path);
+        // Read file from disk as a stream to avoid OOM on large files
+        const fileStream = fs.createReadStream(file.path);
 
-        // Upload to Supabase
+        // Upload to Supabase using stream
         const { error } = await supabase.storage
             .from(BUCKET_NAME)
-            .upload(filename, fileContent, {
+            .upload(filename, fileStream, {
                 contentType: file.mimetype,
-                upsert: false
+                upsert: false,
+                duplex: 'half' // Required for node fetch streams
             });
 
         if (error) {
