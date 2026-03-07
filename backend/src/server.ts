@@ -555,7 +555,7 @@ const startReminderCron = () => {
         try {
             // Find events starting in the next 25 minutes that haven't started yet
             const sql = `
-                SELECT e.id, e.title, e.event_date, p.user_id, u.email, u.name as user_name
+                SELECT e.id, e.title, e.event_date, p.user_id, u.email, u.full_name as user_name
                 FROM events e
                 JOIN purchases p ON e.id = p.event_id
                 JOIN users u ON p.user_id = u.id
