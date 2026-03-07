@@ -8,6 +8,7 @@ import ImageUpload from '@/components/admin/ImageUpload';
 import { eventsAPI, promotersAPI, handleAPIError } from '@/lib/api';
 import { getImageUrl } from '@/lib/utils';
 import toast from 'react-hot-toast';
+import { supabase } from '@/lib/supabase';
 
 interface Promoter {
     id: string;
@@ -113,7 +114,6 @@ export default function EditEventPage() {
             if (formData.stream_url) {
                 data.append('stream_url', formData.stream_url);
             }
-            data.append('trailer_url', formData.trailer_url);
             if (formData.promoter_id) {
                 data.append('promoter_id', formData.promoter_id);
             }
@@ -137,9 +137,36 @@ export default function EditEventPage() {
                 data.append('remove_banner', 'true');
             }
 
-            // Handle trailer video upload
+            let finalTrailerUrl = formData.trailer_url;
+
+            // Direct frontend upload for trailer video to save backend RAM
             if (trailerVideoFile) {
-                data.append('trailer_video', trailerVideoFile);
+                toast.loading('Subiendo video (esto puede tardar unos minutos)...', { id: 'upload-toast' });
+                const fileExt = trailerVideoFile.name.split('.').pop();
+                const fileName = `trailer-${Date.now()}.${fileExt}`;
+                const { data: uploadData, error } = await supabase.storage
+                    .from('event-images') // Assuming the bucket name is event-images based on your backend
+                    .upload(fileName, trailerVideoFile, {
+                        cacheControl: '3600',
+                        upsert: false
+                    });
+
+                if (error) {
+                    toast.dismiss('upload-toast');
+                    throw new Error(`Error subiendo video a Supabase: ${error.message}`);
+                }
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('event-images')
+                    .getPublicUrl(fileName);
+
+                finalTrailerUrl = publicUrl;
+                toast.success('Video subido correctamente', { id: 'upload-toast' });
+            }
+
+            // Append final URL instead of the file itself
+            if (finalTrailerUrl !== undefined) {
+                data.append('trailer_url', finalTrailerUrl);
             }
 
             await eventsAPI.update(eventId, data);
