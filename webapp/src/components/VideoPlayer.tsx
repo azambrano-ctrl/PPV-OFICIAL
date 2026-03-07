@@ -117,6 +117,29 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         return () => clearInterval(interval);
     }, []);
 
+    // Anti-piracy: Block right click and common dev tools shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Block F12
+            if (e.key === 'F12') e.preventDefault();
+            // Block Ctrl+Shift+I / Cmd+Opt+I (DevTools)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'i') e.preventDefault();
+            // Block Ctrl+Shift+J / Cmd+Opt+J (Console)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'j') e.preventDefault();
+            // Block Ctrl+Shift+C / Cmd+Opt+C (Element Inspector)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'c') e.preventDefault();
+            // Block Ctrl+U / Cmd+U (View Source)
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') e.preventDefault();
+        };
+
+        // Attach to document body
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, []);
+
     const handleCast = useCallback(async () => {
         const currentStreamUrl = lastStreamUrlRef.current || streamUrl;
         if (!currentStreamUrl) return;
@@ -439,7 +462,10 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     };
 
     return (
-        <div className="relative w-full h-full bg-black group overflow-hidden" onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
+        <div className="relative w-full h-full bg-black group overflow-hidden"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            onContextMenu={(e) => e.preventDefault()}>
             {(resolvedUrl.includes('cloudflarestream.com') || resolvedUrl.includes('videodelivery.net')) && !resolvedUrl.includes('.m3u8') ? (
                 <div className="w-full h-full">
                     <iframe
@@ -454,7 +480,7 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
                     ></iframe>
                 </div>
             ) : (
-                <video ref={videoRef} className="w-full h-full object-contain" controls playsInline poster={poster} />
+                <video ref={videoRef} className="w-full h-full object-contain" controls controlsList="nodownload noplaybackrate" disablePictureInPicture playsInline poster={poster} />
             )}
 
             {isLoading && (
