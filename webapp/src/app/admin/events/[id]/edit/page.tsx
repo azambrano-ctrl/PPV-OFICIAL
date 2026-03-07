@@ -143,7 +143,7 @@ export default function EditEventPage() {
             if (trailerVideoFile) {
                 toast.loading('Subiendo video (esto puede tardar unos minutos)...', { id: 'upload-toast' });
 
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('accessToken');
                 const videoData = new FormData();
                 videoData.append('trailer_video', trailerVideoFile);
 
