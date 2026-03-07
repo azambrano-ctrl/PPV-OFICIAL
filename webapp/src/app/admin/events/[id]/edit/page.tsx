@@ -145,7 +145,7 @@ export default function EditEventPage() {
                 const fileExt = trailerVideoFile.name.split('.').pop();
                 const fileName = `trailer-${Date.now()}.${fileExt}`;
                 const { data: uploadData, error } = await supabase.storage
-                    .from('event-images') // Assuming the bucket name is event-images based on your backend
+                    .from('uploads') // Assuming the bucket name is event-images based on your backend
                     .upload(fileName, trailerVideoFile, {
                         cacheControl: '3600',
                         upsert: false
@@ -157,7 +157,7 @@ export default function EditEventPage() {
                 }
 
                 const { data: { publicUrl } } = supabase.storage
-                    .from('event-images')
+                    .from('uploads')
                     .getPublicUrl(fileName);
 
                 finalTrailerUrl = publicUrl;
