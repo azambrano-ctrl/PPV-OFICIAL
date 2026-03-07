@@ -94,7 +94,7 @@ export default function FighterHub() {
                         {/* Title Info */}
                         <div className="flex-1 pb-4">
                             <Link href="/fighters" className="inline-flex items-center text-primary-400 hover:text-primary-300 font-medium mb-4 transition-colors">
-                                <ArrowLeft className="w-4 h-4 mr-2" /> Roster Oficial
+                                <ArrowLeft className="w-4 h-4 mr-2" /> Directorio de Peleadores
                             </Link>
 
                             {fighter.nickname && (

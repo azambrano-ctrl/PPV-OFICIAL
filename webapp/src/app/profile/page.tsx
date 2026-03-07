@@ -175,7 +175,7 @@ export default function ProfilePage() {
                                         </svg>
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold">Mi Roster / Pelea</h3>
+                                        <h3 className="font-semibold">Mi Perfil de Pelea</h3>
                                         <p className="text-sm text-dark-400">Ver o crear ficha de atleta</p>
                                     </div>
                                 </div>

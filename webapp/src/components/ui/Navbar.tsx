@@ -32,7 +32,7 @@ export default function Navbar() {
     const navLinks = [
         { name: t('nav.home'), href: '/' },
         { name: t('nav.events') || 'Eventos', href: '/events' },
-        { name: 'Roster', href: '/fighters' },
+        { name: 'Peleadores', href: '/fighters' },
         { name: t('nav.promoters') || 'Promotoras', href: '/promoters' },
         { name: t('nav.news'), href: '/noticias' },
         { name: t('nav.about'), href: '/about' },

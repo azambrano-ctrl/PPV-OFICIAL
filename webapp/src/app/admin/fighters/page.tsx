@@ -86,7 +86,7 @@ export default function AdminFighters() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold">Solicitudes de Roster</h1>
+                    <h1 className="text-2xl font-bold">Solicitudes de Peleadores</h1>
                     <p className="text-dark-400">Revisa y aprueba las fichas que los atletas han creado.</p>
                 </div>
             </div>
@@ -95,7 +95,7 @@ export default function AdminFighters() {
                 <div className="flex items-start gap-4 mb-2">
                     <Shield className="w-6 h-6 text-primary-500 flex-shrink-0" />
                     <div>
-                        <h3 className="font-bold">Control de Calidad del Roster</h3>
+                        <h3 className="font-bold">Control de Calidad de Peleadores</h3>
                         <p className="text-sm text-dark-400">
                             Cuando un usuario reclama/crea un perfil de peleador, su ficha aparece aquí como <span className="text-yellow-500 font-bold">Pending</span>.
                             Revisa que sus datos e historial sean reales. Solo los atletas <span className="text-green-500 font-bold">Approved</span> aparecen en la página pública <code>/fighters</code>.

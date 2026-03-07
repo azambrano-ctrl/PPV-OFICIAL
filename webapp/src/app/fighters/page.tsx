@@ -21,7 +21,7 @@ interface Fighter {
     base_style?: string;
 }
 
-export default function FightersRoster() {
+export default function FightersDirectory() {
     const [fighters, setFighters] = useState<Fighter[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -56,7 +56,7 @@ export default function FightersRoster() {
 
                 <div className="container-custom relative z-10 text-center">
                     <h1 className="font-display font-black text-5xl md:text-7xl mb-4 tracking-tight">
-                        Roster <span className="gradient-text">Oficial</span>
+                        Directorio de <span className="gradient-text">Peleadores</span>
                     </h1>
                     <p className="text-xl text-dark-400 max-w-2xl mx-auto mb-8 font-light">
                         Explora la base de datos de los atletas de Arena Fight Pass y sus historiales oficiales.
@@ -93,7 +93,7 @@ export default function FightersRoster() {
                     ) : filteredFighters.length === 0 ? (
                         <div className="text-center py-20 card max-w-2xl mx-auto border-dashed border-2 border-dark-700">
                             <User className="w-16 h-16 text-dark-600 mx-auto mb-4" />
-                            <h3 className="text-xl font-bold mb-2">Aún no hay peleadores en el Roster</h3>
+                            <h3 className="text-xl font-bold mb-2">Aún no hay peleadores registrados</h3>
                             <p className="text-dark-400 mb-8 max-w-md mx-auto">
                                 El directorio público está vacío. Si eres un atleta profesional, puedes reclamar tu perfil y enviar tus estadísticas oficiales para aparecer aquí.
                             </p>

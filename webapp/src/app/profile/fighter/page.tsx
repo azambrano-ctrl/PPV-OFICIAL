@@ -185,7 +185,7 @@ export default function FighterDashboard() {
                             <div>
                                 <h3 className="text-yellow-500 font-bold mb-1">Perfil en Revisión</h3>
                                 <p className="text-sm text-yellow-500/80">
-                                    Tu perfil ha sido enviado y está esperando la aprobación de un administrador de Arena Fight Pass. Una vez aprobado, aparecerás en el Roster público.
+                                    Tu perfil ha sido enviado y está esperando la aprobación de un administrador de Arena Fight Pass. Una vez aprobado, aparecerás en el Directorio de Peleadores público.
                                 </p>
                             </div>
                         </div>
