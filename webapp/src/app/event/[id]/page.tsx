@@ -351,8 +351,8 @@ export default function EventDetailPage() {
                                         <div className="rounded-xl overflow-hidden aspect-video bg-black">
                                             {embedUrl ? (
                                                 <iframe
-                                                    src={embedUrl}
-                                                    className="w-full h-full"
+                                                    src={embedUrl.includes('youtube.com') ? embedUrl.replace('autoplay=0', 'autoplay=1') + '&mute=1' : embedUrl}
+                                                    className="w-full h-full max-h-[500px]"
                                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                                     allowFullScreen
                                                     title="Trailer del evento"
@@ -361,7 +361,11 @@ export default function EventDetailPage() {
                                                 <video
                                                     src={trailerUrl}
                                                     controls
-                                                    className="w-full h-full object-cover"
+                                                    autoPlay
+                                                    muted
+                                                    loop
+                                                    playsInline
+                                                    className="w-full h-full max-h-[500px] object-cover"
                                                     preload="metadata"
                                                 />
                                             )}
