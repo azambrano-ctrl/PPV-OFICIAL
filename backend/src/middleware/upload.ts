@@ -155,6 +155,11 @@ export const uploadEventImages = handleUploads([
     { name: 'banner', maxCount: 1 }
 ]);
 
+// Middleware for event trailers
+export const uploadTrailerVideo = handleUploads([
+    { name: 'trailer_video', maxCount: 1 }
+]);
+
 // Middleware for settings images (homepage_background)
 export const uploadSettingsImages = handleUploads([
     { name: 'homepage_background', maxCount: 1 },

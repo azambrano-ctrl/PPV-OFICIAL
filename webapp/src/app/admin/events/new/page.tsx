@@ -73,28 +73,30 @@ export default function NewEventPage() {
 
             let finalTrailerUrl = formData.trailer_url;
 
-            // Direct frontend upload for trailer video to save backend RAM
+            // Direct frontend upload for trailer video to save backend RAM via streaming route
             if (trailerVideoFile) {
                 toast.loading('Subiendo video (esto puede tardar unos minutos)...', { id: 'upload-toast' });
-                const fileExt = trailerVideoFile.name.split('.').pop();
-                const fileName = `trailer-${Date.now()}.${fileExt}`;
-                const { data: uploadData, error } = await supabase.storage
-                    .from('uploads') // Assuming the bucket name is event-images based on your backend
-                    .upload(fileName, trailerVideoFile, {
-                        cacheControl: '3600',
-                        upsert: false
-                    });
 
-                if (error) {
+                const token = localStorage.getItem('token');
+                const videoData = new FormData();
+                videoData.append('trailer_video', trailerVideoFile);
+
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events/upload-trailer`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: videoData
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
                     toast.dismiss('upload-toast');
-                    throw new Error(`Error subiendo video a Supabase: ${error.message}`);
+                    throw new Error(result.message || 'Error subiendo video al servidor de streaming');
                 }
 
-                const { data: { publicUrl } } = supabase.storage
-                    .from('event-images')
-                    .getPublicUrl(fileName);
-
-                finalTrailerUrl = publicUrl;
+                finalTrailerUrl = result.url;
                 toast.success('Video subido correctamente', { id: 'upload-toast' });
             }
 

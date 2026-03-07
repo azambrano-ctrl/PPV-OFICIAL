@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { asyncHandler } from '../middleware/errorHandler';
 import { validateBody, validateParams, validateQuery } from '../middleware/validation';
 import { authenticate, requireAdmin, AuthRequest } from '../middleware/auth';
-import { uploadEventImages } from '../middleware/upload';
+import { uploadEventImages, uploadTrailerVideo } from '../middleware/upload';
 import {
     getAllEvents,
     getEventById,
@@ -22,6 +22,35 @@ const router = Router();
 
 
 
+
+// Generic fast upload for trailers directly to Supabase
+router.post('/upload-trailer', authenticate, requireAdmin, uploadTrailerVideo, async (req: Request, res: Response) => {
+    try {
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+        if (!files || !files.trailer_video || files.trailer_video.length === 0) {
+            return res.status(400).json({ success: false, message: 'No se envió ningún archivo de video.' });
+        }
+
+        const uploadedFile = files.trailer_video[0];
+
+        // El middleware handleUploads ya se encargó de subirlo a Supabase
+        // y adjuntar la publicUrl en 'path' o 'location'.
+        const trailerUrl = uploadedFile.path || (uploadedFile as any).location;
+
+        if (!trailerUrl) {
+            return res.status(500).json({ success: false, message: 'No se pudo obtener la URL de Supabase del archivo subido.' });
+        }
+
+        return res.json({
+            success: true,
+            url: trailerUrl
+        });
+    } catch (error: any) {
+        console.error('Error in /upload-trailer:', error);
+        return res.status(500).json({ success: false, message: 'Error subiendo el video', error: error.message });
+    }
+});
 
 const eventIdSchema = z.object({
     id: z.string().uuid('Invalid event ID'),
