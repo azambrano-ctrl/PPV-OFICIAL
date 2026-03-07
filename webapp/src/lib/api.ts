@@ -319,6 +319,9 @@ export const fightersAPI = {
 
     updateStatus: (id: string, status: 'pending' | 'approved' | 'rejected') =>
         api.put(`/fighters/${id}/status`, { status }),
+
+    scrapeTapology: (url: string) =>
+        api.post('/fighters/scrape-tapology', { url }),
 };
 
 // Error handler helper

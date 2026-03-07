@@ -62,7 +62,7 @@ export default function FightersRoster() {
                         Explora la base de datos de los atletas de Arena Fight Pass y sus historiales oficiales.
                     </p>
 
-                    <div className="max-w-xl mx-auto relative">
+                    <div className="max-w-xl mx-auto relative mb-6">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-dark-500 w-5 h-5" />
                         <input
                             type="text"
@@ -72,6 +72,14 @@ export default function FightersRoster() {
                             className="w-full bg-dark-800 border-2 border-dark-700 text-white rounded-full py-4 pl-12 pr-6 focus:border-primary-500 focus:outline-none transition-all outline-none"
                         />
                     </div>
+
+                    <Link
+                        href="/profile/fighter"
+                        className="inline-flex items-center gap-2 text-sm text-primary-400 hover:text-primary-300 font-medium tracking-wide items-center justify-center px-4 py-2 bg-primary-500/10 border border-primary-500/30 rounded-full hover:bg-primary-500/20 transition-all duration-300"
+                    >
+                        <User className="w-4 h-4" />
+                        ¿Eres Peleador? Reclama tu Perfil Aquí
+                    </Link>
                 </div>
             </div>
 
@@ -83,10 +91,16 @@ export default function FightersRoster() {
                             <div className="spinner w-8 h-8" />
                         </div>
                     ) : filteredFighters.length === 0 ? (
-                        <div className="text-center py-20 card max-w-2xl mx-auto">
+                        <div className="text-center py-20 card max-w-2xl mx-auto border-dashed border-2 border-dark-700">
                             <User className="w-16 h-16 text-dark-600 mx-auto mb-4" />
-                            <h3 className="text-xl font-bold mb-2">No se encontraron peleadores</h3>
-                            <p className="text-dark-400">Prueba con otro término de búsqueda o vuelve más tarde mientras más atletas se unen al roster.</p>
+                            <h3 className="text-xl font-bold mb-2">Aún no hay peleadores en el Roster</h3>
+                            <p className="text-dark-400 mb-8 max-w-md mx-auto">
+                                El directorio público está vacío. Si eres un atleta profesional, puedes reclamar tu perfil y enviar tus estadísticas oficiales para aparecer aquí.
+                            </p>
+                            <Link href="/profile/fighter" className="btn btn-primary inline-flex items-center gap-2">
+                                <User className="w-4 h-4" />
+                                Soy Peleador: Crear mi Ficha
+                            </Link>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
