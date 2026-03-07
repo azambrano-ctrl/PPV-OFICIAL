@@ -117,9 +117,12 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         return () => clearInterval(interval);
     }, []);
 
-    // Anti-piracy: Block right click and common dev tools shortcuts
+    // Anti-piracy: Block right click and common dev tools shortcuts (except for admins)
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            // Allow admins to use dev tools
+            if (user?.role === 'admin') return;
+
             // Block F12
             if (e.key === 'F12') e.preventDefault();
             // Block Ctrl+Shift+I / Cmd+Opt+I (DevTools)
@@ -138,7 +141,7 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
         };
-    }, []);
+    }, [user?.role]);
 
     const handleCast = useCallback(async () => {
         const currentStreamUrl = lastStreamUrlRef.current || streamUrl;
