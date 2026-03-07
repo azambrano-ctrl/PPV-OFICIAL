@@ -2,7 +2,7 @@ CREATE TYPE fighter_stance AS ENUM ('Ortodoxo', 'Zurdo', 'Ambidiestro');
 CREATE TYPE fighter_status AS ENUM ('pending', 'approved', 'rejected');
 
 CREATE TABLE IF NOT EXISTS fighters (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,     -- El peleador que administra este perfil
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
