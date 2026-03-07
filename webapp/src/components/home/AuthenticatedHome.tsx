@@ -158,10 +158,10 @@ export default function AuthenticatedHome({
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <button className="w-full text-left px-4 py-3 rounded-xl bg-dark-750 hover:bg-dark-700 transition-colors flex items-center justify-between group">
+                                    <Link href="/profile?tab=purchases" className="w-full text-left px-4 py-3 rounded-xl bg-dark-750 hover:bg-dark-700 transition-colors flex items-center justify-between group">
                                         <span className="text-sm font-medium text-gray-300 group-hover:text-white">{t('nav.purchases')}</span>
                                         <ArrowRight className="w-4 h-4 text-dark-500 group-hover:text-white" />
-                                    </button>
+                                    </Link>
                                     <Link href="/settings" className="w-full text-left px-4 py-3 rounded-xl bg-dark-750 hover:bg-dark-700 transition-colors flex items-center justify-between group">
                                         <span className="text-sm font-medium text-gray-300 group-hover:text-white">{t('home.settings')}</span>
                                         <Settings className="w-4 h-4 text-dark-500 group-hover:text-white" />
