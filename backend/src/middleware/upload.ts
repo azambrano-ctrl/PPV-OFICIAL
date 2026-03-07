@@ -183,3 +183,9 @@ export const uploadPromoterImages = [
     { name: 'banner', maxCount: 1 },
     { name: 'gallery', maxCount: 10 }
 ];
+
+// Middleware for fighter images
+export const uploadFighterImages = handleUploads([
+    { name: 'profile_image_url', maxCount: 1 },
+    { name: 'banner_image_url', maxCount: 1 }
+]);

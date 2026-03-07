@@ -311,11 +311,23 @@ export const fightersAPI = {
     getBySlug: (slug: string) =>
         api.get(`/fighters/${slug}`),
 
-    claim: (data: any) =>
-        api.post('/fighters/claim', data),
+    claim: (data: any) => {
+        const config = data instanceof FormData ? {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        } : {};
+        return api.post('/fighters/claim', data, config);
+    },
 
-    updateMe: (data: any) =>
-        api.put('/fighters/me', data),
+    updateMe: (data: any) => {
+        const config = data instanceof FormData ? {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        } : {};
+        return api.put('/fighters/me', data, config);
+    },
 
     updateStatus: (id: string, status: 'pending' | 'approved' | 'rejected') =>
         api.put(`/fighters/${id}/status`, { status }),

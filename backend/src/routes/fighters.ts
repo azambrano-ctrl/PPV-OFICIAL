@@ -9,6 +9,7 @@ import {
     updateFighterProfile,
     updateFighterStatusAdmin
 } from '../services/fighterService';
+import { uploadFighterImages } from '../middleware/upload';
 import { ScraperService } from '../services/scraperService';
 import { query } from '../config/database';
 import rateLimit from 'express-rate-limit';
@@ -82,6 +83,7 @@ router.get(
 router.post(
     '/claim',
     authenticate,
+    uploadFighterImages,
     asyncHandler(async (req: any, res: Response) => {
         const authReq = req as AuthRequest;
         const userId = authReq.user!.userId;
@@ -99,7 +101,16 @@ router.post(
             return;
         }
 
-        const newFighter = await claimFighterProfile(userId, req.body);
+        const files = (req as any).files;
+        const uploadData = { ...req.body };
+        if (files?.profile_image_url) {
+            uploadData.profile_image_url = files.profile_image_url[0].path;
+        }
+        if (files?.banner_image_url) {
+            uploadData.banner_image_url = files.banner_image_url[0].path;
+        }
+
+        const newFighter = await claimFighterProfile(userId, uploadData);
         res.status(201).json({ success: true, data: newFighter });
     })
 );
@@ -111,6 +122,7 @@ router.post(
 router.put(
     '/me',
     authenticate,
+    uploadFighterImages,
     asyncHandler(async (req: any, res: Response) => {
         const authReq = req as AuthRequest;
         const userId = authReq.user!.userId;
@@ -122,7 +134,17 @@ router.put(
         }
 
         const fighterId = existing.rows[0].id;
-        const updatedFighter = await updateFighterProfile(fighterId, userId, req.body);
+
+        const files = (req as any).files;
+        const uploadData = { ...req.body };
+        if (files?.profile_image_url) {
+            uploadData.profile_image_url = files.profile_image_url[0].path;
+        }
+        if (files?.banner_image_url) {
+            uploadData.banner_image_url = files.banner_image_url[0].path;
+        }
+
+        const updatedFighter = await updateFighterProfile(fighterId, userId, uploadData);
 
         res.json({ success: true, data: updatedFighter });
     })

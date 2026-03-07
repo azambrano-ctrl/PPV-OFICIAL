@@ -36,8 +36,11 @@ export default function FighterDashboard() {
         kos: 0,
         submissions: 0,
         social_instagram: '',
-        social_twitter: ''
+        social_twitter: '',
+        profile_image_url: ''
     });
+
+    const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -84,7 +87,8 @@ export default function FighterDashboard() {
                     kos: f.kos || 0,
                     submissions: f.submissions || 0,
                     social_instagram: f.social_instagram || '',
-                    social_twitter: f.social_twitter || ''
+                    social_twitter: f.social_twitter || '',
+                    profile_image_url: f.profile_image_url || ''
                 });
             }
         } catch (error: any) {
@@ -119,11 +123,24 @@ export default function FighterDashboard() {
                 submissions: parseInt(String(formData.submissions)) || 0,
             };
 
+            let submitData: any = payload;
+
+            if (profileImageFile) {
+                const form = new FormData();
+                Object.keys(payload).forEach(key => {
+                    if (payload[key as keyof typeof payload] !== null && payload[key as keyof typeof payload] !== undefined) {
+                        form.append(key, String(payload[key as keyof typeof payload]));
+                    }
+                });
+                form.append('profile_image_url', profileImageFile);
+                submitData = form;
+            }
+
             if (hasProfile) {
-                await fightersAPI.updateMe(payload);
+                await fightersAPI.updateMe(submitData);
                 toast.success('Perfil actualizado correctamente');
             } else {
-                await fightersAPI.claim(payload);
+                await fightersAPI.claim(submitData);
                 toast.success('Perfil creado. Esperando aprobación del administrador.');
                 setHasProfile(true);
                 setStatus('pending');
@@ -185,6 +202,37 @@ export default function FighterDashboard() {
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-8">
+                        {/* Foto de Perfil */}
+                        <div className="card p-6 flex items-center gap-6">
+                            <div className="w-24 h-24 rounded-full bg-dark-800 border border-dark-700 overflow-hidden flex-shrink-0 relative">
+                                {(profileImageFile || formData.profile_image_url) ? (
+                                    <img
+                                        src={profileImageFile ? URL.createObjectURL(profileImageFile) : formData.profile_image_url}
+                                        alt="Profile view"
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-xs text-center text-dark-400 p-2">
+                                        Sin Foto
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-xl font-bold mb-2 font-display">Foto de Perfil</h3>
+                                <p className="text-sm text-dark-400 mb-4">Sube una foto clara de tu rostro o posando. Se usará para tu tarjeta de peleador.</p>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        if (e.target.files && e.target.files[0]) {
+                                            setProfileImageFile(e.target.files[0]);
+                                        }
+                                    }}
+                                    className="text-sm text-dark-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/80 transition-colors"
+                                />
+                            </div>
+                        </div>
+
                         {/* Datos Personales */}
                         <div className="card p-6">
                             <h3 className="text-xl font-bold mb-4 font-display">Identidad Personal</h3>
