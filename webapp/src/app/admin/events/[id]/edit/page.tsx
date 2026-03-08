@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import ImageUpload from '@/components/admin/ImageUpload';
-import { eventsAPI, promotersAPI, handleAPIError } from '@/lib/api';
+import { eventsAPI, promotersAPI, fightersAPI, handleAPIError } from '@/lib/api';
 import { getImageUrl } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { supabase } from '@/lib/supabase';
@@ -45,12 +45,44 @@ export default function EditEventPage() {
     const [removeThumbnail, setRemoveThumbnail] = useState(false);
     const [removeBanner, setRemoveBanner] = useState(false);
 
+    // Fight Card specific state
+    const [eventFighters, setEventFighters] = useState<any[]>([]);
+    const [allFighters, setAllFighters] = useState<any[]>([]);
+    const [fighterSearch, setFighterSearch] = useState('');
+    const [addingFighter, setAddingFighter] = useState(false);
+
     useEffect(() => {
         if (eventId) {
             loadEvent();
             loadPromoters();
+            loadAllFighters();
+            loadEventFighters();
         }
     }, [eventId]);
+
+    const loadEventFighters = async () => {
+        try {
+            const res = await eventsAPI.getFighters(eventId);
+            if (res.data.success) {
+                setEventFighters(res.data.data);
+            }
+        } catch (error) {
+            console.error('Error loading event fighters:', error);
+        }
+    };
+
+    const loadAllFighters = async () => {
+        try {
+            // Using true to fetch all fighters (even pending/rejected, just in case an admin wants to add them, or you could filter to approved)
+            const res = await fightersAPI.getAll(true);
+            if (res.data.success) {
+                // Let's only allow approved fighters on the fight card to prevent bugs
+                setAllFighters(res.data.data.filter((f: any) => f.status === 'approved'));
+            }
+        } catch (error) {
+            console.error('Error loading all fighters:', error);
+        }
+    };
 
     const loadPromoters = async () => {
         try {
@@ -194,6 +226,34 @@ export default function EditEventPage() {
         } catch (error) {
             const message = handleAPIError(error);
             toast.error(message);
+        }
+    };
+
+    // Fight card handlers
+    const handleAddFighter = async (fighterId: string) => {
+        setAddingFighter(true);
+        try {
+            // Assign index basically at the end
+            const nextIndex = eventFighters.length;
+            await eventsAPI.addFighter(eventId, fighterId, nextIndex);
+            toast.success('Peleador añadido a la cartelera');
+            setFighterSearch('');
+            await loadEventFighters();
+        } catch (error) {
+            toast.error(handleAPIError(error) || 'Error al añadir peleador');
+        } finally {
+            setAddingFighter(false);
+        }
+    };
+
+    const handleRemoveFighter = async (fighterId: string) => {
+        if (!confirm('¿Quitar a este peleador de la cartelera?')) return;
+        try {
+            await eventsAPI.removeFighter(eventId, fighterId);
+            toast.success('Peleador removido la cartelera');
+            await loadEventFighters();
+        } catch (error) {
+            toast.error(handleAPIError(error) || 'Error al remover peleador');
         }
     };
 
@@ -510,6 +570,112 @@ export default function EditEventPage() {
                             Marcar como evento destacado
                         </label>
                     </div>
+                </div>
+
+                {/* Fight Card */}
+                <div className="card p-6 space-y-4">
+                    <h2 className="text-xl font-bold text-white mb-4">Cartelera (Fight Card)</h2>
+
+                    {/* Add Fighter UI */}
+                    <div className="mb-6 bg-dark-800 p-4 rounded-lg relative">
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Buscar y añadir peleador
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="Buscar por nombre o apodo..."
+                            value={fighterSearch}
+                            onChange={(e) => setFighterSearch(e.target.value)}
+                            className="input w-full"
+                        />
+
+                        {fighterSearch.length >= 2 && (
+                            <div className="absolute z-10 top-20 left-4 right-4 bg-dark-700 border border-dark-600 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                {allFighters
+                                    .filter(f =>
+                                        !eventFighters.some(ef => ef.id === f.id) && // Filter out already added
+                                        (f.first_name.toLowerCase().includes(fighterSearch.toLowerCase()) ||
+                                            f.last_name.toLowerCase().includes(fighterSearch.toLowerCase()) ||
+                                            (f.nickname && f.nickname.toLowerCase().includes(fighterSearch.toLowerCase())))
+                                    )
+                                    .map(fighter => (
+                                        <div key={fighter.id} className="flex items-center justify-between p-3 hover:bg-dark-600 border-b border-dark-600 last:border-0">
+                                            <div className="flex items-center gap-3">
+                                                {fighter.profile_image_url ? (
+                                                    <img src={getImageUrl(fighter.profile_image_url)} alt={fighter.first_name} className="w-10 h-10 rounded-full object-cover" />
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded-full bg-dark-500 flex items-center justify-center">
+                                                        <span className="text-gray-400 text-xs text-center">{fighter.first_name[0]}{fighter.last_name[0]}</span>
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <p className="text-white text-sm font-medium">{fighter.first_name} {fighter.nickname ? `"${fighter.nickname}"` : ''} {fighter.last_name}</p>
+                                                    <p className="text-xs text-gray-400">{fighter.wins}W - {fighter.losses}L - {fighter.draws}D</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleAddFighter(fighter.id)}
+                                                disabled={addingFighter}
+                                                className="btn-primary py-1 px-3 text-sm"
+                                            >
+                                                Añadir
+                                            </button>
+                                        </div>
+                                    ))}
+                                {allFighters.filter(f =>
+                                    !eventFighters.some(ef => ef.id === f.id) &&
+                                    (f.first_name.toLowerCase().includes(fighterSearch.toLowerCase()) ||
+                                        f.last_name.toLowerCase().includes(fighterSearch.toLowerCase()) ||
+                                        (f.nickname && f.nickname.toLowerCase().includes(fighterSearch.toLowerCase())))
+                                ).length === 0 && (
+                                        <div className="p-3 text-center text-gray-400 text-sm">
+                                            No se encontraron peleadores (o ya están en la cartelera).
+                                        </div>
+                                    )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Current Fight Card */}
+                    {eventFighters.length === 0 ? (
+                        <p className="text-gray-400 text-sm italic text-center py-4 bg-dark-800 rounded-lg">Aún no hay peleadores asignados a este evento.</p>
+                    ) : (
+                        <div className="space-y-2">
+                            {eventFighters.map((fighter, index) => (
+                                <div key={fighter.id} className="flex items-center justify-between bg-dark-800 p-3 rounded-lg border border-dark-700">
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-gray-500 text-sm w-4 text-center font-bold">
+                                            {index + 1}
+                                        </div>
+                                        {fighter.profile_image_url ? (
+                                            <img src={getImageUrl(fighter.profile_image_url)} alt={fighter.first_name} className="w-12 h-12 rounded-full object-cover border border-dark-600" />
+                                        ) : (
+                                            <div className="w-12 h-12 rounded-full bg-dark-600 flex items-center justify-center border border-dark-500">
+                                                <span className="text-gray-400 text-sm font-medium text-center">{fighter.first_name[0]}{fighter.last_name[0]}</span>
+                                            </div>
+                                        )}
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-white font-medium">{fighter.first_name}</p>
+                                                {fighter.nickname && <span className="text-red-500 text-sm tracking-widest italic font-bold">"{fighter.nickname}"</span>}
+                                                <p className="text-white font-medium">{fighter.last_name}</p>
+                                            </div>
+                                            <p className="text-xs text-gray-400">Récord: {fighter.wins}-{fighter.losses}-{fighter.draws}</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveFighter(fighter.id)}
+                                        className="text-red-500 hover:text-red-400 p-2 hover:bg-dark-700 rounded-lg transition-colors"
+                                        title="Remover de la cartelera"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Actions */}

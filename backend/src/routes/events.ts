@@ -13,6 +13,9 @@ import {
     getEventStats,
     userHasAccessToEvent,
     updateEventStatus,
+    getEventFighters,
+    addFighterToEvent,
+    removeFighterFromEvent
 } from '../services/eventService';
 import { getChatMessages } from '../services/chatService';
 
@@ -492,6 +495,62 @@ router.patch(
             success: true,
             message: 'Event status updated successfully',
             data: event,
+        });
+    })
+);
+
+/**
+ * GET /api/events/:id/fighters
+ * Get all fighters assigned to this event
+ */
+router.get(
+    '/:id/fighters',
+    validateParams(eventIdSchema),
+    asyncHandler(async (req: Request, res: Response) => {
+        const fighters = await getEventFighters(req.params.id);
+        res.json({
+            success: true,
+            data: fighters,
+        });
+    })
+);
+
+/**
+ * POST /api/events/:id/fighters
+ * Add a fighter to the event (admin only)
+ */
+router.post(
+    '/:id/fighters',
+    authenticate,
+    requireAdmin,
+    validateParams(eventIdSchema),
+    validateBody(z.object({ fighter_id: z.string().uuid(), order_index: z.number().optional() })),
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { fighter_id, order_index } = req.body;
+        await addFighterToEvent(req.params.id, fighter_id, order_index);
+
+        res.json({
+            success: true,
+            message: 'Fighter added to event successfully'
+        });
+    })
+);
+
+/**
+ * DELETE /api/events/:id/fighters/:fighterId
+ * Remove a fighter from the event (admin only)
+ */
+router.delete(
+    '/:id/fighters/:fighterId',
+    authenticate,
+    requireAdmin,
+    validateParams(eventIdSchema),
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        await removeFighterFromEvent(req.params.id, req.params.fighterId);
+
+        res.json({
+            success: true,
+            message: 'Fighter removed from event successfully'
         });
     })
 );

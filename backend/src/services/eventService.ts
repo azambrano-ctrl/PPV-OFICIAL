@@ -222,6 +222,7 @@ export const deleteEvent = async (id: string): Promise<void> => {
     await query('DELETE FROM analytics WHERE event_id = $1', [id]).catch(() => { });
     await query('DELETE FROM recordings WHERE event_id = $1', [id]).catch(() => { });
     await query('DELETE FROM registrations WHERE event_id = $1', [id]).catch(() => { });
+    await query('DELETE FROM event_fighters WHERE event_id = $1', [id]).catch(() => { });
 
     // 3. Borrar el evento
     const result = await query('DELETE FROM events WHERE id = $1', [id]);

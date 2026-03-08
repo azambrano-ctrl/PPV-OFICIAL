@@ -8,7 +8,7 @@ import { fightersAPI } from '@/lib/api';
 import Footer from '@/components/Footer';
 import Navbar from '@/components/ui/Navbar';
 import { ArrowLeft, MapPin, Calendar, Ruler, Scale, Dumbbell, Activity, Shield, Trophy, Play } from 'lucide-react';
-import { formatDate } from '@/lib/utils';
+import { formatDate, getImageUrl } from '@/lib/utils';
 
 export default function FighterHub() {
     const params = useParams();
@@ -287,19 +287,80 @@ export default function FighterHub() {
                                     Arena Bóveda
                                 </h3>
                                 <p className="text-dark-300 max-w-lg mb-6 relative z-10">
-                                    Revive todos los combates históricos de {fighter.last_name} dentro del octágono de Arena Fight Pass.
+                                    Explora la bóveda para ver combates históricos de {fighter.last_name} dentro de Arena Fight Pass.
                                 </p>
-                                <Link href="/events" className="btn btn-primary relative z-10">
-                                    Explorar Eventos Pasados
-                                </Link>
                             </div>
 
                         </div>
                     </div>
                 </div>
+
+                {/* Event Participations Section */}
+                {fighter.events && fighter.events.length > 0 && (
+                    <div className="container-custom py-16">
+                        <div className="flex items-center gap-3 mb-8 border-b border-dark-800 pb-4">
+                            <Play className="w-6 h-6 text-primary-500" />
+                            <h2 className="font-display font-bold text-2xl md:text-3xl uppercase tracking-widest text-white">
+                                Participaciones en Eventos
+                            </h2>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {fighter.events.map((event: any) => (
+                                <Link
+                                    href={`/events/${event.id}`}
+                                    key={event.id}
+                                    className="card group overflow-hidden block border border-dark-800 hover:border-primary-500/50 transition-colors"
+                                >
+                                    <div className="aspect-video relative overflow-hidden">
+                                        {event.banner_url ? (
+                                            <Image
+                                                src={getImageUrl(event.banner_url)}
+                                                alt={event.title}
+                                                fill
+                                                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-dark-800 flex items-center justify-center">
+                                                <Play className="w-12 h-12 text-dark-700" />
+                                            </div>
+                                        )}
+                                        {/* Status Badge */}
+                                        <div className="absolute top-3 right-3">
+                                            {event.status === 'live' && (
+                                                <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 flex items-center gap-1 rounded uppercase tracking-wider">
+                                                    <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                                                    En Vivo
+                                                </span>
+                                            )}
+                                            {event.status === 'upcoming' && (
+                                                <span className="bg-primary-600 text-white text-xs font-bold px-2 py-1 rounded uppercase tracking-wider">
+                                                    Próximo
+                                                </span>
+                                            )}
+                                            {(event.status === 'finished' || event.status === 'reprise') && (
+                                                <span className="bg-dark-900 border border-dark-600 text-gray-300 text-xs font-bold px-2 py-1 rounded uppercase tracking-wider">
+                                                    Repetición
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="p-5">
+                                        <div className="text-primary-500 text-xs font-bold tracking-widest uppercase mb-2 flex items-center gap-2">
+                                            <Calendar className="w-3 h-3" />
+                                            {formatDate(event.event_date, 'PP')}
+                                        </div>
+                                        <h3 className="font-display font-bold text-xl text-white group-hover:text-primary-400 transition-colors line-clamp-2 leading-tight">
+                                            {event.title}
+                                        </h3>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
             <Footer />
-        </div>
+        </div >
     );
 }

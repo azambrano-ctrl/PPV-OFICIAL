@@ -31,6 +31,7 @@ export interface Fighter {
     is_active: boolean;
     created_at: Date;
     updated_at: Date;
+    events?: any[];
 }
 
 const generateSlug = (firstName: string, lastName: string, nickname?: string): string => {
@@ -71,7 +72,24 @@ export const getFighterBySlug = async (slug: string): Promise<Fighter | null> =>
         `SELECT * FROM fighters WHERE slug = $1 AND is_active = true LIMIT 1`,
         [slug]
     );
-    return result.rows.length ? result.rows[0] : null;
+
+    if (result.rows.length === 0) return null;
+
+    const fighter = result.rows[0];
+
+    // Fetch associated events
+    const eventsResult = await query(
+        `SELECT e.id, e.title, e.event_date, e.banner_url, e.status, ef.order_index
+         FROM event_fighters ef
+         JOIN events e ON ef.event_id = e.id
+         WHERE ef.fighter_id = $1
+         ORDER BY e.event_date DESC`,
+        [fighter.id]
+    );
+
+    fighter.events = eventsResult.rows;
+
+    return fighter;
 };
 
 /**

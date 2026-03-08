@@ -175,6 +175,15 @@ export const eventsAPI = {
 
     updateStatus: (id: string, status: string) =>
         api.patch(`/events/${id}/status`, { status }),
+
+    getFighters: (id: string) =>
+        api.get(`/events/${id}/fighters`),
+
+    addFighter: (id: string, fighter_id: string, order_index?: number) =>
+        api.post(`/events/${id}/fighters`, { fighter_id, order_index }),
+
+    removeFighter: (id: string, fighter_id: string) =>
+        api.delete(`/events/${id}/fighters/${fighter_id}`),
 };
 
 export const paymentsAPI = {
