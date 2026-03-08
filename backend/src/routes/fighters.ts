@@ -10,9 +10,8 @@ import {
     updateFighterStatusAdmin
 } from '../services/fighterService';
 import { uploadFighterImages } from '../middleware/upload';
-import { ScraperService } from '../services/scraperService';
+// import { ScraperService } from '../services/scraperService';
 import { query } from '../config/database';
-import rateLimit from 'express-rate-limit';
 
 const router = Router();
 
@@ -172,38 +171,6 @@ router.put(
         }
 
         res.json({ success: true, data: updated });
-    })
-);
-
-/**
- * POST /api/fighters/scrape-tapology
- * Uses puppeteer to bypass Cloudflare and scrape a profile
- */
-const scrapeLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 10,
-    message: { success: false, message: 'Demasiadas solicitudes de scrape, intenta más tarde' }
-});
-
-router.post(
-    '/scrape-tapology',
-    authenticate,
-    scrapeLimiter,
-    asyncHandler(async (req: any, res: Response) => {
-        const { url } = req.body;
-        if (!url) {
-            res.status(400).json({ success: false, message: 'URL es requerida' });
-            return;
-        }
-
-        const result = await ScraperService.scrapeTapology(url);
-
-        if (!result.success) {
-            res.status(400).json(result);
-            return;
-        }
-
-        res.json(result);
     })
 );
 
