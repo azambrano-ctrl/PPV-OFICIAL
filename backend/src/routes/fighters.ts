@@ -26,8 +26,8 @@ router.get(
     asyncHandler(async (req: any, res: Response) => {
         const authReq = req as AuthRequest;
 
-        // If admin, they might want to see all
-        if (authReq.user && authReq.user.role === 'admin') {
+        // If admin specifically requests all via query param
+        if (req.query.all === 'true' && authReq.user && authReq.user.role === 'admin') {
             const allFighters = await getAllFightersAdmin();
             res.json({ success: true, data: allFighters });
             return;

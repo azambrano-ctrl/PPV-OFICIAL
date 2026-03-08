@@ -302,8 +302,8 @@ export const newsAPI = {
 };
 
 export const fightersAPI = {
-    getAll: () =>
-        api.get('/fighters'),
+    getAll: (isAdmin?: boolean) =>
+        api.get('/fighters', { params: isAdmin ? { all: 'true' } : {} }),
 
     getMe: () =>
         api.get('/fighters/me'),

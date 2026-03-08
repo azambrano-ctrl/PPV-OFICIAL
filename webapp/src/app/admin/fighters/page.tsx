@@ -42,8 +42,8 @@ export default function AdminFighters() {
 
     const loadFighters = async () => {
         try {
-            // Re-using the getAll endpoint. Since we pass admin token, backend returns ALL fighters.
-            const res = await fightersAPI.getAll();
+            // Because we added ?all=true requirement in the backend for admins
+            const res = await fightersAPI.getAll(true);
             if (res.data.success) {
                 setFighters(res.data.data);
             }
