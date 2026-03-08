@@ -12,6 +12,7 @@ import {
 import { uploadFighterImages } from '../middleware/upload';
 // import { ScraperService } from '../services/scraperService';
 import { query } from '../config/database';
+import { createNotification } from '../services/notificationService';
 
 const router = Router();
 
@@ -110,6 +111,23 @@ router.post(
         }
 
         const newFighter = await claimFighterProfile(userId, uploadData);
+
+        // Notify all main admins
+        try {
+            const adminsResult = await query("SELECT id FROM users WHERE role = 'admin'");
+            for (const admin of adminsResult.rows) {
+                await createNotification(
+                    admin.id,
+                    'Nuevo Peleador',
+                    'Un nuevo peleador ha mandado su perfil a revisión',
+                    'system',
+                    '/admin/fighters'
+                );
+            }
+        } catch (error) {
+            console.error('Error sending admin notifications for new fighter claim:', error);
+        }
+
         res.status(201).json({ success: true, data: newFighter });
     })
 );

@@ -9,6 +9,7 @@ import * as promoterService from '../services/promoterService';
 import { uploadPromoterImages, handleUploads } from '../middleware/upload';
 import * as emailService from '../services/emailService';
 import { query } from '../config/database';
+import { createNotification } from '../services/notificationService';
 
 const router = Router();
 
@@ -131,6 +132,22 @@ router.post(
             city,
             experience_links
         });
+
+        // Notify all main admins
+        try {
+            const adminsResult = await query("SELECT id FROM users WHERE role = 'admin'");
+            for (const admin of adminsResult.rows) {
+                await createNotification(
+                    admin.id,
+                    'Nueva Promotora',
+                    'Una nueva promotora ha solicitado registro',
+                    'system',
+                    '/admin/promoters'
+                );
+            }
+        } catch (error) {
+            console.error('Error sending admin notifications for new promoter registration:', error);
+        }
 
         res.status(201).json({
             success: true,
