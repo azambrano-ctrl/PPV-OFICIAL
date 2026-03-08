@@ -131,13 +131,15 @@ export default function FighterHub() {
                         {/* Big Record Badge */}
                         <div className="hidden lg:flex flex-col items-end pb-4">
                             <div className="text-right">
-                                <p className="text-dark-400 font-medium uppercase tracking-wider mb-1">Récord Oficial</p>
+                                <p className="text-dark-400 font-medium uppercase tracking-wider mb-1">
+                                    {fighter.is_amateur ? 'Récord Amateur' : 'Récord Profesional'}
+                                </p>
                                 <div className="font-mono text-5xl font-black">
                                     <span className="text-green-500">{fighter.wins}</span>-
                                     <span className="text-red-500">{fighter.losses}</span>-
                                     <span className="text-gray-500">{fighter.draws}</span>
                                 </div>
-                                <p className="text-dark-500 mt-2">{totalFights} Combates Profesionales</p>
+                                <p className="text-dark-500 mt-2">{totalFights} Combates en Total</p>
                             </div>
                         </div>
 
@@ -195,14 +197,31 @@ export default function FighterHub() {
                                     </li>
                                 </ul>
                             </div>
+
+                            {/* Titles Section */}
+                            {fighter.titles && (
+                                <div className="card p-8 border border-yellow-500/20 bg-dark-900/50">
+                                    <div className="flex items-center gap-3 mb-6 border-b border-dark-800 pb-4">
+                                        <Trophy className="w-5 h-5 text-yellow-500" />
+                                        <h3 className="font-display font-bold text-xl uppercase tracking-widest text-dark-300">
+                                            Campeonatos
+                                        </h3>
+                                    </div>
+                                    <p className="text-gray-300 font-medium leading-relaxed whitespace-pre-wrap">
+                                        {fighter.titles}
+                                    </p>
+                                </div>
+                            )}
+
                         </div>
 
                         {/* Middle & Right Column: Fight Stats */}
                         <div className="lg:col-span-2 space-y-8">
 
-                            {/* Mobile Record Badge (Visible only on small screens) */}
                             <div className="card p-6 border-primary-500/20 lg:hidden text-center">
-                                <p className="text-dark-400 font-medium uppercase tracking-wider mb-2">Récord Oficial</p>
+                                <p className="text-dark-400 font-medium uppercase tracking-wider mb-2">
+                                    {fighter.is_amateur ? 'Récord Amateur' : 'Récord Profesional'}
+                                </p>
                                 <div className="font-mono text-4xl font-black">
                                     <span className="text-green-500">{fighter.wins}</span>-
                                     <span className="text-red-500">{fighter.losses}</span>-

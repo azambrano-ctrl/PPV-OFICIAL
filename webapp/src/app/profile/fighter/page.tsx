@@ -37,7 +37,9 @@ export default function FighterDashboard() {
         submissions: 0,
         social_instagram: '',
         social_twitter: '',
-        profile_image_url: ''
+        profile_image_url: '',
+        is_amateur: false,
+        titles: ''
     });
 
     const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
@@ -88,7 +90,9 @@ export default function FighterDashboard() {
                     submissions: f.submissions || 0,
                     social_instagram: f.social_instagram || '',
                     social_twitter: f.social_twitter || '',
-                    profile_image_url: f.profile_image_url || ''
+                    profile_image_url: f.profile_image_url || '',
+                    is_amateur: f.is_amateur || false,
+                    titles: f.titles || ''
                 });
             }
         } catch (error: any) {
@@ -101,9 +105,14 @@ export default function FighterDashboard() {
         }
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+        const { name, value, type } = e.target;
+        if (type === 'checkbox') {
+            const checked = (e.target as HTMLInputElement).checked;
+            setFormData(prev => ({ ...prev, [name]: checked }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -292,12 +301,26 @@ export default function FighterDashboard() {
                                     <label className="block text-sm font-medium text-dark-300 mb-2">Estilo Base de Combate</label>
                                     <input type="text" name="base_style" value={formData.base_style} onChange={handleChange} className="input w-full" placeholder="Ej. Wrestling, Muay Thai, BJJ" />
                                 </div>
+                                <div className="md:col-span-3">
+                                    <label className="block text-sm font-medium text-dark-300 mb-2">Títulos Obtenidos</label>
+                                    <textarea name="titles" value={formData.titles} onChange={handleChange} className="input w-full" placeholder="Ej. Campeón Nacional Peso Ligero" rows={2} />
+                                </div>
                             </div>
                         </div>
 
                         {/* Récord Oficial */}
                         <div className="card p-6">
-                            <h3 className="text-xl font-bold mb-4 font-display">Récord Profesional</h3>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-xl font-bold font-display">Récord de Combate</h3>
+                                <div className="flex items-center gap-2">
+                                    <span className={`text-sm font-bold ${formData.is_amateur ? 'text-gray-400' : 'text-primary-500'}`}>Profesional</span>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" name="is_amateur" checked={formData.is_amateur} onChange={handleChange} className="sr-only peer" />
+                                        <div className="w-11 h-6 bg-primary-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-600"></div>
+                                    </label>
+                                    <span className={`text-sm font-bold ${formData.is_amateur ? 'text-primary-500' : 'text-gray-400'}`}>Amateur</span>
+                                </div>
+                            </div>
                             <div className="grid grid-cols-3 gap-4 mb-4">
                                 <div className="p-4 bg-dark-800 rounded-lg text-center border border-green-500/20">
                                     <label className="block text-sm font-bold text-green-500 mb-2">Victorias (W)</label>
