@@ -26,6 +26,8 @@ export interface Fighter {
     social_instagram?: string;
     social_twitter?: string;
     status: 'pending' | 'approved' | 'rejected';
+    is_amateur?: boolean;
+    titles?: string;
     is_active: boolean;
     created_at: Date;
     updated_at: Date;
@@ -88,7 +90,7 @@ export const claimFighterProfile = async (userId: string, data: any) => {
     const {
         first_name, last_name, nickname, date_of_birth, country, city, team_association,
         height_cm, weight_kg, reach_cm, stance, base_style, wins, losses, draws, kos, submissions,
-        profile_image_url, banner_image_url, social_instagram, social_twitter
+        profile_image_url, banner_image_url, social_instagram, social_twitter, is_amateur, titles
     } = data;
 
     const result = await query(
@@ -98,17 +100,18 @@ export const claimFighterProfile = async (userId: string, data: any) => {
             height_cm, weight_kg, reach_cm, stance, base_style,
             wins, losses, draws, kos, submissions,
             profile_image_url, banner_image_url, social_instagram, social_twitter,
-            status
+            status, is_amateur, titles
         ) VALUES (
             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-            $15, $16, $17, $18, $19, $20, $21, $22, $23, 'pending'
+            $15, $16, $17, $18, $19, $20, $21, $22, $23, 'pending', $24, $25
         ) RETURNING *`,
         [
             userId, first_name, last_name, nickname, slug,
             date_of_birth, country, city, team_association,
             height_cm, weight_kg, reach_cm, stance, base_style,
             wins || 0, losses || 0, draws || 0, kos || 0, submissions || 0,
-            profile_image_url, banner_image_url, social_instagram, social_twitter
+            profile_image_url, banner_image_url, social_instagram, social_twitter,
+            is_amateur || false, titles || null
         ]
     );
 
@@ -124,7 +127,8 @@ export const updateFighterProfile = async (fighterId: string, userId: string, up
         'first_name', 'last_name', 'nickname', 'date_of_birth', 'country', 'city', 'team_association',
         'height_cm', 'weight_kg', 'reach_cm', 'stance', 'base_style',
         'wins', 'losses', 'draws', 'kos', 'submissions',
-        'profile_image_url', 'banner_image_url', 'social_instagram', 'social_twitter'
+        'profile_image_url', 'banner_image_url', 'social_instagram', 'social_twitter',
+        'is_amateur', 'titles'
     ];
 
     const updateKeys = Object.keys(updates).filter(key => allowedFields.includes(key));
