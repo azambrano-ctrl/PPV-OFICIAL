@@ -213,12 +213,12 @@ export default function FighterDashboard() {
                     <form onSubmit={handleSubmit} className="space-y-8">
                         {/* Foto de Perfil */}
                         <div className="card p-6 flex items-center gap-6">
-                            <div className="w-24 h-24 rounded-full bg-dark-800 border border-dark-700 overflow-hidden flex-shrink-0 relative">
+                            <div className="w-32 h-40 rounded-lg bg-dark-800 border border-dark-700 overflow-hidden flex-shrink-0 relative">
                                 {(profileImageFile || formData.profile_image_url) ? (
                                     <img
                                         src={profileImageFile ? URL.createObjectURL(profileImageFile) : formData.profile_image_url}
                                         alt="Profile view"
-                                        className="w-full h-full object-cover"
+                                        className="w-full h-full object-contain object-bottom"
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-xs text-center text-dark-400 p-2">
@@ -228,7 +228,7 @@ export default function FighterDashboard() {
                             </div>
                             <div className="flex-1">
                                 <h3 className="text-xl font-bold mb-2 font-display">Foto de Perfil</h3>
-                                <p className="text-sm text-dark-400 mb-4">Sube una foto clara de tu rostro o posando. Se usará para tu tarjeta de peleador.</p>
+                                <p className="text-sm text-dark-400 mb-4">Sube una foto tuya de **medio cuerpo** (desde la cintura hacia arriba), preferiblemente con fondo transparente (formato PNG). Se usará para tu tarjeta oficial de peleador.</p>
                                 <input
                                     type="file"
                                     accept="image/*"

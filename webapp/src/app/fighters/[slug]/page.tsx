@@ -75,13 +75,13 @@ export default function FighterHub() {
                     <div className="flex flex-col lg:flex-row items-end gap-8 pb-8">
 
                         {/* Avatar */}
-                        <div className="relative w-48 h-64 lg:w-64 lg:h-80 flex-shrink-0 -mb-4 lg:-mb-12 overflow-hidden rounded-t-2xl border-b-4 border-primary-500 bg-dark-800 shadow-2xl">
+                        <div className="relative w-56 h-72 lg:w-80 lg:h-[420px] flex-shrink-0 -mb-4 lg:-mb-12 overflow-hidden rounded-t-2xl border-b-4 border-primary-500 bg-transparent lg:bg-dark-800 lg:bg-opacity-50">
                             {fighter.profile_image_url ? (
                                 <Image
                                     src={fighter.profile_image_url}
                                     alt={`${fighter.first_name} ${fighter.last_name}`}
                                     fill
-                                    className="object-cover object-top"
+                                    className="object-contain object-bottom drop-shadow-2xl"
                                 />
                             ) : (
                                 <div className="absolute inset-0 flex items-center justify-center">
