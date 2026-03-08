@@ -22,6 +22,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_WEB_URL || 'http://localhost:3000'),
     title: 'Arena Fight Pass - Peleas en Vivo',
     description: 'La plataforma oficial de streaming de deportes de combate. Compra tu acceso y disfruta de los mejores eventos en vivo.',
     keywords: 'boxeo, mma, kickboxing, streaming, ppv, en vivo, peleas, arena fight pass',
