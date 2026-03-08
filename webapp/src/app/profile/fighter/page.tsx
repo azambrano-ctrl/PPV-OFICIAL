@@ -237,7 +237,7 @@ export default function FighterDashboard() {
                                             setProfileImageFile(e.target.files[0]);
                                         }
                                     }}
-                                    className="text-sm text-dark-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/80 transition-colors"
+                                    className="text-sm text-dark-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-dark-700 file:text-white hover:file:bg-dark-600 transition-colors cursor-pointer"
                                 />
                             </div>
                         </div>
