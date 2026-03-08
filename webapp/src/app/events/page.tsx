@@ -113,7 +113,7 @@ export default function EventsPage() {
             </section>
 
             {/* Filters */}
-            <section className="py-8 bg-dark-900 border-b border-dark-800 sticky top-20 z-40">
+            <section className="py-8 bg-dark-900 border-b border-dark-800 relative z-10">
                 <div className="container-custom">
                     <div className="flex flex-col md:flex-row gap-4">
                         {/* Search */}
