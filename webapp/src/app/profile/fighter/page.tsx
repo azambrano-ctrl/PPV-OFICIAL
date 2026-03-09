@@ -22,6 +22,7 @@ export default function FighterDashboard() {
         first_name: '',
         last_name: '',
         nickname: '',
+        date_of_birth: '',
         country: '',
         city: '',
         team_association: '',
@@ -75,6 +76,7 @@ export default function FighterDashboard() {
                     first_name: f.first_name || '',
                     last_name: f.last_name || '',
                     nickname: f.nickname || '',
+                    date_of_birth: f.date_of_birth ? f.date_of_birth.split('T')[0] : '',
                     country: f.country || '',
                     city: f.city || '',
                     team_association: f.team_association || '',
@@ -257,6 +259,10 @@ export default function FighterDashboard() {
                                 <div>
                                     <label className="block text-sm font-medium text-dark-300 mb-2">Apodo (Nickname)</label>
                                     <input type="text" name="nickname" value={formData.nickname} onChange={handleChange} className="input w-full" placeholder="Ej. Bones" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-dark-300 mb-2">Fecha de Nacimiento</label>
+                                    <input type="date" name="date_of_birth" value={formData.date_of_birth} onChange={handleChange} className="input w-full" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-dark-300 mb-2">Gimnasio o Academia</label>
