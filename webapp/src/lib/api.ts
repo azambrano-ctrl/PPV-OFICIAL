@@ -338,6 +338,15 @@ export const fightersAPI = {
         return api.put('/fighters/me', data, config);
     },
 
+    updateAsAdmin: (id: string, data: any) => {
+        const config = data instanceof FormData ? {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        } : {};
+        return api.put(`/fighters/${id}`, data, config);
+    },
+
     updateStatus: (id: string, status: 'pending' | 'approved' | 'rejected') =>
         api.put(`/fighters/${id}/status`, { status }),
 

@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 import { fightersAPI } from '@/lib/api';
-import { Shield, CheckCircle, XCircle, Search, User, Filter } from 'lucide-react';
+import { Shield, CheckCircle, XCircle, Search, User, Filter, Edit } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatDate } from '@/lib/utils';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface Fighter {
     id: string;
@@ -205,6 +206,13 @@ export default function AdminFighters() {
                                                         <XCircle className="w-5 h-5" />
                                                     </button>
                                                 )}
+                                                <Link
+                                                    href={`/admin/fighters/${fighter.slug}/edit`}
+                                                    className="p-1 text-blue-500 hover:bg-blue-500/10 rounded ml-2"
+                                                    title="Editar Perfil"
+                                                >
+                                                    <Edit className="w-5 h-5" />
+                                                </Link>
                                                 <button
                                                     onClick={() => window.open(`/fighters/${fighter.slug}`, '_blank')}
                                                     className="p-1 text-dark-300 hover:text-white hover:bg-dark-700 rounded ml-2"

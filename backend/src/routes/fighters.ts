@@ -7,6 +7,7 @@ import {
     getFighterBySlug,
     claimFighterProfile,
     updateFighterProfile,
+    updateFighterAdmin,
     updateFighterStatusAdmin
 } from '../services/fighterService';
 import { uploadFighterImages } from '../middleware/upload';
@@ -162,6 +163,35 @@ router.put(
         }
 
         const updatedFighter = await updateFighterProfile(fighterId, userId, uploadData);
+
+        res.json({ success: true, data: updatedFighter });
+    })
+);
+
+/**
+ * PUT /api/fighters/:id
+ * Admin edits any fighter's profile
+ */
+router.put(
+    '/:id',
+    authenticate,
+    requireAdmin,
+    uploadFighterImages,
+    asyncHandler(async (req: any, res: Response) => {
+        const files = (req as any).files;
+        const uploadData = { ...req.body };
+        if (files?.profile_image_url) {
+            uploadData.profile_image_url = files.profile_image_url[0].path;
+        }
+        if (files?.banner_image_url) {
+            uploadData.banner_image_url = files.banner_image_url[0].path;
+        }
+
+        const updatedFighter = await updateFighterAdmin(req.params.id, uploadData);
+        if (!updatedFighter) {
+            res.status(404).json({ success: false, message: 'Fighter no encontrado o sin cambios aportados' });
+            return;
+        }
 
         res.json({ success: true, data: updatedFighter });
     })

@@ -172,6 +172,40 @@ export const updateFighterProfile = async (fighterId: string, userId: string, up
 };
 
 /**
+ * Update a fighter's profile (Admin only)
+ */
+export const updateFighterAdmin = async (fighterId: string, updates: any) => {
+    // Allows updating all specific fields
+    const allowedFields = [
+        'first_name', 'last_name', 'nickname', 'date_of_birth', 'country', 'city', 'team_association',
+        'height_cm', 'weight_kg', 'reach_cm', 'stance', 'base_style',
+        'wins', 'losses', 'draws', 'kos', 'submissions',
+        'profile_image_url', 'banner_image_url', 'social_instagram', 'social_twitter',
+        'is_amateur', 'titles'
+    ];
+
+    const updateKeys = Object.keys(updates).filter(key => allowedFields.includes(key));
+    if (updateKeys.length === 0) return null;
+
+    let queryText = 'UPDATE fighters SET ';
+    const params: any[] = [];
+    let paramCount = 1;
+
+    updateKeys.forEach((key, index) => {
+        queryText += `${key} = $${paramCount}`;
+        params.push(updates[key]);
+        if (index < updateKeys.length - 1) queryText += ', ';
+        paramCount++;
+    });
+
+    queryText += `, updated_at = CURRENT_TIMESTAMP WHERE id = $${paramCount} RETURNING *`;
+    params.push(fighterId);
+
+    const result = await query(queryText, params);
+    return result.rows.length ? result.rows[0] : null;
+};
+
+/**
  * Approve or Reject a fighter (Admin only)
  */
 export const updateFighterStatusAdmin = async (fighterId: string, status: 'approved' | 'rejected' | 'pending') => {
