@@ -302,3 +302,66 @@ export const updateEventStatus = async (
 
     return result.rows[0];
 };
+
+/**
+ * Get all fighters assigned to an event
+ */
+export const getEventFighters = async (eventId: string) => {
+    const result = await query(
+        `SELECT f.*, ef.order_index 
+         FROM fighters f
+         JOIN event_fighters ef ON f.id = ef.fighter_id
+         WHERE ef.event_id = $1
+         ORDER BY ef.order_index ASC, ef.created_at ASC`,
+        [eventId]
+    );
+    return result.rows;
+};
+
+/**
+ * Add a fighter to an event
+ */
+export const addFighterToEvent = async (eventId: string, fighterId: string, orderIndex?: number) => {
+    // Check if fighter already added
+    const check = await query(
+        `SELECT 1 FROM event_fighters WHERE event_id = $1 AND fighter_id = $2`,
+        [eventId, fighterId]
+    );
+
+    if (check.rows.length > 0) {
+        throw new Error('El peleador ya está en la cartelera de este evento');
+    }
+
+    let nextOrder = orderIndex;
+    if (nextOrder === undefined) {
+        // Find next order index
+        const orderRes = await query(
+            `SELECT COALESCE(MAX(order_index), -1) + 1 as next_order FROM event_fighters WHERE event_id = $1`,
+            [eventId]
+        );
+        nextOrder = parseInt(orderRes.rows[0].next_order);
+    }
+
+    const result = await query(
+        `INSERT INTO event_fighters (event_id, fighter_id, order_index)
+         VALUES ($1, $2, $3)
+         RETURNING *`,
+        [eventId, fighterId, nextOrder]
+    );
+
+    return result.rows[0];
+};
+
+/**
+ * Remove a fighter from an event
+ */
+export const removeFighterFromEvent = async (eventId: string, fighterId: string) => {
+    const result = await query(
+        `DELETE FROM event_fighters WHERE event_id = $1 AND fighter_id = $2 RETURNING *`,
+        [eventId, fighterId]
+    );
+
+    if (result.rowCount === 0) {
+        throw new Error('El peleador no fue encontrado en este evento');
+    }
+};
