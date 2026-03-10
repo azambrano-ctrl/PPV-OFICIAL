@@ -307,7 +307,7 @@ export default function FighterHub() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                             {fighter.events.map((event: any) => (
                                 <Link
-                                    href={`/events/${event.id}`}
+                                    href={`/event/${event.id}`}
                                     key={event.id}
                                     className="card group overflow-hidden block border border-dark-800 hover:border-primary-500/50 transition-colors"
                                 >
