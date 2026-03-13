@@ -522,8 +522,11 @@ export default function EventDetailPage() {
                                     <button className="flex-1 btn btn-secondary text-sm">
                                         Facebook
                                     </button>
-                                    <button className="flex-1 btn btn-secondary text-sm">
-                                        Twitter
+                                    <button
+                                        onClick={() => window.open('https://www.instagram.com/arenafightpass?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==', '_blank')}
+                                        className="flex-1 btn btn-secondary text-sm"
+                                    >
+                                        Instagram
                                     </button>
                                     <button className="flex-1 btn btn-secondary text-sm">
                                         Copiar
