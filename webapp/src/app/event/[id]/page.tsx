@@ -520,7 +520,11 @@ export default function EventDetailPage() {
                                 <h3 className="font-semibold mb-4">Compartir Evento</h3>
                                 <div className="flex gap-2">
                                     <button
-                                        onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank')}
+                                        onClick={() => {
+                                            const url = encodeURIComponent(window.location.href);
+                                            const quote = encodeURIComponent(`¡No te pierdas: ${event.title}! 🥊`);
+                                            window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${quote}`, '_blank', 'width=600,height=400');
+                                        }}
                                         className="flex-1 btn btn-secondary text-sm flex items-center justify-center gap-1.5"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="#1877F2">
@@ -529,7 +533,19 @@ export default function EventDetailPage() {
                                         Facebook
                                     </button>
                                     <button
-                                        onClick={() => window.open('https://www.instagram.com/arenafightpass?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==', '_blank')}
+                                        onClick={async () => {
+                                            const shareData = {
+                                                title: event.title,
+                                                text: `¡No te pierdas: ${event.title}! 🥊 Míralo en Arena Fight Pass`,
+                                                url: window.location.href,
+                                            };
+                                            if (navigator.share) {
+                                                try { await navigator.share(shareData); } catch (_) { }
+                                            } else {
+                                                await navigator.clipboard.writeText(window.location.href);
+                                                toast.success('¡Enlace copiado! Pégalo en tu publicación de Instagram 📸');
+                                            }
+                                        }}
                                         className="flex-1 btn btn-secondary text-sm flex items-center justify-center gap-1.5"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24">
@@ -574,7 +590,8 @@ export default function EventDetailPage() {
                     }}
                     onClose={() => setShowPaymentModal(false)}
                 />
-            )}
+            )
+            }
 
             <div className={`fixed bottom-0 left-0 right-0 z-50 bg-dark-950/90 backdrop-blur-xl border-t border-dark-800 p-4 transition-transform duration-300 ease-in-out ${showStickyCTA && event.status !== 'finished' && !canWatch ? 'translate-y-0' : 'translate-y-full'}`}>
                 <div className="container-custom flex items-center justify-between gap-4">
@@ -601,6 +618,6 @@ export default function EventDetailPage() {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
