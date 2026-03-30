@@ -95,11 +95,11 @@ export const verifyRefreshToken = (token: string): JWTPayload => {
 /**
  * Middleware to authenticate requests
  */
-export const authenticate = (
+export const authenticate = async (
     req: Request,
     res: Response,
     next: NextFunction
-): void => {
+): Promise<void> => {
     const authHeader = req.headers.authorization;
     let token = '';
 
@@ -130,30 +130,22 @@ export const authenticate = (
             return;
         }
 
-        query('SELECT current_session_id FROM users WHERE id = $1', [decoded.userId])
-            .then(userResult => {
-                const user = userResult.rows[0];
+        const userResult = await query('SELECT current_session_id FROM users WHERE id = $1', [decoded.userId]);
+        const user = userResult.rows[0];
 
-                if (!user || user.current_session_id !== decoded.sessionId) {
-                    res.status(401).json({
-                        success: false,
-                        message: 'Tu sesión ha expirado o se ha iniciado en otro dispositivo.',
-                        code: 'SESSION_CONFLICT'
-                    });
-                    return;
-                }
-
-                (req as any).user = decoded;
-                next();
-            })
-            .catch(error => {
-                logger.error('Authentication DB error:', error);
-                res.status(500).json({
-                    success: false,
-                    message: 'Internal server error during authentication',
-                });
+        if (!user || user.current_session_id !== decoded.sessionId) {
+            res.status(401).json({
+                success: false,
+                message: 'Tu sesión ha expirado o se ha iniciado en otro dispositivo.',
+                code: 'SESSION_CONFLICT'
             });
+            return;
+        }
+
+        (req as any).user = decoded;
+        next();
     } catch (error) {
+        logger.error('Authentication error:', error);
         res.status(401).json({
             success: false,
             message: 'Token inválido o expirado',

@@ -132,10 +132,20 @@ export const createPayPalOrder = async (
         }
 
         // Create or update purchase record
-        const existingPurchase = await query(
-            'SELECT id, payment_status FROM purchases WHERE user_id = $1 AND event_id = $2',
-            [input.userId, input.eventId]
-        );
+        // For season_pass, event_id is NULL — comparing NULL with = never matches in SQL,
+        // so we need a separate query that checks by purchase_type instead.
+        let existingPurchase;
+        if (input.purchaseType === 'season_pass') {
+            existingPurchase = await query(
+                "SELECT id, payment_status FROM purchases WHERE user_id = $1 AND purchase_type = 'season_pass'",
+                [input.userId]
+            );
+        } else {
+            existingPurchase = await query(
+                'SELECT id, payment_status FROM purchases WHERE user_id = $1 AND event_id = $2',
+                [input.userId, input.eventId]
+            );
+        }
 
         if (existingPurchase.rows.length > 0) {
             const purchase = existingPurchase.rows[0];

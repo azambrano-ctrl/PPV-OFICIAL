@@ -368,8 +368,8 @@ router.post(
         await query('BEGIN');
 
         try {
-            // Obtener el límite del evento
-            const eventRes = await query(`SELECT price, free_viewers_limit FROM events WHERE id = $1`, [eventId]);
+            // Obtener y bloquear el evento para evitar race conditions concurrentes
+            const eventRes = await query(`SELECT price, free_viewers_limit FROM events WHERE id = $1 FOR UPDATE`, [eventId]);
             const event = eventRes.rows[0];
 
             if (!event) {
@@ -388,12 +388,11 @@ router.post(
             const limit = event.free_viewers_limit || 0;
 
             if (limit > 0) {
-                // Verificar cuántos lugares ya han sido ocupados de forma transaccional (bloqueo)
+                // Contar dentro de la transacción (el FOR UPDATE en events ya serializa el acceso)
                 const countRes = await query(`
-                    SELECT COUNT(*) as count 
-                    FROM purchases 
+                    SELECT COUNT(*) as count
+                    FROM purchases
                     WHERE event_id = $1 AND payment_status = 'completed'
-                    FOR UPDATE
                 `, [eventId]);
 
                 const claimed = parseInt(countRes.rows[0].count);
