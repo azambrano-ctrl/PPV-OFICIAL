@@ -1,0 +1,2 @@
+-- Dummy migration to match remote database state
+-- This migration was already run on the server but is missing from the repository.
