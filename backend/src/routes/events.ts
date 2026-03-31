@@ -469,7 +469,8 @@ router.get(
             return;
         }
 
-        const messages = await getChatMessages(req.params.id);
+        const limit = Math.min(parseInt(req.query.limit as string) || 100, 200);
+        const messages = await getChatMessages(req.params.id, limit);
 
         res.json({
             success: true,

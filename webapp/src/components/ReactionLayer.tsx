@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Socket } from 'socket.io-client';
 
@@ -16,20 +16,36 @@ interface ReactionLayerProps {
     eventId: string;
 }
 
+const MAX_REACTIONS = 50;
+
 export default function ReactionLayer({ socket, eventId }: ReactionLayerProps) {
     const [reactions, setReactions] = useState<Reaction[]>([]);
+    const timeoutRefs = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+
+    // Clear all pending timeouts on unmount
+    useEffect(() => {
+        return () => {
+            timeoutRefs.current.forEach(clearTimeout);
+            timeoutRefs.current.clear();
+        };
+    }, []);
 
     const addReaction = useCallback((emoji: string) => {
-        const x = Math.floor(Math.random() * 5) + 90; // Rango 90-95% del ancho total
-        const y = Math.floor(Math.random() * 5) + 80; // Rango 80-85% del alto (Un poco más arriba)
+        const x = Math.floor(Math.random() * 5) + 90;
+        const y = Math.floor(Math.random() * 5) + 80;
         const id = Math.random().toString(36).substring(2, 9);
 
-        setReactions((prev) => [...prev, { id, emoji, x, y }]);
+        setReactions((prev) => {
+            const next = [...prev, { id, emoji, x, y }];
+            // Cap to avoid unbounded growth on high-activity events
+            return next.length > MAX_REACTIONS ? next.slice(-MAX_REACTIONS) : next;
+        });
 
-        // Remove reaction after animation completes (approx 10s + buffer)
-        setTimeout(() => {
+        const t = setTimeout(() => {
             setReactions((prev) => prev.filter((r) => r.id !== id));
+            timeoutRefs.current.delete(t);
         }, 11000);
+        timeoutRefs.current.add(t);
     }, []);
 
     useEffect(() => {

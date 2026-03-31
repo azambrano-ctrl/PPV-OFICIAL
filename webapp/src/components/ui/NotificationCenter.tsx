@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, BellOff, X, ExternalLink, Calendar, CheckCircle2 } from 'lucide-react';
 import { notificationsAPI, handleAPIError } from '@/lib/api';
-import { io } from 'socket.io-client';
+import { initSocket, getSocket } from '@/lib/socket';
 import { useAuthStore } from '@/lib/store';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -23,32 +23,24 @@ export default function NotificationCenter() {
         if (isAuthenticated && user) {
             fetchNotifications();
 
-            // Setup real-time notifications via socket
-            const WS_URL = process.env.NEXT_PUBLIC_WS_URL || process.env.NEXT_PUBLIC_API_URL || '';
-            const socket: any = io(WS_URL, {
-                auth: {
-                    token: localStorage.getItem('accessToken')
-                },
-                transports: ['websocket', 'polling']
-            });
-
+            // Reuse the global socket instead of creating a new connection
+            const token = localStorage.getItem('accessToken') || '';
+            const socket = initSocket(token);
             socketRef.current = socket;
 
-            socket.on('connect', () => {
-                console.log('[NOTIFICATIONS] Connected to socket');
-            });
-
-            socket.on('new_notification', (notification: any) => {
+            const handleNotification = (notification: any) => {
                 setNotifications(prev => [notification, ...prev]);
                 setUnreadCount(prev => prev + 1);
                 toast.success(notification.title, {
                     icon: '🔔',
                     duration: 5000
                 });
-            });
+            };
+
+            socket.on('new_notification', handleNotification);
 
             return () => {
-                socket.disconnect();
+                socket.off('new_notification', handleNotification);
             };
         }
     }, [isAuthenticated, user]);

@@ -154,7 +154,7 @@ export default function ChatBox({ eventId, eventTitle, eventStatus = 'live', soc
             try {
                 if (!accessToken || eventStatus !== 'live') return;
 
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events/${eventId}/chat`, {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events/${eventId}/chat?limit=100`, {
                     headers: {
                         'Authorization': `Bearer ${accessToken}`
                     }
