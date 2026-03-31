@@ -482,10 +482,10 @@ export default function EventDetailPage() {
                                         ) : (
                                             <button
                                                 onClick={handlePurchaseClick}
-                                                disabled={event.price > 0 && event.status !== 'reprise' && (isFinished || isPast(eventDate))}
+                                                disabled={event.price > 0 && event.status !== 'reprise' && !isLive && (isFinished || isPast(eventDate))}
                                                 className="w-full btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
-                                                {event.price > 0 && event.status !== 'reprise' && (isFinished || isPast(eventDate))
+                                                {event.price > 0 && event.status !== 'reprise' && !isLive && (isFinished || isPast(eventDate))
                                                     ? 'Evento Finalizado'
                                                     : isUniversallyFree
                                                         ? 'Ver Ahora'
