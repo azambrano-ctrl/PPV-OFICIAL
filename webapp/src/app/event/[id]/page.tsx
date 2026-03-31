@@ -223,6 +223,7 @@ export default function EventDetailPage() {
     const isLive = event.status === 'live';
     const isUpcoming = event.status === 'upcoming';
     const isFinished = event.status === 'finished';
+    const isCancelled = event.status === 'cancelled';
     const isUrgent = isEventUrgent(event.event_date) && isUpcoming;
 
     const getViewerCount = (id: string) => {
@@ -468,11 +469,13 @@ export default function EventDetailPage() {
                                         {hasFreeSpotsAvailable ? (
                                             <button
                                                 onClick={handleClaimFree}
-                                                disabled={isFinished || claiming}
+                                                disabled={isFinished || isCancelled || claiming}
                                                 className="w-full btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed bg-green-600 hover:bg-green-700 text-white border-none"
                                             >
                                                 {claiming ? (
                                                     <><div className="spinner w-4 h-4 mr-2" />Reclamando...</>
+                                                ) : isCancelled ? (
+                                                    'Evento Cancelado'
                                                 ) : isFinished ? (
                                                     'Evento Finalizado'
                                                 ) : (
@@ -482,14 +485,16 @@ export default function EventDetailPage() {
                                         ) : (
                                             <button
                                                 onClick={handlePurchaseClick}
-                                                disabled={event.price > 0 && event.status !== 'reprise' && !isLive && (isFinished || isPast(eventDate))}
+                                                disabled={isCancelled || (event.price > 0 && event.status !== 'reprise' && !isLive && (isFinished || isPast(eventDate)))}
                                                 className="w-full btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
-                                                {event.price > 0 && event.status !== 'reprise' && !isLive && (isFinished || isPast(eventDate))
-                                                    ? 'Evento Finalizado'
-                                                    : isUniversallyFree
-                                                        ? 'Ver Ahora'
-                                                        : 'Comprar Acceso'}
+                                                {isCancelled
+                                                    ? 'Evento Cancelado'
+                                                    : event.price > 0 && event.status !== 'reprise' && !isLive && (isFinished || isPast(eventDate))
+                                                        ? 'Evento Finalizado'
+                                                        : isUniversallyFree
+                                                            ? 'Ver Ahora'
+                                                            : 'Comprar Acceso'}
                                             </button>
                                         )}
 
@@ -593,7 +598,7 @@ export default function EventDetailPage() {
             )
             }
 
-            <div className={`fixed bottom-0 left-0 right-0 z-50 bg-dark-950/90 backdrop-blur-xl border-t border-dark-800 p-4 transition-transform duration-300 ease-in-out ${showStickyCTA && event.status !== 'finished' && !canWatch ? 'translate-y-0' : 'translate-y-full'}`}>
+            <div className={`fixed bottom-0 left-0 right-0 z-50 bg-dark-950/90 backdrop-blur-xl border-t border-dark-800 p-4 transition-transform duration-300 ease-in-out ${showStickyCTA && event.status !== 'finished' && event.status !== 'cancelled' && event.status !== 'draft' && !canWatch ? 'translate-y-0' : 'translate-y-full'}`}>
                 <div className="container-custom flex items-center justify-between gap-4">
                     <div className="hidden md:block">
                         <h3 className="font-bold text-white mb-1 truncate max-w-sm">{event.title}</h3>
