@@ -359,7 +359,14 @@ export const handlePayPalWebhook = async (webhookBody: any): Promise<void> => {
 
         switch (eventType) {
             case 'PAYMENT.CAPTURE.COMPLETED':
-                const orderId = webhookBody.resource.supplementary_data.related_ids.order_id;
+                const orderId = webhookBody.resource?.supplementary_data?.related_ids?.order_id;
+                if (!orderId) {
+                    logger.warn('PayPal webhook PAYMENT.CAPTURE.COMPLETED missing order_id', {
+                        resourceId: webhookBody.resource?.id,
+                        body: JSON.stringify(webhookBody).substring(0, 500),
+                    });
+                    break; // don't throw — return 200 so PayPal stops retrying
+                }
                 await handlePayPalSuccess(orderId, webhookBody.resource);
                 break;
 

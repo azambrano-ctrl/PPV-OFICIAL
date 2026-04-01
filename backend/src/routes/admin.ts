@@ -509,6 +509,47 @@ router.delete(
 
 
 /**
+ * POST /api/admin/purchases/:purchaseId/retry-capture
+ * Manually retry PayPal capture for a stuck pending purchase
+ */
+router.post(
+    '/purchases/:purchaseId/retry-capture',
+    authenticate,
+    requireAdmin,
+    asyncHandler(async (req: any, res: Response) => {
+        const { purchaseId } = req.params;
+
+        const result = await pool.query(
+            `SELECT id, payment_intent_id, payment_status, payment_method
+             FROM purchases WHERE id = $1`,
+            [purchaseId]
+        );
+
+        if (result.rows.length === 0) {
+            res.status(404).json({ success: false, message: 'Purchase not found' });
+            return;
+        }
+
+        const purchase = result.rows[0];
+
+        if (purchase.payment_status === 'completed') {
+            res.json({ success: true, message: 'Purchase already completed' });
+            return;
+        }
+
+        if (purchase.payment_method !== 'paypal') {
+            res.status(400).json({ success: false, message: 'Only PayPal purchases can be retried' });
+            return;
+        }
+
+        const { capturePayPalOrder } = await import('../services/paypalService');
+        await capturePayPalOrder(purchase.payment_intent_id);
+
+        res.json({ success: true, message: 'Capture successful — purchase is now completed' });
+    })
+);
+
+/**
  * GET /api/admin/events/:id/purchase-analysis
  * Full purchase funnel analysis for a specific event
  */
