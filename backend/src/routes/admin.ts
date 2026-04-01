@@ -508,4 +508,132 @@ router.delete(
 
 
 
+/**
+ * GET /api/admin/events/:id/purchase-analysis
+ * Full purchase funnel analysis for a specific event
+ */
+router.get(
+    '/events/:id/purchase-analysis',
+    authenticate,
+    requireAdmin,
+    asyncHandler(async (req: any, res: Response) => {
+        const eventId = req.params.id;
+
+        // Event info
+        const eventRes = await pool.query(
+            `SELECT id, title, event_date, price, currency, status FROM events WHERE id = $1`,
+            [eventId]
+        );
+        if (eventRes.rows.length === 0) {
+            res.status(404).json({ success: false, message: 'Event not found' });
+            return;
+        }
+        const event = eventRes.rows[0];
+        const eventDate = new Date(event.event_date);
+        const dayStart = new Date(eventDate); dayStart.setHours(0, 0, 0, 0);
+        const dayEnd   = new Date(eventDate); dayEnd.setHours(23, 59, 59, 999);
+
+        // Users registered on event day
+        const newUsersRes = await pool.query(
+            `SELECT COUNT(*) as total FROM users
+             WHERE created_at >= $1 AND created_at <= $2`,
+            [dayStart, dayEnd]
+        );
+
+        // Purchase funnel breakdown
+        const funnelRes = await pool.query(
+            `SELECT
+                payment_status,
+                COUNT(*)            AS total,
+                COUNT(DISTINCT user_id) AS unique_users
+             FROM purchases
+             WHERE event_id = $1
+             GROUP BY payment_status`,
+            [eventId]
+        );
+
+        // Users registered on event day who purchased (completed)
+        const newUsersPurchasedRes = await pool.query(
+            `SELECT COUNT(DISTINCT p.user_id) as total
+             FROM purchases p
+             JOIN users u ON u.id = p.user_id
+             WHERE p.event_id = $1
+               AND p.payment_status = 'completed'
+               AND u.created_at >= $2 AND u.created_at <= $3`,
+            [eventId, dayStart, dayEnd]
+        );
+
+        // Users registered on event day who attempted but failed/pending
+        const newUsersFailedRes = await pool.query(
+            `SELECT COUNT(DISTINCT p.user_id) as total
+             FROM purchases p
+             JOIN users u ON u.id = p.user_id
+             WHERE p.event_id = $1
+               AND p.payment_status IN ('failed', 'pending')
+               AND u.created_at >= $2 AND u.created_at <= $3`,
+            [eventId, dayStart, dayEnd]
+        );
+
+        // Users registered on event day who never attempted a purchase
+        const newUsersNoPurchaseRes = await pool.query(
+            `SELECT COUNT(*) as total
+             FROM users u
+             WHERE u.created_at >= $1 AND u.created_at <= $2
+               AND NOT EXISTS (
+                   SELECT 1 FROM purchases p
+                   WHERE p.user_id = u.id AND p.event_id = $3
+               )`,
+            [dayStart, dayEnd, eventId]
+        );
+
+        // Failed/pending purchase details (last 20)
+        const failedDetailsRes = await pool.query(
+            `SELECT p.id, p.payment_status, p.payment_method, p.amount,
+                    p.purchased_at, u.email, u.full_name
+             FROM purchases p
+             JOIN users u ON u.id = p.user_id
+             WHERE p.event_id = $1
+               AND p.payment_status IN ('failed', 'pending')
+             ORDER BY p.purchased_at DESC
+             LIMIT 20`,
+            [eventId]
+        );
+
+        const funnel: Record<string, { total: number; unique_users: number }> = {};
+        for (const row of funnelRes.rows) {
+            funnel[row.payment_status] = {
+                total: parseInt(row.total),
+                unique_users: parseInt(row.unique_users),
+            };
+        }
+
+        res.json({
+            success: true,
+            data: {
+                event: {
+                    id: event.id,
+                    title: event.title,
+                    date: event.event_date,
+                    price: event.price,
+                    currency: event.currency,
+                    status: event.status,
+                },
+                new_users_on_event_day: parseInt(newUsersRes.rows[0].total),
+                purchase_funnel: {
+                    completed:  funnel['completed']  || { total: 0, unique_users: 0 },
+                    pending:    funnel['pending']    || { total: 0, unique_users: 0 },
+                    failed:     funnel['failed']     || { total: 0, unique_users: 0 },
+                    refunded:   funnel['refunded']   || { total: 0, unique_users: 0 },
+                },
+                new_users_breakdown: {
+                    purchased:    parseInt(newUsersPurchasedRes.rows[0].total),
+                    failed_or_pending: parseInt(newUsersFailedRes.rows[0].total),
+                    never_attempted:   parseInt(newUsersNoPurchaseRes.rows[0].total),
+                },
+                failed_purchase_details: failedDetailsRes.rows,
+            },
+        });
+    })
+);
+
 export default router;
