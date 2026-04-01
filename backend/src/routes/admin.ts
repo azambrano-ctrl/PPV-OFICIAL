@@ -6,6 +6,7 @@ import pool from '../config/database';
 import { bunnyService } from '../services/bunnyService';
 import { CloudflareService } from '../services/cloudflareService';
 import { getEventById } from '../services/eventService';
+import logger from '../config/logger';
 
 const router = Router();
 
