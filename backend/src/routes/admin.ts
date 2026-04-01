@@ -550,6 +550,70 @@ router.post(
 );
 
 /**
+ * POST /api/admin/purchases/:purchaseId/grant-access
+ * Manually complete a purchase and grant stream access (for expired PayPal orders)
+ */
+router.post(
+    '/purchases/:purchaseId/grant-access',
+    authenticate,
+    requireAdmin,
+    asyncHandler(async (req: any, res: Response) => {
+        const { purchaseId } = req.params;
+
+        const result = await pool.query(
+            `SELECT * FROM purchases WHERE id = $1`,
+            [purchaseId]
+        );
+
+        if (result.rows.length === 0) {
+            res.status(404).json({ success: false, message: 'Purchase not found' });
+            return;
+        }
+
+        const purchase = result.rows[0];
+
+        if (purchase.payment_status === 'completed') {
+            res.json({ success: true, message: 'Already completed — no action needed' });
+            return;
+        }
+
+        // Mark as completed
+        await pool.query(
+            `UPDATE purchases SET payment_status = 'completed' WHERE id = $1`,
+            [purchaseId]
+        );
+
+        // Create stream token if event purchase
+        if (purchase.purchase_type === 'event' && purchase.event_id) {
+            const { generateStreamToken } = await import('../middleware/auth');
+            const userRes = await pool.query(
+                'SELECT current_session_id FROM users WHERE id = $1',
+                [purchase.user_id]
+            );
+            const sessionId = userRes.rows[0]?.current_session_id || 'admin-grant';
+            const streamToken = generateStreamToken(purchase.user_id, purchase.event_id, sessionId);
+            const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000); // 72h
+
+            // Revoke existing tokens then insert fresh one
+            await pool.query(
+                `UPDATE stream_tokens SET is_revoked = true
+                 WHERE user_id = $1 AND event_id = $2`,
+                [purchase.user_id, purchase.event_id]
+            );
+            await pool.query(
+                `INSERT INTO stream_tokens (user_id, event_id, token, expires_at)
+                 VALUES ($1, $2, $3, $4)`,
+                [purchase.user_id, purchase.event_id, streamToken, expiresAt]
+            );
+        }
+
+        logger.info('Admin manually granted access to purchase', { purchaseId, adminId: req.user?.userId });
+
+        res.json({ success: true, message: 'Access granted — purchase marked as completed' });
+    })
+);
+
+/**
  * GET /api/admin/events/:id/purchase-analysis
  * Full purchase funnel analysis for a specific event
  */
