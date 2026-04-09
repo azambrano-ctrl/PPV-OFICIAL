@@ -745,4 +745,65 @@ router.get(
     })
 );
 
+/**
+ * POST /api/admin/test-email
+ * Send a test email to verify Brevo / SMTP config (Admin only)
+ */
+router.post(
+    '/test-email',
+    authenticate,
+    requireAdmin,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { sendEmail } = await import('../services/emailService');
+
+        const to: string = (req.body.to as string) || req.user!.email;
+        const provider = process.env.BREVO_API_KEY ? 'Brevo API' : (process.env.EMAIL_USER ? 'SMTP' : 'ninguno');
+
+        if (!process.env.BREVO_API_KEY && !process.env.EMAIL_USER) {
+            res.status(503).json({
+                success: false,
+                provider: 'ninguno',
+                message: 'No hay proveedor de correo configurado. Agrega BREVO_API_KEY o EMAIL_USER en las variables de entorno de Render.',
+            });
+            return;
+        }
+
+        const brandName = process.env.EMAIL_FROM_NAME || 'Arena Fight Pass';
+        const html = `
+<div style="font-family:'Segoe UI',sans-serif;max-width:600px;margin:0 auto;background:#0a0a0a;color:#fff;border-radius:16px;overflow:hidden;border:1px solid #333;">
+  <div style="background:#ef4444;padding:24px;text-align:center;">
+    <h1 style="margin:0;font-size:22px;text-transform:uppercase;letter-spacing:2px;">✅ Correo de Prueba</h1>
+  </div>
+  <div style="padding:32px 28px;">
+    <p style="font-size:16px;color:#ccc;">Este es un correo de prueba enviado desde <strong style="color:#fff;">${brandName}</strong>.</p>
+    <p style="font-size:15px;color:#aaa;">Si estás viendo esto, la configuración de correo funciona correctamente.</p>
+    <table style="width:100%;background:#111;border-radius:8px;padding:16px;margin-top:24px;border-collapse:collapse;">
+      <tr><td style="color:#555;font-size:13px;padding:6px 0;">Proveedor</td><td style="color:#fff;font-size:13px;font-weight:bold;">${provider}</td></tr>
+      <tr><td style="color:#555;font-size:13px;padding:6px 0;">Enviado a</td><td style="color:#fff;font-size:13px;">${to}</td></tr>
+      <tr><td style="color:#555;font-size:13px;padding:6px 0;">Fecha</td><td style="color:#fff;font-size:13px;">${new Date().toLocaleString('es-EC', { timeZone: 'America/Guayaquil' })}</td></tr>
+    </table>
+  </div>
+  <div style="padding:16px;text-align:center;background:#000;border-top:1px solid #111;">
+    <p style="margin:0;color:#333;font-size:12px;">&copy; ${new Date().getFullYear()} ${brandName}</p>
+  </div>
+</div>`;
+
+        try {
+            await sendEmail(to, `[Test] Configuración de correo - ${brandName}`, html);
+            res.json({
+                success: true,
+                provider,
+                message: `Correo de prueba enviado a ${to} vía ${provider}.`,
+                to,
+            });
+        } catch (err: any) {
+            res.status(500).json({
+                success: false,
+                provider,
+                message: `Error al enviar: ${err.message}`,
+            });
+        }
+    })
+);
+
 export default router;

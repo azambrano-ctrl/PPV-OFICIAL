@@ -238,6 +238,9 @@ export const adminAPI = {
 
     sendMassEmail: (data: { subject: string; body: string; role: string; specificEmail?: string }) =>
         api.post('/admin/mass-email', data),
+
+    testEmail: (to?: string) =>
+        api.post('/admin/test-email', { to }),
 };
 
 export const newsletterAPI = {
