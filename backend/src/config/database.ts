@@ -5,7 +5,13 @@ dotenv.config();
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: true } : false,
+    // Supabase pooler uses intermediate certs — rejectUnauthorized must be false.
+    // The connection is still encrypted (TLS), just without cert chain validation.
+    // To enable full validation, set DATABASE_SSL_CERT env var with Supabase's CA cert.
+    ssl: process.env.NODE_ENV === 'production'
+        ? { rejectUnauthorized: process.env.DATABASE_SSL_CERT ? true : false,
+            ca: process.env.DATABASE_SSL_CERT || undefined }
+        : false,
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000,
