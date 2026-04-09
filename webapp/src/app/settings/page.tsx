@@ -11,9 +11,6 @@ import {
     Bell,
     Shield,
     CreditCard,
-    User,
-    Check,
-    AlertTriangle,
     Mail,
     Smartphone,
     LogOut
@@ -24,7 +21,6 @@ export default function SettingsPage() {
     const { user, isAuthenticated, logout } = useAuthStore();
     const [activeSection, setActiveSection] = useState<'security' | 'notifications' | 'billing'>('security');
 
-    // Password Change State
     const [passwordData, setPasswordData] = useState({
         currentPassword: '',
         newPassword: '',
@@ -32,7 +28,6 @@ export default function SettingsPage() {
     });
     const [loading, setLoading] = useState(false);
 
-    // Mock Preferences State
     const [preferences, setPreferences] = useState({
         emailReminders: true,
         pushNotifications: false,
@@ -40,12 +35,13 @@ export default function SettingsPage() {
     });
 
     const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
     // Auth guard
     useEffect(() => {
         if (!isAuthenticated) router.push('/auth/login');
     }, [isAuthenticated, router]);
 
-    // Check push subscription state on mount (independent of auth hydration)
+    // Check push subscription state on mount
     useEffect(() => {
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
         navigator.serviceWorker.ready
@@ -56,6 +52,33 @@ export default function SettingsPage() {
             .catch(() => {});
     }, []);
 
+    const handlePasswordChange = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            toast.error('Las contraseñas nuevas no coinciden');
+            return;
+        }
+
+        if (passwordData.newPassword.length < 8) {
+            toast.error('La contraseña debe tener al menos 8 caracteres');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await authAPI.changePassword({
+                currentPassword: passwordData.currentPassword,
+                newPassword: passwordData.newPassword
+            });
+            toast.success('Contraseña actualizada correctamente');
+            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        } catch (error) {
+            toast.error(handleAPIError(error));
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const togglePushNotifications = async () => {
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -67,7 +90,6 @@ export default function SettingsPage() {
             const reg = await navigator.serviceWorker.ready;
 
             if (preferences.pushNotifications) {
-                // Unsubscribe
                 const sub = await reg.pushManager.getSubscription();
                 if (sub) {
                     const token = localStorage.getItem('accessToken');
@@ -81,14 +103,12 @@ export default function SettingsPage() {
                 setPreferences(p => ({ ...p, pushNotifications: false }));
                 toast.success('Notificaciones desactivadas');
             } else {
-                // Subscribe
                 const permission = await Notification.requestPermission();
                 if (permission !== 'granted') {
                     toast.error('Permiso denegado para notificaciones');
                     return;
                 }
 
-                // Get VAPID key from backend
                 const token = localStorage.getItem('accessToken');
                 const keyRes = await fetch(`${API_URL}/api/notifications/vapid-public-key`, {
                     headers: { 'Authorization': `Bearer ${token}` },
@@ -122,7 +142,6 @@ export default function SettingsPage() {
         toast.success('Preferencia actualizada');
     };
 
-
     if (!user) return null;
 
     const sections = [
@@ -136,7 +155,6 @@ export default function SettingsPage() {
 
             <div className="flex-1 py-12 pt-32">
                 <div className="container-custom">
-                    {/* Header */}
                     <div className="mb-8">
                         <h1 className="font-display text-4xl font-bold mb-2">
                             Configuración de <span className="gradient-text">Cuenta</span>
@@ -264,11 +282,9 @@ export default function SettingsPage() {
                                 <div className="card p-8">
                                     <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
                                         <Mail className="w-6 h-6 text-primary-500" />
-                                        Preferencias de Correo
+                                        Preferencias de Notificaciones
                                     </h2>
                                     <div className="space-y-6">
-
-
                                         <div className="flex items-center justify-between pb-6 border-b border-dark-800 text-left w-full group cursor-pointer" onClick={() => togglePreference('emailReminders')}>
                                             <div>
                                                 <h3 className="font-semibold text-white">Recordatorios de Eventos</h3>
