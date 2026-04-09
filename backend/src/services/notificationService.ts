@@ -1,6 +1,7 @@
 import { query } from '../config/database';
 import { Expo } from 'expo-server-sdk';
 import logger from '../config/logger';
+import { sendWebPushToUser } from './webPushService';
 
 // Create a new Expo SDK client
 const expo = new Expo();
@@ -50,6 +51,14 @@ export const createNotification = async (
     } catch (error) {
         logger.error('Error sending push notification in createNotification:', error);
     }
+
+    // Also send Web Push to browser subscribers
+    try {
+        await sendWebPushToUser(userId, title, message, link);
+    } catch (error) {
+        logger.error('Error sending web push notification:', error);
+    }
+
 
     return notification;
 };

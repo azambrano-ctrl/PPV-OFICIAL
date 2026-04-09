@@ -34,52 +34,90 @@ export default function SettingsPage() {
 
     // Mock Preferences State
     const [preferences, setPreferences] = useState({
-
         emailReminders: true,
         pushNotifications: false,
         twoFactor: false
     });
 
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
+    // Check if push is already subscribed on mount
     useEffect(() => {
-        if (!isAuthenticated) {
-            router.push('/auth/login');
+        if (!isAuthenticated) { router.push('/auth/login'); return; }
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            navigator.serviceWorker.ready.then(reg => {
+                reg.pushManager.getSubscription().then(sub => {
+                    if (sub) setPreferences(p => ({ ...p, pushNotifications: true }));
+                });
+            });
         }
     }, [isAuthenticated, router]);
 
-    const handlePasswordChange = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (passwordData.newPassword !== passwordData.confirmPassword) {
-            toast.error('Las contraseñas nuevas no coinciden');
+    const togglePushNotifications = async () => {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            toast.error('Tu navegador no soporta notificaciones push');
             return;
         }
 
-        if (passwordData.newPassword.length < 8) {
-            toast.error('La contraseña debe tener al menos 8 caracteres');
-            return;
-        }
-
-        setLoading(true);
         try {
-            await authAPI.changePassword({
-                currentPassword: passwordData.currentPassword,
-                newPassword: passwordData.newPassword
-            });
-            toast.success('Contraseña actualizada correctamente');
-            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-        } catch (error) {
-            toast.error(handleAPIError(error));
-        } finally {
-            setLoading(false);
+            const reg = await navigator.serviceWorker.ready;
+
+            if (preferences.pushNotifications) {
+                // Unsubscribe
+                const sub = await reg.pushManager.getSubscription();
+                if (sub) {
+                    const token = localStorage.getItem('accessToken');
+                    await fetch(`${API_URL}/api/notifications/web-push/subscribe`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ endpoint: sub.endpoint }),
+                    });
+                    await sub.unsubscribe();
+                }
+                setPreferences(p => ({ ...p, pushNotifications: false }));
+                toast.success('Notificaciones desactivadas');
+            } else {
+                // Subscribe
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    toast.error('Permiso denegado para notificaciones');
+                    return;
+                }
+
+                // Get VAPID key from backend
+                const token = localStorage.getItem('accessToken');
+                const keyRes = await fetch(`${API_URL}/api/notifications/vapid-public-key`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
+                const keyData = await keyRes.json();
+                if (!keyData.success) throw new Error('VAPID key not available');
+
+                const sub = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: keyData.data,
+                });
+
+                await fetch(`${API_URL}/api/notifications/web-push/subscribe`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    credentials: 'include',
+                    body: JSON.stringify(sub.toJSON()),
+                });
+
+                setPreferences(p => ({ ...p, pushNotifications: true }));
+                toast.success('¡Notificaciones activadas!');
+            }
+        } catch (error: any) {
+            toast.error(error.message || 'Error al configurar notificaciones');
         }
     };
 
     const togglePreference = (key: keyof typeof preferences) => {
-        setPreferences(prev => {
-            const newState = { ...prev, [key]: !prev[key] };
-            // Mock API call
-            toast.success('Preferencia actualizada');
-            return newState;
+        if (key === 'pushNotifications') { togglePushNotifications(); return; }
+        setPreferences(prev => ({ ...prev, [key]: !prev[key] }));
+        toast.success('Preferencia actualizada');
+    };
+
         });
     };
 

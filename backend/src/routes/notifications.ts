@@ -48,3 +48,54 @@ router.patch(
 );
 
 export default router;
+
+import { saveSubscription, deleteSubscription, getVapidPublicKey } from '../services/webPushService';
+
+/**
+ * GET /api/notifications/vapid-public-key
+ * Returns the VAPID public key so the frontend can subscribe
+ */
+router.get('/vapid-public-key', (_req, res) => {
+    const key = getVapidPublicKey();
+    if (!key) {
+        res.status(503).json({ success: false, message: 'Web push not configured' });
+        return;
+    }
+    res.json({ success: true, data: key });
+});
+
+/**
+ * POST /api/notifications/web-push/subscribe
+ * Save a browser push subscription for the current user
+ */
+router.post(
+    '/web-push/subscribe',
+    authenticate,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { endpoint, keys } = req.body;
+        if (!endpoint || !keys?.p256dh || !keys?.auth) {
+            res.status(400).json({ success: false, message: 'Invalid subscription data' });
+            return;
+        }
+        await saveSubscription(req.user!.userId, { endpoint, keys });
+        res.json({ success: true });
+    })
+);
+
+/**
+ * DELETE /api/notifications/web-push/subscribe
+ * Remove a browser push subscription
+ */
+router.delete(
+    '/web-push/subscribe',
+    authenticate,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { endpoint } = req.body;
+        if (!endpoint) {
+            res.status(400).json({ success: false, message: 'Missing endpoint' });
+            return;
+        }
+        await deleteSubscription(req.user!.userId, endpoint);
+        res.json({ success: true });
+    })
+);
