@@ -122,8 +122,6 @@ export default function SettingsPage() {
         toast.success('Preferencia actualizada');
     };
 
-        });
-    };
 
     if (!user) return null;
 
