@@ -520,4 +520,27 @@ router.get(
     })
 );
 
+/**
+ * GET /api/streaming/validate-hls-token
+ * Internal endpoint called by nginx auth_request.
+ * Returns 200 if the ?token query param is a valid stream JWT, 403 otherwise.
+ * This endpoint must NOT require authenticate middleware (nginx calls it without cookies).
+ */
+router.get(
+    '/validate-hls-token',
+    asyncHandler(async (req: Request, res: Response) => {
+        const token = req.query.token as string | undefined;
+        if (!token) {
+            res.status(403).json({ success: false, message: 'Missing token' });
+            return;
+        }
+        try {
+            verifyStreamToken(token);
+            res.status(200).json({ success: true });
+        } catch (_) {
+            res.status(403).json({ success: false, message: 'Invalid or expired stream token' });
+        }
+    })
+);
+
 export default router;

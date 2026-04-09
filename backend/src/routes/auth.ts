@@ -604,4 +604,36 @@ router.post(
     })
 );
 
+/**
+ * GET /api/auth/session
+ * Exchange HttpOnly cookie for access/refresh tokens (used after OAuth redirect)
+ * The tokens are read from the HttpOnly cookie set during OAuth flow
+ */
+router.get(
+    '/session',
+    asyncHandler(async (req: Request, res: Response) => {
+        const accessToken = req.cookies?.accessToken;
+        const refreshToken = req.cookies?.refreshToken;
+
+        if (!accessToken || !refreshToken) {
+            res.status(401).json({ success: false, message: 'No active session' });
+            return;
+        }
+
+        try {
+            const { verifyAccessToken } = require('../middleware/auth');
+            const decoded = verifyAccessToken(accessToken);
+            const user = await findUserById(decoded.userId);
+            if (!user) {
+                res.status(401).json({ success: false, message: 'User not found' });
+                return;
+            }
+            const { password_hash, ...safeUser } = user;
+            res.json({ success: true, data: { accessToken, refreshToken, user: safeUser } });
+        } catch (_) {
+            res.status(401).json({ success: false, message: 'Invalid session' });
+        }
+    })
+);
+
 export default router;

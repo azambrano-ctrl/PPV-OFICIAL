@@ -56,7 +56,7 @@ const allowedOrigins = [
 
 const io = new Server(httpServer, {
     cors: {
-        origin: allowedOrigins.length > 0 ? allowedOrigins : true,
+        origin: allowedOrigins,
         credentials: true,
     },
 });
@@ -82,14 +82,12 @@ app.use(helmet({
     }
 }));
 
-// Manual CORS to fix persistent issues - restricted to allowedOrigins
+// CORS — only allow explicitly whitelisted origins
 app.use((req, res, next) => {
     const origin = req.headers.origin;
 
-    if (origin && (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production')) {
+    if (origin && allowedOrigins.includes(origin)) {
         res.setHeader('Access-Control-Allow-Origin', origin);
-    } else if (!origin && process.env.NODE_ENV !== 'production') {
-        res.setHeader('Access-Control-Allow-Origin', '*');
     }
 
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
@@ -102,7 +100,6 @@ app.use((req, res, next) => {
     }
     next();
 });
-
 // Rate limiting
 const limiter = rateLimit({
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes

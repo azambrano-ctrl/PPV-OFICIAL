@@ -61,7 +61,7 @@ if (isGoogleOAuthConfigured) {
                     if (!user) {
                         user = await createUser({
                             email,
-                            password: Math.random().toString(36).slice(-8),
+                            password: crypto.randomBytes(32).toString('hex'),
                             full_name: profile.displayName || email.split('@')[0],
                             phone: '',
                             is_verified: true
@@ -98,7 +98,7 @@ if (isFacebookOAuthConfigured) {
                     if (!user) {
                         user = await createUser({
                             email,
-                            password: Math.random().toString(36).slice(-8),
+                            password: crypto.randomBytes(32).toString('hex'),
                             full_name: profile.displayName || `${profile.name?.givenName} ${profile.name?.familyName}`,
                             phone: '',
                             is_verified: true
@@ -187,18 +187,18 @@ const handleAuthSuccess = async (req: any, res: Response) => {
         const accessToken = generateAccessToken(payload);
         const refreshToken = generateRefreshToken(payload);
 
-        // Set secure cookies
+        // Tokens go ONLY in HttpOnly cookies — never in URL
         setAuthCookies(res, accessToken, refreshToken);
 
+        // Pass only non-sensitive user info in URL
         const webUrl = getWebUrl();
-        const redirectUrl = `${webUrl}/auth/callback?token=${accessToken}&refresh=${refreshToken}&user=${encodeURIComponent(JSON.stringify({
+        const safeUser = encodeURIComponent(JSON.stringify({
             id: user.id,
             email: user.email,
             full_name: user.full_name,
             role: user.role
-        }))}`;
-
-        res.redirect(redirectUrl);
+        }));
+        res.redirect(`${webUrl}/auth/callback?user=${safeUser}`);
     } catch (error) {
         console.error('Auth callback error:', error);
         res.redirect(`${getWebUrl()}/auth/login?error=auth_failed`);
