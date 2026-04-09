@@ -51,7 +51,7 @@ router.post('/upload-trailer', authenticate, requireAdmin, uploadTrailerVideo, a
         });
     } catch (error: any) {
         console.error('Error in /upload-trailer:', error);
-        return res.status(500).json({ success: false, message: 'Error subiendo el video', error: error.message });
+        return res.status(500).json({ success: false, message: 'Error subiendo el video', ...(process.env.NODE_ENV === 'development' && { error: (error as any).message }) });
     }
 });
 
@@ -116,7 +116,7 @@ router.get(
             res.status(500).json({
                 success: false,
                 message: 'Error al obtener los detalles del evento',
-                error: error.message
+                ...(process.env.NODE_ENV === 'development' && { error: (error as any).message })
             });
         }
     })
@@ -185,7 +185,7 @@ router.put(
                 res.status(500).json({
                     success: false,
                     message: 'File upload failed',
-                    error: err.message || 'Unknown upload error'
+                    ...(process.env.NODE_ENV === 'development' && { error: (err as any).message })
                 });
                 return;
             }
@@ -291,7 +291,7 @@ router.put(
             res.status(500).json({
                 success: false,
                 message: 'Error al actualizar el evento',
-                error: error instanceof Error ? error.message : 'Unknown error'
+                ...(process.env.NODE_ENV === 'development' && { error: error instanceof Error ? error.message : 'Unknown error' })
             });
         }
     })

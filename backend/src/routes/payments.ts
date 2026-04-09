@@ -169,7 +169,9 @@ router.post(
                 `INSERT INTO purchases (
                     user_id, event_id, purchase_type, amount, currency, payment_method,
                     payment_status, coupon_code, discount_amount, final_amount
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                ON CONFLICT (user_id, event_id) WHERE purchase_type != 'season_pass'
+                DO NOTHING RETURNING *`,
                 [
                     req.user!.userId,
                     eventId || null,

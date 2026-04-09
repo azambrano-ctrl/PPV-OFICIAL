@@ -70,9 +70,22 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            imgSrc: ["'self'", "data:", "blob:", "*"],
-            mediaSrc: ["'self'", "blob:", "*"],
-            connectSrc: ["'self'", "*"],
+            imgSrc: ["'self'", "data:", "blob:",
+                "*.b-cdn.net", "*.bunnycdn.com",
+                "*.cloudflarestream.com", "*.cloudflare.com",
+                "*.supabase.co", "*.supabase.com",
+                "*.amazonaws.com",
+            ],
+            mediaSrc: ["'self'", "blob:",
+                "*.b-cdn.net", "*.bunnycdn.com",
+                "*.cloudflarestream.com",
+            ],
+            connectSrc: ["'self'",
+                "*.supabase.co", "*.supabase.com",
+                "*.b-cdn.net", "*.bunnycdn.com",
+                "*.cloudflarestream.com",
+                "wss:", "ws:",
+            ],
         }
     },
     hsts: {
@@ -103,7 +116,7 @@ app.use((req, res, next) => {
 // Rate limiting
 const limiter = rateLimit({
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
-    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '1000'), // Increased to 1000 for admin usage
+    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '500'),
     message: 'Too many requests from this IP, please try again later.',
 });
 
@@ -112,7 +125,7 @@ app.use('/api/', limiter);
 // Strict rate limiting for auth routes (Brute force protection)
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 20, // Limit each IP to 20 requests per window
+    max: 5, // Limit each IP to 20 requests per window
     message: 'Demasiados intentos desde esta IP, por favor intenta de nuevo en 15 minutos.',
     standardHeaders: true,
     legacyHeaders: false,

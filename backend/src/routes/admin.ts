@@ -93,7 +93,8 @@ router.get(
         } catch (error: any) {
             res.status(500).json({
                 success: false,
-                error: error.message
+                message: 'Error sending mass email',
+                ...(process.env.NODE_ENV === 'development' && { error: (error as any).message })
             });
         }
     })
@@ -396,12 +397,15 @@ router.post(
             res.status(500).json({
                 success: false,
                 message: 'Error creating live stream',
-                error: error.message || 'Unknown error',
-                details: {
-                    cloudflareError: error.response?.data || null,
-                    cloudflareStatus: error.response?.status || null,
-                    errorType: error.constructor.name
-                }
+                ...(process.env.NODE_ENV === 'development' && {
+                    error: (error as any).message,
+                    details: {
+                        cloudflareError: (error as any).response?.data || null,
+                        cloudflareStatus: (error as any).response?.status || null,
+                        errorType: (error as any).constructor?.name
+                    }
+                })
+            });
             });
         }
     })
