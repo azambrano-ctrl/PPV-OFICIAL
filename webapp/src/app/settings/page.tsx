@@ -40,18 +40,22 @@ export default function SettingsPage() {
     });
 
     const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
-
-    // Check if push is already subscribed on mount
+    // Auth guard
     useEffect(() => {
-        if (!isAuthenticated) { router.push('/auth/login'); return; }
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-            navigator.serviceWorker.ready.then(reg => {
-                reg.pushManager.getSubscription().then(sub => {
-                    if (sub) setPreferences(p => ({ ...p, pushNotifications: true }));
-                });
-            });
-        }
+        if (!isAuthenticated) router.push('/auth/login');
     }, [isAuthenticated, router]);
+
+    // Check push subscription state on mount (independent of auth hydration)
+    useEffect(() => {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+        navigator.serviceWorker.ready
+            .then(reg => reg.pushManager.getSubscription())
+            .then(sub => {
+                setPreferences(p => ({ ...p, pushNotifications: !!sub }));
+            })
+            .catch(() => {});
+    }, []);
+
 
     const togglePushNotifications = async () => {
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
