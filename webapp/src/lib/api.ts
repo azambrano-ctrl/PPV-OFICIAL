@@ -129,6 +129,9 @@ export const authAPI = {
     deleteUser: (userId: string) =>
         api.delete(`/auth/users/${userId}`),
 
+    verifyUserManually: (userId: string) =>
+        api.put(`/auth/users/${userId}/verify`),
+
     verifyEmail: (token: string) =>
         api.post('/auth/verify-email', { token }),
 };

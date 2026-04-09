@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Search, Filter, UserCheck, UserX, Shield, User as UserIcon, Trash2 } from 'lucide-react';
+import { Search, Filter, UserCheck, UserX, Shield, User as UserIcon, Trash2, MailCheck, MailWarning } from 'lucide-react';
 import { authAPI, handleAPIError } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -12,6 +12,7 @@ interface User {
     full_name: string;
     phone?: string;
     role: 'user' | 'admin' | 'promoter';
+    is_verified: boolean;
     created_at: string;
 }
 
@@ -21,6 +22,7 @@ export default function AdminUsersPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState<string>('all');
+    const [verifiedFilter, setVerifiedFilter] = useState<string>('all');
 
     useEffect(() => {
         loadUsers();
@@ -28,7 +30,7 @@ export default function AdminUsersPage() {
 
     useEffect(() => {
         filterUsers();
-    }, [users, searchTerm, roleFilter]);
+    }, [users, searchTerm, roleFilter, verifiedFilter]);
 
     const loadUsers = async () => {
         try {
@@ -56,6 +58,12 @@ export default function AdminUsersPage() {
             filtered = filtered.filter(user => user.role === roleFilter);
         }
 
+        if (verifiedFilter === 'verified') {
+            filtered = filtered.filter(user => user.is_verified);
+        } else if (verifiedFilter === 'unverified') {
+            filtered = filtered.filter(user => !user.is_verified);
+        }
+
         setFilteredUsers(filtered);
     };
 
@@ -63,6 +71,17 @@ export default function AdminUsersPage() {
         try {
             await authAPI.updateUserRole(userId, newRole);
             toast.success('Rol actualizado exitosamente');
+            loadUsers();
+        } catch (error) {
+            const message = handleAPIError(error);
+            toast.error(message);
+        }
+    };
+
+    const handleVerify = async (userId: string) => {
+        try {
+            await authAPI.verifyUserManually(userId);
+            toast.success('Correo verificado manualmente');
             loadUsers();
         } catch (error) {
             const message = handleAPIError(error);
@@ -96,7 +115,8 @@ export default function AdminUsersPage() {
     const stats = {
         total: users.length,
         admins: users.filter(u => u.role === 'admin').length,
-        regularUsers: users.filter(u => u.role === 'user').length,
+        verified: users.filter(u => u.is_verified).length,
+        unverified: users.filter(u => !u.is_verified).length,
     };
 
     return (
@@ -108,11 +128,11 @@ export default function AdminUsersPage() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="card p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-gray-400 mb-1">Total Usuarios</p>
+                            <p className="text-sm text-gray-400 mb-1">Total</p>
                             <p className="text-3xl font-bold text-white">{stats.total}</p>
                         </div>
                         <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
@@ -124,7 +144,7 @@ export default function AdminUsersPage() {
                 <div className="card p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-gray-400 mb-1">Administradores</p>
+                            <p className="text-sm text-gray-400 mb-1">Admins</p>
                             <p className="text-3xl font-bold text-white">{stats.admins}</p>
                         </div>
                         <div className="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center">
@@ -133,14 +153,26 @@ export default function AdminUsersPage() {
                     </div>
                 </div>
 
-                <div className="card p-6">
+                <div className="card p-6 cursor-pointer hover:bg-dark-800/50 transition-colors" onClick={() => setVerifiedFilter('verified')}>
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-gray-400 mb-1">Usuarios Regulares</p>
-                            <p className="text-3xl font-bold text-white">{stats.regularUsers}</p>
+                            <p className="text-sm text-gray-400 mb-1">Verificados</p>
+                            <p className="text-3xl font-bold text-green-400">{stats.verified}</p>
                         </div>
                         <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
-                            <UserCheck className="w-6 h-6 text-green-400" />
+                            <MailCheck className="w-6 h-6 text-green-400" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="card p-6 cursor-pointer hover:bg-dark-800/50 transition-colors" onClick={() => setVerifiedFilter('unverified')}>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-400 mb-1">Sin verificar</p>
+                            <p className="text-3xl font-bold text-yellow-400">{stats.unverified}</p>
+                        </div>
+                        <div className="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                            <MailWarning className="w-6 h-6 text-yellow-400" />
                         </div>
                     </div>
                 </div>
@@ -148,7 +180,7 @@ export default function AdminUsersPage() {
 
             {/* Filters */}
             <div className="card p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                         <input
@@ -170,6 +202,20 @@ export default function AdminUsersPage() {
                             <option value="all">Todos los roles</option>
                             <option value="admin">Administradores</option>
                             <option value="user">Usuarios</option>
+                            <option value="promoter">Promotoras</option>
+                        </select>
+                    </div>
+
+                    <div className="relative">
+                        <MailCheck className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                        <select
+                            value={verifiedFilter}
+                            onChange={(e) => setVerifiedFilter(e.target.value)}
+                            className="input pl-10"
+                        >
+                            <option value="all">Todos los correos</option>
+                            <option value="verified">Verificados</option>
+                            <option value="unverified">Sin verificar</option>
                         </select>
                     </div>
                 </div>
@@ -179,12 +225,8 @@ export default function AdminUsersPage() {
             {filteredUsers.length === 0 ? (
                 <div className="card p-12 text-center">
                     <UserX className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-white mb-2">
-                        No se encontraron usuarios
-                    </h3>
-                    <p className="text-gray-500">
-                        Intenta con otros filtros
-                    </p>
+                    <h3 className="text-xl font-semibold text-white mb-2">No se encontraron usuarios</h3>
+                    <p className="text-gray-500">Intenta con otros filtros</p>
                 </div>
             ) : (
                 <div className="card overflow-hidden">
@@ -192,24 +234,12 @@ export default function AdminUsersPage() {
                         <table className="w-full">
                             <thead className="bg-dark-800">
                                 <tr>
-                                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-400">
-                                        Usuario
-                                    </th>
-                                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-400">
-                                        Email
-                                    </th>
-                                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-400">
-                                        Teléfono
-                                    </th>
-                                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-400">
-                                        Rol
-                                    </th>
-                                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-400">
-                                        Registro
-                                    </th>
-                                    <th className="text-right py-4 px-6 text-sm font-semibold text-gray-400">
-                                        Acciones
-                                    </th>
+                                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-400">Usuario</th>
+                                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-400">Email</th>
+                                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-400">Correo</th>
+                                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-400">Rol</th>
+                                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-400">Registro</th>
+                                    <th className="text-right py-4 px-6 text-sm font-semibold text-gray-400">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-dark-800">
@@ -218,11 +248,19 @@ export default function AdminUsersPage() {
                                         <td className="py-4 px-6">
                                             <p className="font-semibold text-white">{user.full_name}</p>
                                         </td>
-                                        <td className="py-4 px-6 text-gray-300">
+                                        <td className="py-4 px-6 text-gray-300 text-sm">
                                             {user.email}
                                         </td>
-                                        <td className="py-4 px-6 text-gray-300">
-                                            {user.phone || '-'}
+                                        <td className="py-4 px-6">
+                                            {user.is_verified ? (
+                                                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-green-500/15 text-green-400 border border-green-500/20">
+                                                    <MailCheck className="w-3 h-3" /> Verificado
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/15 text-yellow-400 border border-yellow-500/20">
+                                                    <MailWarning className="w-3 h-3" /> Sin verificar
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="py-4 px-6">
                                             <span className={`badge ${user.role === 'admin'
@@ -234,30 +272,38 @@ export default function AdminUsersPage() {
                                                 {user.role === 'admin' ? '🛡️ Admin' : user.role === 'promoter' ? '📢 Promotora' : '👤 Usuario'}
                                             </span>
                                         </td>
-                                        <td className="py-4 px-6 text-gray-300">
+                                        <td className="py-4 px-6 text-gray-300 text-sm">
                                             {formatDate(user.created_at, 'PPP')}
                                         </td>
                                         <td className="py-4 px-6">
-                                            <div className="flex items-center justify-end gap-2">
+                                            <div className="flex items-center justify-end gap-2 flex-wrap">
+                                                {!user.is_verified && (
+                                                    <button
+                                                        onClick={() => handleVerify(user.id)}
+                                                        className="btn btn-sm bg-green-600 hover:bg-green-700 text-white"
+                                                        title="Verificar correo manualmente"
+                                                    >
+                                                        <UserCheck className="w-4 h-4 mr-1" />
+                                                        Verificar
+                                                    </button>
+                                                )}
                                                 {user.role === 'user' ? (
                                                     <button
                                                         onClick={() => handleRoleChange(user.id, 'admin')}
                                                         className="btn btn-sm bg-red-600 hover:bg-red-700 text-white"
-                                                        title="Promover a Admin"
                                                     >
                                                         <Shield className="w-4 h-4 mr-1" />
                                                         Hacer Admin
                                                     </button>
-                                                ) : (
+                                                ) : user.role === 'admin' ? (
                                                     <button
                                                         onClick={() => handleRoleChange(user.id, 'user')}
                                                         className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white"
-                                                        title="Degradar a Usuario"
                                                     >
                                                         <UserIcon className="w-4 h-4 mr-1" />
                                                         Hacer Usuario
                                                     </button>
-                                                )}
+                                                ) : null}
                                                 <button
                                                     onClick={() => handleDelete(user)}
                                                     className="btn btn-sm bg-dark-700 hover:bg-red-600/20 text-gray-400 hover:text-red-500 border-dark-600 transition-all"
@@ -275,11 +321,13 @@ export default function AdminUsersPage() {
                 </div>
             )}
 
-            {/* Summary */}
             <div className="flex items-center justify-between text-sm text-gray-500">
-                <p>
-                    Mostrando {filteredUsers.length} de {users.length} usuarios
-                </p>
+                <p>Mostrando {filteredUsers.length} de {users.length} usuarios</p>
+                {verifiedFilter !== 'all' && (
+                    <button onClick={() => setVerifiedFilter('all')} className="text-primary-400 hover:text-primary-300">
+                        Limpiar filtro
+                    </button>
+                )}
             </div>
         </div>
     );

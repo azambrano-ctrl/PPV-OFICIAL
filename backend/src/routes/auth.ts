@@ -461,8 +461,8 @@ router.get(
         }
 
         const result = await pool.query(
-            `SELECT id, email, full_name, phone, role, created_at 
-             FROM users 
+            `SELECT id, email, full_name, phone, role, is_verified, created_at
+             FROM users
              ORDER BY created_at DESC`
         );
 
@@ -582,6 +582,34 @@ router.delete(
             message: 'Usuario eliminado exitosamente.',
             data: result.rows[0],
         });
+    })
+);
+
+/**
+ * PUT /api/auth/users/:userId/verify
+ * Manually verify a user's email (Admin only)
+ */
+router.put(
+    '/users/:userId/verify',
+    authenticate,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (req.user!.role !== 'admin') {
+            res.status(403).json({ success: false, error: 'Access denied. Admin only.' });
+            return;
+        }
+
+        const { userId } = req.params;
+        const result = await pool.query(
+            'UPDATE users SET is_verified = TRUE WHERE id = $1 RETURNING id, email',
+            [userId]
+        );
+
+        if (result.rows.length === 0) {
+            res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
+            return;
+        }
+
+        res.json({ success: true, message: 'Correo verificado exitosamente.', data: result.rows[0] });
     })
 );
 
