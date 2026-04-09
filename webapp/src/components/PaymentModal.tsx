@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, CreditCard, Loader2 } from 'lucide-react';
+import { X, CreditCard, Tag, CheckCircle, XCircle } from 'lucide-react';
 import { paymentsAPI, handleAPIError } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
@@ -27,6 +27,49 @@ function PaymentFormContent({ event, purchaseType = 'event', onClose }: PaymentM
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal'>('card');
+
+    // Coupon state
+    const [couponInput, setCouponInput] = useState('');
+    const [couponLoading, setCouponLoading] = useState(false);
+    const [appliedCoupon, setAppliedCoupon] = useState<{
+        code: string;
+        discountType: 'percentage' | 'fixed';
+        discountValue: number;
+    } | null>(null);
+    const [couponError, setCouponError] = useState('');
+
+    const originalPrice = Number(event?.price || 0);
+    const discountAmount = appliedCoupon
+        ? appliedCoupon.discountType === 'percentage'
+            ? Math.min(originalPrice * appliedCoupon.discountValue / 100, originalPrice)
+            : Math.min(appliedCoupon.discountValue, originalPrice)
+        : 0;
+    const finalPrice = Math.max(0, originalPrice - discountAmount);
+
+    const handleApplyCoupon = async () => {
+        if (!couponInput.trim()) return;
+        setCouponLoading(true);
+        setCouponError('');
+        setAppliedCoupon(null);
+        try {
+            const res = await paymentsAPI.validateCoupon(couponInput.trim(), event?.id);
+            setAppliedCoupon({
+                code: res.data.data.code,
+                discountType: res.data.data.discountType,
+                discountValue: res.data.data.discountValue,
+            });
+        } catch (err: any) {
+            setCouponError(err.response?.data?.message || 'Cupón inválido');
+        } finally {
+            setCouponLoading(false);
+        }
+    };
+
+    const handleRemoveCoupon = () => {
+        setAppliedCoupon(null);
+        setCouponInput('');
+        setCouponError('');
+    };
 
     const handlePayPalSuccess = (orderId: string) => {
         toast.success('¡Pago exitoso! Redirigiendo...');
@@ -70,14 +113,74 @@ function PaymentFormContent({ event, purchaseType = 'event', onClose }: PaymentM
                     <h3 className="font-display font-black text-xl text-white uppercase tracking-tighter italic leading-none mb-3">
                         {event?.title || 'Pase de Temporada'}
                     </h3>
-                    <div className="flex items-center justify-between pt-3 border-t border-white/5">
-                        <span className="text-xs text-dark-400 font-bold uppercase tracking-widest">Inversión Final:</span>
-                        <span className="text-2xl font-black text-white tracking-tighter italic">
-                            ${Number(event?.price || 0).toFixed(2)} <span className="text-xs text-dark-500 not-italic ml-1">{event?.currency || 'USD'}</span>
-                        </span>
+                    <div className="pt-3 border-t border-white/5 space-y-1">
+                        {appliedCoupon && (
+                            <>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs text-dark-400 font-bold uppercase tracking-widest">Precio original:</span>
+                                    <span className="text-sm text-dark-400 line-through">${originalPrice.toFixed(2)}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs text-green-400 font-bold uppercase tracking-widest">
+                                        Descuento ({appliedCoupon.discountType === 'percentage' ? `${appliedCoupon.discountValue}%` : `$${appliedCoupon.discountValue}`}):
+                                    </span>
+                                    <span className="text-sm text-green-400 font-bold">-${discountAmount.toFixed(2)}</span>
+                                </div>
+                            </>
+                        )}
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs text-dark-400 font-bold uppercase tracking-widest">Total a pagar:</span>
+                            <span className="text-2xl font-black text-white tracking-tighter italic">
+                                ${finalPrice.toFixed(2)} <span className="text-xs text-dark-500 not-italic ml-1">{event?.currency || 'USD'}</span>
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            {/* Coupon Code */}
+            {purchaseType === 'event' && (
+                <div>
+                    <label className="block text-[10px] font-black text-dark-400 uppercase tracking-[0.2em] mb-2">
+                        <Tag className="inline w-3 h-3 mr-1" />Código de descuento
+                    </label>
+                    {appliedCoupon ? (
+                        <div className="flex items-center justify-between bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3">
+                            <div className="flex items-center gap-2">
+                                <CheckCircle className="w-4 h-4 text-green-400" />
+                                <span className="font-mono font-black text-green-400 tracking-widest">{appliedCoupon.code}</span>
+                                <span className="text-xs text-green-300">aplicado</span>
+                            </div>
+                            <button onClick={handleRemoveCoupon} className="text-dark-400 hover:text-red-400 transition-colors">
+                                <XCircle className="w-4 h-4" />
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={couponInput}
+                                onChange={(e) => { setCouponInput(e.target.value.toUpperCase()); setCouponError(''); }}
+                                onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                                placeholder="FIGHT20"
+                                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white font-mono tracking-widest placeholder:text-dark-600 placeholder:font-sans placeholder:tracking-normal focus:outline-none focus:border-primary-500 text-sm uppercase"
+                            />
+                            <button
+                                onClick={handleApplyCoupon}
+                                disabled={couponLoading || !couponInput.trim()}
+                                className="px-4 py-2.5 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 text-white font-bold text-sm rounded-xl transition-colors whitespace-nowrap"
+                            >
+                                {couponLoading ? '...' : 'Aplicar'}
+                            </button>
+                        </div>
+                    )}
+                    {couponError && (
+                        <p className="text-xs text-red-400 mt-1.5 flex items-center gap-1">
+                            <XCircle className="w-3 h-3" />{couponError}
+                        </p>
+                    )}
+                </div>
+            )}
 
             {/* Payment Method Selection */}
             <div>
@@ -143,6 +246,7 @@ function PaymentFormContent({ event, purchaseType = 'event', onClose }: PaymentM
                                     eventId: event?.id,
                                     purchaseType,
                                     paymentMethod: 'paypal',
+                                    couponCode: appliedCoupon?.code,
                                 });
                                 return response.data.data.orderId;
                             } catch (error) {

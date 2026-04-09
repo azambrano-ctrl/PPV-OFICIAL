@@ -11,7 +11,8 @@ import {
     BarChart3,
     Film,
     Globe,
-    Mail
+    Mail,
+    Tag
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/store';
 
@@ -22,6 +23,7 @@ const navigation = [
     { name: 'Usuarios', href: '/admin/users', icon: Users },
     { name: 'Peleadores', href: '/admin/fighters', icon: Users },
     { name: 'Marketing', href: '/admin/marketing', icon: Mail },
+    { name: 'Cupones', href: '/admin/coupons', icon: Tag },
     { name: 'Estadísticas', href: '/admin/stats', icon: BarChart3 },
     { name: 'Configuración', href: '/admin/settings', icon: Settings },
 ];

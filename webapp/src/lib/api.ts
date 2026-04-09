@@ -204,6 +204,25 @@ export const paymentsAPI = {
 
     refund: (purchaseId: string) =>
         api.post(`/payments/refund/${purchaseId}`),
+
+    validateCoupon: (code: string, eventId?: string) =>
+        api.post('/payments/validate-coupon', { code, eventId }),
+
+    getCoupons: () =>
+        api.get('/payments/coupons'),
+
+    createCoupon: (data: {
+        code: string;
+        discountType: 'percentage' | 'fixed';
+        discountValue: number;
+        eventId?: string;
+        maxUses?: number;
+        validUntil?: string;
+        minAmount?: number;
+    }) => api.post('/payments/coupons', data),
+
+    deleteCoupon: (id: string) =>
+        api.delete(`/payments/coupons/${id}`),
 };
 
 export const streamingAPI = {
