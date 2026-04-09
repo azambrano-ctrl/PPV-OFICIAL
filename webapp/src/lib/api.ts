@@ -132,6 +132,9 @@ export const authAPI = {
     verifyUserManually: (userId: string) =>
         api.put(`/auth/users/${userId}/verify`),
 
+    sendVerificationBulk: () =>
+        api.post('/auth/users/send-verification-bulk'),
+
     verifyEmail: (token: string) =>
         api.post('/auth/verify-email', { token }),
 };

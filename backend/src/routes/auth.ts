@@ -586,6 +586,74 @@ router.delete(
 );
 
 /**
+ * POST /api/auth/users/send-verification-bulk
+ * Resend verification email to ALL unverified users (Admin only)
+ */
+router.post(
+    '/users/send-verification-bulk',
+    authenticate,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (req.user!.role !== 'admin') {
+            res.status(403).json({ success: false, error: 'Access denied. Admin only.' });
+            return;
+        }
+
+        // Get unverified users
+        const usersResult = await pool.query(
+            `SELECT id, email, full_name FROM users WHERE is_verified = FALSE ORDER BY created_at DESC`
+        );
+        const unverified = usersResult.rows;
+
+        if (unverified.length === 0) {
+            res.json({ success: true, message: 'Todos los usuarios ya están verificados.', sent: 0, failed: 0 });
+            return;
+        }
+
+        // Get site logo and name from settings
+        let logoUrl: string | null = null;
+        let siteName: string | undefined;
+        try {
+            const settingsResult = await pool.query('SELECT site_logo, site_name FROM settings WHERE id = 1');
+            if (settingsResult.rows.length > 0) {
+                logoUrl = settingsResult.rows[0].site_logo || null;
+                siteName = settingsResult.rows[0].site_name || undefined;
+            }
+        } catch (_) { /* settings optional */ }
+
+        let sent = 0;
+        let failed = 0;
+        const errors: string[] = [];
+
+        // Send in batches of 5 to avoid rate limits
+        const BATCH = 5;
+        for (let i = 0; i < unverified.length; i += BATCH) {
+            const batch = unverified.slice(i, i + BATCH);
+            await Promise.all(batch.map(async (user: { id: string; email: string; full_name: string }) => {
+                try {
+                    const token = await createEmailVerificationToken(user.id);
+                    await sendVerificationEmail(user.email, user.full_name, token, logoUrl, siteName);
+                    sent++;
+                } catch (err: any) {
+                    failed++;
+                    errors.push(`${user.email}: ${err.message}`);
+                }
+            }));
+            if (i + BATCH < unverified.length) {
+                await new Promise(r => setTimeout(r, 600));
+            }
+        }
+
+        res.json({
+            success: true,
+            message: `Correos enviados: ${sent}. Fallidos: ${failed}.`,
+            sent,
+            failed,
+            errors: errors.length > 0 ? errors : undefined,
+        });
+    })
+);
+
+/**
  * PUT /api/auth/users/:userId/verify
  * Manually verify a user's email (Admin only)
  */

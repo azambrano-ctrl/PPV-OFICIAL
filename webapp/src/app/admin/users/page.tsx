@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Search, Filter, UserCheck, UserX, Shield, User as UserIcon, Trash2, MailCheck, MailWarning } from 'lucide-react';
+import { Search, Filter, UserCheck, UserX, Shield, User as UserIcon, Trash2, MailCheck, MailWarning, Send } from 'lucide-react';
 import { authAPI, handleAPIError } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -20,6 +20,7 @@ export default function AdminUsersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
+    const [sending, setSending] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState<string>('all');
     const [verifiedFilter, setVerifiedFilter] = useState<string>('all');
@@ -78,6 +79,26 @@ export default function AdminUsersPage() {
         }
     };
 
+    const handleSendVerificationBulk = async () => {
+        const unverifiedCount = users.filter(u => !u.is_verified).length;
+        if (unverifiedCount === 0) {
+            toast.success('Todos los usuarios ya están verificados.');
+            return;
+        }
+        if (!confirm(`¿Enviar correo de verificación a los ${unverifiedCount} usuarios sin verificar?`)) return;
+
+        setSending(true);
+        try {
+            const response = await authAPI.sendVerificationBulk();
+            const { sent, failed } = response.data;
+            toast.success(`✅ Enviados: ${sent}${failed > 0 ? ` | ❌ Fallidos: ${failed}` : ''}`);
+        } catch (error) {
+            toast.error(handleAPIError(error));
+        } finally {
+            setSending(false);
+        }
+    };
+
     const handleVerify = async (userId: string) => {
         try {
             await authAPI.verifyUserManually(userId);
@@ -122,9 +143,19 @@ export default function AdminUsersPage() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div>
-                <h1 className="text-3xl font-bold text-white mb-2">Gestión de Usuarios</h1>
-                <p className="text-gray-400">Administra los usuarios de la plataforma</p>
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                    <h1 className="text-3xl font-bold text-white mb-2">Gestión de Usuarios</h1>
+                    <p className="text-gray-400">Administra los usuarios de la plataforma</p>
+                </div>
+                <button
+                    onClick={handleSendVerificationBulk}
+                    disabled={sending}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-yellow-500 hover:bg-yellow-400 disabled:opacity-60 text-black font-bold rounded-xl transition-colors"
+                >
+                    <Send className="w-4 h-4" />
+                    {sending ? 'Enviando...' : `Enviar verificación (${users.filter(u => !u.is_verified).length} pendientes)`}
+                </button>
             </div>
 
             {/* Stats */}
