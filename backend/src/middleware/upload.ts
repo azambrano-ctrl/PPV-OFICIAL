@@ -19,7 +19,7 @@ const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL!; // https://cdn.tudominio.com o
 
 // Multer: store temp files in /tmp to avoid RAM issues on Render (512MB)
 const storage = multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, '/tmp'),
+    destination: (_req: Express.Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => cb(null, '/tmp'),
 });
 
 const fileFilter = (_req: any, file: any, cb: any) => {
