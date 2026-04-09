@@ -129,7 +129,6 @@ router.post(
 
         // Apply coupon discount if provided
         let discountAmount = 0;
-        let validatedCouponId: string | null = null;
         if (couponCode) {
             const pool = require('../config/database').default;
             const couponResult = await pool.query(
@@ -143,7 +142,6 @@ router.post(
             );
             if (couponResult.rows.length > 0) {
                 const coupon = couponResult.rows[0];
-                validatedCouponId = coupon.id;
                 if (coupon.discount_type === 'percentage') {
                     discountAmount = Math.min(amount * (parseFloat(coupon.discount_value) / 100), amount);
                 } else {
