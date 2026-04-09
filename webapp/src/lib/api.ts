@@ -221,6 +221,17 @@ export const paymentsAPI = {
         minAmount?: number;
     }) => api.post('/payments/coupons', data),
 
+    updateCoupon: (id: string, data: {
+        code: string;
+        discountType: 'percentage' | 'fixed';
+        discountValue: number;
+        eventId?: string;
+        maxUses?: number;
+        validUntil?: string;
+        minAmount?: number;
+        isActive?: boolean;
+    }) => api.put(`/payments/coupons/${id}`, data),
+
     deleteCoupon: (id: string) =>
         api.delete(`/payments/coupons/${id}`),
 };

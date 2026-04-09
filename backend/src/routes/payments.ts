@@ -480,8 +480,43 @@ router.post(
 );
 
 /**
+ * PUT /api/payments/coupons/:id
+ * Update a coupon (Admin only)
+ */
+router.put(
+    '/coupons/:id',
+    authenticate,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (req.user!.role !== 'admin') {
+            res.status(403).json({ success: false, error: 'Admin only' });
+            return;
+        }
+        const { code, discountType, discountValue, eventId, maxUses, validUntil, minAmount, isActive } = req.body;
+        const pool = require('../config/database').default;
+        const result = await pool.query(
+            `UPDATE coupons SET
+               code = UPPER($1),
+               discount_type = $2,
+               discount_value = $3,
+               event_id = $4,
+               max_uses = $5,
+               valid_until = $6,
+               min_amount = $7,
+               is_active = $8
+             WHERE id = $9 RETURNING *`,
+            [code, discountType, discountValue, eventId || null, maxUses || null, validUntil || null, minAmount || 0, isActive ?? true, req.params.id]
+        );
+        if (result.rows.length === 0) {
+            res.status(404).json({ success: false, message: 'Cupón no encontrado' });
+            return;
+        }
+        res.json({ success: true, data: result.rows[0] });
+    })
+);
+
+/**
  * DELETE /api/payments/coupons/:id
- * Delete / deactivate a coupon (Admin only)
+ * Permanently delete a coupon (Admin only)
  */
 router.delete(
     '/coupons/:id',
@@ -492,8 +527,8 @@ router.delete(
             return;
         }
         const pool = require('../config/database').default;
-        await pool.query('UPDATE coupons SET is_active = FALSE WHERE id = $1', [req.params.id]);
-        res.json({ success: true, message: 'Cupón desactivado' });
+        await pool.query('DELETE FROM coupons WHERE id = $1', [req.params.id]);
+        res.json({ success: true, message: 'Cupón eliminado' });
     })
 );
 
