@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
+import crypto from 'crypto';
 import { Request, Response, NextFunction } from 'express';
 import logger from '../config/logger';
 
@@ -152,5 +152,121 @@ export const authenticate = async (
             success: false,
             message: 'Token inválido o expirado',
         });
+    }
+};
+
+/**
+ * Middleware to optionally authenticate requests
+ * Adds user to req if token is valid, but doesn't fail if missing
+ */
+export const optionalAuthenticate = (
+    req: Request,
+    _res: Response,
+    next: NextFunction
+): void => {
+    try {
+        const authHeader = req.headers.authorization;
+        let token = '';
+
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            token = authHeader.substring(7);
+        } else if (req.cookies && req.cookies.accessToken) {
+            token = req.cookies.accessToken;
+        }
+
+        if (token) {
+            const decoded = verifyAccessToken(token);
+            (req as any).user = decoded;
+        }
+
+        next();
+    } catch (error) {
+        // Just proceed without user if token is invalid
+        next();
+    }
+};
+
+/**
+ * Middleware to check if user is admin
+ */
+export const requireAdmin = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): void => {
+    const authReq = req as AuthRequest;
+    if (!authReq.user) {
+        res.status(401).json({
+            success: false,
+            message: 'Authentication required',
+        });
+        return;
+    }
+
+    if (authReq.user.role !== 'admin') {
+        res.status(403).json({
+            success: false,
+            message: 'Admin access required',
+        });
+        return;
+    }
+
+    next();
+};
+
+/**
+ * Generate stream token for video access
+ */
+export const generateStreamToken = (
+    userId: string,
+    eventId: string,
+    sessionId: string
+): string => {
+    return jwt.sign(
+        { userId, eventId, sessionId, type: 'stream' },
+        JWT_SECRET,
+        { expiresIn: '6h' }
+    ) as string;
+};
+
+/**
+ * Verify stream token
+ */
+export const verifyStreamToken = (token: string): { userId: string; eventId: string; sessionId: string } => {
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        if (decoded.type !== 'stream') {
+            throw new Error('Invalid token type');
+        }
+        return {
+            userId: decoded.userId,
+            eventId: decoded.eventId,
+            sessionId: decoded.sessionId
+        };
+    } catch (error) {
+        throw new Error('Invalid or expired stream token');
+    }
+};
+
+/**
+ * Sign Bunny.net Stream URL
+ */
+export const signBunnyUrl = (
+    url: string,
+    securityKey: string,
+    expirationTime: number = 3 * 3600
+): string => {
+    try {
+        const parsedUrl = new URL(url);
+        const path = parsedUrl.pathname;
+        const expires = Math.floor(Date.now() / 1000) + expirationTime;
+
+        const hashable = securityKey + path + expires;
+        const token = crypto.createHash('sha256').update(hashable).digest('hex');
+
+        return `${url}${url.includes('?') ? '&' : '?'}token=${token}&expires=${expires}`;
+    } catch (error) {
+        logger.error('Error signing Bunny URL:', error);
+        return url;
     }
 };
