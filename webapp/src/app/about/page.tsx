@@ -174,18 +174,24 @@ export default function AboutPage() {
                             <p className="text-dark-200 text-xl leading-relaxed font-light">
                                 {missionText}
                             </p>
-                            <div className="grid grid-cols-2 gap-10 pt-6">
-                                <div className="p-6 rounded-2xl bg-dark-900/50 border border-dark-800">
+                            <div className="grid grid-cols-2 gap-6 pt-6">
+                                <div className="p-6 rounded-2xl bg-dark-900/50 border border-dark-800 hover:border-primary-500/30 transition-colors">
                                     <p className="text-4xl font-black text-primary-500 mb-1">
                                         {stats?.totalUsers !== undefined ? `${stats.totalUsers}+` : (settings?.about_stats_users || '10k+')}
                                     </p>
-                                    <p className="text-xs text-dark-400 uppercase tracking-widest font-bold">{t('about.active_users')}</p>
+                                    <p className="text-xs text-dark-400 uppercase tracking-widest font-bold">Comunidad en crecimiento</p>
+                                    <p className="text-xs text-dark-600 mt-1">Fanáticos registrados</p>
                                 </div>
-                                <div className="p-6 rounded-2xl bg-dark-900/50 border border-dark-800">
+                                <div className="p-6 rounded-2xl bg-dark-900/50 border border-dark-800 hover:border-primary-500/30 transition-colors">
                                     <p className="text-4xl font-black text-primary-500 mb-1">
                                         {stats?.totalEvents !== undefined ? `${stats.totalEvents}+` : (settings?.about_stats_events || '50+')}
                                     </p>
-                                    <p className="text-xs text-dark-400 uppercase tracking-widest font-bold">{t('about.live_events')}</p>
+                                    <p className="text-xs text-dark-400 uppercase tracking-widest font-bold">Eventos transmitidos</p>
+                                    <p className="text-xs text-dark-600 mt-1">PPV en vivo y en diferido</p>
+                                </div>
+                                <div className="p-6 rounded-2xl bg-dark-900/50 border border-dark-800 hover:border-primary-500/30 transition-colors col-span-2">
+                                    <p className="text-4xl font-black text-primary-500 mb-1">🇪🇨 Ecuador</p>
+                                    <p className="text-xs text-dark-400 uppercase tracking-widest font-bold">Hecho en Ecuador, visto en el mundo</p>
                                 </div>
                             </div>
                         </motion.div>
@@ -285,7 +291,7 @@ export default function AboutPage() {
                             </p>
                             <div className="flex items-center justify-center gap-4 text-primary-500 font-bold tracking-widest uppercase">
                                 <span className="w-10 h-[2px] bg-primary-500"></span>
-                                <span>La Troncal, Ecuador</span>
+                                <span>🇪🇨 La Troncal, Ecuador</span>
                                 <span className="w-10 h-[2px] bg-primary-500"></span>
                             </div>
                         </div>
