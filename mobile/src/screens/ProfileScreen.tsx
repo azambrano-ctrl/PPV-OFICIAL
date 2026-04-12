@@ -7,8 +7,8 @@ import {
     ScrollView,
     ActivityIndicator,
     Alert,
-    Image,
-    TextInput
+    TextInput,
+    StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -20,299 +20,286 @@ import {
     ChevronRight,
     ArrowLeft,
     Shield,
-    Camera
+    Ticket,
+    Eye,
+    EyeOff,
 } from 'lucide-react-native';
 import { authService } from '../services';
 import { useAuthStore } from '../store/authStore';
-import { useSettingsStore } from '../store/settingsStore';
-import { getImageUrl } from '../config/constants';
 
 export default function ProfileScreen({ navigation }: any) {
     const { user, logout } = useAuthStore();
-    const [purchases, setPurchases] = React.useState([]);
+    const [purchases, setPurchases] = React.useState<any[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [isChangingPass, setIsChangingPass] = React.useState(false);
     const [currentPassword, setCurrentPassword] = React.useState('');
     const [newPassword, setNewPassword] = React.useState('');
     const [confirmPassword, setConfirmPassword] = React.useState('');
-
-    const fetchData = async () => {
-        try {
-            const response = await authService.getPurchases();
-            if (response.success) {
-                setPurchases(response.data || []);
-            }
-        } catch (error) {
-            console.error('Error fetching profile data:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const [showCurrent, setShowCurrent] = React.useState(false);
+    const [showNew, setShowNew] = React.useState(false);
 
     React.useEffect(() => {
-        fetchData();
+        authService.getPurchases()
+            .then(res => { if (res.success) setPurchases(res.data || []); })
+            .catch(console.error)
+            .finally(() => setLoading(false));
     }, []);
 
-    const handleLogout = () => {
-        Alert.alert(
-            "Cerrar Sesión",
-            "¿Estás seguro de que deseas salir?",
-            [
-                { text: "Cancelar", style: "cancel" },
-                {
-                    text: "Salir",
-                    onPress: async () => {
-                        await logout();
-                        navigation.navigate('Home');
-                    },
-                    style: "destructive"
-                }
-            ]
-        );
-    };
+    const handleLogout = () =>
+        Alert.alert('Cerrar Sesión', '¿Estás seguro de que deseas salir?', [
+            { text: 'Cancelar', style: 'cancel' },
+            {
+                text: 'Salir',
+                style: 'destructive',
+                onPress: async () => { await logout(); navigation.navigate('Home'); },
+            },
+        ]);
 
     const handleChangePassword = async () => {
         if (!currentPassword || !newPassword || !confirmPassword) {
-            Alert.alert("Error", "Por favor completa todos los campos");
-            return;
+            return Alert.alert('Error', 'Completa todos los campos');
         }
         if (newPassword !== confirmPassword) {
-            Alert.alert("Error", "Las contraseñas no coinciden");
-            return;
+            return Alert.alert('Error', 'Las contraseñas no coinciden');
         }
         if (newPassword.length < 8) {
-            Alert.alert("Error", "La nueva contraseña debe tener al menos 8 caracteres");
-            return;
+            return Alert.alert('Error', 'Mínimo 8 caracteres');
         }
-
         try {
             const res = await authService.changePassword(currentPassword, newPassword);
             if (res.success) {
-                Alert.alert("Éxito", "Contraseña actualizada correctamente");
+                Alert.alert('¡Listo!', 'Contraseña actualizada correctamente');
                 setIsChangingPass(false);
-                setCurrentPassword('');
-                setNewPassword('');
-                setConfirmPassword('');
+                setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
             }
         } catch (error: any) {
-            Alert.alert("Error", error.response?.data?.message || "Error al cambiar la contraseña");
+            Alert.alert('Error', error.response?.data?.message || 'Error al cambiar contraseña');
         }
     };
 
+    const isAdmin = user?.role === 'admin';
+
     if (loading) {
         return (
-            <View style={styles.loadingContainer}>
+            <View style={styles.center}>
                 <ActivityIndicator size="large" color="#ef4444" />
             </View>
         );
     }
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                    <ArrowLeft color="#fff" size={24} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Mi Perfil</Text>
-                <View style={{ width: 44 }} />
-            </View>
+        <View style={styles.screen}>
+            <StatusBar barStyle="light-content" backgroundColor="#080d14" />
+            <SafeAreaView style={styles.safe} edges={['top']}>
+                <View style={styles.topBar}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+                        <ArrowLeft color="#fff" size={22} />
+                    </TouchableOpacity>
+                    <Text style={styles.topTitle}>Mi Perfil</Text>
+                    <View style={{ width: 38 }} />
+                </View>
+            </SafeAreaView>
 
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                {/* Profile Info */}
-                <View style={styles.profileCard}>
-                    <View style={styles.avatarContainer}>
+            <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+                {/* Avatar card */}
+                <View style={styles.avatarCard}>
+                    <View style={styles.avatarRing}>
                         <View style={styles.avatarInner}>
-                            <User color="#fff" size={48} />
+                            <User size={40} color="#fff" />
                         </View>
-                        <TouchableOpacity style={styles.editAvatarBtn}>
-                            <Camera color="#fff" size={16} />
-                        </TouchableOpacity>
                     </View>
                     <Text style={styles.userName}>{user?.full_name}</Text>
                     <View style={styles.emailRow}>
-                        <Mail color="#94a3b8" size={14} />
+                        <Mail size={13} color="#475569" />
                         <Text style={styles.userEmail}>{user?.email}</Text>
                     </View>
-                    <View style={[styles.roleBadge, { backgroundColor: user?.role === 'admin' ? '#ef4444' : '#334155' }]}>
-                        <Shield color="#fff" size={12} />
-                        <Text style={styles.roleText}>{user?.role?.toUpperCase()}</Text>
+                    <View style={[styles.roleBadge, isAdmin && styles.roleBadgeAdmin]}>
+                        <Shield size={11} color={isAdmin ? '#ef4444' : '#475569'} />
+                        <Text style={[styles.roleText, isAdmin && styles.roleTextAdmin]}>
+                            {user?.role?.toUpperCase()}
+                        </Text>
                     </View>
                 </View>
 
-                {/* Section: Purchases */}
+                {/* Purchases */}
                 <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <ShoppingBag color="#ef4444" size={20} />
-                        <Text style={styles.sectionTitle}>Mis Eventos Adquiridos</Text>
+                    <View style={styles.sectionHead}>
+                        <ShoppingBag size={16} color="#ef4444" />
+                        <Text style={styles.sectionTitle}>Mis Eventos</Text>
+                        <View style={styles.countBadge}>
+                            <Text style={styles.countText}>{purchases.length}</Text>
+                        </View>
                     </View>
 
                     {purchases.length === 0 ? (
                         <View style={styles.emptyCard}>
-                            <Text style={styles.emptyText}>Aún no has adquirido ningún evento.</Text>
+                            <Ticket size={32} color="#1a2535" />
+                            <Text style={styles.emptyTitle}>Sin eventos adquiridos</Text>
                             <TouchableOpacity
-                                style={styles.browseBtn}
+                                style={styles.exploreBtn}
                                 onPress={() => navigation.navigate('Home')}
                             >
-                                <Text style={styles.browseBtnText}>Explorar Eventos</Text>
+                                <Text style={styles.exploreBtnText}>Explorar Cartelera</Text>
                             </TouchableOpacity>
                         </View>
                     ) : (
-                        purchases.map((purchase: any) => (
+                        purchases.map((p: any) => (
                             <TouchableOpacity
-                                key={purchase.id}
+                                key={p.id}
                                 style={styles.purchaseItem}
-                                onPress={() => navigation.navigate('EventDetail', { eventId: purchase.event_id })}
+                                onPress={() => navigation.navigate('EventDetail', { eventId: p.event_id })}
+                                activeOpacity={0.8}
                             >
-                                <View style={styles.purchaseInfo}>
-                                    <Text style={styles.purchaseTitle}>{purchase.event_title}</Text>
+                                <View style={styles.purchaseLeft}>
+                                    <Text style={styles.purchaseTitle} numberOfLines={1}>{p.event_title}</Text>
                                     <Text style={styles.purchaseDate}>
-                                        Comprado el {new Date(purchase.created_at).toLocaleDateString()}
+                                        {new Date(p.created_at).toLocaleDateString('es', {
+                                            day: 'numeric', month: 'short', year: 'numeric',
+                                        })}
                                     </Text>
                                 </View>
-                                <View style={styles.purchaseAction}>
-                                    <Text style={styles.priceText}>${purchase.final_amount}</Text>
-                                    <ChevronRight color="#94a3b8" size={20} />
+                                <View style={styles.purchaseRight}>
+                                    <Text style={styles.purchaseAmount}>${p.final_amount}</Text>
+                                    <ChevronRight size={16} color="#334155" />
                                 </View>
                             </TouchableOpacity>
                         ))
                     )}
                 </View>
 
-                {/* Section: Account Settings */}
+                {/* Account settings */}
                 <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <Lock color="#ef4444" size={20} />
-                        <Text style={styles.sectionTitle}>Configuración de Cuenta</Text>
+                    <View style={styles.sectionHead}>
+                        <Lock size={16} color="#ef4444" />
+                        <Text style={styles.sectionTitle}>Cuenta</Text>
                     </View>
 
                     <TouchableOpacity
-                        style={styles.menuItem}
+                        style={styles.menuRow}
                         onPress={() => setIsChangingPass(!isChangingPass)}
+                        activeOpacity={0.8}
                     >
-                        <Text style={styles.menuItemText}>Cambiar Contraseña</Text>
-                        <ChevronRight color="#94a3b8" size={20} />
+                        <Text style={styles.menuLabel}>Cambiar Contraseña</Text>
+                        <ChevronRight size={18} color="#334155" />
                     </TouchableOpacity>
 
                     {isChangingPass && (
                         <View style={styles.passForm}>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Contraseña Actual"
-                                placeholderTextColor="#64748b"
-                                secureTextEntry
-                                value={currentPassword}
-                                onChangeText={setCurrentPassword}
-                            />
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Nueva Contraseña"
-                                placeholderTextColor="#64748b"
-                                secureTextEntry
-                                value={newPassword}
-                                onChangeText={setNewPassword}
-                            />
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Confirmar Nueva Contraseña"
-                                placeholderTextColor="#64748b"
-                                secureTextEntry
-                                value={confirmPassword}
-                                onChangeText={setConfirmPassword}
-                            />
-                            <TouchableOpacity
-                                style={styles.saveBtn}
-                                onPress={handleChangePassword}
-                            >
+                            {[
+                                { label: 'Contraseña actual', value: currentPassword, setter: setCurrentPassword, show: showCurrent, toggleShow: () => setShowCurrent(!showCurrent) },
+                                { label: 'Nueva contraseña', value: newPassword, setter: setNewPassword, show: showNew, toggleShow: () => setShowNew(!showNew) },
+                                { label: 'Confirmar contraseña', value: confirmPassword, setter: setConfirmPassword, show: false, toggleShow: undefined },
+                            ].map(({ label, value, setter, show, toggleShow }) => (
+                                <View key={label} style={styles.passField}>
+                                    <Text style={styles.passLabel}>{label}</Text>
+                                    <View style={styles.passInputRow}>
+                                        <TextInput
+                                            style={styles.passInput}
+                                            value={value}
+                                            onChangeText={setter}
+                                            secureTextEntry={!show && toggleShow !== undefined ? true : !show}
+                                            placeholderTextColor="#334155"
+                                            placeholder="••••••••"
+                                        />
+                                        {toggleShow && (
+                                            <TouchableOpacity onPress={toggleShow}>
+                                                {show ? <EyeOff size={16} color="#475569" /> : <Eye size={16} color="#475569" />}
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
+                                </View>
+                            ))}
+                            <TouchableOpacity style={styles.saveBtn} onPress={handleChangePassword}>
                                 <Text style={styles.saveBtnText}>Actualizar Contraseña</Text>
                             </TouchableOpacity>
                         </View>
                     )}
 
-                    <TouchableOpacity
-                        style={[styles.menuItem, styles.logoutItem]}
-                        onPress={handleLogout}
-                    >
-                        <LogOut color="#ef4444" size={20} />
-                        <Text style={[styles.menuItemText, { color: '#ef4444' }]}>Cerrar Sesión</Text>
+                    <TouchableOpacity style={styles.logoutRow} onPress={handleLogout} activeOpacity={0.8}>
+                        <LogOut size={18} color="#ef4444" />
+                        <Text style={styles.logoutText}>Cerrar Sesión</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>
-        </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
+    screen: {
         flex: 1,
-        backgroundColor: '#0f172a',
+        backgroundColor: '#080d14',
     },
-    loadingContainer: {
+    center: {
         flex: 1,
-        backgroundColor: '#0f172a',
+        backgroundColor: '#080d14',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    header: {
+    safe: {
+        backgroundColor: '#080d14',
+    },
+    topBar: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 15,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#1e293b',
+        borderBottomColor: '#111c2a',
     },
     backBtn: {
-        padding: 8,
+        width: 38,
+        height: 38,
+        borderRadius: 19,
+        backgroundColor: '#0d1520',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#1a2535',
     },
-    headerTitle: {
+    topTitle: {
         color: '#fff',
-        fontSize: 20,
-        fontWeight: 'bold',
+        fontSize: 18,
+        fontWeight: '800',
     },
-    scrollContent: {
+    scroll: {
         padding: 20,
+        paddingBottom: 40,
     },
-    profileCard: {
-        backgroundColor: '#1e293b',
-        borderRadius: 16,
-        padding: 24,
+    avatarCard: {
+        backgroundColor: '#0d1520',
+        borderRadius: 20,
+        padding: 28,
         alignItems: 'center',
         marginBottom: 24,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: '#1a2535',
     },
-    avatarContainer: {
-        position: 'relative',
-        marginBottom: 16,
-    },
-    avatarInner: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        backgroundColor: '#334155',
-        justifyContent: 'center',
-        alignItems: 'center',
+    avatarRing: {
+        width: 90,
+        height: 90,
+        borderRadius: 45,
         borderWidth: 2,
         borderColor: '#ef4444',
-    },
-    editAvatarBtn: {
-        position: 'absolute',
-        bottom: 0,
-        right: 0,
-        backgroundColor: '#ef4444',
-        width: 32,
-        height: 32,
-        borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 2,
-        borderColor: '#1e293b',
+        marginBottom: 16,
+        padding: 3,
+    },
+    avatarInner: {
+        flex: 1,
+        borderRadius: 42,
+        backgroundColor: '#111c2a',
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: '100%',
     },
     userName: {
         color: '#fff',
-        fontSize: 22,
-        fontWeight: 'bold',
-        marginBottom: 4,
+        fontSize: 20,
+        fontWeight: '800',
+        marginBottom: 6,
     },
     emailRow: {
         flexDirection: 'row',
@@ -321,139 +308,194 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     userEmail: {
-        color: '#94a3b8',
+        color: '#64748b',
         fontSize: 14,
     },
     roleBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 12,
+        gap: 5,
+        paddingHorizontal: 12,
+        paddingVertical: 5,
+        borderRadius: 20,
+        backgroundColor: '#111c2a',
+        borderWidth: 1,
+        borderColor: '#1a2535',
+    },
+    roleBadgeAdmin: {
+        backgroundColor: 'rgba(239,68,68,0.08)',
+        borderColor: 'rgba(239,68,68,0.2)',
     },
     roleText: {
-        color: '#fff',
+        color: '#475569',
         fontSize: 10,
-        fontWeight: 'bold',
+        fontWeight: '800',
+        letterSpacing: 1,
+    },
+    roleTextAdmin: {
+        color: '#ef4444',
     },
     section: {
         marginBottom: 24,
     },
-    sectionHeader: {
+    sectionHead: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
-        marginBottom: 16,
+        gap: 8,
+        marginBottom: 14,
     },
     sectionTitle: {
         color: '#fff',
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontSize: 16,
+        fontWeight: '800',
+        flex: 1,
+    },
+    countBadge: {
+        backgroundColor: '#111c2a',
+        borderRadius: 10,
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+    },
+    countText: {
+        color: '#64748b',
+        fontSize: 12,
+        fontWeight: '700',
+    },
+    emptyCard: {
+        backgroundColor: '#0d1520',
+        borderRadius: 16,
+        padding: 28,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#1a2535',
+        borderStyle: 'dashed',
+        gap: 12,
+    },
+    emptyTitle: {
+        color: '#334155',
+        fontSize: 15,
+        fontWeight: '600',
+    },
+    exploreBtn: {
+        backgroundColor: '#ef4444',
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 10,
+    },
+    exploreBtnText: {
+        color: '#fff',
+        fontWeight: '700',
+        fontSize: 13,
     },
     purchaseItem: {
-        backgroundColor: '#1e293b',
-        borderRadius: 12,
+        backgroundColor: '#0d1520',
+        borderRadius: 14,
         padding: 16,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: 10,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: '#1a2535',
     },
-    purchaseInfo: {
+    purchaseLeft: {
         flex: 1,
+        marginRight: 12,
     },
     purchaseTitle: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold',
+        color: '#e2e8f0',
+        fontSize: 15,
+        fontWeight: '700',
         marginBottom: 4,
     },
     purchaseDate: {
-        color: '#64748b',
+        color: '#475569',
         fontSize: 12,
     },
-    purchaseAction: {
+    purchaseRight: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
+        gap: 6,
     },
-    priceText: {
+    purchaseAmount: {
         color: '#ef4444',
-        fontWeight: 'bold',
-        fontSize: 16,
+        fontWeight: '800',
+        fontSize: 15,
     },
-    emptyCard: {
-        backgroundColor: '#1e293b',
-        borderRadius: 12,
-        padding: 24,
-        alignItems: 'center',
-        borderStyle: 'dashed',
-        borderWidth: 1,
-        borderColor: '#475569',
-    },
-    emptyText: {
-        color: '#94a3b8',
-        textAlign: 'center',
-        marginBottom: 16,
-    },
-    browseBtn: {
-        backgroundColor: '#ef4444',
-        paddingHorizontal: 20,
-        paddingVertical: 10,
-        borderRadius: 8,
-    },
-    browseBtnText: {
-        color: '#fff',
-        fontWeight: 'bold',
-    },
-    menuItem: {
-        backgroundColor: '#1e293b',
-        borderRadius: 12,
+    menuRow: {
+        backgroundColor: '#0d1520',
+        borderRadius: 14,
         padding: 18,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: 10,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: '#1a2535',
     },
-    menuItemText: {
-        color: '#fff',
-        fontSize: 16,
-    },
-    logoutItem: {
-        marginTop: 12,
-        justifyContent: 'flex-start',
-        gap: 12,
+    menuLabel: {
+        color: '#e2e8f0',
+        fontSize: 15,
+        fontWeight: '600',
     },
     passForm: {
-        backgroundColor: '#0f172a',
-        padding: 16,
-        borderRadius: 12,
-        marginBottom: 12,
+        backgroundColor: '#080d14',
+        borderRadius: 14,
+        padding: 18,
+        marginBottom: 10,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: '#1a2535',
+        gap: 14,
     },
-    input: {
-        backgroundColor: '#1e293b',
-        color: '#fff',
-        padding: 12,
-        borderRadius: 8,
-        marginBottom: 12,
+    passField: {
+        gap: 6,
+    },
+    passLabel: {
+        color: '#475569',
+        fontSize: 11,
+        fontWeight: '700',
+        letterSpacing: 1,
+    },
+    passInputRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#0d1520',
+        borderRadius: 10,
+        paddingHorizontal: 14,
+        height: 48,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: '#1a2535',
+    },
+    passInput: {
+        flex: 1,
+        color: '#e2e8f0',
+        fontSize: 14,
     },
     saveBtn: {
         backgroundColor: '#ef4444',
-        padding: 12,
-        borderRadius: 8,
+        paddingVertical: 13,
+        borderRadius: 10,
         alignItems: 'center',
     },
     saveBtnText: {
         color: '#fff',
-        fontWeight: 'bold',
-    }
+        fontWeight: '800',
+        fontSize: 13,
+        letterSpacing: 0.5,
+    },
+    logoutRow: {
+        backgroundColor: 'rgba(239,68,68,0.06)',
+        borderRadius: 14,
+        padding: 18,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        borderWidth: 1,
+        borderColor: 'rgba(239,68,68,0.15)',
+    },
+    logoutText: {
+        color: '#ef4444',
+        fontSize: 15,
+        fontWeight: '700',
+    },
 });

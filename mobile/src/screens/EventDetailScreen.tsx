@@ -1,7 +1,17 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    Image,
+    ScrollView,
+    TouchableOpacity,
+    ActivityIndicator,
+    Alert,
+    StatusBar,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Calendar, Clock, DollarSign, Play, ArrowLeft, CheckCircle } from 'lucide-react-native';
+import { Calendar, Clock, Play, ArrowLeft, CheckCircle, Radio, Zap, Lock } from 'lucide-react-native';
 import { eventService } from '../services';
 import api from '../services/api';
 import { useAuthStore } from '../store/authStore';
@@ -10,7 +20,7 @@ import PaymentModal from '../components/PaymentModal';
 
 export default function EventDetailScreen({ route, navigation }: any) {
     const { eventId } = route.params;
-    const { isAuthenticated, user } = useAuthStore();
+    const { isAuthenticated } = useAuthStore();
     const [event, setEvent] = React.useState<any>(null);
     const [loading, setLoading] = React.useState(true);
     const [hasAccess, setHasAccess] = React.useState(false);
@@ -20,7 +30,9 @@ export default function EventDetailScreen({ route, navigation }: any) {
         try {
             const [eventData, accessData] = await Promise.all([
                 eventService.getById(eventId),
-                isAuthenticated ? eventService.checkAccess(eventId) : { success: true, data: { hasAccess: false } }
+                isAuthenticated
+                    ? eventService.checkAccess(eventId)
+                    : Promise.resolve({ success: true, data: { hasAccess: false } }),
             ]);
             setEvent(eventData.data || null);
             setHasAccess(accessData.data?.hasAccess || false);
@@ -31,9 +43,7 @@ export default function EventDetailScreen({ route, navigation }: any) {
         }
     };
 
-    React.useEffect(() => {
-        loadEventData();
-    }, [eventId, isAuthenticated]);
+    React.useEffect(() => { loadEventData(); }, [eventId, isAuthenticated]);
 
     const handleFreeAccess = async () => {
         setLoading(true);
@@ -44,10 +54,9 @@ export default function EventDetailScreen({ route, navigation }: any) {
                 paymentMethod: 'paypal',
             });
             await loadEventData();
-            Alert.alert('¡Éxito!', 'Ya tienes acceso gratuito a este evento.');
+            Alert.alert('¡Acceso activado!', 'Ya tienes acceso gratuito a este evento.');
         } catch (error: any) {
-            console.error('Error getting free access:', error);
-            Alert.alert('Error', error.response?.data?.message || 'No se pudo obtener el acceso gratuito.');
+            Alert.alert('Error', error.response?.data?.message || 'No se pudo obtener el acceso.');
         } finally {
             setLoading(false);
         }
@@ -55,7 +64,7 @@ export default function EventDetailScreen({ route, navigation }: any) {
 
     if (loading) {
         return (
-            <View style={styles.loadingContainer}>
+            <View style={styles.center}>
                 <ActivityIndicator size="large" color="#ef4444" />
             </View>
         );
@@ -63,8 +72,8 @@ export default function EventDetailScreen({ route, navigation }: any) {
 
     if (!event) {
         return (
-            <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>Evento no encontrado</Text>
+            <View style={styles.center}>
+                <Text style={styles.notFoundText}>Evento no encontrado</Text>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                     <Text style={styles.backBtnText}>Volver</Text>
                 </TouchableOpacity>
@@ -73,95 +82,147 @@ export default function EventDetailScreen({ route, navigation }: any) {
     }
 
     const isFree = parseFloat(event.price) === 0;
+    const status = (event.status || 'upcoming').toLowerCase();
+    const isLive = status === 'live';
     const bannerUri = getImageUrl(event.banner_url || event.thumbnail_url);
 
     return (
-        <ScrollView style={styles.container} bounces={false}>
-            <View style={styles.hero}>
-                <Image
-                    source={{ uri: bannerUri || 'https://via.placeholder.com/800x400' }}
-                    style={styles.banner}
-                />
-                <View style={styles.overlay} />
-                <TouchableOpacity
-                    style={styles.backIcon}
-                    onPress={() => navigation.goBack()}
-                >
-                    <ArrowLeft color="#fff" size={24} />
-                </TouchableOpacity>
-            </View>
+        <View style={styles.screen}>
+            <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-            <View style={styles.content}>
-                <View style={styles.badgeRow}>
-                    <View style={styles.statusBadge}>
-                        <Text style={styles.statusText}>{event.status.toUpperCase()}</Text>
-                    </View>
-                    {event.is_featured && (
-                        <View style={styles.featuredBadge}>
-                            <Text style={styles.featuredText}>DESTACADO</Text>
-                        </View>
-                    )}
-                </View>
+            <ScrollView style={styles.scroll} bounces={false} showsVerticalScrollIndicator={false}>
+                {/* Hero */}
+                <View style={styles.hero}>
+                    <Image
+                        source={{ uri: bannerUri || 'https://via.placeholder.com/800x400/0f172a/ef4444' }}
+                        style={styles.banner}
+                    />
+                    <View style={styles.heroOverlay} />
 
-                <Text style={styles.title}>{event.title}</Text>
-
-                <View style={styles.infoGrid}>
-                    <View style={styles.infoItem}>
-                        <Calendar size={18} color="#94a3b8" />
-                        <Text style={styles.infoText}>{new Date(event.event_date).toLocaleDateString([], { dateStyle: 'long' })}</Text>
-                    </View>
-                    <View style={styles.infoItem}>
-                        <Clock size={18} color="#94a3b8" />
-                        <Text style={styles.infoText}>{new Date(event.event_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
-                    </View>
-                </View>
-
-                <View style={styles.descriptionBox}>
-                    <Text style={styles.sectionTitle}>Sobre la pelea</Text>
-                    <Text style={styles.description}>{event.description || 'No hay descripción disponible para este evento.'}</Text>
-                </View>
-
-                <View style={styles.actionCard}>
-                    {hasAccess ? (
-                        <View style={styles.accessContainer}>
-                            <View style={styles.successRow}>
-                                <CheckCircle size={20} color="#22c55e" />
-                                <Text style={styles.successText}>Tienes acceso a este evento</Text>
+                    {/* Back button */}
+                    <SafeAreaView style={styles.heroTop} edges={['top']}>
+                        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.heroBack}>
+                            <ArrowLeft color="#fff" size={22} />
+                        </TouchableOpacity>
+                        {isLive && (
+                            <View style={styles.livePill}>
+                                <Radio size={11} color="#fff" />
+                                <Text style={styles.liveText}>EN VIVO</Text>
                             </View>
-                            <TouchableOpacity
-                                style={styles.watchBtn}
-                                onPress={() => navigation.navigate('Watch', { eventId: event.id })}
-                            >
-                                <Play size={20} color="#fff" />
-                                <Text style={styles.watchBtnText}>Ver Ahora</Text>
-                            </TouchableOpacity>
+                        )}
+                    </SafeAreaView>
+
+                    {/* Hero content */}
+                    <View style={styles.heroContent}>
+                        <View style={styles.heroBadgeRow}>
+                            {event.is_featured && (
+                                <View style={styles.featuredBadge}>
+                                    <Zap size={10} color="#f59e0b" />
+                                    <Text style={styles.featuredText}>DESTACADO</Text>
+                                </View>
+                            )}
+                            <View style={styles.statusBadge}>
+                                <Text style={styles.statusText}>{event.status?.toUpperCase()}</Text>
+                            </View>
                         </View>
-                    ) : (
-                        <View style={styles.purchaseContainer}>
-                            <Text style={styles.priceLabel}>{isFree ? 'Evento Gratuito' : 'Acceso Total'}</Text>
-                            <Text style={styles.priceValue}>
-                                {isFree ? 'GRATIS' : `$${event.price} ${event.currency}`}
-                            </Text>
-                            <TouchableOpacity
-                                style={styles.buyBtn}
-                                onPress={() => {
-                                    if (isAuthenticated) {
-                                        if (isFree) {
-                                            handleFreeAccess();
-                                        } else {
-                                            setShowPaymentModal(true);
-                                        }
-                                    } else {
-                                        navigation.navigate('Login');
-                                    }
-                                }}
-                            >
-                                <Text style={styles.buyBtnText}>{isFree ? 'Obtener Acceso Gratis' : 'Comprar Pase'}</Text>
-                            </TouchableOpacity>
-                        </View>
-                    )}
+                        <Text style={styles.heroTitle}>{event.title}</Text>
+                    </View>
                 </View>
-            </View>
+
+                {/* Body */}
+                <View style={styles.body}>
+                    {/* Date / Time chips */}
+                    <View style={styles.chipRow}>
+                        <View style={styles.chip}>
+                            <Calendar size={14} color="#ef4444" />
+                            <Text style={styles.chipText}>
+                                {new Date(event.event_date).toLocaleDateString('es', {
+                                    day: 'numeric', month: 'long', year: 'numeric',
+                                })}
+                            </Text>
+                        </View>
+                        <View style={styles.chip}>
+                            <Clock size={14} color="#ef4444" />
+                            <Text style={styles.chipText}>
+                                {new Date(event.event_date).toLocaleTimeString([], {
+                                    hour: '2-digit', minute: '2-digit',
+                                })}
+                            </Text>
+                        </View>
+                    </View>
+
+                    {/* Description */}
+                    {event.description ? (
+                        <View style={styles.section}>
+                            <Text style={styles.sectionLabel}>SOBRE EL EVENTO</Text>
+                            <Text style={styles.description}>{event.description}</Text>
+                        </View>
+                    ) : null}
+
+                    {/* Access card */}
+                    <View style={styles.accessCard}>
+                        {hasAccess ? (
+                            <View style={styles.accessGranted}>
+                                <View style={styles.accessGrantedRow}>
+                                    <CheckCircle size={22} color="#10b981" />
+                                    <View>
+                                        <Text style={styles.accessGrantedTitle}>Acceso Activado</Text>
+                                        <Text style={styles.accessGrantedSub}>Puedes ver este evento ahora</Text>
+                                    </View>
+                                </View>
+                                <TouchableOpacity
+                                    style={styles.watchBtn}
+                                    onPress={() => navigation.navigate('Watch', { eventId: event.id })}
+                                    activeOpacity={0.85}
+                                >
+                                    <Play size={20} color="#fff" fill="#fff" />
+                                    <Text style={styles.watchBtnText}>VER AHORA</Text>
+                                </TouchableOpacity>
+                            </View>
+                        ) : (
+                            <View style={styles.accessPurchase}>
+                                <View style={styles.priceRow}>
+                                    <View>
+                                        <Text style={styles.priceLabel}>
+                                            {isFree ? 'Evento Gratuito' : 'Pase de Acceso'}
+                                        </Text>
+                                        <Text style={styles.priceValue}>
+                                            {isFree ? 'GRATIS' : `$${parseFloat(event.price).toFixed(2)} ${event.currency}`}
+                                        </Text>
+                                    </View>
+                                    {!isFree && (
+                                        <View style={styles.lockIcon}>
+                                            <Lock size={20} color="#475569" />
+                                        </View>
+                                    )}
+                                </View>
+                                <TouchableOpacity
+                                    style={styles.buyBtn}
+                                    onPress={() => {
+                                        if (!isAuthenticated) {
+                                            navigation.navigate('Login');
+                                            return;
+                                        }
+                                        isFree ? handleFreeAccess() : setShowPaymentModal(true);
+                                    }}
+                                    activeOpacity={0.85}
+                                >
+                                    <Text style={styles.buyBtnText}>
+                                        {!isAuthenticated
+                                            ? 'INICIAR SESIÓN'
+                                            : isFree
+                                            ? 'OBTENER ACCESO GRATIS'
+                                            : 'COMPRAR PASE'}
+                                    </Text>
+                                </TouchableOpacity>
+                                <Text style={styles.accessNote}>
+                                    Acceso inmediato · Sin suscripción
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+                </View>
+            </ScrollView>
 
             <PaymentModal
                 visible={showPaymentModal}
@@ -169,29 +230,22 @@ export default function EventDetailScreen({ route, navigation }: any) {
                 event={event}
                 onSuccess={() => loadEventData()}
             />
-        </ScrollView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
+    screen: {
         flex: 1,
-        backgroundColor: '#0f172a',
+        backgroundColor: '#080d14',
     },
-    loadingContainer: {
+    center: {
         flex: 1,
-        backgroundColor: '#0f172a',
+        backgroundColor: '#080d14',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    errorContainer: {
-        flex: 1,
-        backgroundColor: '#0f172a',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-    },
-    errorText: {
+    notFoundText: {
         color: '#fff',
         fontSize: 18,
         marginBottom: 20,
@@ -206,160 +260,251 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: 'bold',
     },
+    scroll: {
+        flex: 1,
+    },
     hero: {
-        height: 250,
+        height: 300,
         position: 'relative',
     },
     banner: {
         width: '100%',
         height: '100%',
     },
-    overlay: {
+    heroOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(15, 23, 42, 0.5)',
+        backgroundColor: 'rgba(8,13,20,0.6)',
     },
-    backIcon: {
+    heroTop: {
         position: 'absolute',
-        top: 50,
-        left: 20,
-        width: 40,
-        height: 40,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        borderRadius: 20,
+        top: 0,
+        left: 0,
+        right: 0,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+    },
+    heroBack: {
+        width: 38,
+        height: 38,
+        borderRadius: 19,
+        backgroundColor: 'rgba(8,13,20,0.6)',
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    content: {
-        padding: 20,
-        marginTop: -30,
-        backgroundColor: '#0f172a',
-        borderTopLeftRadius: 30,
-        borderTopRightRadius: 30,
-    },
-    badgeRow: {
-        flexDirection: 'row',
-        gap: 8,
-        marginBottom: 12,
-    },
-    statusBadge: {
-        backgroundColor: '#ef4444',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 4,
-    },
-    statusText: {
-        color: '#fff',
-        fontSize: 12,
-        fontWeight: 'bold',
-    },
-    featuredBadge: {
-        backgroundColor: 'rgba(234, 179, 8, 0.2)',
-        borderColor: 'rgba(234, 179, 8, 0.5)',
         borderWidth: 1,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 4,
+        borderColor: 'rgba(255,255,255,0.1)',
     },
-    featuredText: {
-        color: '#eab308',
-        fontSize: 12,
-        fontWeight: 'bold',
-    },
-    title: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: '#fff',
-        marginBottom: 16,
-    },
-    infoGrid: {
-        flexDirection: 'row',
-        gap: 20,
-        marginBottom: 24,
-    },
-    infoItem: {
+    livePill: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
+        gap: 5,
+        backgroundColor: '#ef4444',
+        paddingHorizontal: 12,
+        paddingVertical: 5,
+        borderRadius: 20,
     },
-    infoText: {
-        color: '#94a3b8',
-        fontSize: 14,
-    },
-    descriptionBox: {
-        marginBottom: 30,
-    },
-    sectionTitle: {
+    liveText: {
         color: '#fff',
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontSize: 11,
+        fontWeight: '800',
+        letterSpacing: 1,
+    },
+    heroContent: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        padding: 20,
+    },
+    heroBadgeRow: {
+        flexDirection: 'row',
+        gap: 8,
+        marginBottom: 10,
+    },
+    featuredBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        backgroundColor: 'rgba(245,158,11,0.15)',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: 'rgba(245,158,11,0.3)',
+    },
+    featuredText: {
+        color: '#f59e0b',
+        fontSize: 9,
+        fontWeight: '800',
+        letterSpacing: 1,
+    },
+    statusBadge: {
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.15)',
+    },
+    statusText: {
+        color: '#94a3b8',
+        fontSize: 9,
+        fontWeight: '700',
+        letterSpacing: 1,
+    },
+    heroTitle: {
+        fontSize: 26,
+        fontWeight: '900',
+        color: '#fff',
+        lineHeight: 30,
+        letterSpacing: -0.3,
+    },
+    body: {
+        padding: 20,
+        backgroundColor: '#080d14',
+    },
+    chipRow: {
+        flexDirection: 'row',
+        gap: 10,
+        marginBottom: 24,
+        flexWrap: 'wrap',
+    },
+    chip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 7,
+        backgroundColor: '#0d1520',
+        paddingHorizontal: 14,
+        paddingVertical: 9,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#1a2535',
+    },
+    chipText: {
+        color: '#94a3b8',
+        fontSize: 13,
+        fontWeight: '600',
+    },
+    section: {
+        marginBottom: 24,
+    },
+    sectionLabel: {
+        fontSize: 10,
+        color: '#475569',
+        fontWeight: '700',
+        letterSpacing: 2,
         marginBottom: 10,
     },
     description: {
-        color: '#94a3b8',
-        lineHeight: 22,
+        color: '#64748b',
         fontSize: 15,
+        lineHeight: 24,
+        fontWeight: '400',
     },
-    actionCard: {
-        backgroundColor: '#1e293b',
-        borderRadius: 16,
-        padding: 24,
+    accessCard: {
+        backgroundColor: '#0d1520',
+        borderRadius: 20,
         borderWidth: 1,
-        borderColor: '#334155',
-    },
-    accessContainer: {
-        alignItems: 'center',
-    },
-    successRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
+        borderColor: '#1a2535',
+        overflow: 'hidden',
         marginBottom: 20,
     },
-    successText: {
-        color: '#22c55e',
-        fontWeight: 'bold',
+    accessGranted: {
+        padding: 20,
+        gap: 20,
+    },
+    accessGrantedRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 14,
+    },
+    accessGrantedTitle: {
+        color: '#10b981',
         fontSize: 16,
+        fontWeight: '700',
+    },
+    accessGrantedSub: {
+        color: '#475569',
+        fontSize: 13,
+        marginTop: 2,
     },
     watchBtn: {
         backgroundColor: '#ef4444',
-        width: '100%',
         height: 56,
-        borderRadius: 12,
+        borderRadius: 14,
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
         gap: 10,
+        shadowColor: '#ef4444',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 6,
     },
     watchBtnText: {
         color: '#fff',
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontSize: 15,
+        fontWeight: '900',
+        letterSpacing: 2,
     },
-    purchaseContainer: {
+    accessPurchase: {
+        padding: 20,
+    },
+    priceRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
+        marginBottom: 16,
     },
     priceLabel: {
-        color: '#94a3b8',
-        fontSize: 14,
+        color: '#475569',
+        fontSize: 12,
+        fontWeight: '600',
         marginBottom: 4,
+        letterSpacing: 0.5,
     },
     priceValue: {
         color: '#fff',
-        fontSize: 32,
-        fontWeight: 'bold',
-        marginBottom: 20,
+        fontSize: 30,
+        fontWeight: '900',
+        letterSpacing: -0.5,
+    },
+    lockIcon: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: '#111c2a',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#1a2535',
     },
     buyBtn: {
         backgroundColor: '#ef4444',
-        width: '100%',
         height: 56,
-        borderRadius: 12,
+        borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',
+        shadowColor: '#ef4444',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 6,
+        marginBottom: 12,
     },
     buyBtnText: {
         color: '#fff',
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontSize: 14,
+        fontWeight: '900',
+        letterSpacing: 2,
+    },
+    accessNote: {
+        color: '#334155',
+        fontSize: 12,
+        textAlign: 'center',
+        fontWeight: '500',
     },
 });
