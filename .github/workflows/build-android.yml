@@ -9,6 +9,9 @@ on:
       - 'mobile/**'
   workflow_dispatch:   # Permite lanzarlo manualmente desde GitHub
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # Silencia warnings de Node.js 20 deprecated
+
 jobs:
   build-apk:
     name: Build Debug APK
