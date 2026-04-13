@@ -1,22 +1,29 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
 # dependencies
 node_modules/
 
-# Expo
+# Expo leftovers (no longer used)
 .expo/
 dist/
 web-build/
 expo-env.d.ts
 
-# Native
+# Native build artifacts (track source, ignore binaries)
 .kotlin/
 *.orig.*
-*.jks
 *.p8
 *.p12
-*.key
 *.mobileprovision
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+ios/build/
+ios/Pods/
+ios/DerivedData/
+*.jks
+
+# Keep debug.keystore in git (safe for dev)
+!android/app/debug.keystore
 
 # Metro
 .metro-health-check*
@@ -35,7 +42,3 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
-
-# generated native folders
-/ios
-/android

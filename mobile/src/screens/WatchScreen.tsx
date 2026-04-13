@@ -1,10 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Dimensions, StatusBar } from 'react-native';
-import { Video, ResizeMode } from 'expo-av';
-import * as ScreenOrientation from 'expo-screen-orientation';
+import Video, { VideoRef } from 'react-native-video';
+import Orientation from 'react-native-orientation-locker';
 import { ChevronLeft, Info, Maximize, Minimize } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuthStore } from '../store/authStore';
 import api from '../services/api';
 import { getImageUrl } from '../config/constants';
 
@@ -14,7 +13,7 @@ export default function WatchScreen({ route, navigation }: any) {
     const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState<string | null>(null);
     const [isFullscreen, setIsFullscreen] = React.useState(false);
-    const videoRef = React.useRef<Video>(null);
+    const videoRef = React.useRef<VideoRef>(null);
 
     const fetchStreamToken = async () => {
         try {
@@ -31,21 +30,18 @@ export default function WatchScreen({ route, navigation }: any) {
 
     React.useEffect(() => {
         fetchStreamToken();
-
-        // Lock to portrait by default on entry
-        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+        Orientation.lockToPortrait();
 
         return () => {
-            // Unlock on exit
-            ScreenOrientation.unlockAsync();
+            Orientation.unlockAllOrientations();
         };
     }, [eventId]);
 
-    const toggleFullscreen = async () => {
+    const toggleFullscreen = () => {
         if (isFullscreen) {
-            await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+            Orientation.lockToPortrait();
         } else {
-            await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+            Orientation.lockToLandscape();
         }
         setIsFullscreen(!isFullscreen);
     };
@@ -64,7 +60,7 @@ export default function WatchScreen({ route, navigation }: any) {
             <View style={styles.errorContainer}>
                 <Info size={48} color="#ef4444" />
                 <Text style={styles.errorTitle}>Error de Acceso</Text>
-                <Text style={styles.errorText}>{error || 'Ocurrió un problemainesperado'}</Text>
+                <Text style={styles.errorText}>{error || 'Ocurrió un problema inesperado'}</Text>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                     <Text style={styles.backBtnText}>Volver</Text>
                 </TouchableOpacity>
@@ -72,7 +68,6 @@ export default function WatchScreen({ route, navigation }: any) {
         );
     }
 
-    // Ensure streamUrl is properly formatted
     const streamUri = streamData.streamUrl.startsWith('http')
         ? streamData.streamUrl
         : getImageUrl(streamData.streamUrl);
@@ -81,7 +76,6 @@ export default function WatchScreen({ route, navigation }: any) {
         <View style={styles.container}>
             <StatusBar hidden={isFullscreen} />
 
-            {/* Minimal Header - Hidden in fullscreen */}
             {!isFullscreen && (
                 <SafeAreaView edges={['top']} style={styles.header}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backIcon}>
@@ -95,22 +89,19 @@ export default function WatchScreen({ route, navigation }: any) {
                 <Video
                     ref={videoRef}
                     source={{
-                        uri: streamUri,
+                        uri: streamUri || '',
                         headers: {
-                            'Authorization': `Bearer ${streamData.token}`
-                        }
+                            Authorization: `Bearer ${streamData.token}`,
+                        },
                     }}
-                    rate={1.0}
-                    volume={1.0}
-                    isMuted={false}
-                    resizeMode={ResizeMode.CONTAIN}
-                    shouldPlay
-                    useNativeControls
+                    paused={false}
+                    muted={false}
+                    resizeMode="contain"
+                    controls={true}
                     style={styles.video}
                     onError={(err) => console.error('Video Error:', err)}
                 />
 
-                {/* Custom Fullscreen Toggle */}
                 <TouchableOpacity
                     style={[styles.fullscreenBtn, isFullscreen && styles.fullscreenBtnTop]}
                     onPress={toggleFullscreen}
@@ -123,7 +114,6 @@ export default function WatchScreen({ route, navigation }: any) {
                 </TouchableOpacity>
             </View>
 
-            {/* Chat Placeholder (Optional later) */}
             {!isFullscreen && (
                 <View style={styles.chatContainer}>
                     <View style={styles.chatHeader}>
@@ -252,5 +242,5 @@ const styles = StyleSheet.create({
         color: '#475569',
         fontSize: 14,
         textAlign: 'center',
-    }
+    },
 });
