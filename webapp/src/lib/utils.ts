@@ -1,8 +1,6 @@
 import { format, formatDistanceToNow, isPast, isFuture, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-
 /**
  * Get full URL for uploaded images
  */
@@ -13,15 +11,15 @@ export function getImageUrl(relativePath?: string | null): string | undefined {
     // Ensure relative paths start with /
     const cleanPath = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
 
-    // If it's a public image (e.g. in /images/ folder in webapp/public), return path as is for Next.js
+    // Public image from webapp/public
     if (cleanPath.startsWith('/images/')) {
         return cleanPath;
     }
 
-    // If it's a local upload, ensure it goes through the /uploads/ proxy
+    // Return relative /uploads/ path — Next.js rewrites proxy it to the backend.
+    // This avoids hardcoding the API_URL which may be localhost in production builds.
     const finalPath = cleanPath.startsWith('/uploads/') ? cleanPath : `/uploads${cleanPath}`;
-
-    return `${API_URL}${finalPath}`;
+    return finalPath;
 }
 
 /**
