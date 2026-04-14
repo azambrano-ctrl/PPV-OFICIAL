@@ -96,32 +96,6 @@ async function uploadToR2(key: string, buffer: Buffer, contentType: string): Pro
     }));
 }
 
-// ─── Supabase list files ──────────────────────────────────────────────────────
-async function listSupabaseFiles(prefix = ''): Promise<string[]> {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (SUPABASE_SERVICE_KEY) headers['Authorization'] = `Bearer ${SUPABASE_SERVICE_KEY}`;
-
-    const res = await axios.post(
-        `${SUPABASE_STORAGE_URL}/object/list/${SUPABASE_BUCKET}`,
-        { prefix, limit: 1000, offset: 0, sortBy: { column: 'name', order: 'asc' } },
-        { headers }
-    );
-
-    const files: string[] = [];
-    for (const item of res.data) {
-        if (item.id) {
-            // It's a file
-            files.push(prefix ? `${prefix}/${item.name}` : item.name);
-        } else {
-            // It's a folder — recurse
-            const subPath = prefix ? `${prefix}/${item.name}` : item.name;
-            const subFiles = await listSupabaseFiles(subPath);
-            files.push(...subFiles);
-        }
-    }
-    return files;
-}
-
 // ─── Download from Supabase ───────────────────────────────────────────────────
 async function downloadFromSupabase(filePath: string): Promise<{ buffer: Buffer; contentType: string }> {
     const headers: Record<string, string> = {};
@@ -198,7 +172,7 @@ async function migrate() {
     let skipped = 0;
     let errors = 0;
 
-    for (const [supabaseUrl, r2Url] of urlMap.entries()) {
+    for (const [supabaseUrl] of urlMap.entries()) {
         const filePath = extractFilePathFromUrl(supabaseUrl);
         const r2Key = filePath;
 
