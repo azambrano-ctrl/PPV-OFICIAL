@@ -77,6 +77,10 @@ export default function Navbar() {
                                         src={settings.site_logo}
                                         alt={settings?.site_name || 'Logo'}
                                         className="max-w-full max-h-[70px] md:max-h-none h-auto object-contain"
+                                        onError={(e) => {
+                                            e.currentTarget.onerror = null;
+                                            e.currentTarget.src = '/la-jaula-logo.svg';
+                                        }}
                                     />
                                 </div>
                             ) : (

@@ -1,10 +1,15 @@
-// API base URL - update this to your server's IP/domain before building
-// For local development use your machine's local network IP (e.g. http://192.168.1.100:5000)
-// For production use your domain (e.g. https://api.yourdomain.com)
-export const API_BASE_URL = __DEV__
-    ? 'http://10.0.2.2:5000'   // Android emulator → host machine localhost
-    : 'https://api.arenafightpass.com';
+import Constants from 'expo-constants';
 
+// Production API URL - change this to your deployed backend URL
+const PRODUCTION_API_URL = 'https://ppv-backend.onrender.com';
+
+// Dev: use Expo debugger host to get local IP
+const debuggerHost = Constants.expoConfig?.hostUri;
+const localhost = debuggerHost?.split(':')[0] || 'localhost';
+const DEV_API_URL = `http://${localhost}:5000`;
+
+// Auto-select based on environment
+export const API_BASE_URL = __DEV__ ? DEV_API_URL : PRODUCTION_API_URL;
 export const API_URL = `${API_BASE_URL}/api`;
 export const UPLOADS_URL = `${API_BASE_URL}/uploads`;
 
