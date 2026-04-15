@@ -125,7 +125,7 @@ export const createPayPalOrder = async (
                 user_action: 'PAY_NOW',
                 return_url: `${process.env.WEB_URL}/payment/success`,
                 cancel_url: `${process.env.WEB_URL}/payment/cancel`,
-                locale: 'es-EC',
+                locale: 'es-MX',
             },
         });
 
