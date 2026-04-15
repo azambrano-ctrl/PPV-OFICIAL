@@ -114,12 +114,18 @@ export const createPayPalOrder = async (
                     }),
                 },
             ],
+            payer: {
+                address: {
+                    country_code: 'EC',
+                },
+            },
             application_context: {
-                brand_name: 'PPV Streaming',
+                brand_name: 'Arena Fight Pass',
                 landing_page: 'NO_PREFERENCE',
                 user_action: 'PAY_NOW',
                 return_url: `${process.env.WEB_URL}/payment/success`,
                 cancel_url: `${process.env.WEB_URL}/payment/cancel`,
+                locale: 'es-EC',
             },
         });
 
