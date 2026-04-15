@@ -569,7 +569,7 @@ export default function EventDetailPage() {
             {/* Payment Modal */}
             {showPaymentModal && event && (
                 <PaymentModal
-                    event={{ id: event.id, title: event.title, price: event.price, currency: event.currency, date: event.event_date, status: event.status }}
+                    event={{ id: event.id, title: event.title, price: event.price, currency: event.currency, date: event.event_date, status: event.status, thumbnail_url: event.thumbnail_url }}
                     onClose={() => setShowPaymentModal(false)}
                 />
             )}
