@@ -1,4 +1,5 @@
 const paypal = require('@paypal/checkout-server-sdk');
+import axios from 'axios';
 import { query, transaction } from '../config/database';
 import logger from '../config/logger';
 import { getSettings } from './settingsService';
@@ -36,6 +37,84 @@ const getPayPalClient = async () => {
     }
 };
 // Module level client is removed in favor of dynamic fetch
+
+/**
+ * Verify PayPal webhook signature using PayPal's verification API.
+ * Returns true if valid, false if invalid or unverifiable.
+ * Requires PAYPAL_WEBHOOK_ID env var — set it in Render dashboard.
+ */
+export const verifyPayPalWebhookSignature = async (
+    headers: Record<string, string | string[] | undefined>,
+    rawBody: Buffer | string,
+): Promise<boolean> => {
+    const webhookId = process.env.PAYPAL_WEBHOOK_ID;
+    if (!webhookId) {
+        logger.warn('PAYPAL_WEBHOOK_ID not set — rejecting unverified webhook for security');
+        return false;
+    }
+
+    try {
+        const settings = await getSettings();
+        const clientId = settings.paypal_client_id?.trim();
+        const clientSecret = settings.paypal_secret_key?.trim();
+        if (!clientId || !clientSecret) {
+            logger.error('PayPal credentials missing — cannot verify webhook');
+            return false;
+        }
+
+        const isLive = process.env.PAYPAL_MODE === 'live';
+        const baseUrl = isLive
+            ? 'https://api.paypal.com'
+            : 'https://api.sandbox.paypal.com';
+
+        // 1. Get OAuth2 access token
+        const tokenRes = await axios.post(
+            `${baseUrl}/v1/oauth2/token`,
+            'grant_type=client_credentials',
+            {
+                auth: { username: clientId, password: clientSecret },
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                timeout: 8000,
+            }
+        );
+        const accessToken = tokenRes.data.access_token;
+
+        // 2. Parse raw body
+        const bodyStr = Buffer.isBuffer(rawBody) ? rawBody.toString('utf8') : rawBody;
+        const webhookEvent = JSON.parse(bodyStr);
+
+        // 3. Call PayPal verify-webhook-signature API
+        const verifyRes = await axios.post(
+            `${baseUrl}/v1/notifications/verify-webhook-signature`,
+            {
+                auth_algo:         headers['paypal-auth-algo'],
+                cert_url:          headers['paypal-cert-url'],
+                transmission_id:   headers['paypal-transmission-id'],
+                transmission_sig:  headers['paypal-transmission-sig'],
+                transmission_time: headers['paypal-transmission-time'],
+                webhook_id:        webhookId,
+                webhook_event:     webhookEvent,
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+                timeout: 8000,
+            }
+        );
+
+        const status: string = verifyRes.data.verification_status;
+        logger.info('PayPal webhook verification result', { status });
+        return status === 'SUCCESS';
+    } catch (error: any) {
+        logger.error('PayPal webhook signature verification failed', {
+            message: error.message,
+            response: error.response?.data,
+        });
+        return false;
+    }
+};
 
 export interface CreatePayPalOrderInput {
     userId: string;

@@ -136,8 +136,9 @@ app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/forgot-password', authLimiter);
 
 // Body parsing middleware
-// Note: For Stripe webhooks, we need raw body
+// Raw body needed for webhook signature verification
 app.use('/api/payments/webhooks/stripe', express.raw({ type: 'application/json' }));
+app.use('/api/payments/webhooks/paypal', express.raw({ type: 'application/json' }));
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
