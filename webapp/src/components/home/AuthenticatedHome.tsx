@@ -267,41 +267,59 @@ export default function AuthenticatedHome({
 
                             {/* My Purchased Events */}
                             {myPurchases.length > 0 && (
-                                <div className="bg-dark-800/80 backdrop-blur-sm rounded-2xl p-6 border border-dark-700">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h4 className="font-bold flex items-center gap-2">
+                                <div className="bg-dark-800/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-dark-700">
+                                    <div className="flex items-center justify-between px-5 pt-5 pb-3">
+                                        <h4 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wider text-gray-300">
                                             <ShoppingBag className="w-4 h-4 text-primary-500" />
                                             Mis Eventos
                                         </h4>
-                                        <Link href="/profile?tab=purchases" className="text-xs text-gray-500 hover:text-white transition-colors">
-                                            Ver todos
+                                        <Link href="/profile?tab=purchases" className="text-xs text-gray-500 hover:text-primary-400 transition-colors">
+                                            Ver todos →
                                         </Link>
                                     </div>
-                                    <div className="space-y-3">
+                                    <div className="divide-y divide-dark-700">
                                         {myPurchases.map((p: any) => (
                                             <Link
                                                 key={p.id}
                                                 href={`/event/${p.event_id}`}
-                                                className="flex items-center gap-3 p-3 rounded-xl bg-dark-750 hover:bg-dark-700 transition-colors group"
+                                                className="flex items-center gap-3 px-4 py-3 hover:bg-dark-700/60 transition-colors group"
                                             >
-                                                {p.event_thumbnail_url ? (
-                                                    <div className="w-12 h-8 rounded overflow-hidden shrink-0 relative">
+                                                {/* Thumbnail */}
+                                                <div className="relative w-16 h-10 rounded-lg overflow-hidden shrink-0 bg-dark-700">
+                                                    {p.thumbnail_url ? (
                                                         <Image
-                                                            src={getImageUrl(p.event_thumbnail_url) || ''}
-                                                            alt={p.event_title || ''}
+                                                            src={getImageUrl(p.thumbnail_url) || ''}
+                                                            alt={p.title || ''}
                                                             fill
                                                             className="object-cover"
                                                         />
-                                                    </div>
-                                                ) : (
-                                                    <div className="w-12 h-8 rounded bg-dark-600 shrink-0 flex items-center justify-center">
-                                                        <Play className="w-3 h-3 text-gray-500" />
-                                                    </div>
-                                                )}
-                                                <span className="text-xs font-medium text-gray-300 group-hover:text-white line-clamp-2 leading-tight">
-                                                    {p.event_title}
-                                                </span>
-                                                <Play className="w-3 h-3 text-primary-500 shrink-0 ml-auto" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-900/50 to-dark-700">
+                                                            <Play className="w-4 h-4 text-primary-500" />
+                                                        </div>
+                                                    )}
+                                                    {/* Live badge */}
+                                                    {p.event_status === 'live' && (
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                                                            <span className="text-[8px] font-black text-white bg-red-600 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                                                LIVE
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Info */}
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs font-semibold text-white group-hover:text-primary-400 transition-colors line-clamp-1 leading-tight">
+                                                        {p.title}
+                                                    </p>
+                                                    <p className="text-[10px] text-gray-500 mt-0.5">
+                                                        {formatDate(p.event_date)}
+                                                    </p>
+                                                </div>
+
+                                                {/* Arrow */}
+                                                <ArrowRight className="w-3.5 h-3.5 text-dark-500 group-hover:text-primary-400 group-hover:translate-x-0.5 transition-all shrink-0" />
                                             </Link>
                                         ))}
                                     </div>
