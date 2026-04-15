@@ -72,13 +72,8 @@ export default function EventDetailPage() {
     const [claiming, setClaiming] = useState(false);
     const [countdown, setCountdown] = useState<CountdownTime | null>(null);
     const [isClient, setIsClient] = useState(false);
-    const [showStickyCTA, setShowStickyCTA] = useState(false);
-
     useEffect(() => {
         setIsClient(true);
-        const handleScroll = () => setShowStickyCTA(window.scrollY > 200);
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
     useEffect(() => {
@@ -579,26 +574,6 @@ export default function EventDetailPage() {
                 />
             )}
 
-            {/* Sticky CTA */}
-            <div className={`fixed bottom-0 left-0 right-0 z-50 bg-dark-950/95 backdrop-blur-xl border-t border-dark-800 p-4 transition-transform duration-300 ${showStickyCTA && !['finished','cancelled','draft'].includes(event.status) && !canWatch ? 'translate-y-0' : 'translate-y-full'}`}>
-                <div className="container-custom flex items-center justify-between gap-4">
-                    <div className="hidden md:block">
-                        <h3 className="font-bold text-white truncate max-w-sm">{event.title}</h3>
-                        <p className="text-primary-500 font-bold text-sm">
-                            {isUniversallyFree ? 'PASE LIBRE' : formatCurrency(event.price, event.currency)}
-                        </p>
-                    </div>
-                    <button
-                        onClick={hasFreeSpotsAvailable ? handleClaimFree : handlePurchaseClick}
-                        disabled={claiming}
-                        className={`w-full md:w-auto btn font-black ${hasFreeSpotsAvailable ? 'bg-green-600 hover:bg-green-500 text-white border-none' : 'btn-primary'} shadow-lg`}
-                    >
-                        {claiming ? <><div className="spinner w-4 h-4 mr-2" />Reclamando...</> :
-                            hasFreeSpotsAvailable ? `🎟 Reclamar Gratis (${freeSpotsRemaining} quedan)` :
-                            `🎟 Comprar ${formatCurrency(event.price, event.currency)}`}
-                    </button>
-                </div>
-            </div>
         </div>
     );
 }
