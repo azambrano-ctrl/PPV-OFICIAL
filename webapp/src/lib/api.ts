@@ -124,7 +124,7 @@ export const authAPI = {
         api.post('/auth/forgot-password', { email }),
 
     resetPassword: (token: string, password: string) =>
-        api.post('/reset-password', { token, password }),
+        api.post('/auth/reset-password', { token, password }),
 
     deleteUser: (userId: string) =>
         api.delete(`/auth/users/${userId}`),
