@@ -314,7 +314,7 @@ export default function FighterHub() {
                                     <div className="aspect-video relative overflow-hidden">
                                         {event.banner_url ? (
                                             <Image
-                                                src={getImageUrl(event.banner_url)}
+                                                src={getImageUrl(event.banner_url) || event.banner_url!}
                                                 alt={event.title}
                                                 fill
                                                 className="object-cover group-hover:scale-105 transition-transform duration-500"
