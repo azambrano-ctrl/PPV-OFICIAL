@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import Hls from 'hls.js';
 import { useSettingsStore, useAuthStore } from '@/lib/store';
 import { authAPI } from '@/lib/api';
-import { Users } from 'lucide-react';
+import { Users, Settings } from 'lucide-react';
 import Image from 'next/image';
 import AdSense from './ui/AdSense';
 
@@ -53,6 +53,9 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     const adsManagerRef = useRef<any>(null);
     const [isAdPlaying, setIsAdPlaying] = useState(false);
     const [quality, setQuality] = useState<string>('');
+    const [availableLevels, setAvailableLevels] = useState<{ height: number; bitrate: number; index: number }[]>([]);
+    const [selectedLevel, setSelectedLevel] = useState<number>(-1); // -1 = auto
+    const [showQualityMenu, setShowQualityMenu] = useState(false);
 
     // Mid-roll ad state
     const [lastAdTime, setLastAdTime] = useState(0);
@@ -209,6 +212,16 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     };
 
     const handleMouseLeave = () => { if (isPlaying) setShowUI(false); };
+
+    const changeQuality = useCallback((levelIndex: number) => {
+        if (!hlsRef.current) return;
+        hlsRef.current.currentLevel = levelIndex; // -1 = auto-adaptive
+        setSelectedLevel(levelIndex);
+        setShowQualityMenu(false);
+        if (levelIndex === -1) {
+            setQuality('');
+        }
+    }, []);;
 
 
 
@@ -407,7 +420,15 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
             hlsRef.current = hls;
             hls.loadSource(finalUrl);
             hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, handleManifestParsed);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                // Capture available quality levels
+                const levels = hls.levels
+                    .map((l, i) => ({ height: l.height || 0, bitrate: l.bitrate || 0, index: i }))
+                    .filter(l => l.height > 0)
+                    .sort((a, b) => b.height - a.height);
+                setAvailableLevels(levels);
+                handleManifestParsed();
+            });
             hls.on(Hls.Events.LEVEL_SWITCHED, (_: any, data: { level: number }) => {
                 const level = hls.levels[data.level];
                 if (level?.height) {
@@ -554,6 +575,55 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
                             </span>
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Quality Selector */}
+            {availableLevels.length > 1 && (
+                <div className={`absolute bottom-14 right-4 z-50 transition-opacity ${showUI ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                    {/* Dropdown menu */}
+                    {showQualityMenu && (
+                        <div className="mb-2 bg-black/90 backdrop-blur-md rounded-xl border border-white/10 shadow-2xl overflow-hidden min-w-[110px]">
+                            {/* Auto option */}
+                            <button
+                                onClick={() => changeQuality(-1)}
+                                className={`w-full px-4 py-2.5 text-sm text-left flex items-center justify-between gap-3 hover:bg-white/10 transition-colors ${selectedLevel === -1 ? 'text-primary-400 font-bold' : 'text-white/80'}`}
+                            >
+                                <span>Auto</span>
+                                {selectedLevel === -1 && <span className="w-1.5 h-1.5 rounded-full bg-primary-400" />}
+                            </button>
+                            <div className="h-px bg-white/10" />
+                            {/* Level options sorted highest → lowest */}
+                            {availableLevels.map(({ height, index }) => {
+                                const label = height >= 2160 ? '4K' : height >= 1440 ? '2K' : `${height}p`;
+                                const isHD = height >= 720;
+                                return (
+                                    <button
+                                        key={index}
+                                        onClick={() => changeQuality(index)}
+                                        className={`w-full px-4 py-2.5 text-sm text-left flex items-center justify-between gap-3 hover:bg-white/10 transition-colors ${selectedLevel === index ? 'text-primary-400 font-bold' : 'text-white/80'}`}
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            {label}
+                                            {isHD && <span className="text-[9px] font-black text-emerald-400 bg-emerald-400/15 px-1 rounded">HD</span>}
+                                        </span>
+                                        {selectedLevel === index && <span className="w-1.5 h-1.5 rounded-full bg-primary-400" />}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {/* Toggle button */}
+                    <button
+                        onClick={() => setShowQualityMenu(v => !v)}
+                        className={`flex items-center gap-1.5 bg-black/70 backdrop-blur-md rounded-full px-3 py-1.5 border text-white text-xs font-bold transition-colors ${showQualityMenu ? 'border-primary-500/60 text-primary-400' : 'border-white/10 hover:border-white/30'}`}
+                    >
+                        <Settings className="w-3.5 h-3.5" />
+                        {selectedLevel === -1
+                            ? (quality || 'Auto')
+                            : `${availableLevels.find(l => l.index === selectedLevel)?.height ?? ''}p`}
+                    </button>
                 </div>
             )}
 
