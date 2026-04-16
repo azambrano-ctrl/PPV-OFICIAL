@@ -61,6 +61,8 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     const consecutiveErrorsRef = useRef(0);
     /** Timer ref for the 'waiting' → failure overlay delay */
     const stallTimerRef = useRef<NodeJS.Timeout | null>(null);
+    /** True while video is stalled due to empty buffer on a live stream */
+    const isLiveStallRef = useRef(false);
     // ─────────────────────────────────────────────────────────────────────
 
     // Mid-roll ad state
@@ -104,7 +106,8 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         const video = videoRef.current;
         if (!video) return;
 
-        const STALL_DELAY_MS = 15_000; // show overlay after 15 s of buffering
+        // Show overlay after 8 s of stalling — faster feedback than 15 s
+        const STALL_DELAY_MS = 8_000;
 
         const clearStallTimer = () => {
             if (stallTimerRef.current) {
@@ -117,7 +120,13 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
             // Only trigger if we were already playing successfully
             if (!hadSuccessfulLoadRef.current) return;
             if (stallTimerRef.current) return; // timer already running
-            console.warn('[VideoPlayer] video.waiting — starting stall timer');
+
+            // Mark as live stall so onPause doesn't show the play button
+            isLiveStallRef.current = true;
+            // Hide play button immediately — don't let it appear during stall
+            setShowPlayButton(false);
+
+            console.warn('[VideoPlayer] video.waiting — stream stalling, starting timer...');
             stallTimerRef.current = setTimeout(() => {
                 console.warn('[VideoPlayer] Stall confirmed — showing failure overlay');
                 setIsStreamDown(true);
@@ -125,9 +134,11 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         };
 
         const onRecovered = () => {
+            isLiveStallRef.current = false;
             clearStallTimer();
             consecutiveErrorsRef.current = 0;
             setIsStreamDown(false);
+            setShowPlayButton(false);
             setReconnectCount(0);
         };
 
@@ -386,6 +397,7 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         consecutiveErrorsRef.current = 0;
         hadSuccessfulLoadRef.current = false;
         if (stallTimerRef.current) { clearTimeout(stallTimerRef.current); stallTimerRef.current = null; }
+        isLiveStallRef.current = false;
 
         const isCloudflare = finalUrl.includes('cloudflarestream.com') || finalUrl.includes('videodelivery.net');
         const isManifest = finalUrl.includes('.m3u8');
@@ -507,7 +519,14 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         const video = videoRef.current;
         if (!video) return;
         const onPlay = () => { setIsPlaying(true); setShowPlayButton(false); };
-        const onPause = () => { setIsPlaying(false); if (!isLoading) setShowPlayButton(true); };
+        const onPause = () => {
+            setIsPlaying(false);
+            // Don't show the play button if the video auto-paused because of a
+            // live stream stall — the failure overlay handles that case instead.
+            if (!isLoading && !isLiveStallRef.current) {
+                setShowPlayButton(true);
+            }
+        };
         video.addEventListener('play', onPlay);
         video.addEventListener('pause', onPause);
         return () => { video.removeEventListener('play', onPlay); video.removeEventListener('pause', onPause); };
