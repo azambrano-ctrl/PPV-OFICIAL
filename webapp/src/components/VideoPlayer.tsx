@@ -57,8 +57,12 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     const [reconnectIn, setReconnectIn] = useState(15);
     /** Only show failure overlay if stream was working at least once */
     const hadSuccessfulLoadRef = useRef(false);
-    /** Consecutive fatal network errors counter */
+    /** Consecutive network error counter (fatal + non-fatal) */
     const consecutiveErrorsRef = useRef(0);
+    /** Last known currentTime — used for stall detection */
+    const lastCurrentTimeRef = useRef(-1);
+    /** How many stall-check ticks the video hasn't advanced */
+    const stallTicksRef = useRef(0);
     // ─────────────────────────────────────────────────────────────────────
 
     // Mid-roll ad state
@@ -91,6 +95,47 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
 
         return () => clearInterval(countdown);
     }, [isStreamDown, reconnectCount]);
+    // ─────────────────────────────────────────────────────────────────────
+
+    // ── Stall detection — primary trigger for the failure overlay ─────────
+    // HLS.js with manifestLoadingMaxRetry:Infinity retries silently forever
+    // so fatal errors may never fire. Instead we watch currentTime directly:
+    // if the video is supposed to be playing but currentTime doesn't advance
+    // for ~20 seconds, we show the failure overlay.
+    useEffect(() => {
+        if (status !== 'live' || isLoading) return;
+
+        const STALL_THRESHOLD_TICKS = 4; // 4 × 5s = 20 seconds stalled
+        const CHECK_INTERVAL_MS = 5000;
+
+        const interval = setInterval(() => {
+            const video = videoRef.current;
+            if (!video || video.paused || !hadSuccessfulLoadRef.current) return;
+
+            const now = video.currentTime;
+            if (now === lastCurrentTimeRef.current) {
+                stallTicksRef.current += 1;
+                if (stallTicksRef.current >= STALL_THRESHOLD_TICKS && !isStreamDown) {
+                    console.warn('[VideoPlayer] Stream stalled — showing failure overlay');
+                    setIsStreamDown(true);
+                }
+            } else {
+                // Video is advancing — stream is alive
+                if (stallTicksRef.current > 0) {
+                    stallTicksRef.current = 0;
+                    consecutiveErrorsRef.current = 0;
+                    if (isStreamDown) {
+                        console.info('[VideoPlayer] Stream recovered (stall cleared)');
+                        setIsStreamDown(false);
+                        setReconnectCount(0);
+                    }
+                }
+                lastCurrentTimeRef.current = now;
+            }
+        }, CHECK_INTERVAL_MS);
+
+        return () => clearInterval(interval);
+    }, [status, isLoading, isStreamDown]);
     // ─────────────────────────────────────────────────────────────────────
 
     // Detect if browser supports casting/remote playback
@@ -334,6 +379,8 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         setReconnectCount(0);
         consecutiveErrorsRef.current = 0;
         hadSuccessfulLoadRef.current = false;
+        lastCurrentTimeRef.current = -1;
+        stallTicksRef.current = 0;
 
         const isCloudflare = finalUrl.includes('cloudflarestream.com') || finalUrl.includes('videodelivery.net');
         const isManifest = finalUrl.includes('.m3u8');
@@ -359,15 +406,19 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         };
 
         const handleError = (_: any, data: any) => {
-            if (data.fatal) {
-                if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-                    consecutiveErrorsRef.current++;
-                    // Show failure overlay only if stream was working before (not initial load)
-                    if (consecutiveErrorsRef.current >= 2 && hadSuccessfulLoadRef.current && status === 'live') {
-                        setIsStreamDown(true);
-                    }
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                // Count ALL network errors (fatal + non-fatal).
+                // With manifestLoadingMaxRetry:Infinity the fatal flag often never
+                // fires, so we need non-fatal counts too.
+                consecutiveErrorsRef.current++;
+                if (consecutiveErrorsRef.current >= 4 && hadSuccessfulLoadRef.current && status === 'live') {
+                    setIsStreamDown(true);
+                }
+                if (data.fatal) {
                     hlsRef.current?.startLoad();
-                } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                }
+            } else if (data.fatal) {
+                if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
                     hlsRef.current?.recoverMediaError();
                 } else {
                     setError('Error al cargar la transmisión.');
@@ -607,13 +658,7 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
                             <span className="text-white/50 text-xs">viendo</span>
                         </div>
                     )}
-                    {quality && (
-                        <div className="flex items-center bg-black/70 backdrop-blur-md rounded-full px-2.5 py-1.5 border border-white/10">
-                            <span className={`text-[11px] font-black tracking-widest ${quality === 'HD' || quality === '4K' ? 'text-emerald-400' : 'text-yellow-400'}`}>
-                                {quality}
-                            </span>
-                        </div>
-                    )}
+                    {/* Quality shown in gear button — no duplicate badge here */}
                 </div>
             )}
 
@@ -651,12 +696,15 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
                     )}
                     <button
                         onClick={() => setShowQualityMenu(v => !v)}
+                        title="Calidad de video"
                         className={`flex items-center gap-1.5 bg-black/70 backdrop-blur-md rounded-full px-3 py-1.5 border text-white text-xs font-bold transition-colors ${showQualityMenu ? 'border-primary-500/60 text-primary-400' : 'border-white/10 hover:border-white/30'}`}
                     >
                         <Settings className="w-3.5 h-3.5" />
-                        {selectedLevel === -1
-                            ? (quality || 'Auto')
-                            : `${availableLevels.find(l => l.index === selectedLevel)?.height ?? ''}p`}
+                        <span>
+                            {selectedLevel === -1
+                                ? 'Auto'
+                                : `${availableLevels.find(l => l.index === selectedLevel)?.height ?? ''}p`}
+                        </span>
                     </button>
                 </div>
             )}
