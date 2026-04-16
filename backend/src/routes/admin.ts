@@ -441,8 +441,19 @@ router.get(
         try {
             if (stream.cloudflare_stream_id) {
                 const cfInput = await CloudflareService.getLiveInput(stream.cloudflare_stream_id);
-                // Cloudflare status from live_inputs response
-                stream.status = cfInput.status === 'connected' ? 'active' : 'idle';
+                // Cloudflare may return status as a string or nested object
+                const cfStatusRaw = cfInput.status;
+                let cfStatusStr: string;
+                if (cfStatusRaw === null || cfStatusRaw === undefined) {
+                    cfStatusStr = 'idle';
+                } else if (typeof cfStatusRaw === 'object') {
+                    cfStatusStr = (cfStatusRaw as any).current?.state
+                        ?? (cfStatusRaw as any).state
+                        ?? JSON.stringify(cfStatusRaw);
+                } else {
+                    cfStatusStr = String(cfStatusRaw);
+                }
+                stream.status = cfStatusStr.toLowerCase().includes('connected') ? 'active' : cfStatusStr;
             } else if (stream.bunny_live_stream_id) {
                 const bunnyStream = await bunnyService.getLiveStream(stream.bunny_live_stream_id);
                 stream.status = bunnyStream.status === 3 ? 'active' : 'idle';
@@ -510,7 +521,59 @@ router.delete(
     })
 );
 
+/**
+ * POST /api/admin/events/:id/end-stream
+ * Manually force an event from 'live' → 'reprise' (admin emergency stop)
+ */
+router.post(
+    '/events/:id/end-stream',
+    authenticate,
+    requireAdmin,
+    asyncHandler(async (req: any, res: Response) => {
+        const authReq = req as AuthRequest;
+        const eventId = authReq.params.id;
 
+        // Verify the event exists
+        const eventRes = await pool.query(
+            'SELECT id, title, status FROM events WHERE id = $1',
+            [eventId]
+        );
+
+        if (eventRes.rows.length === 0) {
+            res.status(404).json({ success: false, message: 'Evento no encontrado' });
+            return;
+        }
+
+        const event = eventRes.rows[0];
+
+        if (event.status !== 'live') {
+            res.status(400).json({
+                success: false,
+                message: `El evento no está en vivo (estado actual: ${event.status})`,
+            });
+            return;
+        }
+
+        // Move event to reprise
+        await pool.query(
+            "UPDATE events SET status = 'reprise', updated_at = NOW() WHERE id = $1",
+            [eventId]
+        );
+
+        // Mark live_stream as completed
+        await pool.query(
+            "UPDATE live_streams SET status = 'completed', updated_at = NOW() WHERE event_id = $1",
+            [eventId]
+        );
+
+        logger.info(`[Admin] Event "${event.title}" (${eventId}) manually ended by admin ${authReq.user!.userId}`);
+
+        res.json({
+            success: true,
+            message: `Transmisión de "${event.title}" finalizada. Estado cambiado a REPRISE.`,
+        });
+    })
+);
 
 /**
  * POST /api/admin/purchases/:purchaseId/retry-capture

@@ -91,16 +91,37 @@ async function handleLiveToReprise() {
             try {
                 if (event.cloudflare_stream_id) {
                     const cfInput = await CloudflareService.getLiveInput(event.cloudflare_stream_id);
-                    // Update live_streams status in DB for visibility
-                    await query('UPDATE live_streams SET status = $1 WHERE event_id = $2', [cfInput.status, event.id]);
 
-                    if (cfInput.status === 'disconnected') {
-                        // If Cloudflare says disconnected, and we've been live for at least 15 minutes
-                        // (setup buffer), we switch to reprise.
-                        if (minutesSinceStart > 15) {
-                            shouldEnd = true;
-                            reason = 'Cloudflare reported disconnected (Stream ended)';
-                        }
+                    // Cloudflare can return status as a string OR as an object like
+                    // { current: { state: 'disconnected', reason: '' }, history: [...] }
+                    // We normalize it to a plain string for DB storage and comparison.
+                    const cfStatusRaw = cfInput.status;
+                    let cfStatusStr: string;
+                    if (cfStatusRaw === null || cfStatusRaw === undefined) {
+                        cfStatusStr = 'idle';
+                    } else if (typeof cfStatusRaw === 'object') {
+                        // Extract nested state if available, otherwise JSON stringify
+                        cfStatusStr = (cfStatusRaw as any).current?.state
+                            ?? (cfStatusRaw as any).state
+                            ?? JSON.stringify(cfStatusRaw);
+                    } else {
+                        cfStatusStr = String(cfStatusRaw);
+                    }
+
+                    // Update live_streams status in DB for visibility
+                    await query('UPDATE live_streams SET status = $1 WHERE event_id = $2', [cfStatusStr, event.id]);
+
+                    logger.info(`[BackgroundService] Cloudflare status for event ${event.id}: "${cfStatusStr}"`);
+
+                    // End the stream as soon as Cloudflare reports it's no longer connected.
+                    // We check 'disconnected' and also 'idle' (never/no longer receiving signal).
+                    // No time guard — react immediately when the signal drops.
+                    const isDisconnected = cfStatusStr.toLowerCase().includes('disconnected')
+                        || (minutesSinceStart > 5 && cfStatusStr.toLowerCase() === 'idle');
+
+                    if (isDisconnected) {
+                        shouldEnd = true;
+                        reason = `Cloudflare signal lost (status: ${cfStatusStr})`;
                     }
                 } else if (event.bunny_live_stream_id) {
                     const bunnyStream = await bunnyService.getLiveStream(event.bunny_live_stream_id);
