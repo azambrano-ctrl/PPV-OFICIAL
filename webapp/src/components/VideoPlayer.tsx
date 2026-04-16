@@ -63,6 +63,8 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     const stallTimerRef = useRef<NodeJS.Timeout | null>(null);
     /** True while video is stalled due to empty buffer on a live stream */
     const isLiveStallRef = useRef(false);
+    /** Mirror of isStreamDown as a ref — avoids stale closures in HLS callbacks */
+    const isStreamDownRef = useRef(false);
     // ─────────────────────────────────────────────────────────────────────
 
     // Mid-roll ad state
@@ -72,6 +74,9 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
 
     const { settings } = useSettingsStore();
     const { user } = useAuthStore();
+
+    // Keep ref in sync so HLS callbacks (which close over stale state) can read the current value
+    useEffect(() => { isStreamDownRef.current = isStreamDown; }, [isStreamDown]);
 
     // ── Auto-reconnect countdown while stream is down ──────────────────────
     useEffect(() => {
@@ -488,11 +493,22 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
             // Fragment loaded successfully → stream is alive
             hls.on(Hls.Events.FRAG_LOADED, () => {
                 hadSuccessfulLoadRef.current = true;
-                if (consecutiveErrorsRef.current > 0 || isStreamDown) {
-                    consecutiveErrorsRef.current = 0;
+                consecutiveErrorsRef.current = 0;
+
+                // Use the ref — isStreamDown state is stale inside this closure
+                if (isStreamDownRef.current || isLiveStallRef.current) {
+                    console.info('[VideoPlayer] Stream recovered via FRAG_LOADED ✅');
+                    isLiveStallRef.current = false;
+                    isStreamDownRef.current = false;
+                    if (stallTimerRef.current) {
+                        clearTimeout(stallTimerRef.current);
+                        stallTimerRef.current = null;
+                    }
                     setIsStreamDown(false);
                     setReconnectCount(0);
-                    console.log('[VideoPlayer] Stream recovered ✅');
+                    setShowPlayButton(false);
+                    // Resume playback — video auto-paused when buffer ran out
+                    videoRef.current?.play().catch(() => {});
                 }
             });
 
