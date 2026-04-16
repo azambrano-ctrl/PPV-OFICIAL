@@ -59,10 +59,8 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     const hadSuccessfulLoadRef = useRef(false);
     /** Consecutive network error counter (fatal + non-fatal) */
     const consecutiveErrorsRef = useRef(0);
-    /** Last known currentTime — used for stall detection */
-    const lastCurrentTimeRef = useRef(-1);
-    /** How many stall-check ticks the video hasn't advanced */
-    const stallTicksRef = useRef(0);
+    /** Timer ref for the 'waiting' → failure overlay delay */
+    const stallTimerRef = useRef<NodeJS.Timeout | null>(null);
     // ─────────────────────────────────────────────────────────────────────
 
     // Mid-roll ad state
@@ -97,45 +95,53 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     }, [isStreamDown, reconnectCount]);
     // ─────────────────────────────────────────────────────────────────────
 
-    // ── Stall detection — primary trigger for the failure overlay ─────────
-    // HLS.js with manifestLoadingMaxRetry:Infinity retries silently forever
-    // so fatal errors may never fire. Instead we watch currentTime directly:
-    // if the video is supposed to be playing but currentTime doesn't advance
-    // for ~20 seconds, we show the failure overlay.
+    // ── Stall detection via native video events ───────────────────────────
+    // 'waiting' fires when the browser has no more data to play (buffer empty).
+    // This is more reliable than polling currentTime because it fires even
+    // when video.paused becomes true due to buffer exhaustion.
     useEffect(() => {
-        if (status !== 'live' || isLoading) return;
+        if (status !== 'live') return;
+        const video = videoRef.current;
+        if (!video) return;
 
-        const STALL_THRESHOLD_TICKS = 4; // 4 × 5s = 20 seconds stalled
-        const CHECK_INTERVAL_MS = 5000;
+        const STALL_DELAY_MS = 15_000; // show overlay after 15 s of buffering
 
-        const interval = setInterval(() => {
-            const video = videoRef.current;
-            if (!video || video.paused || !hadSuccessfulLoadRef.current) return;
-
-            const now = video.currentTime;
-            if (now === lastCurrentTimeRef.current) {
-                stallTicksRef.current += 1;
-                if (stallTicksRef.current >= STALL_THRESHOLD_TICKS && !isStreamDown) {
-                    console.warn('[VideoPlayer] Stream stalled — showing failure overlay');
-                    setIsStreamDown(true);
-                }
-            } else {
-                // Video is advancing — stream is alive
-                if (stallTicksRef.current > 0) {
-                    stallTicksRef.current = 0;
-                    consecutiveErrorsRef.current = 0;
-                    if (isStreamDown) {
-                        console.info('[VideoPlayer] Stream recovered (stall cleared)');
-                        setIsStreamDown(false);
-                        setReconnectCount(0);
-                    }
-                }
-                lastCurrentTimeRef.current = now;
+        const clearStallTimer = () => {
+            if (stallTimerRef.current) {
+                clearTimeout(stallTimerRef.current);
+                stallTimerRef.current = null;
             }
-        }, CHECK_INTERVAL_MS);
+        };
 
-        return () => clearInterval(interval);
-    }, [status, isLoading, isStreamDown]);
+        const onWaiting = () => {
+            // Only trigger if we were already playing successfully
+            if (!hadSuccessfulLoadRef.current) return;
+            if (stallTimerRef.current) return; // timer already running
+            console.warn('[VideoPlayer] video.waiting — starting stall timer');
+            stallTimerRef.current = setTimeout(() => {
+                console.warn('[VideoPlayer] Stall confirmed — showing failure overlay');
+                setIsStreamDown(true);
+            }, STALL_DELAY_MS);
+        };
+
+        const onRecovered = () => {
+            clearStallTimer();
+            consecutiveErrorsRef.current = 0;
+            setIsStreamDown(false);
+            setReconnectCount(0);
+        };
+
+        video.addEventListener('waiting', onWaiting);
+        video.addEventListener('playing', onRecovered);  // playback resumed
+        video.addEventListener('canplay', onRecovered);  // data available again
+
+        return () => {
+            clearStallTimer();
+            video.removeEventListener('waiting', onWaiting);
+            video.removeEventListener('playing', onRecovered);
+            video.removeEventListener('canplay', onRecovered);
+        };
+    }, [status]); // intentionally minimal deps — uses refs inside
     // ─────────────────────────────────────────────────────────────────────
 
     // Detect if browser supports casting/remote playback
@@ -379,8 +385,7 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         setReconnectCount(0);
         consecutiveErrorsRef.current = 0;
         hadSuccessfulLoadRef.current = false;
-        lastCurrentTimeRef.current = -1;
-        stallTicksRef.current = 0;
+        if (stallTimerRef.current) { clearTimeout(stallTimerRef.current); stallTimerRef.current = null; }
 
         const isCloudflare = finalUrl.includes('cloudflarestream.com') || finalUrl.includes('videodelivery.net');
         const isManifest = finalUrl.includes('.m3u8');
