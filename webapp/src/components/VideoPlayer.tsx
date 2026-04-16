@@ -52,6 +52,7 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     const adsLoaderRef = useRef<any>(null);
     const adsManagerRef = useRef<any>(null);
     const [isAdPlaying, setIsAdPlaying] = useState(false);
+    const [quality, setQuality] = useState<string>('');
 
     // Mid-roll ad state
     const [lastAdTime, setLastAdTime] = useState(0);
@@ -407,6 +408,15 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
             hls.loadSource(finalUrl);
             hls.attachMedia(video);
             hls.on(Hls.Events.MANIFEST_PARSED, handleManifestParsed);
+            hls.on(Hls.Events.LEVEL_SWITCHED, (_: any, data: { level: number }) => {
+                const level = hls.levels[data.level];
+                if (level?.height) {
+                    if (level.height >= 1080) setQuality('4K');
+                    else if (level.height >= 720) setQuality('HD');
+                    else if (level.height >= 480) setQuality('SD');
+                    else setQuality('LD');
+                }
+            });
             hls.on(Hls.Events.ERROR, handleError);
 
             // For live streams, ensure we are close to the edge
@@ -520,13 +530,30 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
                 </div>
             )}
 
-            {/* Viewer Count Overlay (TikTok Style) */}
+            {/* Viewer Count + Quality Overlay */}
             {status === 'live' && (
-                <div className={`absolute top-4 right-16 z-40 transition-opacity ${showUI ? 'opacity-100' : 'opacity-70'}`}>
-                    <div className="flex items-center gap-1.5 bg-red-600/90 text-white font-bold px-3 py-1 rounded-sm shadow border border-red-500/50 backdrop-blur-sm">
-                        <Users className="w-4 h-4" />
-                        <span className="text-sm tracking-wide">{viewerCount.toLocaleString()}</span>
+                <div className={`absolute top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 transition-opacity ${showUI ? 'opacity-100' : 'opacity-0'}`}>
+                    {/* LIVE badge */}
+                    <div className="flex items-center gap-1.5 bg-black/70 backdrop-blur-md rounded-full px-3 py-1.5 border border-red-500/40">
+                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.8)]" />
+                        <span className="text-red-400 font-black text-[11px] uppercase tracking-widest">EN VIVO</span>
                     </div>
+                    {/* Viewer count */}
+                    {viewerCount > 0 && (
+                        <div className="flex items-center gap-1.5 bg-black/70 backdrop-blur-md rounded-full px-3 py-1.5 border border-white/10">
+                            <span className="text-base leading-none">🔥</span>
+                            <span className="text-white font-bold text-sm tabular-nums">{viewerCount.toLocaleString()}</span>
+                            <span className="text-white/50 text-xs">viendo</span>
+                        </div>
+                    )}
+                    {/* Quality badge */}
+                    {quality && (
+                        <div className="flex items-center bg-black/70 backdrop-blur-md rounded-full px-2.5 py-1.5 border border-white/10">
+                            <span className={`text-[11px] font-black tracking-widest ${quality === 'HD' || quality === '4K' ? 'text-emerald-400' : 'text-yellow-400'}`}>
+                                {quality}
+                            </span>
+                        </div>
+                    )}
                 </div>
             )}
 
