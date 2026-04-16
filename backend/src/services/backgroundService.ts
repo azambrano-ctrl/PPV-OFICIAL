@@ -216,8 +216,14 @@ async function handleLiveToReprise() {
                     [event.id]
                 );
 
-                // Register in the reconnection watcher if it was a Cloudflare signal loss
+                // For Cloudflare streams: fetch the latest recording and update stream_url
+                // so REPRISE plays the real recorded video (different UID than the live input).
                 if (event.cloudflare_stream_id) {
+                    setCloudflareRecordingUrl(event).catch(err =>
+                        logger.error(`[BackgroundService] Could not auto-set recording URL for "${event.title}":`, err)
+                    );
+
+                    // Register for reconnection watch
                     reprisedDueToSignalLoss.set(event.id, {
                         movedAt: Date.now(),
                         cloudflare_stream_id: event.cloudflare_stream_id,
@@ -322,6 +328,50 @@ async function getCloudflareStatusStr(cloudflareStreamId: string): Promise<strin
             ?? JSON.stringify(raw);
     }
     return String(raw);
+}
+
+/**
+ * After a Cloudflare live stream ends, fetch the latest recorded video for
+ * that live input and update the event's stream_url so REPRISE playback
+ * uses the real recording UID (different from the live input UID).
+ *
+ * Cloudflare may take a few seconds to finalise the recording, so we retry
+ * up to 5 times with a 30-second gap before giving up.
+ */
+async function setCloudflareRecordingUrl(event: { id: string; title: string; cloudflare_stream_id: string }): Promise<void> {
+    const MAX_ATTEMPTS = 5;
+    const RETRY_DELAY_MS = 30_000; // 30 seconds between attempts
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        try {
+            // Wait before first check too — Cloudflare needs a moment to finalise
+            await new Promise(resolve => setTimeout(resolve, attempt === 1 ? 15_000 : RETRY_DELAY_MS));
+
+            const recordings = await CloudflareService.getRecordingsForLiveInput(event.cloudflare_stream_id);
+
+            if (recordings.length === 0) {
+                logger.info(`[BackgroundService] No recordings yet for "${event.title}" (attempt ${attempt}/${MAX_ATTEMPTS})`);
+                continue;
+            }
+
+            // Pick the most recent recording (already sorted newest-first)
+            const latest = recordings[0];
+            const hlsUrl = CloudflareService.buildRecordingHlsUrl(latest.uid);
+
+            await query('UPDATE events SET stream_url = $1 WHERE id = $2', [hlsUrl, event.id]);
+
+            logger.info(
+                `[BackgroundService] ✅ Recording URL set for "${event.title}": ` +
+                `${hlsUrl} (video UID: ${latest.uid})`
+            );
+            return; // Done
+
+        } catch (err) {
+            logger.error(`[BackgroundService] Error fetching recording (attempt ${attempt}):`, err);
+        }
+    }
+
+    logger.warn(`[BackgroundService] ⚠️ Could not auto-set recording URL for "${event.title}" after ${MAX_ATTEMPTS} attempts.`);
 }
 
 /**

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft, Router as RouterIcon, Key, Copy, AlertTriangle, Play, RefreshCw, Trash2, Video, Square, Radio } from 'lucide-react';
+import { ChevronLeft, Router as RouterIcon, Key, Copy, AlertTriangle, Play, RefreshCw, Trash2, Video, Square, Radio, Film } from 'lucide-react';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 
@@ -32,6 +32,7 @@ export default function StreamConfigPage() {
     const [error, setError] = useState('');
     const [creating, setCreating] = useState(false);
     const [endingStream, setEndingStream] = useState(false);
+    const [fetchingRecording, setFetchingRecording] = useState(false);
 
     const eventId = params.id as string;
 
@@ -126,6 +127,20 @@ export default function StreamConfigPage() {
         }
     };
 
+    const fetchRecording = async () => {
+        try {
+            setFetchingRecording(true);
+            const res = await api.post(`/admin/events/${eventId}/fetch-recording`);
+            toast.success(`✅ URL actualizada: ${res.data.data?.videoUid}`);
+            await fetchData();
+        } catch (err: any) {
+            const msg = err.response?.data?.message || 'Error al buscar la grabación';
+            toast.error(msg);
+        } finally {
+            setFetchingRecording(false);
+        }
+    };
+
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
         toast.success('Copiado al portapapeles');
@@ -200,6 +215,32 @@ export default function StreamConfigPage() {
                                 >
                                     <Square className="w-4 h-4" />
                                     {endingStream ? 'Finalizando...' : 'Terminar Transmisión Ahora'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Reprise recording card */}
+                {event?.status === 'reprise' && (
+                    <div className="bg-blue-900/20 border border-blue-500/30 rounded-2xl p-6">
+                        <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                <Film className="w-6 h-6 text-blue-400" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-lg font-bold text-blue-300 mb-1">Grabación de Cloudflare</h3>
+                                <p className="text-white/60 text-sm mb-4">
+                                    Cuando el evento pasa a REPRISE, el sistema busca automáticamente el video grabado.
+                                    Si la URL del stream no se actualizó correctamente, usa este botón.
+                                </p>
+                                <button
+                                    onClick={fetchRecording}
+                                    disabled={fetchingRecording}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-900/50 disabled:cursor-not-allowed text-white rounded-full font-semibold text-sm transition-all"
+                                >
+                                    <Film className="w-4 h-4" />
+                                    {fetchingRecording ? 'Buscando grabación...' : 'Obtener URL de grabación'}
                                 </button>
                             </div>
                         </div>
