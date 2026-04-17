@@ -253,6 +253,7 @@ export default function EventForm({ event, onSuccess, onCancel, isAdmin }: Event
 
                             <ImageUpload
                                 label="Cartelera del Evento (Fight Card)"
+                                aspect={0}
                                 onChange={(file) => setCardFile(file)}
                                 value={cardPreview || undefined}
                             />

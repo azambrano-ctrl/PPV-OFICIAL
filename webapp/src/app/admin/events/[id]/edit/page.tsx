@@ -460,6 +460,7 @@ export default function EditEventPage() {
                     <ImageUpload
                         label="Cartelera del Evento (Fight Card)"
                         value={getImageUrl(formData.card_image_url)}
+                        aspect={0}
                         onChange={(file) => {
                             setCardFile(file);
                             if (file === null && formData.card_image_url) {
