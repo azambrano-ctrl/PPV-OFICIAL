@@ -332,3 +332,28 @@ export const sendApprovalEmail = async (to: string, promoterName: string) => {
 
     return sendEmail(to, subject, html);
 };
+
+/**
+ * Send 24-hour event reminder email
+ */
+export const sendEventReminderEmail = async (
+    to: string,
+    userName: string,
+    eventTitle: string,
+    eventDate: string,
+    eventId: string
+) => {
+    const brandName = process.env.EMAIL_FROM_NAME || 'Arena Fight Pass';
+    const webUrl = process.env.WEB_URL || 'http://localhost:3000';
+
+    const formattedDate = new Date(eventDate).toLocaleDateString('es-ES', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', timeZone: 'America/Guayaquil',
+    });
+
+    const eventUrl = `${webUrl}/event/${eventId}`;
+    const subject = `⏰ ¡Mañana es el día! ${eventTitle} - ${brandName}`;
+    const html = `<div style="font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;max-width:600px;margin:0 auto;background-color:#0a0a0a;color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #333;"><div style="background:linear-gradient(135deg,#ef4444 0%,#b91c1c 100%);padding:30px;text-align:center;"><p style="margin:0 0 8px 0;font-size:14px;text-transform:uppercase;letter-spacing:3px;color:rgba(255,255,255,0.8);">RECORDATORIO</p><h1 style="margin:0;font-size:28px;text-transform:uppercase;letter-spacing:2px;">¡Faltan 24 horas!</h1></div><div style="padding:40px 30px;"><p style="font-size:18px;color:#aaa;margin-bottom:20px;">Hola <strong style="color:#fff;">${userName}</strong>,</p><div style="background:linear-gradient(135deg,#1a0000 0%,#0a0a0a 100%);padding:24px;border-radius:12px;border:1px solid #ef4444;margin-bottom:36px;text-align:center;"><h2 style="margin:0 0 8px 0;color:#ef4444;font-size:22px;text-transform:uppercase;">${eventTitle}</h2><p style="margin:0;color:#888;font-size:14px;">📅 ${formattedDate}</p></div><div style="text-align:center;margin-bottom:30px;"><a href="${eventUrl}" style="display:inline-block;background-color:#ef4444;color:#ffffff;padding:16px 48px;text-decoration:none;border-radius:8px;font-weight:900;font-size:16px;text-transform:uppercase;">🥊 VER EVENTO</a></div><div style="background-color:#111;padding:20px;border-radius:10px;"><ul style="margin:0;padding-left:18px;color:#888;font-size:14px;line-height:2;"><li>Conéctate 15 minutos antes.</li><li>Asegúrate de tener buena conexión.</li><li>Usa Chrome o Edge actualizados.</li></ul></div></div><div style="padding:20px;text-align:center;background-color:#000;border-top:1px solid #111;"><p style="margin:0;color:#333;font-size:12px;">&copy; ${new Date().getFullYear()} ${brandName}. Todos los derechos reservados.</p></div></div>`;
+
+    return sendEmail(to, subject, html);
+};

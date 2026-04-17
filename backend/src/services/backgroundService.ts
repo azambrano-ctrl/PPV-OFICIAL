@@ -60,6 +60,15 @@ export const startBackgroundService = () => {
         }
     }, 60000);
 
+    // 24-hour event reminders — every hour
+    setInterval(async () => {
+        try {
+            await handleEventReminders();
+        } catch (error) {
+            logger.error('[BackgroundService] Error in reminder loop:', error);
+        }
+    }, 60 * 60 * 1000);
+
     // News update — every 4 hours
     setInterval(async () => {
         try {
@@ -385,4 +394,45 @@ function checkIfDurationExceeded(event: any, bufferMinutes: number = 30): boolea
     const bufferMs   = bufferMinutes * 60 * 1000;
 
     return Date.now() > startTime + durationMs + bufferMs;
+}
+
+// In-memory set to avoid re-sending reminders within the same server session
+const remindersSentThisSession = new Set<string>();
+
+/**
+ * Send 24-hour reminder emails to users with upcoming event purchases.
+ * Targets events starting between 23h and 25h from now.
+ */
+async function handleEventReminders() {
+    const { sendEventReminderEmail } = await import('./emailService');
+
+    const result = await query(`
+        SELECT
+            e.id        AS event_id,
+            e.title     AS event_title,
+            e.event_date,
+            u.id        AS user_id,
+            u.email,
+            u.full_name
+        FROM purchases p
+        JOIN events  e ON e.id = p.event_id
+        JOIN users   u ON u.id = p.user_id
+        WHERE p.payment_status = 'completed'
+          AND e.status = 'upcoming'
+          AND e.event_date BETWEEN NOW() + INTERVAL '23 hours'
+                               AND NOW() + INTERVAL '25 hours'
+    `);
+
+    for (const row of result.rows) {
+        const key = `${row.event_id}:${row.user_id}`;
+        if (remindersSentThisSession.has(key)) continue;
+
+        try {
+            await sendEventReminderEmail(row.email, row.full_name, row.event_title, row.event_date, row.event_id);
+            remindersSentThisSession.add(key);
+            logger.info(`[Reminders] Sent 24h reminder to ${row.email} for event "${row.event_title}"`);
+        } catch (err) {
+            logger.error(`[Reminders] Failed to send to ${row.email}:`, err);
+        }
+    }
 }
