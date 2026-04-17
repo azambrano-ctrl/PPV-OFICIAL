@@ -25,7 +25,10 @@ interface AuthenticatedHomeProps {
 
 function useCountdown(targetDate: string) {
     const calcTimeLeft = useCallback(() => {
-        const diff = new Date(targetDate).getTime() - Date.now();
+        if (!targetDate) return null;
+        const ts = new Date(targetDate).getTime();
+        if (isNaN(ts)) return null;
+        const diff = ts - Date.now();
         if (diff <= 0) return null;
         return {
             days: Math.floor(diff / (1000 * 60 * 60 * 24)),
