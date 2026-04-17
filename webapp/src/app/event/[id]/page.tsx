@@ -24,6 +24,7 @@ interface Event {
     currency: string;
     thumbnail_url?: string;
     banner_url?: string;
+    card_image_url?: string;
     trailer_url?: string;
     status: string;
     is_featured: boolean;
@@ -307,6 +308,21 @@ export default function EventDetailPage() {
                                     {event.description || 'No hay descripción disponible para este evento.'}
                                 </p>
                             </div>
+
+                            {/* Cartelera */}
+                            {event.card_image_url && (
+                                <div className="card p-6">
+                                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                        <Users className="w-5 h-5 text-primary-500" />
+                                        Cartelera del Evento
+                                    </h2>
+                                    <img
+                                        src={getImageUrl(event.card_image_url)}
+                                        alt={`Cartelera - ${event.title}`}
+                                        className="w-full rounded-xl object-contain max-h-[700px]"
+                                    />
+                                </div>
+                            )}
 
                             {/* Trailer */}
                             {(event as any).trailer_url && (() => {

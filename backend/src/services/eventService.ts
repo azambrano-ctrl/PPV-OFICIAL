@@ -32,6 +32,7 @@ export interface CreateEventInput {
     currency?: string;
     thumbnail_url?: string;
     banner_url?: string;
+    card_image_url?: string;
     max_viewers?: number;
     free_viewers_limit?: number | null;
     is_featured?: boolean;
@@ -118,8 +119,8 @@ export const createEvent = async (input: CreateEventInput): Promise<Event> => {
     const result = await query(
         `INSERT INTO events (
       title, description, event_date, duration_minutes, price, currency,
-      thumbnail_url, banner_url, max_viewers, is_featured, created_by, stream_key, promoter_id, free_viewers_limit
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      thumbnail_url, banner_url, card_image_url, max_viewers, is_featured, created_by, stream_key, promoter_id, free_viewers_limit
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
     RETURNING *`,
         [
             input.title,
@@ -130,6 +131,7 @@ export const createEvent = async (input: CreateEventInput): Promise<Event> => {
             input.currency || 'USD',
             input.thumbnail_url,
             input.banner_url,
+            input.card_image_url,
             input.max_viewers,
             input.is_featured || false,
             input.created_by,
@@ -162,6 +164,7 @@ export const updateEvent = async (
         'currency',
         'thumbnail_url',
         'banner_url',
+        'card_image_url',
         'status',
         'max_viewers',
         'free_viewers_limit',

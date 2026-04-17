@@ -154,6 +154,7 @@ router.post(
             stream_url: isPromoter ? null : (req.body.stream_url || null),
             trailer_url: isPromoter ? null : (req.body.trailer_url || null),
             banner_url: files?.banner ? files.banner[0].path : undefined,
+            card_image_url: files?.card ? files.card[0].path : undefined,
             promoter_id: isPromoter ? user.promoterId : (req.body.promoter_id || null),
             created_by: user.userId,
         };
@@ -271,6 +272,12 @@ router.put(
                 updates.banner_url = files.banner[0].path;
             } else if (req.body.remove_banner === 'true') {
                 updates.banner_url = null;
+            }
+
+            if (files?.card) {
+                updates.card_image_url = files.card[0].path;
+            } else if (req.body.remove_card === 'true') {
+                updates.card_image_url = null;
             }
 
             if (req.body.trailer_url !== undefined) {
