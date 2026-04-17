@@ -35,15 +35,18 @@ export default function EditEventPage() {
         stream_url: '',
         thumbnail_url: '',
         banner_url: '',
+        card_image_url: '',
         promoter_id: '',
         trailer_url: '',
     });
     const [promoters, setPromoters] = useState<Promoter[]>([]);
     const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
     const [bannerFile, setBannerFile] = useState<File | null>(null);
+    const [cardFile, setCardFile] = useState<File | null>(null);
     const [trailerVideoFile, setTrailerVideoFile] = useState<File | null>(null);
     const [removeThumbnail, setRemoveThumbnail] = useState(false);
     const [removeBanner, setRemoveBanner] = useState(false);
+    const [removeCard, setRemoveCard] = useState(false);
 
     // Fight Card specific state
     const [eventFighters, setEventFighters] = useState<any[]>([]);
@@ -118,6 +121,7 @@ export default function EditEventPage() {
                 stream_url: event.stream_url || '',
                 thumbnail_url: event.thumbnail_url || '',
                 banner_url: event.banner_url || '',
+                card_image_url: event.card_image_url || '',
                 promoter_id: event.promoter_id || '',
                 trailer_url: event.trailer_url || '',
             });
@@ -167,6 +171,13 @@ export default function EditEventPage() {
                 data.append('banner', bannerFile);
             } else if (removeBanner) {
                 data.append('remove_banner', 'true');
+            }
+
+            // Handle card image
+            if (cardFile) {
+                data.append('card', cardFile);
+            } else if (removeCard) {
+                data.append('remove_card', 'true');
             }
 
             let finalTrailerUrl = formData.trailer_url;
@@ -438,12 +449,24 @@ export default function EditEventPage() {
                         onChange={(file, preview) => {
                             setBannerFile(file);
                             if (file === null && formData.banner_url) {
-                                // User removed the existing image
                                 setRemoveBanner(true);
                                 setFormData({ ...formData, banner_url: '' });
                             } else if (file) {
-                                // User uploaded a new image
                                 setRemoveBanner(false);
+                            }
+                        }}
+                    />
+
+                    <ImageUpload
+                        label="Cartelera del Evento (Fight Card)"
+                        value={getImageUrl(formData.card_image_url)}
+                        onChange={(file) => {
+                            setCardFile(file);
+                            if (file === null && formData.card_image_url) {
+                                setRemoveCard(true);
+                                setFormData({ ...formData, card_image_url: '' });
+                            } else if (file) {
+                                setRemoveCard(false);
                             }
                         }}
                     />
