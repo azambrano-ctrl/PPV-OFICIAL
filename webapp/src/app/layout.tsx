@@ -76,26 +76,22 @@ export default function RootLayout({
             </head>
             <body className="font-sans">
                 {/* Google Analytics GA4 */}
-                {process.env.NEXT_PUBLIC_GA_ID && (
-                    <>
-                        <Script
-                            src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
-                            strategy="afterInteractive"
-                        />
-                        <Script
-                            id="ga4-init"
-                            strategy="afterInteractive"
-                            dangerouslySetInnerHTML={{
-                                __html: `
-                                    window.dataLayer = window.dataLayer || [];
-                                    function gtag(){dataLayer.push(arguments);}
-                                    gtag('js', new Date());
-                                    gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', { page_path: window.location.pathname });
-                                `,
-                            }}
-                        />
-                    </>
-                )}
+                <Script
+                    src="https://www.googletagmanager.com/gtag/js?id=G-6VRSVRWWL7"
+                    strategy="afterInteractive"
+                />
+                <Script
+                    id="ga4-init"
+                    strategy="afterInteractive"
+                    dangerouslySetInnerHTML={{
+                        __html: `
+                            window.dataLayer = window.dataLayer || [];
+                            function gtag(){dataLayer.push(arguments);}
+                            gtag('js', new Date());
+                            gtag('config', 'G-6VRSVRWWL7');
+                        `,
+                    }}
+                />
 
                 {/* Meta Pixel */}
                 {process.env.NEXT_PUBLIC_META_PIXEL_ID && (
