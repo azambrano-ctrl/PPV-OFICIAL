@@ -12,6 +12,7 @@ import {
     createPayPalOrder,
     capturePayPalOrder,
     handlePayPalWebhook,
+    verifyPayPalWebhookSignature,
 } from '../services/paypalService';
 import { getEventById } from '../services/eventService';
 
@@ -331,12 +332,24 @@ router.post(
 
 /**
  * POST /api/payments/webhooks/paypal
- * PayPal webhook endpoint
+ * PayPal webhook endpoint — signature verified before processing
  */
 router.post(
     '/webhooks/paypal',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await handlePayPalWebhook(req.body);
+        // Verify PayPal signature to prevent fake webhook attacks
+        const isValid = await verifyPayPalWebhookSignature(
+            req.headers as Record<string, string>,
+            req.body as Buffer,
+        );
+
+        if (!isValid) {
+            res.status(401).json({ success: false, message: 'Invalid webhook signature' });
+            return;
+        }
+
+        const body = JSON.parse((req.body as Buffer).toString('utf8'));
+        await handlePayPalWebhook(body);
 
         res.json({ received: true });
     })

@@ -101,7 +101,7 @@ export default function NotificationCenter() {
                 className="relative p-2 rounded-full text-gray-400 hover:text-white hover:bg-white/5 transition-all"
                 title="Notificaciones"
             >
-                <Bell className={`w-6 h-6 ${unreadCount > 0 ? 'animate-bounce text-primary-500' : ''}`} />
+                <Bell className={`w-6 h-6 ${unreadCount > 0 ? 'animate-pulse text-primary-500' : ''}`} />
                 {unreadCount > 0 && (
                     <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-primary-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center ring-2 ring-dark-950">
                         {unreadCount > 9 ? '9+' : unreadCount}
@@ -112,9 +112,11 @@ export default function NotificationCenter() {
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        initial={{ opacity: 0, y: 6, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        exit={{ opacity: 0, y: 4, scale: 0.97 }}
+                        transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] }}
+                        style={{ transformOrigin: 'top right' }}
                         className="absolute -right-4 md:-right-2 mt-3 w-72 md:w-80 bg-dark-900 border border-dark-700 rounded-2xl shadow-2xl z-50 overflow-hidden ring-1 ring-white/5"
                     >
                         <div className="p-3 border-b border-dark-700 flex items-center justify-between bg-dark-800/50">

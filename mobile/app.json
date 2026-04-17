@@ -1,26 +1,30 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "Arena Fight Pass",
+    "slug": "arena-fight-pass",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "arenafightpass",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0f172a"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.arenafightpass.app"
+      "bundleIdentifier": "com.arenafightpass.app",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#0f172a"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -39,10 +43,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "803f12d8-8fef-4810-856b-c4981f07c9ab"
-      }
+      "router": {}
     }
   }
 }

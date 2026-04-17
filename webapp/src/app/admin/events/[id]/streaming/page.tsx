@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft, Router as RouterIcon, Key, Copy, AlertTriangle, Play, RefreshCw, Trash2, Video } from 'lucide-react';
+import { ChevronLeft, Router as RouterIcon, Key, Copy, AlertTriangle, Play, RefreshCw, Trash2, Video, Square, Radio, Film } from 'lucide-react';
 import api from '@/lib/api';
+import toast from 'react-hot-toast';
 
 interface LiveStream {
     id: string;
@@ -16,33 +17,65 @@ interface LiveStream {
     mux_live_stream_id: string;
 }
 
+interface EventInfo {
+    id: string;
+    title: string;
+    status: string;
+}
+
 export default function StreamConfigPage() {
     const params = useParams();
     const router = useRouter();
     const [stream, setStream] = useState<LiveStream | null>(null);
+    const [event, setEvent] = useState<EventInfo | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [creating, setCreating] = useState(false);
+    const [endingStream, setEndingStream] = useState(false);
+    const [fetchingRecording, setFetchingRecording] = useState(false);
 
     const eventId = params.id as string;
 
     useEffect(() => {
-        fetchStreamInfo();
+        fetchData();
     }, [eventId]);
+
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            const [streamRes, eventRes] = await Promise.allSettled([
+                api.get(`/admin/events/${eventId}/live-stream`),
+                api.get(`/events/${eventId}`),
+            ]);
+
+            if (streamRes.status === 'fulfilled') {
+                setStream(streamRes.value.data.data);
+            } else if ((streamRes.reason as any)?.response?.status !== 404) {
+                setError('Error al cargar la información del stream');
+            }
+
+            if (eventRes.status === 'fulfilled') {
+                setEvent(eventRes.value.data.data);
+            }
+        } catch (err: any) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const fetchStreamInfo = async () => {
         try {
-            setLoading(true);
             const res = await api.get(`/admin/events/${eventId}/live-stream`);
             setStream(res.data.data);
+            const eventRes = await api.get(`/events/${eventId}`);
+            setEvent(eventRes.data.data);
+            setError('');
         } catch (err: any) {
             console.error(err);
-            // Ignore 404/null data, just means no stream yet
             if (err.response?.status !== 404) {
-                setError('Error al cargar la información del stream');
+                setError('Error al actualizar');
             }
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -74,10 +107,43 @@ export default function StreamConfigPage() {
         }
     };
 
+    const endStream = async () => {
+        if (!confirm('¿Terminar la transmisión EN VIVO ahora? El evento pasará a estado REPRISE y los espectadores podrán seguir viendo la grabación.')) {
+            return;
+        }
+
+        try {
+            setEndingStream(true);
+            await api.post(`/admin/events/${eventId}/end-stream`);
+            toast.success('✅ Transmisión finalizada. Evento en modo REPRISE.');
+            // Refresh state
+            await fetchStreamInfo();
+        } catch (err: any) {
+            const msg = err.response?.data?.message || 'Error al terminar la transmisión';
+            setError(msg);
+            toast.error(msg);
+        } finally {
+            setEndingStream(false);
+        }
+    };
+
+    const fetchRecording = async () => {
+        try {
+            setFetchingRecording(true);
+            const res = await api.post(`/admin/events/${eventId}/fetch-recording`);
+            toast.success(`✅ URL actualizada: ${res.data.data?.videoUid}`);
+            await fetchData();
+        } catch (err: any) {
+            const msg = err.response?.data?.message || 'Error al buscar la grabación';
+            toast.error(msg);
+        } finally {
+            setFetchingRecording(false);
+        }
+    };
+
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
-        // You could add a toast here
-        alert('Copiado al portapapeles');
+        toast.success('Copiado al portapapeles');
     };
 
     if (loading) {
@@ -87,6 +153,8 @@ export default function StreamConfigPage() {
             </div>
         );
     }
+
+    const isLive = event?.status === 'live';
 
     return (
         <div className="min-h-screen bg-neutral-950 text-white p-8">
@@ -99,13 +167,83 @@ export default function StreamConfigPage() {
                     >
                         <ChevronLeft className="w-6 h-6" />
                     </Link>
-                    <h1 className="text-2xl font-bold">Configuración de Transmisión (Mux)</h1>
+                    <div className="flex-1">
+                        <h1 className="text-2xl font-bold">Configuración de Transmisión</h1>
+                        {event && (
+                            <p className="text-white/50 text-sm mt-0.5">{event.title}</p>
+                        )}
+                    </div>
+                    {/* Live status badge */}
+                    {event && (
+                        <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold ${
+                            isLive
+                                ? 'bg-red-500/20 border border-red-500/40 text-red-400'
+                                : event.status === 'reprise'
+                                ? 'bg-blue-500/20 border border-blue-500/40 text-blue-400'
+                                : 'bg-white/10 border border-white/20 text-white/60'
+                        }`}>
+                            {isLive && <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />}
+                            {isLive ? '🔴 EN VIVO' : event.status === 'reprise' ? '📼 REPRISE' : event.status.toUpperCase()}
+                        </div>
+                    )}
                 </div>
 
                 {error && (
                     <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-lg flex items-center gap-2">
-                        <AlertTriangle className="w-5 h-5" />
+                        <AlertTriangle className="w-5 h-5 flex-shrink-0" />
                         {error}
+                    </div>
+                )}
+
+                {/* Emergency Stop Banner — only shown when event is LIVE */}
+                {isLive && (
+                    <div className="bg-red-900/30 border border-red-500/40 rounded-2xl p-6">
+                        <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                <Radio className="w-6 h-6 text-red-400 animate-pulse" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-lg font-bold text-red-300 mb-1">Evento EN VIVO</h3>
+                                <p className="text-white/60 text-sm mb-4">
+                                    Si la transmisión desde OBS ya terminó pero la plataforma sigue mostrando "EN VIVO",
+                                    usa este botón para finalizar manualmente y pasar a modo REPRISE.
+                                </p>
+                                <button
+                                    onClick={endStream}
+                                    disabled={endingStream}
+                                    className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-500 disabled:bg-red-900/50 disabled:cursor-not-allowed text-white rounded-full font-semibold transition-all transform hover:scale-105 active:scale-95"
+                                >
+                                    <Square className="w-4 h-4" />
+                                    {endingStream ? 'Finalizando...' : 'Terminar Transmisión Ahora'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Reprise recording card */}
+                {event?.status === 'reprise' && (
+                    <div className="bg-blue-900/20 border border-blue-500/30 rounded-2xl p-6">
+                        <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                <Film className="w-6 h-6 text-blue-400" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-lg font-bold text-blue-300 mb-1">Grabación de Cloudflare</h3>
+                                <p className="text-white/60 text-sm mb-4">
+                                    Cuando el evento pasa a REPRISE, el sistema busca automáticamente el video grabado.
+                                    Si la URL del stream no se actualizó correctamente, usa este botón.
+                                </p>
+                                <button
+                                    onClick={fetchRecording}
+                                    disabled={fetchingRecording}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-900/50 disabled:cursor-not-allowed text-white rounded-full font-semibold text-sm transition-all"
+                                >
+                                    <Film className="w-4 h-4" />
+                                    {fetchingRecording ? 'Buscando grabación...' : 'Obtener URL de grabación'}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -25,7 +25,7 @@ interface Purchase {
     seat_number?: number;
 }
 
-export default function ProfilePage() {
+function ProfileContent() {
     const router = useRouter();
     const { user, isAuthenticated, logout } = useAuthStore();
     const [purchases, setPurchases] = useState<Purchase[]>([]);
@@ -383,5 +383,13 @@ export default function ProfilePage() {
 
             <Footer />
         </div>
+    );
+}
+
+export default function ProfilePage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-dark-950 flex items-center justify-center"><div className="spinner w-8 h-8" /></div>}>
+            <ProfileContent />
+        </Suspense>
     );
 }

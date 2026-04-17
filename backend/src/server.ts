@@ -136,8 +136,9 @@ app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/forgot-password', authLimiter);
 
 // Body parsing middleware
-// Note: For Stripe webhooks, we need raw body
+// Raw body needed for webhook signature verification
 app.use('/api/payments/webhooks/stripe', express.raw({ type: 'application/json' }));
+app.use('/api/payments/webhooks/paypal', express.raw({ type: 'application/json' }));
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
@@ -221,6 +222,9 @@ io.use(async (socket, next) => {
 import { moderateUser, checkChatStatus, removeModeration } from './services/promoterService';
 import * as notificationService from './services/notificationService';
 
+// O(1) user→socket map to replace the O(N²) loop on every join
+const userSocketMap = new Map<string, Set<string>>();
+
 // Socket.io connection handling
 io.on('connection', (socket) => {
     logger.info('User connected to socket', {
@@ -266,25 +270,23 @@ io.on('connection', (socket) => {
                 return;
             }
 
-            // --- STRICT GLOBAL 1-TAB/DEVICE POLICY ---
-            // Find if this user already has an active socket ANYWHERE in the server
-            // (Even if they are watching a different event Reprise vs Live)
-            for (const [_, existingSocket] of io.sockets.sockets.entries()) {
-                if (existingSocket &&
-                    existingSocket.data?.user?.userId === userId &&
-                    existingSocket.id !== socket.id) {
-
-                    logger.info(`[GLOBAL CHAT] Enforcing global 1-device policy for user ${userId}. Kicking old socket ${existingSocket.id}`);
-
-                    // Notify the old socket it's being kicked out
-                    existingSocket.emit('force_logout', {
-                        message: 'Se ha iniciado sesión en otro dispositivo o has abierto otra transmisión. Tu sesión aquí será cerrada por seguridad.'
-                    });
-
-                    // Force the old socket to disconnect
-                    existingSocket.disconnect(true);
+            // --- STRICT GLOBAL 1-TAB/DEVICE POLICY (O(1) via Map) ---
+            const existingIds = userSocketMap.get(userId) || new Set<string>();
+            for (const oldId of existingIds) {
+                if (oldId !== socket.id) {
+                    const oldSocket = io.sockets.sockets.get(oldId);
+                    if (oldSocket) {
+                        logger.info(`[GLOBAL CHAT] 1-device policy: kicking ${oldId} for user ${userId}`);
+                        oldSocket.emit('force_logout', {
+                            message: 'Se ha iniciado sesión en otro dispositivo. Tu sesión anterior fue cerrada.'
+                        });
+                        oldSocket.disconnect(true);
+                    }
+                    existingIds.delete(oldId);
                 }
             }
+            existingIds.add(socket.id);
+            userSocketMap.set(userId, existingIds);
             // -----------------------------------------
 
             // Check if user is admin or has purchased the event
@@ -538,10 +540,18 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Disconnect
+    // Disconnect — clean up userSocketMap to prevent memory leak
     socket.on('disconnect', () => {
+        const userId = socket.data.user?.userId;
+        if (userId) {
+            const sockets = userSocketMap.get(userId);
+            if (sockets) {
+                sockets.delete(socket.id);
+                if (sockets.size === 0) userSocketMap.delete(userId);
+            }
+        }
         logger.info('User disconnected from chat', {
-            userId: socket.data.user.userId,
+            userId,
             socketId: socket.id,
         });
     });
@@ -559,9 +569,15 @@ app.use(errorHandler);
 const startReminderCron = () => {
     logger.info('⏰ Starting event reminder cron for Push and Emails...');
 
-    // Set to store notified event-user pairs for current session to avoid duplicates
     const notifiedPushPairs = new Set<string>();
     const notifiedEmailPairs = new Set<string>();
+
+    // Clear tracking sets every 24h to prevent unbounded memory growth
+    setInterval(() => {
+        notifiedPushPairs.clear();
+        notifiedEmailPairs.clear();
+        logger.info('[Reminder] Cleared notification tracking sets');
+    }, 24 * 60 * 60 * 1000);
 
     setInterval(async () => {
         try {

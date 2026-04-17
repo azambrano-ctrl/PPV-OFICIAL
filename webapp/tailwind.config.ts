@@ -46,23 +46,28 @@ const config: Config = {
                 'hero-pattern': "url('/hero-pattern.svg')",
             },
             animation: {
-                'fade-in': 'fadeIn 0.5s ease-in-out',
-                'slide-up': 'slideUp 0.5s ease-out',
-                'slide-down': 'slideDown 0.5s ease-out',
+                'fade-in': 'fadeIn 0.25s cubic-bezier(0.23, 1, 0.32, 1)',
+                'slide-up': 'slideUp 0.25s cubic-bezier(0.23, 1, 0.32, 1)',
+                'slide-down': 'slideDown 0.25s cubic-bezier(0.23, 1, 0.32, 1)',
                 'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                'slow-zoom': 'slowZoom 8s ease-in-out infinite',
             },
             keyframes: {
                 fadeIn: {
-                    '0%': { opacity: '0' },
-                    '100%': { opacity: '1' },
+                    '0%': { opacity: '0', transform: 'translateY(6px) scale(0.98)' },
+                    '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
                 },
                 slideUp: {
-                    '0%': { transform: 'translateY(20px)', opacity: '0' },
+                    '0%': { transform: 'translateY(16px)', opacity: '0' },
                     '100%': { transform: 'translateY(0)', opacity: '1' },
                 },
                 slideDown: {
-                    '0%': { transform: 'translateY(-20px)', opacity: '0' },
+                    '0%': { transform: 'translateY(-16px)', opacity: '0' },
                     '100%': { transform: 'translateY(0)', opacity: '1' },
+                },
+                slowZoom: {
+                    '0%, 100%': { transform: 'scale(1.05)' },
+                    '50%': { transform: 'scale(1.12)' },
                 },
             },
         },
