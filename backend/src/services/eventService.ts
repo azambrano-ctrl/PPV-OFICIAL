@@ -368,3 +368,32 @@ export const removeFighterFromEvent = async (eventId: string, fighterId: string)
         throw new Error('El peleador no fue encontrado en este evento');
     }
 };
+
+export const getEventCardImages = async (eventId: string) => {
+    const result = await query(
+        'SELECT * FROM event_card_images WHERE event_id = $1 ORDER BY order_index ASC, created_at ASC',
+        [eventId]
+    );
+    return result.rows;
+};
+
+export const addEventCardImage = async (eventId: string, imageUrl: string) => {
+    const orderRes = await query(
+        'SELECT COALESCE(MAX(order_index), -1) + 1 AS next FROM event_card_images WHERE event_id = $1',
+        [eventId]
+    );
+    const nextOrder = parseInt(orderRes.rows[0].next);
+    const result = await query(
+        'INSERT INTO event_card_images (event_id, image_url, order_index) VALUES ($1, $2, $3) RETURNING *',
+        [eventId, imageUrl, nextOrder]
+    );
+    return result.rows[0];
+};
+
+export const deleteEventCardImage = async (eventId: string, imageId: string) => {
+    const result = await query(
+        'DELETE FROM event_card_images WHERE id = $1 AND event_id = $2 RETURNING *',
+        [imageId, eventId]
+    );
+    if (result.rowCount === 0) throw new Error('Imagen no encontrada');
+};

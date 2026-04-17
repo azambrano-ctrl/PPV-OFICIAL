@@ -116,6 +116,10 @@ export const uploadEventImages = handleUploads([
     { name: 'card', maxCount: 1 },
 ]);
 
+export const uploadCardImages = handleUploads([
+    { name: 'card_images', maxCount: 10 },
+]);
+
 export const uploadTrailerVideo = handleUploads([
     { name: 'trailer_video', maxCount: 1 },
 ]);

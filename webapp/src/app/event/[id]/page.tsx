@@ -73,6 +73,7 @@ export default function EventDetailPage() {
     const [claiming, setClaiming] = useState(false);
     const [countdown, setCountdown] = useState<CountdownTime | null>(null);
     const [isClient, setIsClient] = useState(false);
+    const [cardImages, setCardImages] = useState<{ id: string; image_url: string }[]>([]);
     useEffect(() => {
         setIsClient(true);
     }, []);
@@ -82,6 +83,9 @@ export default function EventDetailPage() {
             loadEvent(params.id as string);
             if (isAuthenticated) checkAccess(params.id as string);
             else setCheckingAccess(false);
+            eventsAPI.getCardImages(params.id as string)
+                .then(r => setCardImages(r.data.data))
+                .catch(() => {});
         }
     }, [params.id, isAuthenticated]);
 
@@ -310,17 +314,30 @@ export default function EventDetailPage() {
                             </div>
 
                             {/* Cartelera */}
-                            {event.card_image_url && (
+                            {(cardImages.length > 0 || event.card_image_url) && (
                                 <div className="card p-6">
                                     <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                                         <Users className="w-5 h-5 text-primary-500" />
                                         Cartelera del Evento
                                     </h2>
-                                    <img
-                                        src={getImageUrl(event.card_image_url)}
-                                        alt={`Cartelera - ${event.title}`}
-                                        className="w-full rounded-xl object-contain max-h-[700px]"
-                                    />
+                                    {cardImages.length > 0 ? (
+                                        <div className={cardImages.length === 1 ? '' : 'grid grid-cols-1 sm:grid-cols-2 gap-4'}>
+                                            {cardImages.map(img => (
+                                                <img
+                                                    key={img.id}
+                                                    src={getImageUrl(img.image_url)}
+                                                    alt={`Cartelera - ${event.title}`}
+                                                    className="w-full rounded-xl object-contain"
+                                                />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <img
+                                            src={getImageUrl(event.card_image_url)}
+                                            alt={`Cartelera - ${event.title}`}
+                                            className="w-full rounded-xl object-contain max-h-[700px]"
+                                        />
+                                    )}
                                 </div>
                             )}
 

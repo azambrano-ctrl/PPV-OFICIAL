@@ -190,6 +190,17 @@ export const eventsAPI = {
 
     removeFighter: (id: string, fighter_id: string) =>
         api.delete(`/events/${id}/fighters/${fighter_id}`),
+
+    getCardImages: (id: string) =>
+        api.get(`/events/${id}/card-images`),
+
+    addCardImages: (id: string, formData: FormData) =>
+        api.post(`/events/${id}/card-images`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        }),
+
+    deleteCardImage: (id: string, imageId: string) =>
+        api.delete(`/events/${id}/card-images/${imageId}`),
 };
 
 export const paymentsAPI = {

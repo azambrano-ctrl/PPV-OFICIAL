@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { asyncHandler } from '../middleware/errorHandler';
 import { validateBody, validateParams, validateQuery } from '../middleware/validation';
 import { authenticate, requireAdmin, AuthRequest } from '../middleware/auth';
-import { uploadEventImages, uploadTrailerVideo } from '../middleware/upload';
+import { uploadEventImages, uploadTrailerVideo, uploadCardImages } from '../middleware/upload';
 import {
     getAllEvents,
     getEventById,
@@ -15,7 +15,10 @@ import {
     updateEventStatus,
     getEventFighters,
     addFighterToEvent,
-    removeFighterFromEvent
+    removeFighterFromEvent,
+    getEventCardImages,
+    addEventCardImage,
+    deleteEventCardImage
 } from '../services/eventService';
 import { getChatMessages } from '../services/chatService';
 
@@ -560,6 +563,89 @@ router.delete(
             success: true,
             message: 'Fighter removed from event successfully'
         });
+    })
+);
+
+/**
+ * GET /api/events/:id/card-images
+ * Get all card images for an event (public)
+ */
+router.get(
+    '/:id/card-images',
+    validateParams(eventIdSchema),
+    asyncHandler(async (req: Request, res: Response) => {
+        const images = await getEventCardImages(req.params.id);
+        res.json({ success: true, data: images });
+    })
+);
+
+/**
+ * POST /api/events/:id/card-images
+ * Upload card images (admin or owning promoter)
+ */
+router.post(
+    '/:id/card-images',
+    authenticate,
+    validateParams(eventIdSchema),
+    uploadCardImages,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const user = req.user!;
+        const eventId = req.params.id;
+
+        const currentEvent = await getEventById(eventId);
+        if (!currentEvent) {
+            res.status(404).json({ success: false, message: 'Evento no encontrado' });
+            return;
+        }
+
+        const isAdmin = user.role === 'admin';
+        const isOwner = user.role === 'promoter' && currentEvent.promoter_id === user.promoterId;
+        if (!isAdmin && !isOwner) {
+            res.status(403).json({ success: false, message: 'Sin permisos' });
+            return;
+        }
+
+        const files = (req as any).files as { card_images?: Express.Multer.File[] };
+        if (!files?.card_images || files.card_images.length === 0) {
+            res.status(400).json({ success: false, message: 'No se enviaron imágenes' });
+            return;
+        }
+
+        const saved = await Promise.all(
+            files.card_images.map(f => addEventCardImage(eventId, f.path))
+        );
+
+        res.status(201).json({ success: true, data: saved });
+    })
+);
+
+/**
+ * DELETE /api/events/:id/card-images/:imageId
+ * Delete a card image (admin or owning promoter)
+ */
+router.delete(
+    '/:id/card-images/:imageId',
+    authenticate,
+    validateParams(eventIdSchema),
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const user = req.user!;
+        const { id: eventId, imageId } = req.params;
+
+        const currentEvent = await getEventById(eventId);
+        if (!currentEvent) {
+            res.status(404).json({ success: false, message: 'Evento no encontrado' });
+            return;
+        }
+
+        const isAdmin = user.role === 'admin';
+        const isOwner = user.role === 'promoter' && currentEvent.promoter_id === user.promoterId;
+        if (!isAdmin && !isOwner) {
+            res.status(403).json({ success: false, message: 'Sin permisos' });
+            return;
+        }
+
+        await deleteEventCardImage(eventId, imageId);
+        res.json({ success: true, message: 'Imagen eliminada' });
     })
 );
 
