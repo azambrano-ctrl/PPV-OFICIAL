@@ -213,7 +213,7 @@ export default function EventsPage() {
             )}
 
             {/* ── FILTERS ── */}
-            <section className="sticky top-0 z-20 bg-dark-950/95 backdrop-blur-sm border-b border-dark-800 py-4">
+            <section className="sticky top-20 z-20 bg-dark-950/95 backdrop-blur-sm border-b border-dark-800 py-4">
                 <div className="container-custom space-y-3">
                     {/* Search + Sort row */}
                     <div className="flex gap-3">
