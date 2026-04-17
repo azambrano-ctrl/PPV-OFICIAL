@@ -89,11 +89,7 @@ export default function EventsPage() {
         let result = events;
 
         if (statusFilter !== 'all') {
-            if (statusFilter === 'upcoming') {
-                result = result.filter(e => e.status === 'upcoming' || e.status === 'reprise');
-            } else {
-                result = result.filter(e => e.status === statusFilter);
-            }
+            result = result.filter(e => e.status === statusFilter);
         }
 
         if (searchTerm) {
@@ -242,9 +238,7 @@ export default function EventsPage() {
                         {STATUS_CHIPS.map(chip => {
                             const count = chip.value === 'all'
                                 ? statusCounts.all
-                                : chip.value === 'upcoming'
-                                    ? (statusCounts['upcoming'] || 0) + (statusCounts['reprise'] || 0)
-                                    : statusCounts[chip.value] || 0;
+                                : statusCounts[chip.value] || 0;
 
                             if (count === 0 && chip.value !== 'all') return null;
 
