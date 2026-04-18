@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Search, Filter, UserCheck, UserX, Shield, User as UserIcon, Trash2, MailCheck, MailWarning, Send } from 'lucide-react';
+import { Search, Filter, UserCheck, UserX, Shield, User as UserIcon, Trash2, MailCheck, MailWarning, Send, KeyRound } from 'lucide-react';
 import { authAPI, handleAPIError } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -107,6 +107,16 @@ export default function AdminUsersPage() {
         } catch (error) {
             const message = handleAPIError(error);
             toast.error(message);
+        }
+    };
+
+    const handleResetPassword = async (user: User) => {
+        if (!confirm(`¿Enviar email de reset de contraseña a ${user.email}?`)) return;
+        try {
+            await authAPI.forgotPassword(user.email);
+            toast.success(`Email de reset enviado a ${user.email}`);
+        } catch (error) {
+            toast.error(handleAPIError(error));
         }
     };
 
@@ -335,6 +345,13 @@ export default function AdminUsersPage() {
                                                         Hacer Usuario
                                                     </button>
                                                 ) : null}
+                                                <button
+                                                    onClick={() => handleResetPassword(user)}
+                                                    className="btn btn-sm bg-dark-700 hover:bg-blue-600/20 text-gray-400 hover:text-blue-400 border-dark-600 transition-all"
+                                                    title="Enviar reset de contraseña"
+                                                >
+                                                    <KeyRound className="w-4 h-4" />
+                                                </button>
                                                 <button
                                                     onClick={() => handleDelete(user)}
                                                     className="btn btn-sm bg-dark-700 hover:bg-red-600/20 text-gray-400 hover:text-red-500 border-dark-600 transition-all"
