@@ -55,11 +55,14 @@ function PaymentFormContent({ event, purchaseType = 'event', onClose }: PaymentM
         setAppliedCoupon(null);
         try {
             const res = await paymentsAPI.validateCoupon(couponInput.trim(), event?.id);
-            setAppliedCoupon({
-                code: res.data.data.code,
-                discountType: res.data.data.discountType,
-                discountValue: res.data.data.discountValue,
-            });
+            const { code, discountType, discountValue, minAmount } = res.data.data;
+
+            if (minAmount && originalPrice < minAmount) {
+                setCouponError(`Este cupón requiere un monto mínimo de $${Number(minAmount).toFixed(2)}`);
+                return;
+            }
+
+            setAppliedCoupon({ code, discountType, discountValue });
         } catch (err: any) {
             setCouponError(err.response?.data?.message || 'Cupón inválido');
         } finally {

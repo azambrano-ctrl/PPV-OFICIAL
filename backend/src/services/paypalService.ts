@@ -144,15 +144,22 @@ export const createPayPalOrder = async (
         // Apply coupon if provided
         if (input.couponCode) {
             const couponResult = await query(
-                `SELECT * FROM coupons 
-         WHERE code = $1 AND is_active = TRUE 
-         AND (valid_until IS NULL OR valid_until > NOW())
-         AND (max_uses IS NULL OR current_uses < max_uses)`,
-                [input.couponCode]
+                `SELECT * FROM coupons
+                 WHERE UPPER(code) = UPPER($1) AND is_active = TRUE
+                 AND (valid_until IS NULL OR valid_until > NOW())
+                 AND (max_uses IS NULL OR current_uses < max_uses)
+                 AND (event_id IS NULL OR event_id = $2)`,
+                [input.couponCode, input.eventId || null]
             );
 
             if (couponResult.rows.length > 0) {
                 const coupon = couponResult.rows[0];
+
+                // Validate min_amount
+                const minAmount = parseFloat(coupon.min_amount || '0');
+                if (minAmount > 0 && input.amount < minAmount) {
+                    throw new Error(`Este cupón requiere un monto mínimo de $${minAmount.toFixed(2)}`);
+                }
 
                 if (coupon.discount_type === 'percentage') {
                     discountAmount = (input.amount * coupon.discount_value) / 100;
@@ -332,12 +339,17 @@ async function handlePayPalSuccess(orderId: string, _orderDetails: any) {
 
         const purchase = result.rows[0];
 
-        // Update coupon usage if applicable
+        // Update coupon usage atomically (guards against race conditions)
         if (purchase.coupon_code) {
-            await client.query(
-                'UPDATE coupons SET current_uses = current_uses + 1 WHERE code = $1',
+            const couponUpdate = await client.query(
+                `UPDATE coupons SET current_uses = current_uses + 1
+                 WHERE code = $1 AND (max_uses IS NULL OR current_uses < max_uses)
+                 RETURNING id`,
                 [purchase.coupon_code]
             );
+            if (couponUpdate.rowCount === 0) {
+                logger.warn('Coupon max_uses exceeded at capture time', { code: purchase.coupon_code });
+            }
         }
 
         // Create stream token for user
