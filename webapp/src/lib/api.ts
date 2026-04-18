@@ -293,6 +293,9 @@ export const adminAPI = {
 
     grantEventAccess: (userId: string, eventId: string) =>
         api.post('/admin/grant-access', { userId, eventId }),
+
+    getUserPurchasesAdmin: (userId: string) =>
+        api.get(`/admin/users/${userId}/purchases`),
 };
 
 export const newsletterAPI = {

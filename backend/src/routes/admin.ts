@@ -255,6 +255,8 @@ router.post(
 
 /**
  * GET /api/admin/purchases/recent
+/**
+ * GET /api/admin/purchases/recent
  * Get recent purchases
  */
 router.get(
@@ -265,7 +267,7 @@ router.get(
         const limit = parseInt(req.query.limit as string) || 10;
 
         const result = await pool.query(
-            `SELECT 
+            `SELECT
                 p.id,
                 p.amount,
                 p.currency,
@@ -288,6 +290,46 @@ router.get(
     })
 );
 
+
+/**
+ * GET /api/admin/users/:userId/purchases
+ * Get all purchases for a specific user (all statuses)
+ */
+router.get(
+    '/users/:userId/purchases',
+    authenticate,
+    requireAdmin,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { userId } = req.params;
+
+        const result = await pool.query(
+            `SELECT
+                p.id,
+                p.amount,
+                p.final_amount,
+                p.currency,
+                p.payment_method,
+                p.payment_status,
+                p.payment_intent_id,
+                p.purchase_type,
+                p.coupon_code,
+                p.discount_amount,
+                p.purchased_at,
+                p.seat_number,
+                COALESCE(e.title, 'Pase de Temporada') as event_title,
+                e.id as event_id,
+                e.status as event_status,
+                e.event_date
+             FROM purchases p
+             LEFT JOIN events e ON p.event_id = e.id
+             WHERE p.user_id = $1
+             ORDER BY p.purchased_at DESC`,
+            [userId]
+        );
+
+        res.json({ success: true, data: result.rows });
+    })
+);
 
 /**
  * POST /api/admin/events/:id/live-stream

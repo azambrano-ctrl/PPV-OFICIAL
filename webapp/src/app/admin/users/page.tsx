@@ -23,6 +23,17 @@ interface Event {
     event_date: string;
 }
 
+interface Purchase {
+    id: string;
+    event_title: string;
+    payment_method: string;
+    payment_status: string;
+    payment_intent_id: string;
+    final_amount: number;
+    currency: string;
+    purchased_at: string;
+}
+
 export default function AdminUsersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -33,6 +44,8 @@ export default function AdminUsersPage() {
     const [verifiedFilter, setVerifiedFilter] = useState<string>('all');
     const [grantModal, setGrantModal] = useState<{ user: User } | null>(null);
     const [events, setEvents] = useState<Event[]>([]);
+    const [userPurchases, setUserPurchases] = useState<Purchase[]>([]);
+    const [loadingPurchases, setLoadingPurchases] = useState(false);
     const [selectedEventId, setSelectedEventId] = useState('');
     const [granting, setGranting] = useState(false);
 
@@ -124,11 +137,17 @@ export default function AdminUsersPage() {
     const openGrantModal = async (user: User) => {
         setGrantModal({ user });
         setSelectedEventId('');
-        if (events.length === 0) {
-            try {
-                const res = await eventsAPI.getAll();
-                setEvents(res.data.data || []);
-            } catch { /* ignore */ }
+        setUserPurchases([]);
+        setLoadingPurchases(true);
+        try {
+            const [evRes, purRes] = await Promise.all([
+                events.length === 0 ? eventsAPI.getAll() : Promise.resolve({ data: { data: events } }),
+                adminAPI.getUserPurchasesAdmin(user.id),
+            ]);
+            setEvents(evRes.data.data || []);
+            setUserPurchases(purRes.data.data || []);
+        } catch { /* ignore */ } finally {
+            setLoadingPurchases(false);
         }
     };
 
@@ -440,8 +459,33 @@ export default function AdminUsersPage() {
                             <br />
                             <span className="text-gray-500">{grantModal.user.email}</span>
                         </p>
+
+                        {/* Existing purchases */}
                         <div>
-                            <label className="block text-sm text-gray-400 mb-1">Seleccionar evento</label>
+                            <p className="text-xs font-semibold text-gray-400 uppercase mb-2">Compras registradas</p>
+                            {loadingPurchases ? (
+                                <p className="text-xs text-gray-500">Cargando...</p>
+                            ) : userPurchases.length === 0 ? (
+                                <p className="text-xs text-yellow-400">⚠️ No hay compras registradas para este usuario.</p>
+                            ) : (
+                                <div className="space-y-1 max-h-32 overflow-y-auto">
+                                    {userPurchases.map(p => (
+                                        <div key={p.id} className="flex items-center justify-between text-xs rounded bg-dark-800 px-2 py-1.5">
+                                            <span className="text-gray-300 truncate max-w-[55%]">{p.event_title}</span>
+                                            <span className={`px-1.5 py-0.5 rounded font-medium ${
+                                                p.payment_status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                                                p.payment_status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                'bg-red-500/20 text-red-400'
+                                            }`}>{p.payment_status}</span>
+                                            <span className="text-gray-500">{p.payment_method}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm text-gray-400 mb-1">Dar acceso a evento</label>
                             <select
                                 value={selectedEventId}
                                 onChange={(e) => setSelectedEventId(e.target.value)}
