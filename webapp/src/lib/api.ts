@@ -290,6 +290,9 @@ export const adminAPI = {
 
     testEmail: (to?: string) =>
         api.post('/admin/test-email', { to }),
+
+    grantEventAccess: (userId: string, eventId: string) =>
+        api.post('/admin/grant-access', { userId, eventId }),
 };
 
 export const newsletterAPI = {

@@ -928,4 +928,60 @@ router.post(
     })
 );
 
+/**
+ * POST /api/admin/grant-access
+ * Manually grant a user access to a paid event (creates a completed purchase).
+ */
+router.post(
+    '/grant-access',
+    authenticate,
+    requireAdmin,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { userId, eventId } = req.body;
+
+        if (!userId || !eventId) {
+            res.status(400).json({ success: false, message: 'userId y eventId son requeridos' });
+            return;
+        }
+
+        // Verify user and event exist
+        const [userRes, eventRes] = await Promise.all([
+            pool.query('SELECT id, email, full_name FROM users WHERE id = $1', [userId]),
+            pool.query('SELECT id, title, price, currency FROM events WHERE id = $1', [eventId]),
+        ]);
+
+        if (userRes.rows.length === 0) {
+            res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+            return;
+        }
+        if (eventRes.rows.length === 0) {
+            res.status(404).json({ success: false, message: 'Evento no encontrado' });
+            return;
+        }
+
+        const event = eventRes.rows[0];
+
+        // Upsert: if pending purchase exists, complete it; otherwise create new
+        await pool.query(
+            `INSERT INTO purchases (user_id, event_id, purchase_type, amount, currency, payment_method, payment_status, final_amount)
+             VALUES ($1, $2, 'event', $3, $4, 'stripe', 'completed', $3)
+             ON CONFLICT (user_id, event_id) WHERE purchase_type != 'season_pass'
+             DO UPDATE SET payment_status = 'completed', final_amount = EXCLUDED.final_amount`,
+            [userId, eventId, event.price || 0, event.currency || 'USD']
+        );
+
+        logger.info('[Admin] Manual access granted', {
+            adminId: req.user!.userId,
+            userId,
+            eventId,
+            eventTitle: event.title,
+        });
+
+        res.json({
+            success: true,
+            message: `Acceso otorgado a "${event.title}"`,
+        });
+    })
+);
+
 export default router;

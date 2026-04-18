@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Search, Filter, UserCheck, UserX, Shield, User as UserIcon, Trash2, MailCheck, MailWarning, Send, KeyRound } from 'lucide-react';
-import { authAPI, handleAPIError } from '@/lib/api';
+import { Search, Filter, UserCheck, UserX, Shield, User as UserIcon, Trash2, MailCheck, MailWarning, Send, KeyRound, Ticket, X } from 'lucide-react';
+import { authAPI, adminAPI, eventsAPI, handleAPIError } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
@@ -16,6 +16,13 @@ interface User {
     created_at: string;
 }
 
+interface Event {
+    id: string;
+    title: string;
+    status: string;
+    event_date: string;
+}
+
 export default function AdminUsersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -24,6 +31,10 @@ export default function AdminUsersPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState<string>('all');
     const [verifiedFilter, setVerifiedFilter] = useState<string>('all');
+    const [grantModal, setGrantModal] = useState<{ user: User } | null>(null);
+    const [events, setEvents] = useState<Event[]>([]);
+    const [selectedEventId, setSelectedEventId] = useState('');
+    const [granting, setGranting] = useState(false);
 
     useEffect(() => {
         loadUsers();
@@ -107,6 +118,32 @@ export default function AdminUsersPage() {
         } catch (error) {
             const message = handleAPIError(error);
             toast.error(message);
+        }
+    };
+
+    const openGrantModal = async (user: User) => {
+        setGrantModal({ user });
+        setSelectedEventId('');
+        if (events.length === 0) {
+            try {
+                const res = await eventsAPI.getAll();
+                setEvents(res.data.data || []);
+            } catch { /* ignore */ }
+        }
+    };
+
+    const handleGrantAccess = async () => {
+        if (!grantModal || !selectedEventId) return;
+        setGranting(true);
+        try {
+            await adminAPI.grantEventAccess(grantModal.user.id, selectedEventId);
+            const eventTitle = events.find(e => e.id === selectedEventId)?.title || 'evento';
+            toast.success(`Acceso otorgado a ${grantModal.user.full_name} para "${eventTitle}"`);
+            setGrantModal(null);
+        } catch (error) {
+            toast.error(handleAPIError(error));
+        } finally {
+            setGranting(false);
         }
     };
 
@@ -346,6 +383,13 @@ export default function AdminUsersPage() {
                                                     </button>
                                                 ) : null}
                                                 <button
+                                                    onClick={() => openGrantModal(user)}
+                                                    className="btn btn-sm bg-dark-700 hover:bg-green-600/20 text-gray-400 hover:text-green-400 border-dark-600 transition-all"
+                                                    title="Dar acceso a evento"
+                                                >
+                                                    <Ticket className="w-4 h-4" />
+                                                </button>
+                                                <button
                                                     onClick={() => handleResetPassword(user)}
                                                     className="btn btn-sm bg-dark-700 hover:bg-blue-600/20 text-gray-400 hover:text-blue-400 border-dark-600 transition-all"
                                                     title="Enviar reset de contraseña"
@@ -377,6 +421,59 @@ export default function AdminUsersPage() {
                     </button>
                 )}
             </div>
+
+            {/* Grant Access Modal */}
+            {grantModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
+                    <div className="card p-6 w-full max-w-md space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                <Ticket className="w-5 h-5 text-green-400" />
+                                Dar Acceso a Evento
+                            </h3>
+                            <button onClick={() => setGrantModal(null)} className="text-gray-500 hover:text-white">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <p className="text-sm text-gray-400">
+                            Usuario: <span className="text-white font-semibold">{grantModal.user.full_name}</span>
+                            <br />
+                            <span className="text-gray-500">{grantModal.user.email}</span>
+                        </p>
+                        <div>
+                            <label className="block text-sm text-gray-400 mb-1">Seleccionar evento</label>
+                            <select
+                                value={selectedEventId}
+                                onChange={(e) => setSelectedEventId(e.target.value)}
+                                className="input w-full"
+                            >
+                                <option value="">-- Elige un evento --</option>
+                                {events.map(ev => (
+                                    <option key={ev.id} value={ev.id}>
+                                        {ev.title} ({ev.status})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                onClick={() => setGrantModal(null)}
+                                className="btn btn-secondary flex-1"
+                                disabled={granting}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleGrantAccess}
+                                disabled={!selectedEventId || granting}
+                                className="btn btn-primary flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                            >
+                                {granting ? 'Otorgando...' : 'Dar Acceso'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
