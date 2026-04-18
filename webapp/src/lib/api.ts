@@ -17,9 +17,17 @@ const api: AxiosInstance = axios.create({
 api.interceptors.request.use(
     (config) => {
         if (typeof window !== 'undefined') {
-            const token = localStorage.getItem('accessToken');
-            if (token) {
-                config.headers.Authorization = `Bearer ${token}`;
+            try {
+                const token = localStorage.getItem('accessToken');
+                if (token) {
+                    config.headers.Authorization = `Bearer ${token}`;
+                }
+            } catch (e) {
+                // localStorage blocked (e.g. Instagram WebView) — fall back to Zustand store
+                const storeToken = useAuthStore.getState().accessToken;
+                if (storeToken) {
+                    config.headers.Authorization = `Bearer ${storeToken}`;
+                }
             }
         }
         return config;

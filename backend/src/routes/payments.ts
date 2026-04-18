@@ -293,6 +293,7 @@ router.get(
  */
 router.post(
     '/paypal/capture',
+    authenticate,
     validateBody(capturePayPalSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
         const { orderId } = req.body;

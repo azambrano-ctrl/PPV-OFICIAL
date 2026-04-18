@@ -182,17 +182,19 @@ export const handleStripeWebhook = async (
  */
 const handlePaymentSuccess = async (paymentIntent: Stripe.PaymentIntent) => {
     await transaction(async (client) => {
-        // Update purchase status
+        // Update purchase status — only if still pending (idempotency guard)
         const result = await client.query(
-            `UPDATE purchases 
+            `UPDATE purchases
        SET payment_status = 'completed'
-       WHERE payment_intent_id = $1
+       WHERE payment_intent_id = $1 AND payment_status != 'completed'
        RETURNING *`,
             [paymentIntent.id]
         );
 
         if (result.rows.length === 0) {
-            throw new Error('Purchase not found');
+            // Either purchase doesn't exist OR already completed (duplicate webhook) — safe to ignore
+            logger.info('Payment already processed or not found, skipping', { paymentIntentId: paymentIntent.id });
+            return;
         }
 
         const purchase = result.rows[0];
@@ -311,13 +313,12 @@ const handleRefund = async (charge: Stripe.Charge) => {
             [charge.payment_intent]
         );
 
-        // Revoke stream tokens
+        // Revoke only the stream tokens for the specific refunded event
         await client.query(
-            `UPDATE stream_tokens 
+            `UPDATE stream_tokens
        SET is_revoked = TRUE
-       WHERE user_id IN (
-         SELECT user_id FROM purchases WHERE payment_intent_id = $1
-       )`,
+       WHERE user_id = (SELECT user_id FROM purchases WHERE payment_intent_id = $1 LIMIT 1)
+         AND event_id = (SELECT event_id FROM purchases WHERE payment_intent_id = $1 LIMIT 1)`,
             [charge.payment_intent]
         );
 

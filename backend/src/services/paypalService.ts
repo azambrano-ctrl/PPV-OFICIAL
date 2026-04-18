@@ -324,17 +324,18 @@ export const capturePayPalOrder = async (orderId: string): Promise<void> => {
  */
 async function handlePayPalSuccess(orderId: string, _orderDetails: any) {
     await transaction(async (client) => {
-        // Update purchase status
+        // Update purchase status — only if still pending (idempotency guard)
         const result = await client.query(
-            `UPDATE purchases 
+            `UPDATE purchases
        SET payment_status = 'completed'
-       WHERE payment_intent_id = $1
+       WHERE payment_intent_id = $1 AND payment_status != 'completed'
        RETURNING *`,
             [orderId]
         );
 
         if (result.rows.length === 0) {
-            throw new Error('Purchase not found');
+            logger.info('PayPal payment already processed or not found, skipping', { orderId });
+            return;
         }
 
         const purchase = result.rows[0];
