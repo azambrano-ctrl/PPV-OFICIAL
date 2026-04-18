@@ -75,12 +75,12 @@ export const createPaymentIntent = async (
                 }
 
                 if (coupon.discount_type === 'percentage') {
-                    discountAmount = (input.amount * coupon.discount_value) / 100;
+                    discountAmount = Math.round((input.amount * coupon.discount_value) / 100 * 100) / 100;
                 } else {
-                    discountAmount = coupon.discount_value;
+                    discountAmount = Math.min(coupon.discount_value, input.amount);
                 }
-
-                finalAmount = Math.max(input.amount - discountAmount, 0);
+                discountAmount = Math.round(discountAmount * 100) / 100;
+                finalAmount = Math.round(Math.max(input.amount - discountAmount, 0) * 100) / 100;
             }
         }
 
