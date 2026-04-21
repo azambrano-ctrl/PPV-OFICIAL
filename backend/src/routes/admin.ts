@@ -706,7 +706,7 @@ router.post(
     '/purchases/paypal-reconcile',
     authenticate,
     requireAdmin,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
+    asyncHandler(async (_req: AuthRequest, res: Response) => {
         const pendingRes = await pool.query(
             `SELECT id, payment_intent_id FROM purchases
              WHERE payment_method = 'paypal' AND payment_status = 'pending'`
