@@ -302,6 +302,12 @@ export const adminAPI = {
 
     getPurchases: (params?: { eventId?: string; status?: string; paymentMethod?: string }) =>
         api.get('/admin/purchases', { params }),
+
+    retryCapture: (purchaseId: string) =>
+        api.post(`/admin/purchases/${purchaseId}/retry-capture`),
+
+    grantAccessByPurchase: (purchaseId: string) =>
+        api.post(`/admin/purchases/${purchaseId}/grant-access`),
 };
 
 export const newsletterAPI = {

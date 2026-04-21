@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ShoppingCart, DollarSign, Clock, Users, Filter, Download } from 'lucide-react';
+import { ShoppingCart, DollarSign, Clock, Users, Filter, Download, RefreshCw, Ticket } from 'lucide-react';
 import { adminAPI, handleAPIError } from '@/lib/api';
-import { formatDate, formatCurrency } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
 interface Purchase {
@@ -53,6 +53,7 @@ export default function VentasPage() {
     const [purchases, setPurchases] = useState<Purchase[]>([]);
     const [events, setEvents] = useState<EventSummary[]>([]);
     const [loading, setLoading] = useState(true);
+    const [actionId, setActionId] = useState<string | null>(null);
     const [filterEvent, setFilterEvent] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
     const [filterMethod, setFilterMethod] = useState('');
@@ -101,6 +102,39 @@ export default function VentasPage() {
     const pending   = purchases.filter(p => p.payment_status === 'pending');
     const totalRev  = completed.reduce((s, p) => s + parseFloat(String(p.final_amount)), 0);
     const uniqueBuyers = new Set(completed.map(p => p.user_id)).size;
+
+    const handleRetry = async (p: Purchase) => {
+        if (!confirm(`¿Reintentar captura de PayPal para ${p.user_name}?\n\nSolo funciona si el usuario SÍ pagó en PayPal. Si no pagó, fallará.`)) return;
+        setActionId(p.id);
+        try {
+            await adminAPI.retryCapture(p.id);
+            toast.success(`✅ Captura exitosa — ${p.user_name} ahora tiene acceso`);
+            applyFilters();
+        } catch (error: any) {
+            const msg = error.response?.data?.message || handleAPIError(error);
+            if (msg.includes('UNPROCESSABLE') || msg.includes('already been captured') || msg.includes('ORDER_NOT_APPROVED')) {
+                toast.error('❌ El usuario NO pagó en PayPal (orden no aprobada o expirada). Usa "Dar Acceso" si quieres dárselo manualmente.');
+            } else {
+                toast.error(`Error: ${msg}`);
+            }
+        } finally {
+            setActionId(null);
+        }
+    };
+
+    const handleGrantByPurchase = async (p: Purchase) => {
+        if (!confirm(`¿Dar acceso manualmente a ${p.user_name} para "${p.event_title}"?`)) return;
+        setActionId(p.id);
+        try {
+            await adminAPI.grantAccessByPurchase(p.id);
+            toast.success(`✅ Acceso otorgado a ${p.user_name}`);
+            applyFilters();
+        } catch (error) {
+            toast.error(handleAPIError(error));
+        } finally {
+            setActionId(null);
+        }
+    };
 
     const exportCSV = () => {
         const header = 'Fecha,Usuario,Email,Evento,Monto,Descuento,Final,Método,Estado,ID Pago';
@@ -256,6 +290,7 @@ export default function VentasPage() {
                                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase">Método</th>
                                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase">Estado</th>
                                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase">Cupón</th>
+                                    <th className="py-3 px-4 text-xs font-semibold text-gray-400 uppercase">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-dark-800">
@@ -287,6 +322,32 @@ export default function VentasPage() {
                                         </td>
                                         <td className="py-3 px-4 text-gray-500 text-xs">
                                             {p.coupon_code || '—'}
+                                        </td>
+                                        <td className="py-3 px-4">
+                                            {p.payment_status === 'pending' && (
+                                                <div className="flex items-center gap-1">
+                                                    {p.payment_method === 'paypal' && (
+                                                        <button
+                                                            onClick={() => handleRetry(p)}
+                                                            disabled={actionId === p.id}
+                                                            title="Reintentar captura PayPal (si el usuario SÍ pagó)"
+                                                            className="p-1.5 rounded bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 transition-colors disabled:opacity-40"
+                                                        >
+                                                            <RefreshCw className={`w-3.5 h-3.5 ${actionId === p.id ? 'animate-spin' : ''}`} />
+                                                        </button>
+                                                    )}
+                                                    {p.event_id && (
+                                                        <button
+                                                            onClick={() => handleGrantByPurchase(p)}
+                                                            disabled={actionId === p.id}
+                                                            title="Dar acceso manualmente"
+                                                            className="p-1.5 rounded bg-green-500/10 hover:bg-green-500/20 text-green-400 transition-colors disabled:opacity-40"
+                                                        >
+                                                            <Ticket className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
