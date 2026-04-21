@@ -53,6 +53,7 @@ export default function VentasPage() {
     const [purchases, setPurchases] = useState<Purchase[]>([]);
     const [events, setEvents] = useState<EventSummary[]>([]);
     const [loading, setLoading] = useState(true);
+    const [reconciling, setReconciling] = useState(false);
     const [actionId, setActionId] = useState<string | null>(null);
     const [paypalStatuses, setPaypalStatuses] = useState<Record<string, { status: string; grossAmount?: string; payerEmail?: string }>>({});
     const [filterEvent, setFilterEvent] = useState('');
@@ -163,6 +164,32 @@ export default function VentasPage() {
         }
     };
 
+    const handleReconcile = async () => {
+        if (!confirm('¿Verificar todos los pagos PayPal pendientes y capturar automáticamente los que SÍ fueron aprobados?')) return;
+        setReconciling(true);
+        try {
+            const res = await adminAPI.reconcilePayPal();
+            const { captured, expired, errors } = res.data.data;
+            if (captured > 0) {
+                toast.success(`✅ ${captured} pago${captured > 1 ? 's' : ''} capturado${captured > 1 ? 's' : ''} correctamente`, { duration: 8000 });
+            }
+            if (expired > 0) {
+                toast(`${expired} orden${expired > 1 ? 'es' : ''} no tenían pago (expiradas o abandonadas)`, { icon: 'ℹ️', duration: 6000 });
+            }
+            if (errors > 0) {
+                toast.error(`${errors} no se pudieron capturar`);
+            }
+            if (captured === 0 && expired > 0) {
+                toast('Ningún pendiente tiene dinero real en PayPal — todos fueron abandonados', { icon: '📭', duration: 6000 });
+            }
+            await loadData();
+        } catch (error) {
+            toast.error(handleAPIError(error));
+        } finally {
+            setReconciling(false);
+        }
+    };
+
     const exportCSV = () => {
         const header = 'Fecha,Usuario,Email,Evento,Monto,Descuento,Final,Método,Estado,ID Pago';
         const rows = purchases.map(p => [
@@ -195,13 +222,24 @@ export default function VentasPage() {
                     <h1 className="text-3xl font-bold text-white mb-2">Ventas</h1>
                     <p className="text-gray-400">Historial completo de compras</p>
                 </div>
-                <button
-                    onClick={exportCSV}
-                    className="flex items-center gap-2 px-4 py-2 bg-dark-800 hover:bg-dark-700 text-gray-300 rounded-xl border border-dark-600 transition-colors text-sm"
-                >
-                    <Download className="w-4 h-4" />
-                    Exportar CSV
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleReconcile}
+                        disabled={reconciling}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-xl border border-blue-500/30 transition-colors text-sm disabled:opacity-50"
+                        title="Verifica TODOS los pendientes de PayPal y captura los que sí tienen dinero"
+                    >
+                        <RefreshCw className={`w-4 h-4 ${reconciling ? 'animate-spin' : ''}`} />
+                        {reconciling ? 'Verificando...' : 'Reconciliar PayPal'}
+                    </button>
+                    <button
+                        onClick={exportCSV}
+                        className="flex items-center gap-2 px-4 py-2 bg-dark-800 hover:bg-dark-700 text-gray-300 rounded-xl border border-dark-600 transition-colors text-sm"
+                    >
+                        <Download className="w-4 h-4" />
+                        CSV
+                    </button>
+                </div>
             </div>
 
             {/* Summary Cards */}

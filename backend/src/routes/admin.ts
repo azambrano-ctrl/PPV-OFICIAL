@@ -699,6 +699,51 @@ router.post(
 );
 
 /**
+ * POST /api/admin/purchases/paypal-reconcile
+ * Check ALL pending PayPal purchases against PayPal API and auto-capture APPROVED ones
+ */
+router.post(
+    '/purchases/paypal-reconcile',
+    authenticate,
+    requireAdmin,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const pendingRes = await pool.query(
+            `SELECT id, payment_intent_id FROM purchases
+             WHERE payment_method = 'paypal' AND payment_status = 'pending'`
+        );
+
+        const { getPayPalOrderStatus, capturePayPalOrder } = await import('../services/paypalService');
+
+        const results = { captured: 0, expired: 0, errors: 0, capturedOrders: [] as string[] };
+
+        for (const row of pendingRes.rows) {
+            try {
+                const status = await getPayPalOrderStatus(row.payment_intent_id);
+
+                if (status.status === 'APPROVED') {
+                    try {
+                        await capturePayPalOrder(row.payment_intent_id);
+                        results.captured++;
+                        results.capturedOrders.push(row.id);
+                        logger.info('[Reconcile] Auto-captured APPROVED PayPal order', { purchaseId: row.id });
+                    } catch (captureErr: any) {
+                        logger.warn('[Reconcile] Capture failed for APPROVED order', { purchaseId: row.id, error: captureErr.message });
+                        results.errors++;
+                    }
+                } else {
+                    results.expired++;
+                }
+            } catch {
+                results.expired++; // Treat fetch errors as expired/not found
+            }
+        }
+
+        logger.info('[Reconcile] PayPal reconciliation complete', results);
+        res.json({ success: true, data: results });
+    })
+);
+
+/**
  * GET /api/admin/purchases/:purchaseId/paypal-status
  * Check the real status of a PayPal order directly from PayPal
  */

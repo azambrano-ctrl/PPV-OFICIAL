@@ -306,6 +306,9 @@ export const adminAPI = {
     checkPayPalStatus: (purchaseId: string) =>
         api.get(`/admin/purchases/${purchaseId}/paypal-status`),
 
+    reconcilePayPal: () =>
+        api.post('/admin/purchases/paypal-reconcile'),
+
     retryCapture: (purchaseId: string) =>
         api.post(`/admin/purchases/${purchaseId}/retry-capture`),
 
