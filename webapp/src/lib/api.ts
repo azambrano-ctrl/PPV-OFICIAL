@@ -303,6 +303,9 @@ export const adminAPI = {
     getPurchases: (params?: { eventId?: string; status?: string; paymentMethod?: string }) =>
         api.get('/admin/purchases', { params }),
 
+    checkPayPalStatus: (purchaseId: string) =>
+        api.get(`/admin/purchases/${purchaseId}/paypal-status`),
+
     retryCapture: (purchaseId: string) =>
         api.post(`/admin/purchases/${purchaseId}/retry-capture`),
 

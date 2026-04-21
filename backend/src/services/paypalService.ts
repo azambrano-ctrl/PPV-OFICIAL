@@ -482,4 +482,32 @@ export const handlePayPalWebhook = async (webhookBody: any): Promise<void> => {
     }
 };
 
+/**
+ * Get the real status of a PayPal order from PayPal's API
+ * Possible statuses: CREATED, SAVED, APPROVED, VOIDED, COMPLETED, PAYER_ACTION_REQUIRED
+ */
+export const getPayPalOrderStatus = async (orderId: string): Promise<{
+    status: string;
+    grossAmount?: string;
+    currency?: string;
+    payerEmail?: string;
+    createTime?: string;
+}> => {
+    const client = await getPayPalClient();
+    const request = new paypal.orders.OrdersGetRequest(orderId);
+    const response = await client.execute(request);
+    const order = response.result;
+
+    const capture = order.purchase_units?.[0]?.payments?.captures?.[0];
+    const amount = order.purchase_units?.[0]?.amount;
+
+    return {
+        status: order.status,
+        grossAmount: capture?.amount?.value || amount?.value,
+        currency: capture?.amount?.currency_code || amount?.currency_code,
+        payerEmail: order.payer?.email_address,
+        createTime: order.create_time,
+    };
+};
+
 export { getPayPalClient as paypalClient };

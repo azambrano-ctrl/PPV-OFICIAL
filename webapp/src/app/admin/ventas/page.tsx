@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ShoppingCart, DollarSign, Clock, Users, Filter, Download, RefreshCw, Ticket } from 'lucide-react';
+import { ShoppingCart, DollarSign, Clock, Users, Filter, Download, RefreshCw, Ticket, Search } from 'lucide-react';
 import { adminAPI, handleAPIError } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -54,6 +54,7 @@ export default function VentasPage() {
     const [events, setEvents] = useState<EventSummary[]>([]);
     const [loading, setLoading] = useState(true);
     const [actionId, setActionId] = useState<string | null>(null);
+    const [paypalStatuses, setPaypalStatuses] = useState<Record<string, { status: string; grossAmount?: string; payerEmail?: string }>>({});
     const [filterEvent, setFilterEvent] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
     const [filterMethod, setFilterMethod] = useState('');
@@ -102,6 +103,31 @@ export default function VentasPage() {
     const pending   = purchases.filter(p => p.payment_status === 'pending');
     const totalRev  = completed.reduce((s, p) => s + parseFloat(String(p.final_amount)), 0);
     const uniqueBuyers = new Set(completed.map(p => p.user_id)).size;
+
+    const handleCheckPayPal = async (p: Purchase) => {
+        setActionId(p.id);
+        try {
+            const res = await adminAPI.checkPayPalStatus(p.id);
+            const data = res.data.data;
+            setPaypalStatuses(prev => ({ ...prev, [p.id]: data }));
+
+            const statusMsg: Record<string, string> = {
+                COMPLETED: '✅ PAGADO y capturado en PayPal',
+                APPROVED:  '⚠️ APROBADO por el comprador pero NO capturado — el dinero está pendiente',
+                CREATED:   '❌ NUNCA pagado — el usuario solo creó la orden sin pagar',
+                VOIDED:    '❌ ANULADO por PayPal',
+                SAVED:     '⏳ Guardado pero no pagado',
+            };
+            toast(statusMsg[data.status] || `Estado PayPal: ${data.status}`, {
+                duration: 6000,
+                icon: data.status === 'APPROVED' ? '⚠️' : data.status === 'CREATED' ? '❌' : '✅',
+            });
+        } catch (error) {
+            toast.error('No se pudo consultar PayPal: ' + handleAPIError(error));
+        } finally {
+            setActionId(null);
+        }
+    };
 
     const handleRetry = async (p: Purchase) => {
         if (!confirm(`¿Reintentar captura de PayPal para ${p.user_name}?\n\nSolo funciona si el usuario SÍ pagó en PayPal. Si no pagó, fallará.`)) return;
@@ -325,26 +351,48 @@ export default function VentasPage() {
                                         </td>
                                         <td className="py-3 px-4">
                                             {p.payment_status === 'pending' && (
-                                                <div className="flex items-center gap-1">
-                                                    {p.payment_method === 'paypal' && (
-                                                        <button
-                                                            onClick={() => handleRetry(p)}
-                                                            disabled={actionId === p.id}
-                                                            title="Reintentar captura PayPal (si el usuario SÍ pagó)"
-                                                            className="p-1.5 rounded bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 transition-colors disabled:opacity-40"
-                                                        >
-                                                            <RefreshCw className={`w-3.5 h-3.5 ${actionId === p.id ? 'animate-spin' : ''}`} />
-                                                        </button>
-                                                    )}
-                                                    {p.event_id && (
-                                                        <button
-                                                            onClick={() => handleGrantByPurchase(p)}
-                                                            disabled={actionId === p.id}
-                                                            title="Dar acceso manualmente"
-                                                            className="p-1.5 rounded bg-green-500/10 hover:bg-green-500/20 text-green-400 transition-colors disabled:opacity-40"
-                                                        >
-                                                            <Ticket className="w-3.5 h-3.5" />
-                                                        </button>
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center gap-1">
+                                                        {p.payment_method === 'paypal' && (
+                                                            <button
+                                                                onClick={() => handleCheckPayPal(p)}
+                                                                disabled={actionId === p.id}
+                                                                title="Verificar si pagó en PayPal"
+                                                                className="p-1.5 rounded bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 transition-colors disabled:opacity-40"
+                                                            >
+                                                                <Search className={`w-3.5 h-3.5 ${actionId === p.id ? 'animate-pulse' : ''}`} />
+                                                            </button>
+                                                        )}
+                                                        {p.payment_method === 'paypal' && (
+                                                            <button
+                                                                onClick={() => handleRetry(p)}
+                                                                disabled={actionId === p.id}
+                                                                title="Reintentar captura PayPal"
+                                                                className="p-1.5 rounded bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 transition-colors disabled:opacity-40"
+                                                            >
+                                                                <RefreshCw className={`w-3.5 h-3.5 ${actionId === p.id ? 'animate-spin' : ''}`} />
+                                                            </button>
+                                                        )}
+                                                        {p.event_id && (
+                                                            <button
+                                                                onClick={() => handleGrantByPurchase(p)}
+                                                                disabled={actionId === p.id}
+                                                                title="Dar acceso manualmente"
+                                                                className="p-1.5 rounded bg-green-500/10 hover:bg-green-500/20 text-green-400 transition-colors disabled:opacity-40"
+                                                            >
+                                                                <Ticket className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    {paypalStatuses[p.id] && (
+                                                        <div className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                                                            paypalStatuses[p.id].status === 'APPROVED' ? 'text-yellow-400 bg-yellow-500/10' :
+                                                            paypalStatuses[p.id].status === 'CREATED' ? 'text-red-400 bg-red-500/10' :
+                                                            'text-gray-400 bg-dark-700'
+                                                        }`}>
+                                                            {paypalStatuses[p.id].status}
+                                                            {paypalStatuses[p.id].grossAmount && ` $${paypalStatuses[p.id].grossAmount}`}
+                                                        </div>
                                                     )}
                                                 </div>
                                             )}

@@ -699,6 +699,38 @@ router.post(
 );
 
 /**
+ * GET /api/admin/purchases/:purchaseId/paypal-status
+ * Check the real status of a PayPal order directly from PayPal
+ */
+router.get(
+    '/purchases/:purchaseId/paypal-status',
+    authenticate,
+    requireAdmin,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { purchaseId } = req.params;
+
+        const result = await pool.query(
+            'SELECT id, payment_intent_id, payment_method FROM purchases WHERE id = $1',
+            [purchaseId]
+        );
+        if (result.rows.length === 0) {
+            res.status(404).json({ success: false, message: 'Purchase not found' });
+            return;
+        }
+        const purchase = result.rows[0];
+        if (purchase.payment_method !== 'paypal') {
+            res.status(400).json({ success: false, message: 'Not a PayPal purchase' });
+            return;
+        }
+
+        const { getPayPalOrderStatus } = await import('../services/paypalService');
+        const status = await getPayPalOrderStatus(purchase.payment_intent_id);
+
+        res.json({ success: true, data: status });
+    })
+);
+
+/**
  * POST /api/admin/purchases/:purchaseId/retry-capture
  * Manually retry PayPal capture for a stuck pending purchase
  */
