@@ -332,6 +332,35 @@ router.get(
 );
 
 /**
+ * GET /api/admin/events/sales-summary
+ * Returns all events with completed purchase counts and revenue
+ */
+router.get(
+    '/events/sales-summary',
+    authenticate,
+    requireAdmin,
+    asyncHandler(async (_req: AuthRequest, res: Response) => {
+        const result = await pool.query(
+            `SELECT
+                e.id,
+                e.title,
+                e.status,
+                e.event_date,
+                e.price,
+                e.currency,
+                COUNT(p.id) FILTER (WHERE p.payment_status = 'completed') AS sold,
+                COUNT(p.id) FILTER (WHERE p.payment_status = 'pending')   AS pending,
+                COALESCE(SUM(p.final_amount) FILTER (WHERE p.payment_status = 'completed'), 0) AS revenue
+             FROM events e
+             LEFT JOIN purchases p ON p.event_id = e.id
+             GROUP BY e.id
+             ORDER BY e.event_date DESC`
+        );
+        res.json({ success: true, data: result.rows });
+    })
+);
+
+/**
  * POST /api/admin/events/:id/live-stream
  * Create a new live stream for an event
  */

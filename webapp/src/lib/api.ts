@@ -296,6 +296,9 @@ export const adminAPI = {
 
     getUserPurchasesAdmin: (userId: string) =>
         api.get(`/admin/users/${userId}/purchases`),
+
+    getEventsSalesSummary: () =>
+        api.get('/admin/events/sales-summary'),
 };
 
 export const newsletterAPI = {

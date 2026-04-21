@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Filter, Edit, Trash2, Eye, Video, Square } from 'lucide-react';
-import { eventsAPI, handleAPIError } from '@/lib/api';
+import { Plus, Search, Filter, Edit, Trash2, Eye, Video, Square, ShoppingCart } from 'lucide-react';
+import { eventsAPI, adminAPI, handleAPIError } from '@/lib/api';
 import api from '@/lib/api';
 import { formatDate, formatCurrency, getEventStatusColor, getEventStatusText, getImageUrl } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -20,9 +20,18 @@ interface Event {
     is_featured: boolean;
 }
 
+interface SalesSummary {
+    id: string;
+    sold: number;
+    pending: number;
+    revenue: number;
+    currency: string;
+}
+
 export default function AdminEventsPage() {
     const [events, setEvents] = useState<Event[]>([]);
     const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
+    const [salesMap, setSalesMap] = useState<Record<string, SalesSummary>>({});
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -38,8 +47,14 @@ export default function AdminEventsPage() {
 
     const loadEvents = async () => {
         try {
-            const response = await eventsAPI.getAll({});
-            setEvents(response.data.data);
+            const [evRes, salesRes] = await Promise.all([
+                eventsAPI.getAll({}),
+                adminAPI.getEventsSalesSummary(),
+            ]);
+            setEvents(evRes.data.data);
+            const map: Record<string, SalesSummary> = {};
+            for (const s of (salesRes.data.data || [])) map[s.id] = s;
+            setSalesMap(map);
         } catch (error) {
             console.error('Error loading events:', error);
             toast.error('Error al cargar eventos');
@@ -197,6 +212,9 @@ export default function AdminEventsPage() {
                                     <th className="text-left py-4 px-6 text-sm font-semibold text-gray-400">
                                         Destacado
                                     </th>
+                                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-400">
+                                        Ventas
+                                    </th>
                                     <th className="text-right py-4 px-6 text-sm font-semibold text-gray-400">
                                         Acciones
                                     </th>
@@ -245,6 +263,24 @@ export default function AdminEventsPage() {
                                             ) : (
                                                 <span className="text-gray-500">No</span>
                                             )}
+                                        </td>
+                                        <td className="py-4 px-6">
+                                            {(() => {
+                                                const s = salesMap[event.id];
+                                                if (!s) return <span className="text-gray-600">—</span>;
+                                                return (
+                                                    <div>
+                                                        <p className="text-white font-bold flex items-center gap-1">
+                                                            <ShoppingCart className="w-3.5 h-3.5 text-green-400" />
+                                                            {s.sold}
+                                                        </p>
+                                                        <p className="text-xs text-green-400">{formatCurrency(s.revenue, event.currency)}</p>
+                                                        {s.pending > 0 && (
+                                                            <p className="text-xs text-yellow-500">{s.pending} pendiente{s.pending > 1 ? 's' : ''}</p>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
                                         </td>
                                         <td className="py-4 px-6">
                                             <div className="flex items-center justify-end gap-2">
