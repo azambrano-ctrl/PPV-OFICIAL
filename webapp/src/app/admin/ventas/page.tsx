@@ -364,16 +364,20 @@ export default function VentasPage() {
                                                                 <Search className={`w-3.5 h-3.5 ${actionId === p.id ? 'animate-pulse' : ''}`} />
                                                             </button>
                                                         )}
-                                                        {p.payment_method === 'paypal' && (
-                                                            <button
-                                                                onClick={() => handleRetry(p)}
-                                                                disabled={actionId === p.id}
-                                                                title="Reintentar captura PayPal"
-                                                                className="p-1.5 rounded bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 transition-colors disabled:opacity-40"
-                                                            >
-                                                                <RefreshCw className={`w-3.5 h-3.5 ${actionId === p.id ? 'animate-spin' : ''}`} />
-                                                            </button>
-                                                        )}
+                                                        {p.payment_method === 'paypal' && (() => {
+                                                            const knownStatus = paypalStatuses[p.id]?.status;
+                                                            const canRetry = !knownStatus || knownStatus === 'APPROVED';
+                                                            return (
+                                                                <button
+                                                                    onClick={() => canRetry ? handleRetry(p) : toast.error('Orden expirada — el cliente no pagó. Usa 🎟️ si quieres dar acceso manualmente.')}
+                                                                    disabled={actionId === p.id}
+                                                                    title={canRetry ? 'Reintentar captura PayPal' : 'Orden expirada — no se puede capturar'}
+                                                                    className={`p-1.5 rounded transition-colors disabled:opacity-40 ${canRetry ? 'bg-blue-500/10 hover:bg-blue-500/20 text-blue-400' : 'bg-dark-700 text-gray-600 cursor-not-allowed'}`}
+                                                                >
+                                                                    <RefreshCw className={`w-3.5 h-3.5 ${actionId === p.id ? 'animate-spin' : ''}`} />
+                                                                </button>
+                                                            );
+                                                        })()}
                                                         {p.event_id && (
                                                             <button
                                                                 onClick={() => handleGrantByPurchase(p)}

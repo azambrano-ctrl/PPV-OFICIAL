@@ -789,9 +789,34 @@ router.post(
         }
 
         const { capturePayPalOrder } = await import('../services/paypalService');
-        await capturePayPalOrder(purchase.payment_intent_id);
 
-        res.json({ success: true, message: 'Capture successful — purchase is now completed' });
+        try {
+            await capturePayPalOrder(purchase.payment_intent_id);
+            res.json({ success: true, message: 'Captura exitosa — compra completada' });
+        } catch (paypalErr: any) {
+            const raw = paypalErr?.message || String(paypalErr);
+            logger.warn('[Admin] retry-capture failed', { purchaseId, error: raw });
+
+            // Identify unrecoverable PayPal errors
+            if (
+                raw.includes('ORDER_NOT_APPROVED') ||
+                raw.includes('UNPROCESSABLE_ENTITY') ||
+                raw.includes('ORDER_ALREADY_CAPTURED') ||
+                raw.includes('INVALID_RESOURCE_ID') ||
+                raw.includes('404')
+            ) {
+                res.status(422).json({
+                    success: false,
+                    message: 'La orden de PayPal está expirada o el cliente nunca aprobó el pago. Usa "Dar Acceso" manualmente si corresponde.',
+                });
+                return;
+            }
+
+            res.status(502).json({
+                success: false,
+                message: `Error de PayPal: ${raw.substring(0, 200)}`,
+            });
+        }
     })
 );
 
