@@ -112,15 +112,16 @@ export default function VentasPage() {
             setPaypalStatuses(prev => ({ ...prev, [p.id]: data }));
 
             const statusMsg: Record<string, string> = {
-                COMPLETED: '✅ PAGADO y capturado en PayPal',
-                APPROVED:  '⚠️ APROBADO por el comprador pero NO capturado — el dinero está pendiente',
-                CREATED:   '❌ NUNCA pagado — el usuario solo creó la orden sin pagar',
-                VOIDED:    '❌ ANULADO por PayPal',
-                SAVED:     '⏳ Guardado pero no pagado',
+                COMPLETED:            '✅ PAGADO y capturado en PayPal',
+                APPROVED:             '⚠️ El cliente SÍ aprobó el pago pero NO fue capturado — usa 🔄 para capturarlo',
+                CREATED:              '❌ Nunca pagó — solo abrió el modal y lo cerró',
+                VOIDED:               '❌ Orden anulada por PayPal',
+                SAVED:                '⏳ Guardado pero sin pago',
+                EXPIRED_OR_NOT_FOUND: '❌ Orden expirada o no existe en PayPal (usuario no pagó o es muy antigua)',
             };
             toast(statusMsg[data.status] || `Estado PayPal: ${data.status}`, {
-                duration: 6000,
-                icon: data.status === 'APPROVED' ? '⚠️' : data.status === 'CREATED' ? '❌' : '✅',
+                duration: 8000,
+                icon: data.status === 'APPROVED' ? '⚠️' : data.status === 'COMPLETED' ? '✅' : '❌',
             });
         } catch (error) {
             toast.error('No se pudo consultar PayPal: ' + handleAPIError(error));
@@ -387,11 +388,12 @@ export default function VentasPage() {
                                                     {paypalStatuses[p.id] && (
                                                         <div className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
                                                             paypalStatuses[p.id].status === 'APPROVED' ? 'text-yellow-400 bg-yellow-500/10' :
-                                                            paypalStatuses[p.id].status === 'CREATED' ? 'text-red-400 bg-red-500/10' :
+                                                            paypalStatuses[p.id].status === 'CREATED' || paypalStatuses[p.id].status === 'EXPIRED_OR_NOT_FOUND' ? 'text-red-400 bg-red-500/10' :
+                                                            paypalStatuses[p.id].status === 'COMPLETED' ? 'text-green-400 bg-green-500/10' :
                                                             'text-gray-400 bg-dark-700'
                                                         }`}>
-                                                            {paypalStatuses[p.id].status}
-                                                            {paypalStatuses[p.id].grossAmount && ` $${paypalStatuses[p.id].grossAmount}`}
+                                                            {paypalStatuses[p.id].status === 'EXPIRED_OR_NOT_FOUND' ? 'EXPIRADA' : paypalStatuses[p.id].status}
+                                                            {paypalStatuses[p.id].grossAmount && ` · $${paypalStatuses[p.id].grossAmount}`}
                                                         </div>
                                                     )}
                                                 </div>

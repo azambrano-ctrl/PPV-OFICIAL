@@ -724,9 +724,33 @@ router.get(
         }
 
         const { getPayPalOrderStatus } = await import('../services/paypalService');
-        const status = await getPayPalOrderStatus(purchase.payment_intent_id);
 
-        res.json({ success: true, data: status });
+        try {
+            const status = await getPayPalOrderStatus(purchase.payment_intent_id);
+            res.json({ success: true, data: status });
+        } catch (paypalErr: any) {
+            // PayPal SDK wraps errors — extract useful message
+            const details = paypalErr?.message || String(paypalErr);
+            logger.warn('[Admin] PayPal order status check failed', {
+                purchaseId,
+                orderId: purchase.payment_intent_id,
+                error: details,
+            });
+
+            // Order expired or not found in PayPal
+            if (details.includes('404') || details.includes('INVALID_RESOURCE_ID') || details.includes('not found')) {
+                res.json({
+                    success: true,
+                    data: { status: 'EXPIRED_OR_NOT_FOUND', grossAmount: undefined, payerEmail: undefined },
+                });
+                return;
+            }
+
+            res.status(502).json({
+                success: false,
+                message: `PayPal API error: ${details.substring(0, 200)}`,
+            });
+        }
     })
 );
 
