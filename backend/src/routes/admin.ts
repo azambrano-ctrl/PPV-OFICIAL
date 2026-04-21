@@ -256,6 +256,58 @@ router.post(
 /**
  * GET /api/admin/purchases/recent
 /**
+ * GET /api/admin/purchases
+ * All purchases with optional filters: eventId, status, paymentMethod
+ */
+router.get(
+    '/purchases',
+    authenticate,
+    requireAdmin,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { eventId, status, paymentMethod } = req.query as Record<string, string>;
+
+        const conditions: string[] = [];
+        const params: any[] = [];
+
+        if (eventId) { params.push(eventId); conditions.push(`p.event_id = $${params.length}`); }
+        if (status)  { params.push(status);  conditions.push(`p.payment_status = $${params.length}`); }
+        if (paymentMethod) { params.push(paymentMethod); conditions.push(`p.payment_method = $${params.length}`); }
+
+        const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+        const result = await pool.query(
+            `SELECT
+                p.id,
+                p.payment_status,
+                p.payment_method,
+                p.amount,
+                p.final_amount,
+                p.discount_amount,
+                p.currency,
+                p.coupon_code,
+                p.seat_number,
+                p.purchased_at,
+                p.payment_intent_id,
+                u.id        AS user_id,
+                u.email     AS user_email,
+                u.full_name AS user_name,
+                COALESCE(e.title, 'Pase de Temporada') AS event_title,
+                e.id        AS event_id,
+                p.purchase_type
+             FROM purchases p
+             JOIN users u ON u.id = p.user_id
+             LEFT JOIN events e ON e.id = p.event_id
+             ${where}
+             ORDER BY p.purchased_at DESC
+             LIMIT 500`,
+            params
+        );
+
+        res.json({ success: true, data: result.rows });
+    })
+);
+
+/**
  * GET /api/admin/purchases/recent
  * Get recent purchases
  */

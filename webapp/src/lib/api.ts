@@ -299,6 +299,9 @@ export const adminAPI = {
 
     getEventsSalesSummary: () =>
         api.get('/admin/events/sales-summary'),
+
+    getPurchases: (params?: { eventId?: string; status?: string; paymentMethod?: string }) =>
+        api.get('/admin/purchases', { params }),
 };
 
 export const newsletterAPI = {
