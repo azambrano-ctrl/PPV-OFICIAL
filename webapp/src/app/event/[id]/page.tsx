@@ -361,7 +361,7 @@ export default function EventDetailPage() {
                                                     title="Trailer del evento"
                                                 />
                                             ) : (
-                                                <video src={trailerUrl} controls autoPlay muted loop playsInline className="w-full h-full object-contain" preload="metadata" />
+                                                <video src={trailerUrl} controls autoPlay muted loop playsInline className="w-full h-full object-contain scale-125" preload="metadata" />
                                             )}
                                         </div>
                                     </div>
