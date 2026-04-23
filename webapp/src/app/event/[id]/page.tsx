@@ -313,34 +313,6 @@ export default function EventDetailPage() {
                                 </p>
                             </div>
 
-                            {/* Cartelera */}
-                            {(cardImages.length > 0 || event.card_image_url) && (
-                                <div className="card p-6">
-                                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                        <Users className="w-5 h-5 text-primary-500" />
-                                        Cartelera del Evento
-                                    </h2>
-                                    {cardImages.length > 0 ? (
-                                        <div className={cardImages.length === 1 ? '' : 'grid grid-cols-1 sm:grid-cols-2 gap-4'}>
-                                            {cardImages.map(img => (
-                                                <img
-                                                    key={img.id}
-                                                    src={getImageUrl(img.image_url)}
-                                                    alt={`Cartelera - ${event.title}`}
-                                                    className="w-full rounded-xl object-contain"
-                                                />
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <img
-                                            src={getImageUrl(event.card_image_url)}
-                                            alt={`Cartelera - ${event.title}`}
-                                            className="w-full rounded-xl object-contain max-h-[700px]"
-                                        />
-                                    )}
-                                </div>
-                            )}
-
                             {/* Trailer */}
                             {(event as any).trailer_url && (() => {
                                 const trailerUrl = (event as any).trailer_url as string;
@@ -374,6 +346,34 @@ export default function EventDetailPage() {
                                     </div>
                                 );
                             })()}
+
+                            {/* Cartelera */}
+                            {(cardImages.length > 0 || event.card_image_url) && (
+                                <div className="card p-6">
+                                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                        <Users className="w-5 h-5 text-primary-500" />
+                                        Cartelera del Evento
+                                    </h2>
+                                    {cardImages.length > 0 ? (
+                                        <div className={cardImages.length === 1 ? '' : 'grid grid-cols-1 sm:grid-cols-2 gap-4'}>
+                                            {cardImages.map(img => (
+                                                <img
+                                                    key={img.id}
+                                                    src={getImageUrl(img.image_url)}
+                                                    alt={`Cartelera - ${event.title}`}
+                                                    className="w-full rounded-xl object-contain"
+                                                />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <img
+                                            src={getImageUrl(event.card_image_url)}
+                                            alt={`Cartelera - ${event.title}`}
+                                            className="w-full rounded-xl object-contain max-h-[700px]"
+                                        />
+                                    )}
+                                </div>
+                            )}
 
                             {/* Event Details — icon cards */}
                             <div className="card p-8">
