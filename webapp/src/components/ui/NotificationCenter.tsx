@@ -92,12 +92,21 @@ export default function NotificationCenter() {
         }
     };
 
+    const handleToggle = () => {
+        const opening = !isOpen;
+        setIsOpen(opening);
+        // Mark all as read when opening the panel
+        if (opening && unreadCount > 0) {
+            handleMarkAllRead();
+        }
+    };
+
     if (!isAuthenticated) return null;
 
     return (
         <div className="relative" ref={dropdownRef}>
             <button
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={handleToggle}
                 className="relative p-2 rounded-full text-gray-400 hover:text-white hover:bg-white/5 transition-all"
                 title="Notificaciones"
             >
