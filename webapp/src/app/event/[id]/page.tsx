@@ -351,7 +351,7 @@ export default function EventDetailPage() {
                                             <Play className="w-5 h-5 text-primary-500" />
                                             Ver Trailer
                                         </h2>
-                                        <div className="rounded-xl overflow-hidden aspect-video bg-black">
+                                        <div className="rounded-xl overflow-hidden aspect-video bg-black relative">
                                             {embedUrl ? (
                                                 <iframe
                                                     src={embedUrl.includes('youtube.com') ? embedUrl.replace('autoplay=0', 'autoplay=1') + '&mute=1' : embedUrl}
@@ -361,7 +361,14 @@ export default function EventDetailPage() {
                                                     title="Trailer del evento"
                                                 />
                                             ) : (
-                                                <video src={trailerUrl} controls autoPlay muted loop playsInline className="w-full h-full object-contain scale-125" preload="metadata" />
+                                                <>
+                                                    {/* Blurred background fill */}
+                                                    <video src={trailerUrl} autoPlay muted loop playsInline aria-hidden tabIndex={-1}
+                                                        className="absolute inset-0 w-full h-full object-cover scale-110 blur-xl opacity-70 pointer-events-none" />
+                                                    {/* Main video — fully visible, centered */}
+                                                    <video src={trailerUrl} controls autoPlay muted loop playsInline
+                                                        className="relative z-10 w-full h-full object-contain" preload="metadata" />
+                                                </>
                                             )}
                                         </div>
                                     </div>
