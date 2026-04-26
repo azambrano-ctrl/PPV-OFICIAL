@@ -30,8 +30,10 @@ export default function EventForm({ event, onSuccess, onCancel, isAdmin }: Event
 
     const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
     const [bannerFile, setBannerFile] = useState<File | null>(null);
+    const [cardFile, setCardFile] = useState<File | null>(null);
     const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+    const [cardPreview, setCardPreview] = useState<string | null>(null);
 
     useEffect(() => {
         if (event) {
@@ -56,6 +58,7 @@ export default function EventForm({ event, onSuccess, onCancel, isAdmin }: Event
 
             if (event.thumbnail_url) setThumbnailPreview(getImageUrl(event.thumbnail_url) as string | null);
             if (event.banner_url) setBannerPreview(getImageUrl(event.banner_url) as string | null);
+            if (event.card_image_url) setCardPreview(getImageUrl(event.card_image_url) as string | null);
         }
     }, [event]);
 
@@ -80,6 +83,7 @@ export default function EventForm({ event, onSuccess, onCancel, isAdmin }: Event
 
             if (thumbnailFile) data.append('thumbnail', thumbnailFile);
             if (bannerFile) data.append('banner', bannerFile);
+            if (cardFile) data.append('card', cardFile);
 
             if (event?.id) {
                 await eventsAPI.update(event.id, data);
@@ -245,6 +249,13 @@ export default function EventForm({ event, onSuccess, onCancel, isAdmin }: Event
                                 label="Banner de Fondo (Landscape - 16:9)"
                                 onChange={(file) => setBannerFile(file)}
                                 value={bannerPreview || undefined}
+                            />
+
+                            <ImageUpload
+                                label="Cartelera del Evento (Fight Card)"
+                                aspect={0}
+                                onChange={(file) => setCardFile(file)}
+                                value={cardPreview || undefined}
                             />
                         </div>
                     </section>

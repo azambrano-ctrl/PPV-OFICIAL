@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import Hls from 'hls.js';
 import { useSettingsStore, useAuthStore } from '@/lib/store';
 import { authAPI } from '@/lib/api';
-import { Users } from 'lucide-react';
+import { Users, Settings, WifiOff } from 'lucide-react';
 import Image from 'next/image';
 import AdSense from './ui/AdSense';
 
@@ -20,19 +20,10 @@ interface VideoPlayerProps {
 
 export default function VideoPlayer({ streamUrl, token, eventTitle, status, poster, isMp4, viewerCount = 0 }: VideoPlayerProps) {
     // === CONFIGURACIÓN DE PUBLICIDAD (VAST TAG) ===
-    // ========================================================
-    // Reemplaza esta URL de prueba por tu enlace real de Google Ad Manager/AdSense cuando lo tengas.
-    //
-    // ## Solución de Problemas (Error 303)
-    // Si ves el error **"303: No Ads VAST response"**, ¡felicidades! Significa que:
-    // 1.  **El código funciona perfectamente**: Tu sitio está conectando con Google con éxito.
-    // 2.  **Falta de Inventario**: Google simplemente no tiene un anuncio para mostrarte en este momento (común en cuentas nuevas).
-    // 3.  **Siguiente Paso**: Debes ir a Google Ad Manager y crear un **"Pedido" (Order)** y una **"Línea de pedido" (Line Item)** apuntando a tu bloque `midroll_video` para que Google empiece a enviar anuncios reales.
     const VAST_TAG_URL = 'https://pubads.g.doubleclick.net/gampad/ads?iu=/23341415522/midroll_video&description_url=https%3A%2F%2Farenafightpass.com%2F&tfcd=0&npa=0&sz=640x480&gdfp_req=1&unviewed_position_start=1&output=vast&env=vp&impl=s';
-    // ========================================================
 
     useEffect(() => {
-        console.log('%c>>> VideoPlayer Version: 1.0.3 (Fixed VAST & Cache) <<<', 'color: #ff00ff; font-weight: bold;');
+        console.log('%c>>> VideoPlayer Version: 1.0.4 (Technical Failure Overlay) <<<', 'color: #ff00ff; font-weight: bold;');
     }, []);
 
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -52,6 +43,29 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     const adsLoaderRef = useRef<any>(null);
     const adsManagerRef = useRef<any>(null);
     const [isAdPlaying, setIsAdPlaying] = useState(false);
+    const [quality, setQuality] = useState<string>('');
+    const [availableLevels, setAvailableLevels] = useState<{ height: number; bitrate: number; index: number }[]>([]);
+    const [selectedLevel, setSelectedLevel] = useState<number>(-1);
+    const [showQualityMenu, setShowQualityMenu] = useState(false);
+
+    // ── Technical failure overlay ──────────────────────────────────────────
+    /** True when HLS can't load the stream after it was previously working */
+    const [isStreamDown, setIsStreamDown] = useState(false);
+    /** How many auto-reconnect attempts have been made */
+    const [reconnectCount, setReconnectCount] = useState(0);
+    /** Countdown seconds until next reconnect attempt */
+    const [reconnectIn, setReconnectIn] = useState(15);
+    /** Only show failure overlay if stream was working at least once */
+    const hadSuccessfulLoadRef = useRef(false);
+    /** Consecutive network error counter (fatal + non-fatal) */
+    const consecutiveErrorsRef = useRef(0);
+    /** Timer ref for the 'waiting' → failure overlay delay */
+    const stallTimerRef = useRef<NodeJS.Timeout | null>(null);
+    /** True while video is stalled due to empty buffer on a live stream */
+    const isLiveStallRef = useRef(false);
+    /** Mirror of isStreamDown as a ref — avoids stale closures in HLS callbacks */
+    const isStreamDownRef = useRef(false);
+    // ─────────────────────────────────────────────────────────────────────
 
     // Mid-roll ad state
     const [lastAdTime, setLastAdTime] = useState(0);
@@ -61,17 +75,100 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     const { settings } = useSettingsStore();
     const { user } = useAuthStore();
 
+    // Keep ref in sync so HLS callbacks (which close over stale state) can read the current value
+    useEffect(() => { isStreamDownRef.current = isStreamDown; }, [isStreamDown]);
+
+    // ── Auto-reconnect countdown while stream is down ──────────────────────
+    useEffect(() => {
+        if (!isStreamDown) return;
+
+        setReconnectIn(15);
+        const countdown = setInterval(() => {
+            setReconnectIn(n => {
+                if (n <= 1) {
+                    // Attempt to reload
+                    if (hlsRef.current) {
+                        console.log('[VideoPlayer] Auto-reconnect attempt #' + (reconnectCount + 1));
+                        hlsRef.current.startLoad();
+                        setReconnectCount(c => c + 1);
+                    }
+                    return 15; // Reset countdown
+                }
+                return n - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(countdown);
+    }, [isStreamDown, reconnectCount]);
+    // ─────────────────────────────────────────────────────────────────────
+
+    // ── Stall detection via native video events ───────────────────────────
+    // 'waiting' fires when the browser has no more data to play (buffer empty).
+    // This is more reliable than polling currentTime because it fires even
+    // when video.paused becomes true due to buffer exhaustion.
+    useEffect(() => {
+        if (status !== 'live') return;
+        const video = videoRef.current;
+        if (!video) return;
+
+        // Show overlay after 8 s of stalling — faster feedback than 15 s
+        const STALL_DELAY_MS = 8_000;
+
+        const clearStallTimer = () => {
+            if (stallTimerRef.current) {
+                clearTimeout(stallTimerRef.current);
+                stallTimerRef.current = null;
+            }
+        };
+
+        const onWaiting = () => {
+            // Only trigger if we were already playing successfully
+            if (!hadSuccessfulLoadRef.current) return;
+            if (stallTimerRef.current) return; // timer already running
+
+            // Mark as live stall so onPause doesn't show the play button
+            isLiveStallRef.current = true;
+            // Hide play button immediately — don't let it appear during stall
+            setShowPlayButton(false);
+
+            console.warn('[VideoPlayer] video.waiting — stream stalling, starting timer...');
+            stallTimerRef.current = setTimeout(() => {
+                console.warn('[VideoPlayer] Stall confirmed — showing failure overlay');
+                setIsStreamDown(true);
+            }, STALL_DELAY_MS);
+        };
+
+        const onRecovered = () => {
+            isLiveStallRef.current = false;
+            clearStallTimer();
+            consecutiveErrorsRef.current = 0;
+            setIsStreamDown(false);
+            setShowPlayButton(false);
+            setReconnectCount(0);
+        };
+
+        video.addEventListener('waiting', onWaiting);
+        video.addEventListener('playing', onRecovered);  // playback resumed
+        video.addEventListener('canplay', onRecovered);  // data available again
+
+        return () => {
+            clearStallTimer();
+            video.removeEventListener('waiting', onWaiting);
+            video.removeEventListener('playing', onRecovered);
+            video.removeEventListener('canplay', onRecovered);
+        };
+    }, [status]); // intentionally minimal deps — uses refs inside
+    // ─────────────────────────────────────────────────────────────────────
+
     // Detect if browser supports casting/remote playback
     useEffect(() => {
         const checkCastSDK = setInterval(() => {
             if ((window as any).chrome && (window as any).chrome.cast && (window as any).chrome.cast.isAvailable) {
                 setCanCast(true);
                 clearInterval(checkCastSDK);
-                console.log('Google Cast SDK detected and available');
             }
         }, 1000);
 
-        // Native AirPlay support (Safari)
         if (typeof window !== 'undefined' && 'WebKitPlaybackTargetAvailabilityEvent' in window) {
             setCanCast(true);
         }
@@ -86,13 +183,11 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
 
         const heartbeatInterval = setInterval(async () => {
             try {
-                // Use a simple profile call as heartbeat
                 await authAPI.getProfile();
-                console.log('Auth heartbeat: session active');
             } catch (err) {
                 console.warn('Auth heartbeat failed:', err);
             }
-        }, 5 * 60 * 1000); // Every 5 minutes
+        }, 5 * 60 * 1000);
 
         return () => clearInterval(heartbeatInterval);
     }, [isPlaying, isLoading]);
@@ -100,14 +195,10 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
     // Move watermark position periodically (anti-piracy)
     useEffect(() => {
         const positions = [
-            { top: '15%', left: '20%' },
-            { top: '60%', left: '70%' },
-            { top: '30%', left: '55%' },
-            { top: '75%', left: '15%' },
-            { top: '45%', left: '40%' },
-            { top: '20%', left: '75%' },
-            { top: '70%', left: '35%' },
-            { top: '50%', left: '60%' },
+            { top: '15%', left: '20%' }, { top: '60%', left: '70%' },
+            { top: '30%', left: '55%' }, { top: '75%', left: '15%' },
+            { top: '45%', left: '40%' }, { top: '20%', left: '75%' },
+            { top: '70%', left: '35%' }, { top: '50%', left: '60%' },
         ];
         let idx = 0;
         const interval = setInterval(() => {
@@ -117,30 +208,18 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         return () => clearInterval(interval);
     }, []);
 
-    // Anti-piracy: Block right click and common dev tools shortcuts (except for admins)
+    // Anti-piracy key blocking
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Allow admins to use dev tools
             if (user?.role === 'admin') return;
-
-            // Block F12
             if (e.key === 'F12') e.preventDefault();
-            // Block Ctrl+Shift+I / Cmd+Opt+I (DevTools)
             if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'i') e.preventDefault();
-            // Block Ctrl+Shift+J / Cmd+Opt+J (Console)
             if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'j') e.preventDefault();
-            // Block Ctrl+Shift+C / Cmd+Opt+C (Element Inspector)
             if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'c') e.preventDefault();
-            // Block Ctrl+U / Cmd+U (View Source)
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') e.preventDefault();
         };
-
-        // Attach to document body
         document.addEventListener('keydown', handleKeyDown);
-
-        return () => {
-            document.removeEventListener('keydown', handleKeyDown);
-        };
+        return () => document.removeEventListener('keydown', handleKeyDown);
     }, [user?.role]);
 
     const handleCast = useCallback(async () => {
@@ -151,7 +230,6 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         const cast = (window as any).cast;
         const chrome = (window as any).chrome;
 
-        // Try Google Cast SDK
         if (cast && cast.framework && chrome && chrome.cast) {
             const castContext = cast.framework.CastContext.getInstance();
             castContext.setOptions({
@@ -180,7 +258,6 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
             } catch (err) { console.warn('Cast failed:', err); }
         }
 
-        // Fallback to Native Remote Playback (Safari/AirPlay)
         if (video && 'remote' in video) {
             try {
                 const isBlob = video.src.startsWith('blob:');
@@ -194,7 +271,6 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         }
     }, [streamUrl, isMp4, status, eventTitle, poster]);
 
-    // Listen for global cast trigger
     useEffect(() => {
         const handleGlobalCast = () => handleCast();
         window.addEventListener('trigger-cast', handleGlobalCast);
@@ -209,37 +285,31 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
 
     const handleMouseLeave = () => { if (isPlaying) setShowUI(false); };
 
-
+    const changeQuality = useCallback((levelIndex: number) => {
+        if (!hlsRef.current) return;
+        hlsRef.current.currentLevel = levelIndex;
+        setSelectedLevel(levelIndex);
+        setShowQualityMenu(false);
+        if (levelIndex === -1) setQuality('');
+    }, []);
 
     const onAdError = useCallback((adErrorEvent: any) => {
         const error = adErrorEvent.getError();
-        console.error('IMA Ad Error:', {
-            code: error.getErrorCode(),
-            message: error.getMessage(),
-            type: error.getType()
-        });
+        console.error('IMA Ad Error:', { code: error.getErrorCode(), message: error.getMessage() });
         setIsAdPlaying(false);
-        if (adsManagerRef.current) {
-            try { adsManagerRef.current.destroy(); } catch (e) { }
-        }
-        if (videoRef.current) {
-            videoRef.current.play().catch(e => console.warn('Video play after error failed:', e));
-        }
+        if (adsManagerRef.current) { try { adsManagerRef.current.destroy(); } catch (e) { } }
+        if (videoRef.current) videoRef.current.play().catch(() => { });
     }, []);
 
     const requestAds = useCallback(() => {
         const google = (window as any).google;
         if (!google || !adsLoaderRef.current) return;
-
         const adsRequest = new google.ima.AdsRequest();
-        // Usar la URL configurada al principio del componente
         adsRequest.adTagUrl = VAST_TAG_URL;
-
         adsRequest.linearAdSlotWidth = videoRef.current?.clientWidth || 640;
         adsRequest.linearAdSlotHeight = videoRef.current?.clientHeight || 480;
         adsRequest.nonLinearAdSlotWidth = videoRef.current?.clientWidth || 640;
         adsRequest.nonLinearAdSlotHeight = videoRef.current?.clientHeight || 150;
-
         adsLoaderRef.current.requestAds(adsRequest);
     }, [VAST_TAG_URL]);
 
@@ -247,7 +317,6 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         const google = (window as any).google;
         const adsRenderingSettings = new google.ima.AdsRenderingSettings();
         adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = true;
-        // Aumentar el límite de redirecciones para evitar que se rompa la cadena de VAST
         adsRenderingSettings.maxRedirects = 10;
 
         const adsManager = adsManagerLoadedEvent.getAdsManager(videoRef.current, adsRenderingSettings);
@@ -256,15 +325,11 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         adsManager.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, onAdError);
         adsManager.addEventListener(google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED, () => {
             setIsAdPlaying(true);
-            if (videoRef.current) {
-                videoRef.current.pause();
-            }
+            if (videoRef.current) videoRef.current.pause();
         });
         adsManager.addEventListener(google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED, () => {
             setIsAdPlaying(false);
-            if (videoRef.current) {
-                videoRef.current.play().catch(e => console.warn('Main video play interrupted:', e));
-            }
+            if (videoRef.current) videoRef.current.play().catch(() => { });
         });
         adsManager.addEventListener(google.ima.AdEvent.Type.ALL_ADS_COMPLETED, () => {
             setIsAdPlaying(false);
@@ -272,9 +337,7 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         });
 
         try {
-            console.log('AdsManager initializing...');
             adsManager.init(videoRef.current?.clientWidth || 640, videoRef.current?.clientHeight || 480, google.ima.ViewMode.NORMAL);
-            console.log('AdsManager starting...');
             adsManager.start();
         } catch (adError) {
             console.error('AdsManager error:', adError);
@@ -291,16 +354,8 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         const adsLoader = new google.ima.AdsLoader(adDisplayContainer);
         adsLoaderRef.current = adsLoader;
 
-        adsLoader.addEventListener(
-            google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
-            onAdsManagerLoaded,
-            false
-        );
-        adsLoader.addEventListener(
-            google.ima.AdErrorEvent.Type.AD_ERROR,
-            onAdError,
-            false
-        );
+        adsLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, onAdsManagerLoaded, false);
+        adsLoader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, onAdError, false);
     }, [onAdsManagerLoaded, onAdError]);
 
     // Load IMA SDK
@@ -308,13 +363,9 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         if (typeof window === 'undefined') return;
 
         const script = document.createElement('script');
-        // Usar la versión cacheable del SDK para no demorar la carga del reproductor
         script.src = `https://imasdk.googleapis.com/js/sdkloader/ima3.js`;
         script.async = true;
-        script.onload = () => {
-            console.log('Google IMA SDK loaded');
-            initializeIMA();
-        };
+        script.onload = () => { initializeIMA(); };
         document.head.appendChild(script);
 
         return () => {
@@ -323,6 +374,7 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         };
     }, [initializeIMA]);
 
+    // ── Main stream setup ──────────────────────────────────────────────────
     useEffect(() => {
         let finalUrl = streamUrl;
         if (!finalUrl) return;
@@ -331,7 +383,6 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
             finalUrl = `${window.location.protocol}//${window.location.host}${finalUrl}`;
         }
 
-        // URL Security / Provider logic
         const isProvider = finalUrl.includes('cloudflarestream.com') ||
             finalUrl.includes('videodelivery.net') ||
             finalUrl.includes('stream.mux.com') ||
@@ -342,17 +393,21 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
             finalUrl = `${finalUrl}${finalUrl.includes('?') ? '&' : '?'}token=${token}`;
         }
 
-        console.log('Resolved Stream URL:', finalUrl);
         setResolvedUrl(finalUrl);
         lastStreamUrlRef.current = finalUrl;
 
-        // If it's a Cloudflare URL and it's NOT a manifest, we might need the iframe.
-        // BUT if it IS a manifest, HLS.js is much better (supports Cast button).
+        // Reset failure state on new stream URL
+        setIsStreamDown(false);
+        setReconnectCount(0);
+        consecutiveErrorsRef.current = 0;
+        hadSuccessfulLoadRef.current = false;
+        if (stallTimerRef.current) { clearTimeout(stallTimerRef.current); stallTimerRef.current = null; }
+        isLiveStallRef.current = false;
+
         const isCloudflare = finalUrl.includes('cloudflarestream.com') || finalUrl.includes('videodelivery.net');
         const isManifest = finalUrl.includes('.m3u8');
 
         if (isCloudflare && !isManifest) {
-            console.log('Cloudflare ID detected (no manifest) - Using iframe mode');
             setIsLoading(false);
             return;
         }
@@ -373,10 +428,19 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         };
 
         const handleError = (_: any, data: any) => {
-            if (data.fatal) {
-                if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                // Count ALL network errors (fatal + non-fatal).
+                // With manifestLoadingMaxRetry:Infinity the fatal flag often never
+                // fires, so we need non-fatal counts too.
+                consecutiveErrorsRef.current++;
+                if (consecutiveErrorsRef.current >= 4 && hadSuccessfulLoadRef.current && status === 'live') {
+                    setIsStreamDown(true);
+                }
+                if (data.fatal) {
                     hlsRef.current?.startLoad();
-                } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                }
+            } else if (data.fatal) {
+                if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
                     hlsRef.current?.recoverMediaError();
                 } else {
                     setError('Error al cargar la transmisión.');
@@ -393,24 +457,64 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
             const hls = new Hls({
                 debug: false,
                 enableWorker: true,
-                lowLatencyMode: true, // Enable for faster live playback
-                liveSyncDurationCount: 3, // Reduce safety buffer to keep closer to live edge
+                lowLatencyMode: true,
+                liveSyncDurationCount: 3,
                 liveMaxLatencyDurationCount: 10,
-                maxBufferLength: 10, // Reduce buffer length to prevent downloading too far ahead and causing memory/network spikes
+                maxBufferLength: 10,
                 maxMaxBufferLength: 30,
                 manifestLoadingMaxRetry: Infinity,
                 manifestLoadingRetryDelay: 1000,
-                levelLoadingTimeOut: 10000, // Timeout faster on bad connections to trigger quality drop
+                levelLoadingTimeOut: 10000,
                 fragLoadingTimeOut: 10000,
             });
             hlsRef.current = hls;
             hls.loadSource(finalUrl);
             hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, handleManifestParsed);
+
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                const levels = hls.levels
+                    .map((l, i) => ({ height: l.height || 0, bitrate: l.bitrate || 0, index: i }))
+                    .filter(l => l.height > 0)
+                    .sort((a, b) => b.height - a.height);
+                setAvailableLevels(levels);
+                handleManifestParsed();
+            });
+
+            hls.on(Hls.Events.LEVEL_SWITCHED, (_: any, data: { level: number }) => {
+                const level = hls.levels[data.level];
+                if (level?.height) {
+                    if (level.height >= 1080) setQuality('4K');
+                    else if (level.height >= 720) setQuality('HD');
+                    else if (level.height >= 480) setQuality('SD');
+                    else setQuality('LD');
+                }
+            });
+
+            // Fragment loaded successfully → stream is alive
+            hls.on(Hls.Events.FRAG_LOADED, () => {
+                hadSuccessfulLoadRef.current = true;
+                consecutiveErrorsRef.current = 0;
+
+                // Use the ref — isStreamDown state is stale inside this closure
+                if (isStreamDownRef.current || isLiveStallRef.current) {
+                    console.info('[VideoPlayer] Stream recovered via FRAG_LOADED ✅');
+                    isLiveStallRef.current = false;
+                    isStreamDownRef.current = false;
+                    if (stallTimerRef.current) {
+                        clearTimeout(stallTimerRef.current);
+                        stallTimerRef.current = null;
+                    }
+                    setIsStreamDown(false);
+                    setReconnectCount(0);
+                    setShowPlayButton(false);
+                    // Resume playback — video auto-paused when buffer ran out
+                    videoRef.current?.play().catch(() => {});
+                }
+            });
+
             hls.on(Hls.Events.ERROR, handleError);
 
-            // For live streams, ensure we are close to the edge
-            hls.on(Hls.Events.LEVEL_LOADED, (event, data) => {
+            hls.on(Hls.Events.LEVEL_LOADED, (_event: any, data: any) => {
                 if (data.details.live && video.paused && !video.currentTime) {
                     console.log('Live stream detected, seeking to edge');
                 }
@@ -431,28 +535,30 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
         const video = videoRef.current;
         if (!video) return;
         const onPlay = () => { setIsPlaying(true); setShowPlayButton(false); };
-        const onPause = () => { setIsPlaying(false); if (!isLoading) setShowPlayButton(true); };
+        const onPause = () => {
+            setIsPlaying(false);
+            // Don't show the play button if the video auto-paused because of a
+            // live stream stall — the failure overlay handles that case instead.
+            if (!isLoading && !isLiveStallRef.current) {
+                setShowPlayButton(true);
+            }
+        };
         video.addEventListener('play', onPlay);
         video.addEventListener('pause', onPause);
         return () => { video.removeEventListener('play', onPlay); video.removeEventListener('pause', onPause); };
     }, [isLoading]);
 
-    // Logic for mid-roll ads (only for 'reprise')
+    // Mid-roll ads
     useEffect(() => {
         const video = videoRef.current;
         if (!video || status !== 'reprise' || isAdPlaying) return;
-
         const onTimeUpdate = () => {
             const currentTime = video.currentTime;
-            // Trigger ad every 15 minutes (900 seconds)
-            // For testing, you can change 900 to 30
             if (currentTime >= lastAdTime + 900) {
-                console.log('Triggering mid-roll video ad at:', currentTime);
                 requestAds();
                 setLastAdTime(currentTime);
             }
         };
-
         video.addEventListener('timeupdate', onTimeUpdate);
         return () => video.removeEventListener('timeupdate', onTimeUpdate);
     }, [status, lastAdTime, isAdPlaying, requestAds]);
@@ -469,38 +575,96 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
             onContextMenu={(e) => e.preventDefault()}>
+
             {(resolvedUrl.includes('cloudflarestream.com') || resolvedUrl.includes('videodelivery.net')) && !resolvedUrl.includes('.m3u8') ? (
                 <div className="w-full h-full">
                     <iframe
-                        src={
-                            resolvedUrl.includes('/iframe')
-                                ? resolvedUrl
-                                : `${resolvedUrl}/iframe?autoplay=true&letterbox=false`
-                        }
+                        src={resolvedUrl.includes('/iframe') ? resolvedUrl : `${resolvedUrl}/iframe?autoplay=true&letterbox=false`}
                         className="absolute inset-0 w-full h-full border-0"
                         allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
                         allowFullScreen
-                    ></iframe>
+                    />
                 </div>
             ) : (
                 <video ref={videoRef} className="w-full h-full object-contain" controls controlsList="nodownload noplaybackrate" disablePictureInPicture playsInline poster={poster} />
             )}
 
+            {/* Loading */}
             {isLoading && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-20">
-                    <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+                    <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4" />
                     <p className="text-white">Cargando...</p>
                 </div>
             )}
 
-            {error && (
+            {/* Fatal error (not technical failure) */}
+            {error && !isStreamDown && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-30">
                     <p className="text-white text-lg font-bold mb-4">{error}</p>
                     <button onClick={() => window.location.reload()} className="px-6 py-2 bg-red-600 text-white rounded-lg">Reintentar</button>
                 </div>
             )}
 
-            {!isLoading && !error && showPlayButton && (
+            {/* ── FALLA TÉCNICA overlay ─────────────────────────────────────── */}
+            {isStreamDown && status === 'live' && (
+                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/92 backdrop-blur-sm">
+                    {/* Animated signal icon */}
+                    <div className="relative mb-6">
+                        {/* Pulsing rings */}
+                        <span className="absolute inset-0 rounded-full bg-red-500/20 animate-ping" style={{ animationDuration: '1.5s' }} />
+                        <span className="absolute inset-0 rounded-full bg-red-500/10 animate-ping" style={{ animationDuration: '2s', animationDelay: '0.5s' }} />
+                        <div className="relative w-20 h-20 bg-red-500/15 border-2 border-red-500/40 rounded-full flex items-center justify-center">
+                            <WifiOff className="w-9 h-9 text-red-400" />
+                        </div>
+                    </div>
+
+                    {/* Title */}
+                    <h2 className="text-white text-xl font-black tracking-wide mb-1">
+                        ⚡ Falla Técnica
+                    </h2>
+                    <p className="text-white/50 text-sm mb-6 text-center max-w-xs px-4">
+                        La señal se interrumpió. Estamos reconectando automáticamente.
+                    </p>
+
+                    {/* Countdown bar */}
+                    <div className="w-48 mb-3">
+                        <div className="flex justify-between text-xs text-white/40 mb-1.5">
+                            <span>Reconectando en</span>
+                            <span className="text-white/70 font-mono font-bold">{reconnectIn}s</span>
+                        </div>
+                        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-red-500 rounded-full transition-all duration-1000 ease-linear"
+                                style={{ width: `${(reconnectIn / 15) * 100}%` }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Attempt counter */}
+                    {reconnectCount > 0 && (
+                        <p className="text-white/25 text-xs mt-2">
+                            Intento #{reconnectCount}
+                        </p>
+                    )}
+
+                    {/* Manual retry */}
+                    <button
+                        onClick={() => {
+                            if (hlsRef.current) {
+                                hlsRef.current.startLoad();
+                                setReconnectCount(c => c + 1);
+                                setReconnectIn(15);
+                            }
+                        }}
+                        className="mt-5 px-5 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white/80 text-sm rounded-full transition-colors"
+                    >
+                        Reintentar ahora
+                    </button>
+                </div>
+            )}
+            {/* ─────────────────────────────────────────────────────────────── */}
+
+            {!isLoading && !error && !isStreamDown && showPlayButton && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10 cursor-pointer" onClick={handleManualPlay}>
                     <div className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center">
                         <svg className="w-10 h-10 text-white translate-x-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
@@ -520,31 +684,83 @@ export default function VideoPlayer({ streamUrl, token, eventTitle, status, post
                 </div>
             )}
 
-            {/* Viewer Count Overlay (TikTok Style) */}
-            {status === 'live' && (
-                <div className={`absolute top-4 right-16 z-40 transition-opacity ${showUI ? 'opacity-100' : 'opacity-70'}`}>
-                    <div className="flex items-center gap-1.5 bg-red-600/90 text-white font-bold px-3 py-1 rounded-sm shadow border border-red-500/50 backdrop-blur-sm">
-                        <Users className="w-4 h-4" />
-                        <span className="text-sm tracking-wide">{viewerCount.toLocaleString()}</span>
+            {/* Viewer Count + Quality Overlay */}
+            {status === 'live' && !isStreamDown && (
+                <div className={`absolute top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 transition-opacity ${showUI ? 'opacity-100' : 'opacity-0'}`}>
+                    <div className="flex items-center gap-1.5 bg-black/70 backdrop-blur-md rounded-full px-3 py-1.5 border border-red-500/40">
+                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.8)]" />
+                        <span className="text-red-400 font-black text-[11px] uppercase tracking-widest">EN VIVO</span>
                     </div>
+                    {viewerCount > 0 && (
+                        <div className="flex items-center gap-1.5 bg-black/70 backdrop-blur-md rounded-full px-3 py-1.5 border border-white/10">
+                            <span className="text-base leading-none">🔥</span>
+                            <span className="text-white font-bold text-sm tabular-nums">{viewerCount.toLocaleString()}</span>
+                            <span className="text-white/50 text-xs">viendo</span>
+                        </div>
+                    )}
+                    {/* Quality shown in gear button — no duplicate badge here */}
                 </div>
             )}
 
-            {/* Contenedor de Publicidad Google IMA */}
+            {/* Quality Selector */}
+            {availableLevels.length > 1 && (
+                <div className={`absolute bottom-14 right-4 z-50 transition-opacity ${showUI ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                    {showQualityMenu && (
+                        <div className="mb-2 bg-black/90 backdrop-blur-md rounded-xl border border-white/10 shadow-2xl overflow-hidden min-w-[110px]">
+                            <button
+                                onClick={() => changeQuality(-1)}
+                                className={`w-full px-4 py-2.5 text-sm text-left flex items-center justify-between gap-3 hover:bg-white/10 transition-colors ${selectedLevel === -1 ? 'text-primary-400 font-bold' : 'text-white/80'}`}
+                            >
+                                <span>Auto</span>
+                                {selectedLevel === -1 && <span className="w-1.5 h-1.5 rounded-full bg-primary-400" />}
+                            </button>
+                            <div className="h-px bg-white/10" />
+                            {availableLevels.map(({ height, index }) => {
+                                const label = height >= 2160 ? '4K' : height >= 1440 ? '2K' : `${height}p`;
+                                const isHD = height >= 720;
+                                return (
+                                    <button
+                                        key={index}
+                                        onClick={() => changeQuality(index)}
+                                        className={`w-full px-4 py-2.5 text-sm text-left flex items-center justify-between gap-3 hover:bg-white/10 transition-colors ${selectedLevel === index ? 'text-primary-400 font-bold' : 'text-white/80'}`}
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            {label}
+                                            {isHD && <span className="text-[9px] font-black text-emerald-400 bg-emerald-400/15 px-1 rounded">HD</span>}
+                                        </span>
+                                        {selectedLevel === index && <span className="w-1.5 h-1.5 rounded-full bg-primary-400" />}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+                    <button
+                        onClick={() => setShowQualityMenu(v => !v)}
+                        title="Calidad de video"
+                        className={`flex items-center gap-1.5 bg-black/70 backdrop-blur-md rounded-full px-3 py-1.5 border text-white text-xs font-bold transition-colors ${showQualityMenu ? 'border-primary-500/60 text-primary-400' : 'border-white/10 hover:border-white/30'}`}
+                    >
+                        <Settings className="w-3.5 h-3.5" />
+                        <span>
+                            {selectedLevel === -1
+                                ? 'Auto'
+                                : `${availableLevels.find(l => l.index === selectedLevel)?.height ?? ''}p`}
+                        </span>
+                    </button>
+                </div>
+            )}
+
+            {/* Google IMA Ad Container */}
             <div
                 ref={adContainerRef}
                 className={`absolute inset-0 z-[60] bg-black/40 ${isAdPlaying ? 'block' : 'hidden'}`}
                 style={{ pointerEvents: isAdPlaying ? 'auto' : 'none' }}
             />
 
-            {/* User Watermark - Anti-piracy */}
+            {/* User Watermark */}
             {user?.email && (
                 <div
                     className="absolute z-[45] pointer-events-none select-none transition-all duration-[5000ms] ease-in-out"
-                    style={{
-                        top: watermarkPos.top,
-                        left: watermarkPos.left,
-                    }}
+                    style={{ top: watermarkPos.top, left: watermarkPos.left }}
                 >
                     <span className="text-white/[0.07] text-sm font-mono tracking-wider" style={{ userSelect: 'none', WebkitUserSelect: 'none' }}>
                         {user.email}

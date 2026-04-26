@@ -77,6 +77,10 @@ export default function Navbar() {
                                         src={settings.site_logo}
                                         alt={settings?.site_name || 'Logo'}
                                         className="max-w-full max-h-[70px] md:max-h-none h-auto object-contain"
+                                        onError={(e) => {
+                                            e.currentTarget.onerror = null;
+                                            e.currentTarget.src = '/la-jaula-logo.svg';
+                                        }}
                                     />
                                 </div>
                             ) : (
@@ -134,7 +138,7 @@ export default function Navbar() {
                             <div className="relative">
                                 <button
                                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                                    className="flex items-center gap-3 pl-2 pr-4 py-1.5 rounded-full bg-dark-800 hover:bg-dark-700 border border-dark-700 transition-all group"
+                                    className="flex items-center gap-3 pl-2 pr-4 py-1.5 rounded-full bg-dark-800 hover:bg-dark-700 border border-dark-700 transition-colors group"
                                 >
                                     <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-primary-900/50">
                                         {user.full_name?.charAt(0).toUpperCase() || <User className="w-4 h-4" />}
@@ -145,6 +149,7 @@ export default function Navbar() {
                                 </button>
 
                                 {/* Dropdown Menu */}
+                                <AnimatePresence>
                                 {userMenuOpen && (
                                     <>
                                         <div
@@ -152,9 +157,11 @@ export default function Navbar() {
                                             onClick={() => setUserMenuOpen(false)}
                                         />
                                         <motion.div
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: 10 }}
+                                            initial={{ opacity: 0, y: 6, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 4, scale: 0.97 }}
+                                            transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] }}
+                                            style={{ transformOrigin: 'top right' }}
                                             className="absolute right-0 mt-2 w-64 bg-dark-900 border border-dark-700 rounded-xl shadow-2xl z-50 overflow-hidden ring-1 ring-white/5"
                                         >
                                             <div className="px-4 py-4 bg-dark-800/50 border-b border-dark-700">
@@ -222,6 +229,7 @@ export default function Navbar() {
                                         </motion.div>
                                     </>
                                 )}
+                                </AnimatePresence>
                             </div>
                         ) : (
                             !isAuthPage && (
@@ -267,10 +275,11 @@ export default function Navbar() {
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden bg-dark-950 overflow-hidden shadow-2xl"
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                        className="md:hidden bg-dark-950 shadow-2xl"
                     >
                         <div className="px-4 pt-2 pb-6 space-y-2">
                             {!isAuthPage && navLinks.map((link) => (

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Save, Upload, X, Shield, UserPlus } from 'lucide-react';
-import { promotersAPI, authAPI, handleAPIError } from '@/lib/api';
+import { promotersAPI, adminAPI, handleAPIError } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 export default function NewPromoterPage() {
@@ -56,47 +56,27 @@ export default function NewPromoterPage() {
         setLoading(true);
 
         try {
-            // 1. If createAccount is true, create the user first
-            let userId = null;
             if (createAccount) {
-                const userRes = await authAPI.register({
+                // Single endpoint creates promoter + user + links them atomically
+                await adminAPI.createPromoterAccount({
+                    name: formData.name,
                     email: userData.email,
                     password: userData.password,
-                    full_name: userData.full_name || formData.name,
                 });
-                userId = userRes.data.data.user.id;
-                // Update their role to 'promoter' immediately
-                await authAPI.updateUserRole(userId, 'promoter');
-            }
-
-            // 2. Create the promoter profile
-            const data = new FormData();
-            data.append('name', formData.name);
-            data.append('description', formData.description);
-            data.append('social_links', JSON.stringify(formData.social_links));
-
-            if (logoFile) data.append('logo', logoFile);
-            if (bannerFile) data.append('banner', bannerFile);
-
-            const promoterRes = await promotersAPI.create(data);
-            const promoterId = promoterRes.data.data.id;
-
-            // 3. Link user to promoter if created
-            if (userId) {
-                // We need a specific endpoint to link them, or we update the user with promoter_id
-                // Assuming we can update user profile with promoter_id or we add it to the register if admin
-                // For now, let's assume the backend will handle this if we pass it, 
-                // but since we don't have that endpoint yet, let's just create the profile.
-
-                // TODO: Link userId to promoterId in DB
-                // Since I already have database migration with promoter_id in users table, 
-                // I should probably have a way to update it.
+            } else {
+                // Just create the promoter profile (no login account)
+                const data = new FormData();
+                data.append('name', formData.name);
+                data.append('description', formData.description);
+                data.append('social_links', JSON.stringify(formData.social_links));
+                if (logoFile) data.append('logo', logoFile);
+                if (bannerFile) data.append('banner', bannerFile);
+                await promotersAPI.create(data);
             }
 
             toast.success('Promotora creada exitosamente');
             router.push('/admin/promoters');
         } catch (error) {
-            console.error('Error creating promoter:', error);
             const message = handleAPIError(error);
             toast.error(message);
         } finally {

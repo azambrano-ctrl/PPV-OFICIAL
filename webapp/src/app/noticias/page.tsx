@@ -28,7 +28,7 @@ export default function NewsPage() {
     const [loading, setLoading] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
-    const categories = ['All', 'MMA', 'Resultados'];
+    const categories = ['All', 'Arena Fight Pass', 'MMA', 'Resultados'];
 
     useEffect(() => {
         loadPosts();
@@ -38,11 +38,28 @@ export default function NewsPage() {
         try {
             setLoading(true);
             const params: any = { status: 'published' };
-            if (selectedCategory !== 'All') {
+            if (selectedCategory === 'Arena Fight Pass') {
+                // No category filter — filter client-side by missing/own source
+            } else if (selectedCategory !== 'All') {
                 params.category = selectedCategory;
             }
             const res = await newsAPI.getAll(params);
-            setPosts(res.data.data);
+            let data: NewsPost[] = res.data.data;
+
+            // Filter Arena Fight Pass: noticias propias (sin source_name externo)
+            if (selectedCategory === 'Arena Fight Pass') {
+                data = data.filter(p => !p.source_name || p.source_name.toLowerCase().includes('arena'));
+            }
+
+            // Sort: own news first (no source_name), then external
+            if (selectedCategory === 'All') {
+                data = [
+                    ...data.filter(p => !p.source_name || p.source_name.toLowerCase().includes('arena')),
+                    ...data.filter(p => p.source_name && !p.source_name.toLowerCase().includes('arena')),
+                ];
+            }
+
+            setPosts(data);
         } catch (error) {
             console.error('Error loading news:', error);
         } finally {
@@ -78,7 +95,7 @@ export default function NewsPage() {
             {/* Content Section */}
             <main className="flex-grow container-custom pb-20">
                 {/* Category Filters */}
-                <div className="flex flex-wrap gap-2 mb-12 overflow-x-auto pb-4 scrollbar-hide">
+                <div className="flex flex-wrap gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
                     {categories.map((cat) => (
                         <button
                             key={cat}
@@ -88,7 +105,7 @@ export default function NewsPage() {
                                 : 'bg-zinc-900 text-gray-400 hover:bg-zinc-800'
                                 }`}
                         >
-                            {cat === 'All' ? 'TODAS' : cat}
+                            {cat === 'All' ? 'TODAS' : cat === 'Arena Fight Pass' ? '🥊 ARENA FP' : cat}
                         </button>
                     ))}
                 </div>

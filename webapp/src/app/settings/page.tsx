@@ -11,9 +11,6 @@ import {
     Bell,
     Shield,
     CreditCard,
-    User,
-    Check,
-    AlertTriangle,
     Mail,
     Smartphone,
     LogOut
@@ -24,7 +21,6 @@ export default function SettingsPage() {
     const { user, isAuthenticated, logout } = useAuthStore();
     const [activeSection, setActiveSection] = useState<'security' | 'notifications' | 'billing'>('security');
 
-    // Password Change State
     const [passwordData, setPasswordData] = useState({
         currentPassword: '',
         newPassword: '',
@@ -32,19 +28,29 @@ export default function SettingsPage() {
     });
     const [loading, setLoading] = useState(false);
 
-    // Mock Preferences State
     const [preferences, setPreferences] = useState({
-
         emailReminders: true,
         pushNotifications: false,
         twoFactor: false
     });
 
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
+    // Auth guard
     useEffect(() => {
-        if (!isAuthenticated) {
-            router.push('/auth/login');
-        }
+        if (!isAuthenticated) router.push('/auth/login');
     }, [isAuthenticated, router]);
+
+    // Check push subscription state on mount
+    useEffect(() => {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+        navigator.serviceWorker.ready
+            .then(reg => reg.pushManager.getSubscription())
+            .then(sub => {
+                setPreferences(p => ({ ...p, pushNotifications: !!sub }));
+            })
+            .catch(() => {});
+    }, []);
 
     const handlePasswordChange = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -74,13 +80,66 @@ export default function SettingsPage() {
         }
     };
 
+    const togglePushNotifications = async () => {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            toast.error('Tu navegador no soporta notificaciones push');
+            return;
+        }
+
+        try {
+            const reg = await navigator.serviceWorker.ready;
+
+            if (preferences.pushNotifications) {
+                const sub = await reg.pushManager.getSubscription();
+                if (sub) {
+                    const token = localStorage.getItem('accessToken');
+                    await fetch(`${API_URL}/api/notifications/web-push/subscribe`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ endpoint: sub.endpoint }),
+                    });
+                    await sub.unsubscribe();
+                }
+                setPreferences(p => ({ ...p, pushNotifications: false }));
+                toast.success('Notificaciones desactivadas');
+            } else {
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    toast.error('Permiso denegado para notificaciones');
+                    return;
+                }
+
+                const token = localStorage.getItem('accessToken');
+                const keyRes = await fetch(`${API_URL}/api/notifications/vapid-public-key`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
+                const keyData = await keyRes.json();
+                if (!keyData.success) throw new Error('VAPID key not available');
+
+                const sub = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: keyData.data,
+                });
+
+                await fetch(`${API_URL}/api/notifications/web-push/subscribe`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    credentials: 'include',
+                    body: JSON.stringify(sub.toJSON()),
+                });
+
+                setPreferences(p => ({ ...p, pushNotifications: true }));
+                toast.success('¡Notificaciones activadas!');
+            }
+        } catch (error: any) {
+            toast.error(error.message || 'Error al configurar notificaciones');
+        }
+    };
+
     const togglePreference = (key: keyof typeof preferences) => {
-        setPreferences(prev => {
-            const newState = { ...prev, [key]: !prev[key] };
-            // Mock API call
-            toast.success('Preferencia actualizada');
-            return newState;
-        });
+        if (key === 'pushNotifications') { togglePushNotifications(); return; }
+        setPreferences(prev => ({ ...prev, [key]: !prev[key] }));
+        toast.success('Preferencia actualizada');
     };
 
     if (!user) return null;
@@ -96,7 +155,6 @@ export default function SettingsPage() {
 
             <div className="flex-1 py-12 pt-32">
                 <div className="container-custom">
-                    {/* Header */}
                     <div className="mb-8">
                         <h1 className="font-display text-4xl font-bold mb-2">
                             Configuración de <span className="gradient-text">Cuenta</span>
@@ -224,11 +282,9 @@ export default function SettingsPage() {
                                 <div className="card p-8">
                                     <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
                                         <Mail className="w-6 h-6 text-primary-500" />
-                                        Preferencias de Correo
+                                        Preferencias de Notificaciones
                                     </h2>
                                     <div className="space-y-6">
-
-
                                         <div className="flex items-center justify-between pb-6 border-b border-dark-800 text-left w-full group cursor-pointer" onClick={() => togglePreference('emailReminders')}>
                                             <div>
                                                 <h3 className="font-semibold text-white">Recordatorios de Eventos</h3>

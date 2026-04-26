@@ -28,7 +28,11 @@ export const authService = {
     updatePushToken: async (token: string | null) => {
         const response = await api.post('/auth/push-token', { token });
         return response.data;
-    }
+    },
+    forgotPassword: async (email: string) => {
+        const response = await api.post('/auth/forgot-password', { email });
+        return response.data;
+    },
 };
 
 export const eventService = {
@@ -43,12 +47,12 @@ export const eventService = {
     checkAccess: async (id: string) => {
         const response = await api.get(`/events/${id}/access`);
         return response.data;
-    }
+    },
 };
 
 export const settingsService = {
     get: async () => {
         const response = await api.get('/settings');
         return response.data;
-    }
+    },
 };

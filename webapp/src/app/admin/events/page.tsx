@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Filter, Edit, Trash2, Eye, Video } from 'lucide-react';
-import { eventsAPI, handleAPIError } from '@/lib/api';
+import { Plus, Search, Filter, Edit, Trash2, Eye, Video, Square, ShoppingCart } from 'lucide-react';
+import { eventsAPI, adminAPI, handleAPIError } from '@/lib/api';
+import api from '@/lib/api';
 import { formatDate, formatCurrency, getEventStatusColor, getEventStatusText, getImageUrl } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
@@ -19,12 +20,22 @@ interface Event {
     is_featured: boolean;
 }
 
+interface SalesSummary {
+    id: string;
+    sold: number;
+    pending: number;
+    revenue: number;
+    currency: string;
+}
+
 export default function AdminEventsPage() {
     const [events, setEvents] = useState<Event[]>([]);
     const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
+    const [salesMap, setSalesMap] = useState<Record<string, SalesSummary>>({});
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [endingStreamId, setEndingStreamId] = useState<string | null>(null);
 
     useEffect(() => {
         loadEvents();
@@ -36,8 +47,14 @@ export default function AdminEventsPage() {
 
     const loadEvents = async () => {
         try {
-            const response = await eventsAPI.getAll({});
-            setEvents(response.data.data);
+            const [evRes, salesRes] = await Promise.all([
+                eventsAPI.getAll({}),
+                adminAPI.getEventsSalesSummary(),
+            ]);
+            setEvents(evRes.data.data);
+            const map: Record<string, SalesSummary> = {};
+            for (const s of (salesRes.data.data || [])) map[s.id] = s;
+            setSalesMap(map);
         } catch (error) {
             console.error('Error loading events:', error);
             toast.error('Error al cargar eventos');
@@ -62,6 +79,23 @@ export default function AdminEventsPage() {
         }
 
         setFilteredEvents(filtered);
+    };
+
+    const handleEndStream = async (id: string, title: string) => {
+        if (!confirm(`¿Terminar la transmisión EN VIVO de "${title}" ahora? El evento pasará a modo REPRISE.`)) {
+            return;
+        }
+        try {
+            setEndingStreamId(id);
+            await api.post(`/admin/events/${id}/end-stream`);
+            toast.success(`✅ "${title}" pasó a REPRISE`);
+            loadEvents();
+        } catch (error: any) {
+            const msg = error.response?.data?.message || 'Error al terminar la transmisión';
+            toast.error(msg);
+        } finally {
+            setEndingStreamId(null);
+        }
     };
 
     const handleDelete = async (id: string) => {
@@ -178,6 +212,9 @@ export default function AdminEventsPage() {
                                     <th className="text-left py-4 px-6 text-sm font-semibold text-gray-400">
                                         Destacado
                                     </th>
+                                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-400">
+                                        Ventas
+                                    </th>
                                     <th className="text-right py-4 px-6 text-sm font-semibold text-gray-400">
                                         Acciones
                                     </th>
@@ -228,7 +265,36 @@ export default function AdminEventsPage() {
                                             )}
                                         </td>
                                         <td className="py-4 px-6">
+                                            {(() => {
+                                                const s = salesMap[event.id];
+                                                if (!s) return <span className="text-gray-600">—</span>;
+                                                return (
+                                                    <div>
+                                                        <p className="text-white font-bold flex items-center gap-1">
+                                                            <ShoppingCart className="w-3.5 h-3.5 text-green-400" />
+                                                            {s.sold}
+                                                        </p>
+                                                        <p className="text-xs text-green-400">{formatCurrency(s.revenue, event.currency)}</p>
+                                                        {s.pending > 0 && (
+                                                            <p className="text-xs text-yellow-500">{s.pending} pendiente{s.pending > 1 ? 's' : ''}</p>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
+                                        </td>
+                                        <td className="py-4 px-6">
                                             <div className="flex items-center justify-end gap-2">
+                                                {event.status === 'live' && (
+                                                    <button
+                                                        onClick={() => handleEndStream(event.id, event.title)}
+                                                        disabled={endingStreamId === event.id}
+                                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600/20 hover:bg-red-600/40 border border-red-500/40 rounded-lg transition-colors text-red-400 text-xs font-semibold disabled:opacity-50"
+                                                        title="Terminar transmisión EN VIVO"
+                                                    >
+                                                        <Square className="w-3 h-3" />
+                                                        {endingStreamId === event.id ? '...' : 'Terminar'}
+                                                    </button>
+                                                )}
                                                 <Link
                                                     href={`/event/${event.id}`}
                                                     className="p-2 hover:bg-dark-700 rounded-lg transition-colors"
@@ -239,7 +305,7 @@ export default function AdminEventsPage() {
                                                 <Link
                                                     href={`/admin/events/${event.id}/streaming`}
                                                     className="p-2 hover:bg-dark-700 rounded-lg transition-colors"
-                                                    title="Configurar Streaming (Mux)"
+                                                    title="Configurar Streaming"
                                                 >
                                                     <Video className="w-4 h-4 text-purple-400" />
                                                 </Link>

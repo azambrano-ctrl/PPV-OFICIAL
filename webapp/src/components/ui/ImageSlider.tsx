@@ -40,15 +40,15 @@ export default function ImageSlider({
 
     const variants = {
         enter: (direction: number) => ({
-            x: direction > 0 ? 1000 : -1000,
+            transform: `translateX(${direction > 0 ? '100%' : '-100%'})`,
             opacity: 0
         }),
         center: {
-            x: 0,
+            transform: 'translateX(0%)',
             opacity: 1
         },
         exit: (direction: number) => ({
-            x: direction < 0 ? 1000 : -1000,
+            transform: `translateX(${direction < 0 ? '100%' : '-100%'})`,
             opacity: 0
         })
     };
@@ -74,8 +74,8 @@ export default function ImageSlider({
                     animate="center"
                     exit="exit"
                     transition={{
-                        x: { type: "spring", stiffness: 300, damping: 30 },
-                        opacity: { duration: 0.2 }
+                        transform: { type: "spring", duration: 0.4, bounce: 0.1 },
+                        opacity: { duration: 0.15 }
                     }}
                     className="absolute inset-0 w-full h-full object-cover"
                     alt={`Slide ${currentIndex}`}

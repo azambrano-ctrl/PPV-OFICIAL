@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { asyncHandler } from '../middleware/errorHandler';
 import { validateBody, validateParams, validateQuery } from '../middleware/validation';
 import { authenticate, requireAdmin, AuthRequest } from '../middleware/auth';
-import { uploadEventImages, uploadTrailerVideo } from '../middleware/upload';
+import { uploadEventImages, uploadTrailerVideo, uploadCardImages } from '../middleware/upload';
 import {
     getAllEvents,
     getEventById,
@@ -15,7 +15,10 @@ import {
     updateEventStatus,
     getEventFighters,
     addFighterToEvent,
-    removeFighterFromEvent
+    removeFighterFromEvent,
+    getEventCardImages,
+    addEventCardImage,
+    deleteEventCardImage
 } from '../services/eventService';
 import { getChatMessages } from '../services/chatService';
 
@@ -51,7 +54,7 @@ router.post('/upload-trailer', authenticate, requireAdmin, uploadTrailerVideo, a
         });
     } catch (error: any) {
         console.error('Error in /upload-trailer:', error);
-        return res.status(500).json({ success: false, message: 'Error subiendo el video', error: error.message });
+        return res.status(500).json({ success: false, message: 'Error subiendo el video', ...(process.env.NODE_ENV === 'development' && { error: (error as any).message }) });
     }
 });
 
@@ -116,7 +119,7 @@ router.get(
             res.status(500).json({
                 success: false,
                 message: 'Error al obtener los detalles del evento',
-                error: error.message
+                ...(process.env.NODE_ENV === 'development' && { error: (error as any).message })
             });
         }
     })
@@ -154,6 +157,7 @@ router.post(
             stream_url: isPromoter ? null : (req.body.stream_url || null),
             trailer_url: isPromoter ? null : (req.body.trailer_url || null),
             banner_url: files?.banner ? files.banner[0].path : undefined,
+            card_image_url: files?.card ? files.card[0].path : undefined,
             promoter_id: isPromoter ? user.promoterId : (req.body.promoter_id || null),
             created_by: user.userId,
         };
@@ -185,7 +189,7 @@ router.put(
                 res.status(500).json({
                     success: false,
                     message: 'File upload failed',
-                    error: err.message || 'Unknown upload error'
+                    ...(process.env.NODE_ENV === 'development' && { error: (err as any).message })
                 });
                 return;
             }
@@ -273,6 +277,12 @@ router.put(
                 updates.banner_url = null;
             }
 
+            if (files?.card) {
+                updates.card_image_url = files.card[0].path;
+            } else if (req.body.remove_card === 'true') {
+                updates.card_image_url = null;
+            }
+
             if (req.body.trailer_url !== undefined) {
                 updates.trailer_url = req.body.trailer_url === '' ? null : req.body.trailer_url;
             }
@@ -291,7 +301,7 @@ router.put(
             res.status(500).json({
                 success: false,
                 message: 'Error al actualizar el evento',
-                error: error instanceof Error ? error.message : 'Unknown error'
+                ...(process.env.NODE_ENV === 'development' && { error: error instanceof Error ? error.message : 'Unknown error' })
             });
         }
     })
@@ -368,8 +378,8 @@ router.post(
         await query('BEGIN');
 
         try {
-            // Obtener y bloquear el evento para evitar race conditions concurrentes
-            const eventRes = await query(`SELECT price, free_viewers_limit FROM events WHERE id = $1 FOR UPDATE`, [eventId]);
+            // Obtener el límite del evento
+            const eventRes = await query(`SELECT price, free_viewers_limit FROM events WHERE id = $1`, [eventId]);
             const event = eventRes.rows[0];
 
             if (!event) {
@@ -388,11 +398,12 @@ router.post(
             const limit = event.free_viewers_limit || 0;
 
             if (limit > 0) {
-                // Contar dentro de la transacción (el FOR UPDATE en events ya serializa el acceso)
+                // Verificar cuántos lugares ya han sido ocupados de forma transaccional (bloqueo)
                 const countRes = await query(`
-                    SELECT COUNT(*) as count
-                    FROM purchases
+                    SELECT COUNT(*) as count 
+                    FROM purchases 
                     WHERE event_id = $1 AND payment_status = 'completed'
+                    FOR UPDATE
                 `, [eventId]);
 
                 const claimed = parseInt(countRes.rows[0].count);
@@ -468,7 +479,8 @@ router.get(
             return;
         }
 
-        const messages = await getChatMessages(req.params.id);
+        const limit = Math.min(parseInt(req.query.limit as string) || 100, 200);
+        const messages = await getChatMessages(req.params.id, limit);
 
         res.json({
             success: true,
@@ -551,6 +563,89 @@ router.delete(
             success: true,
             message: 'Fighter removed from event successfully'
         });
+    })
+);
+
+/**
+ * GET /api/events/:id/card-images
+ * Get all card images for an event (public)
+ */
+router.get(
+    '/:id/card-images',
+    validateParams(eventIdSchema),
+    asyncHandler(async (req: Request, res: Response) => {
+        const images = await getEventCardImages(req.params.id);
+        res.json({ success: true, data: images });
+    })
+);
+
+/**
+ * POST /api/events/:id/card-images
+ * Upload card images (admin or owning promoter)
+ */
+router.post(
+    '/:id/card-images',
+    authenticate,
+    validateParams(eventIdSchema),
+    uploadCardImages,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const user = req.user!;
+        const eventId = req.params.id;
+
+        const currentEvent = await getEventById(eventId);
+        if (!currentEvent) {
+            res.status(404).json({ success: false, message: 'Evento no encontrado' });
+            return;
+        }
+
+        const isAdmin = user.role === 'admin';
+        const isOwner = user.role === 'promoter' && currentEvent.promoter_id === user.promoterId;
+        if (!isAdmin && !isOwner) {
+            res.status(403).json({ success: false, message: 'Sin permisos' });
+            return;
+        }
+
+        const files = (req as any).files as { card_images?: Express.Multer.File[] };
+        if (!files?.card_images || files.card_images.length === 0) {
+            res.status(400).json({ success: false, message: 'No se enviaron imágenes' });
+            return;
+        }
+
+        const saved = await Promise.all(
+            files.card_images.map(f => addEventCardImage(eventId, f.path))
+        );
+
+        res.status(201).json({ success: true, data: saved });
+    })
+);
+
+/**
+ * DELETE /api/events/:id/card-images/:imageId
+ * Delete a card image (admin or owning promoter)
+ */
+router.delete(
+    '/:id/card-images/:imageId',
+    authenticate,
+    validateParams(eventIdSchema),
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const user = req.user!;
+        const { id: eventId, imageId } = req.params;
+
+        const currentEvent = await getEventById(eventId);
+        if (!currentEvent) {
+            res.status(404).json({ success: false, message: 'Evento no encontrado' });
+            return;
+        }
+
+        const isAdmin = user.role === 'admin';
+        const isOwner = user.role === 'promoter' && currentEvent.promoter_id === user.promoterId;
+        if (!isAdmin && !isOwner) {
+            res.status(403).json({ success: false, message: 'Sin permisos' });
+            return;
+        }
+
+        await deleteEventCardImage(eventId, imageId);
+        res.json({ success: true, message: 'Imagen eliminada' });
     })
 );
 

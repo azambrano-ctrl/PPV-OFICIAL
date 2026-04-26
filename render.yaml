@@ -5,24 +5,28 @@ services:
   - type: web
     name: ppv-backend
     runtime: node
-    region: oregon # O la región más cercana a ti (ej: ohio, frankfurt)
-    plan: starter # $7/mes (necesario para persistencia y rendimiento)
+    region: oregon
+    plan: starter
     rootDir: backend
     buildCommand: npm install && npm run build
     startCommand: npm run start
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 10000
-    # Las siguientes variables sensibles debes agregarlas en el Dashboard de Render:
-    # - DATABASE_URL
-    # - JWT_SECRET
-    # - JWT_REFRESH_SECRET
-    # - STRIPE_SECRET_KEY
-    # - MUX_TOKEN_ID
-    # - MUX_TOKEN_SECRET
-    # (etc...)
+    # Variables sensibles — agregar en Render Dashboard:
+    # DATABASE_URL, JWT_SECRET, JWT_REFRESH_SECRET,
+    # STRIPE_SECRET_KEY, MUX_TOKEN_ID, MUX_TOKEN_SECRET,
+    # PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET,
+    # CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN,
+    # BUNNY_API_KEY, BUNNY_SECURITY_KEY,
+    # R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY,
+    # R2_BUCKET_NAME, R2_PUBLIC_URL,
+    # BREVO_API_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
+    # FACEBOOK_APP_ID, FACEBOOK_APP_SECRET,
+    # WEB_URL, API_URL
 
   # --------------------------------------------------------------------------------
   # FRONTEND WEBAPP (Next.js)
@@ -31,12 +35,12 @@ services:
     name: ppv-webapp
     runtime: node
     region: oregon
-    plan: starter # $7/mes (o static gratuito si exportas, pero Next.js suele requerir Node)
+    plan: starter
     rootDir: webapp
     buildCommand: npm install && npm run build
     startCommand: npm run start
+    healthCheckPath: /
     envVars:
       - key: NODE_ENV
         value: production
-      # Debes agregar la URL de tu backend una vez desplegado:
-      # - NEXT_PUBLIC_API_URL=https://ppv-backend.onrender.com (ejemplo)
+      # NEXT_PUBLIC_API_URL=https://ppv-backend.onrender.com

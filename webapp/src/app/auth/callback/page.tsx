@@ -4,19 +4,22 @@ import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
 function AuthCallbackContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
     useEffect(() => {
-        const token = searchParams.get('token');
-        const refresh = searchParams.get('refresh');
-        const userStr = searchParams.get('user');
         const error = searchParams.get('error');
 
         if (error) {
+            const errorData = { type: 'AUTH_ERROR', error };
+            const bc = new BroadcastChannel('auth_channel');
+            bc.postMessage(errorData);
+            setTimeout(() => bc.close(), 500);
             if (window.opener) {
-                window.opener.postMessage({ type: 'AUTH_ERROR', error }, window.location.origin);
+                window.opener.postMessage(errorData, window.location.origin);
                 window.close();
             } else {
                 router.push(`/auth/login?error=${error}`);
@@ -24,23 +27,29 @@ function AuthCallbackContent() {
             return;
         }
 
-        if (token && refresh && userStr) {
-            try {
-                // Parse user data first
-                const user = JSON.parse(decodeURIComponent(userStr));
+        // Exchange HttpOnly cookie for tokens via secure API call
+        fetch(`${API_URL}/api/auth/session`, {
+            method: 'GET',
+            credentials: 'include',
+        })
+            .then((res) => res.json())
+            .then((data) => {
+                if (!data.success) throw new Error(data.message || 'Session error');
+
+                const { accessToken, refreshToken, user } = data.data;
                 const authData = {
                     type: 'AUTH_SUCCESS',
                     user,
-                    accessToken: token,
-                    refreshToken: refresh
+                    accessToken,
+                    refreshToken,
                 };
 
-                // 1. Try BroadcastChannel (Modern & Robust)
+                // 1. BroadcastChannel (Modern)
                 const bc = new BroadcastChannel('auth_channel');
                 bc.postMessage(authData);
                 setTimeout(() => bc.close(), 1000);
 
-                // 2. Try window.opener.postMessage (Classic)
+                // 2. window.opener.postMessage (Classic popup flow)
                 if (window.opener) {
                     try {
                         window.opener.postMessage(authData, window.location.origin);
@@ -49,63 +58,37 @@ function AuthCallbackContent() {
                     }
                 }
 
-                // Detect if we are in a popup
-                const isPopup = window.opener || window.name.includes('Login') || window.innerWidth < 800;
+                const isPopup =
+                    window.opener || window.name.includes('Login') || window.innerWidth < 800;
 
                 if (isPopup) {
-                    // AGGRESSIVE CLOSING: Try to close multiple times
                     window.close();
                     setTimeout(() => window.close(), 100);
                     setTimeout(() => window.close(), 500);
                     setTimeout(() => window.close(), 1000);
-
-                    // Do NOT redirect if it's a popup, just stay on the "Authenticating" UI
-                    // until it closes. This prevents the "duplicate site" inside the popup.
                     return;
                 }
 
-                // If NOT a popup (regular redirect), then definitely push to home
-                useAuthStore.getState().setAuth(user, token, refresh);
-                if (user.role === 'admin') {
-                    router.push('/admin');
-                } else {
-                    router.push('/');
-                }
-            } catch (err) {
+                // Regular redirect flow
+                useAuthStore.getState().setAuth(user, accessToken, refreshToken);
+                router.push(user.role === 'admin' ? '/admin' : '/');
+            })
+            .catch((err) => {
                 console.error('Error processing OAuth callback:', err);
                 const errorData = { type: 'AUTH_ERROR', error: 'invalid_callback' };
-
                 const bc = new BroadcastChannel('auth_channel');
                 bc.postMessage(errorData);
                 setTimeout(() => bc.close(), 500);
-
                 if (window.opener) {
                     window.opener.postMessage(errorData, window.location.origin);
-                }
-
-                if (!window.opener) {
+                } else {
                     router.push('/auth/login?error=invalid_callback');
                 }
-            }
-        } else {
-            const errorData = { type: 'AUTH_ERROR', error: 'missing_params' };
-            const bc = new BroadcastChannel('auth_channel');
-            bc.postMessage(errorData);
-            setTimeout(() => bc.close(), 500);
-
-            if (window.opener) {
-                window.opener.postMessage(errorData, window.location.origin);
-            }
-
-            if (!window.opener) {
-                router.push('/auth/login?error=missing_params');
-            }
-        }
+            });
     }, [searchParams, router]);
 
     return (
         <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden">
-            {/* Background Accents */}
             <div className="absolute top-0 left-0 w-full h-1 bg-red-600 shadow-[0_0_20px_rgba(220,38,38,0.5)]" />
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-red-600/10 blur-[100px] rounded-full" />
 
@@ -141,11 +124,13 @@ function AuthCallbackContent() {
 
 export default function AuthCallbackPage() {
     return (
-        <Suspense fallback={
-            <div className="min-h-screen bg-black flex items-center justify-center">
-                <div className="w-12 h-12 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-            </div>
-        }>
+        <Suspense
+            fallback={
+                <div className="min-h-screen bg-black flex items-center justify-center">
+                    <div className="w-12 h-12 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+            }
+        >
             <AuthCallbackContent />
         </Suspense>
     );

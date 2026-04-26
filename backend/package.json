@@ -23,6 +23,7 @@
   "author": "",
   "license": "UNLICENSED",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1027.0",
     "@mux/mux-node": "^12.8.1",
     "@paypal/checkout-server-sdk": "^1.0.3",
     "@supabase/supabase-js": "^2.91.1",
@@ -59,6 +60,8 @@
     "socket.io": "^4.6.0",
     "stripe": "^14.10.0",
     "uuid": "^9.0.1",
+    "web-push": "^3.6.7",
+    "@types/web-push": "^3.6.4",
     "winston": "^3.11.0",
     "zod": "^3.22.4"
   },

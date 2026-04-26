@@ -1,7 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Modal, Alert } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
-import { X, CreditCard, ShieldCheck } from 'lucide-react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    ActivityIndicator,
+    Modal,
+    Alert,
+} from 'react-native';
+import InAppBrowser from 'react-native-inappbrowser-reborn';
+import { X, CreditCard, ShieldCheck, Lock, Zap } from 'lucide-react-native';
 import api from '../services/api';
 
 interface PaymentModalProps {
@@ -26,24 +34,31 @@ export default function PaymentModal({ visible, onClose, event, onSuccess }: Pay
             });
 
             if (response.data.success && response.data.data.approvalUrl) {
-                const result = await WebBrowser.openAuthSessionAsync(
-                    response.data.data.approvalUrl,
-                    'arenafightpass://' // Redirect scheme
-                );
+                const approvalUrl: string = response.data.data.approvalUrl;
 
-                if (result.type === 'success') {
-                    // El usuario volvió a la app. 
-                    // El backend probablemente ya capturó el pago vía Webhook 
-                    // o podemos forzar una verificación aquí.
-                    await verifyPurchase();
-                } else if (result.type === 'cancel') {
-                    Alert.alert('Pago Cancelado', 'No se ha completado el pago.');
+                if (await InAppBrowser.isAvailable()) {
+                    const result: any = await InAppBrowser.openAuth(
+                        approvalUrl,
+                        'arenafightpass://',
+                        {
+                            showTitle: false,
+                            enableUrlBarHiding: true,
+                            enableDefaultShare: false,
+                            forceCloseOnRedirection: true,
+                        }
+                    );
+                    if (result?.type === 'success') {
+                        await verifyPurchase();
+                    } else if (result?.type === 'cancel') {
+                        Alert.alert('Pago Cancelado', 'No se ha completado el pago.');
+                    }
+                } else {
+                    Alert.alert('Error', 'No se pudo abrir el navegador para completar el pago.');
                 }
             } else {
-                throw new Error('No se pudo generar la orden de PayPal');
+                throw new Error('No se pudo generar la orden de pago');
             }
         } catch (error: any) {
-            console.error('PayPal Error:', error);
             Alert.alert('Error', error.response?.data?.message || 'Error al procesar el pago');
         } finally {
             setLoading(false);
@@ -54,69 +69,80 @@ export default function PaymentModal({ visible, onClose, event, onSuccess }: Pay
         try {
             const response = await api.get(`/events/${event.id}/access`);
             if (response.data.data.hasAccess) {
-                Alert.alert('¡Éxito!', 'Tu pago ha sido procesado correctamente.');
+                Alert.alert('¡Pago Exitoso!', 'Tu acceso ha sido activado correctamente.');
                 onSuccess();
                 onClose();
             } else {
-                // Posiblemente el webhook aún no se ha procesado.
-                Alert.alert('Verificando...', 'Estamos confirmando tu pago. Por favor, espera un momento.');
                 setTimeout(verifyPurchase, 3000);
             }
-        } catch (error) {
-            console.error('Verify error:', error);
+        } catch {
+            /* silent */
         }
     };
 
     if (!event) return null;
 
     return (
-        <Modal
-            visible={visible}
-            animationType="slide"
-            transparent={true}
-            onRequestClose={onClose}
-        >
-            <View style={styles.overlay}>
-                <View style={styles.content}>
+        <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+            <View style={styles.backdrop}>
+                <View style={styles.sheet}>
+                    {/* Handle bar */}
+                    <View style={styles.handle} />
+
+                    {/* Header */}
                     <View style={styles.header}>
-                        <Text style={styles.title}>Finalizar Compra</Text>
+                        <View>
+                            <Text style={styles.headerLabel}>RESUMEN DE COMPRA</Text>
+                            <Text style={styles.headerTitle}>Finalizar Pago</Text>
+                        </View>
                         <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-                            <X color="#94a3b8" size={24} />
+                            <X color="#64748b" size={20} />
                         </TouchableOpacity>
                     </View>
 
-                    <View style={styles.summaryBox}>
-                        <Text style={styles.summaryLabel}>Estás comprando:</Text>
-                        <Text style={styles.eventTitle}>{event.title}</Text>
-                        <View style={styles.priceRow}>
-                            <Text style={styles.totalLabel}>Total a pagar:</Text>
-                            <Text style={styles.priceValue}>${event.price} {event.currency}</Text>
+                    {/* Event summary */}
+                    <View style={styles.summaryCard}>
+                        <View style={styles.summaryTop}>
+                            <View style={styles.eventBadge}>
+                                <Zap size={12} color="#ef4444" />
+                                <Text style={styles.eventBadgeText}>ACCESO COMPLETO</Text>
+                            </View>
+                            <Text style={styles.eventName}>{event.title}</Text>
+                        </View>
+                        <View style={styles.divider} />
+                        <View style={styles.totalRow}>
+                            <Text style={styles.totalLabel}>Total</Text>
+                            <Text style={styles.totalAmount}>
+                                ${parseFloat(event.price).toFixed(2)}{' '}
+                                <Text style={styles.currency}>{event.currency}</Text>
+                            </Text>
                         </View>
                     </View>
 
-                    <View style={styles.paymentSection}>
-                        <Text style={styles.sectionTitle}>Método de Pago</Text>
-                        <TouchableOpacity
-                            style={styles.paypalBtn}
-                            onPress={handlePayPalPayment}
-                            disabled={loading}
-                        >
-                            {loading ? (
-                                <ActivityIndicator color="#fff" />
-                            ) : (
-                                <>
-                                    <View style={styles.paypalIconBox}>
-                                        <CreditCard color="#fff" size={20} />
-                                    </View>
-                                    <Text style={styles.paypalBtnText}>Pagar con PayPal / Tarjeta</Text>
-                                </>
-                            )}
-                        </TouchableOpacity>
-                    </View>
+                    {/* Payment methods */}
+                    <Text style={styles.payLabel}>MÉTODO DE PAGO</Text>
 
-                    <View style={styles.footer}>
-                        <ShieldCheck color="#22c55e" size={16} />
-                        <Text style={styles.footerText}>Pago 100% Seguro y Encriptado</Text>
+                    <TouchableOpacity
+                        style={[styles.payBtn, loading && styles.payBtnDisabled]}
+                        onPress={handlePayPalPayment}
+                        disabled={loading}
+                        activeOpacity={0.85}
+                    >
+                        {loading ? (
+                            <ActivityIndicator color="#fff" />
+                        ) : (
+                            <>
+                                <CreditCard color="#fff" size={20} />
+                                <Text style={styles.payBtnText}>Pagar con PayPal / Tarjeta</Text>
+                            </>
+                        )}
+                    </TouchableOpacity>
+
+                    {/* Security badge */}
+                    <View style={styles.securityRow}>
+                        <Lock size={13} color="#475569" />
+                        <ShieldCheck size={13} color="#475569" />
+                        <Text style={styles.securityText}>Pago 256-bit SSL · Datos encriptados</Text>
                     </View>
                 </View>
             </View>
@@ -125,112 +151,156 @@ export default function PaymentModal({ visible, onClose, event, onSuccess }: Pay
 }
 
 const styles = StyleSheet.create({
-    overlay: {
+    backdrop: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.8)',
+        backgroundColor: 'rgba(0,0,0,0.85)',
         justifyContent: 'flex-end',
     },
-    content: {
-        backgroundColor: '#1e293b',
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        padding: 24,
-        minHeight: 400,
+    sheet: {
+        backgroundColor: '#0d1520',
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        paddingHorizontal: 24,
+        paddingBottom: 40,
+        borderTopWidth: 1,
+        borderColor: '#1e2d3d',
+    },
+    handle: {
+        width: 40,
+        height: 4,
+        backgroundColor: '#1e2d3d',
+        borderRadius: 2,
+        alignSelf: 'center',
+        marginTop: 12,
+        marginBottom: 24,
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         marginBottom: 24,
     },
-    title: {
+    headerLabel: {
+        fontSize: 10,
+        color: '#475569',
+        fontWeight: '700',
+        letterSpacing: 2,
+        marginBottom: 4,
+    },
+    headerTitle: {
+        fontSize: 22,
+        fontWeight: '800',
         color: '#fff',
-        fontSize: 20,
-        fontWeight: 'bold',
     },
     closeBtn: {
-        padding: 4,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#1a2535',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    summaryBox: {
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        padding: 16,
+    summaryCard: {
+        backgroundColor: '#111c2a',
         borderRadius: 16,
-        marginBottom: 24,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
+        borderColor: '#1e2d3d',
+        marginBottom: 28,
+        overflow: 'hidden',
     },
-    summaryLabel: {
-        color: '#94a3b8',
-        fontSize: 12,
-        fontWeight: 'bold',
-        textTransform: 'uppercase',
-        marginBottom: 8,
+    summaryTop: {
+        padding: 18,
     },
-    eventTitle: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 16,
+    eventBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+        backgroundColor: 'rgba(239,68,68,0.1)',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 6,
+        alignSelf: 'flex-start',
+        marginBottom: 10,
+        borderWidth: 1,
+        borderColor: 'rgba(239,68,68,0.2)',
     },
-    priceRow: {
+    eventBadgeText: {
+        fontSize: 10,
+        color: '#ef4444',
+        fontWeight: '800',
+        letterSpacing: 1,
+    },
+    eventName: {
+        fontSize: 17,
+        fontWeight: '700',
+        color: '#e2e8f0',
+        lineHeight: 24,
+    },
+    divider: {
+        height: 1,
+        backgroundColor: '#1e2d3d',
+    },
+    totalRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingTop: 12,
-        borderTopWidth: 1,
-        borderTopColor: 'rgba(255,255,255,0.1)',
+        padding: 18,
     },
     totalLabel: {
-        color: '#fff',
+        color: '#64748b',
         fontSize: 14,
+        fontWeight: '600',
     },
-    priceValue: {
-        color: '#ef4444',
-        fontSize: 22,
-        fontWeight: 'bold',
+    totalAmount: {
+        color: '#fff',
+        fontSize: 24,
+        fontWeight: '800',
     },
-    paymentSection: {
-        flex: 1,
+    currency: {
+        fontSize: 14,
+        color: '#64748b',
+        fontWeight: '600',
     },
-    sectionTitle: {
-        color: '#94a3b8',
-        fontSize: 12,
-        fontWeight: 'bold',
-        textTransform: 'uppercase',
+    payLabel: {
+        fontSize: 10,
+        color: '#475569',
+        fontWeight: '700',
+        letterSpacing: 2,
         marginBottom: 12,
     },
-    paypalBtn: {
-        backgroundColor: '#0070ba',
-        height: 56,
-        borderRadius: 12,
+    payBtn: {
+        backgroundColor: '#ef4444',
+        height: 58,
+        borderRadius: 14,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 12,
+        marginBottom: 20,
+        shadowColor: '#ef4444',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 6,
     },
-    paypalIconBox: {
-        width: 32,
-        height: 32,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        borderRadius: 8,
-        justifyContent: 'center',
-        alignItems: 'center',
+    payBtnDisabled: {
+        opacity: 0.6,
     },
-    paypalBtnText: {
+    payBtnText: {
         color: '#fff',
         fontSize: 16,
-        fontWeight: 'bold',
+        fontWeight: '800',
+        letterSpacing: 0.5,
     },
-    footer: {
+    securityRow: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        gap: 8,
-        marginTop: 20,
+        gap: 6,
     },
-    footerText: {
-        color: '#22c55e',
+    securityText: {
+        color: '#475569',
         fontSize: 12,
-        fontWeight: 'bold',
-    }
+        fontWeight: '500',
+    },
 });

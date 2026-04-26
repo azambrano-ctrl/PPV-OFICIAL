@@ -57,23 +57,30 @@ export const createPaymentIntent = async (
         // Apply coupon if provided
         if (input.couponCode) {
             const couponResult = await query(
-                `SELECT * FROM coupons 
-         WHERE code = $1 AND is_active = TRUE 
-         AND (valid_until IS NULL OR valid_until > NOW())
-         AND (max_uses IS NULL OR current_uses < max_uses)`,
-                [input.couponCode]
+                `SELECT * FROM coupons
+                 WHERE UPPER(code) = UPPER($1) AND is_active = TRUE
+                 AND (valid_until IS NULL OR valid_until > NOW())
+                 AND (max_uses IS NULL OR current_uses < max_uses)
+                 AND (event_id IS NULL OR event_id = $2)`,
+                [input.couponCode, input.eventId || null]
             );
 
             if (couponResult.rows.length > 0) {
                 const coupon = couponResult.rows[0];
 
-                if (coupon.discount_type === 'percentage') {
-                    discountAmount = (input.amount * coupon.discount_value) / 100;
-                } else {
-                    discountAmount = coupon.discount_value;
+                // Validate min_amount
+                const minAmount = parseFloat(coupon.min_amount || '0');
+                if (minAmount > 0 && input.amount < minAmount) {
+                    throw new Error(`Este cupón requiere un monto mínimo de $${minAmount.toFixed(2)}`);
                 }
 
-                finalAmount = Math.max(input.amount - discountAmount, 0);
+                if (coupon.discount_type === 'percentage') {
+                    discountAmount = Math.round((input.amount * coupon.discount_value) / 100 * 100) / 100;
+                } else {
+                    discountAmount = Math.min(coupon.discount_value, input.amount);
+                }
+                discountAmount = Math.round(discountAmount * 100) / 100;
+                finalAmount = Math.round(Math.max(input.amount - discountAmount, 0) * 100) / 100;
             }
         }
 
@@ -175,27 +182,34 @@ export const handleStripeWebhook = async (
  */
 const handlePaymentSuccess = async (paymentIntent: Stripe.PaymentIntent) => {
     await transaction(async (client) => {
-        // Update purchase status
+        // Update purchase status — only if still pending (idempotency guard)
         const result = await client.query(
-            `UPDATE purchases 
+            `UPDATE purchases
        SET payment_status = 'completed'
-       WHERE payment_intent_id = $1
+       WHERE payment_intent_id = $1 AND payment_status != 'completed'
        RETURNING *`,
             [paymentIntent.id]
         );
 
         if (result.rows.length === 0) {
-            throw new Error('Purchase not found');
+            // Either purchase doesn't exist OR already completed (duplicate webhook) — safe to ignore
+            logger.info('Payment already processed or not found, skipping', { paymentIntentId: paymentIntent.id });
+            return;
         }
 
         const purchase = result.rows[0];
 
-        // Update coupon usage if applicable
+        // Update coupon usage atomically (guards against race conditions)
         if (purchase.coupon_code) {
-            await client.query(
-                'UPDATE coupons SET current_uses = current_uses + 1 WHERE code = $1',
+            const couponUpdate = await client.query(
+                `UPDATE coupons SET current_uses = current_uses + 1
+                 WHERE code = $1 AND (max_uses IS NULL OR current_uses < max_uses)
+                 RETURNING id`,
                 [purchase.coupon_code]
             );
+            if (couponUpdate.rowCount === 0) {
+                logger.warn('Coupon max_uses exceeded at capture time', { code: purchase.coupon_code });
+            }
         }
 
         // Create stream token for user (ONLY if it's an event purchase)
@@ -299,13 +313,12 @@ const handleRefund = async (charge: Stripe.Charge) => {
             [charge.payment_intent]
         );
 
-        // Revoke stream tokens
+        // Revoke only the stream tokens for the specific refunded event
         await client.query(
-            `UPDATE stream_tokens 
+            `UPDATE stream_tokens
        SET is_revoked = TRUE
-       WHERE user_id IN (
-         SELECT user_id FROM purchases WHERE payment_intent_id = $1
-       )`,
+       WHERE user_id = (SELECT user_id FROM purchases WHERE payment_intent_id = $1 LIMIT 1)
+         AND event_id = (SELECT event_id FROM purchases WHERE payment_intent_id = $1 LIMIT 1)`,
             [charge.payment_intent]
         );
 

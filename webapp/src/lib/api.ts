@@ -17,9 +17,17 @@ const api: AxiosInstance = axios.create({
 api.interceptors.request.use(
     (config) => {
         if (typeof window !== 'undefined') {
-            const token = localStorage.getItem('accessToken');
-            if (token) {
-                config.headers.Authorization = `Bearer ${token}`;
+            try {
+                const token = localStorage.getItem('accessToken');
+                if (token) {
+                    config.headers.Authorization = `Bearer ${token}`;
+                }
+            } catch (e) {
+                // localStorage blocked (e.g. Instagram WebView) — fall back to Zustand store
+                const storeToken = useAuthStore.getState().accessToken;
+                if (storeToken) {
+                    config.headers.Authorization = `Bearer ${storeToken}`;
+                }
             }
         }
         return config;
@@ -124,10 +132,16 @@ export const authAPI = {
         api.post('/auth/forgot-password', { email }),
 
     resetPassword: (token: string, password: string) =>
-        api.post('/reset-password', { token, password }),
+        api.post('/auth/reset-password', { token, password }),
 
     deleteUser: (userId: string) =>
         api.delete(`/auth/users/${userId}`),
+
+    verifyUserManually: (userId: string) =>
+        api.put(`/auth/users/${userId}/verify`),
+
+    sendVerificationBulk: () =>
+        api.post('/auth/users/send-verification-bulk'),
 
     verifyEmail: (token: string) =>
         api.post('/auth/verify-email', { token }),
@@ -184,6 +198,17 @@ export const eventsAPI = {
 
     removeFighter: (id: string, fighter_id: string) =>
         api.delete(`/events/${id}/fighters/${fighter_id}`),
+
+    getCardImages: (id: string) =>
+        api.get(`/events/${id}/card-images`),
+
+    addCardImages: (id: string, formData: FormData) =>
+        api.post(`/events/${id}/card-images`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        }),
+
+    deleteCardImage: (id: string, imageId: string) =>
+        api.delete(`/events/${id}/card-images/${imageId}`),
 };
 
 export const paymentsAPI = {
@@ -198,6 +223,36 @@ export const paymentsAPI = {
 
     refund: (purchaseId: string) =>
         api.post(`/payments/refund/${purchaseId}`),
+
+    validateCoupon: (code: string, eventId?: string) =>
+        api.post('/payments/validate-coupon', { code, eventId }),
+
+    getCoupons: () =>
+        api.get('/payments/coupons'),
+
+    createCoupon: (data: {
+        code: string;
+        discountType: 'percentage' | 'fixed';
+        discountValue: number;
+        eventId?: string;
+        maxUses?: number;
+        validUntil?: string;
+        minAmount?: number;
+    }) => api.post('/payments/coupons', data),
+
+    updateCoupon: (id: string, data: {
+        code: string;
+        discountType: 'percentage' | 'fixed';
+        discountValue: number;
+        eventId?: string;
+        maxUses?: number;
+        validUntil?: string;
+        minAmount?: number;
+        isActive?: boolean;
+    }) => api.put(`/payments/coupons/${id}`, data),
+
+    deleteCoupon: (id: string) =>
+        api.delete(`/payments/coupons/${id}`),
 };
 
 export const streamingAPI = {
@@ -232,6 +287,39 @@ export const adminAPI = {
 
     sendMassEmail: (data: { subject: string; body: string; role: string; specificEmail?: string }) =>
         api.post('/admin/mass-email', data),
+
+    testEmail: (to?: string) =>
+        api.post('/admin/test-email', { to }),
+
+    createPromoterAccount: (data: { name: string; email: string; password: string }) =>
+        api.post('/admin/promoters/create-account', data),
+
+    grantEventAccess: (userId: string, eventId: string) =>
+        api.post('/admin/grant-access', { userId, eventId }),
+
+    getUserPurchasesAdmin: (userId: string) =>
+        api.get(`/admin/users/${userId}/purchases`),
+
+    getEventsSalesSummary: () =>
+        api.get('/admin/events/sales-summary'),
+
+    getPurchases: (params?: { eventId?: string; status?: string; paymentMethod?: string }) =>
+        api.get('/admin/purchases', { params }),
+
+    checkPayPalStatus: (purchaseId: string) =>
+        api.get(`/admin/purchases/${purchaseId}/paypal-status`),
+
+    reconcilePayPal: () =>
+        api.post('/admin/purchases/paypal-reconcile'),
+
+    retryCapture: (purchaseId: string) =>
+        api.post(`/admin/purchases/${purchaseId}/retry-capture`),
+
+    grantAccessByPurchase: (purchaseId: string) =>
+        api.post(`/admin/purchases/${purchaseId}/grant-access`),
+
+    makePromoter: (userId: string, promoterName: string) =>
+        api.post(`/admin/users/${userId}/make-promoter`, { promoterName }),
 };
 
 export const newsletterAPI = {

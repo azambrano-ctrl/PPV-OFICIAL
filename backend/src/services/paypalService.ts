@@ -1,4 +1,5 @@
 const paypal = require('@paypal/checkout-server-sdk');
+import axios from 'axios';
 import { query, transaction } from '../config/database';
 import logger from '../config/logger';
 import { getSettings } from './settingsService';
@@ -37,6 +38,84 @@ const getPayPalClient = async () => {
 };
 // Module level client is removed in favor of dynamic fetch
 
+/**
+ * Verify PayPal webhook signature using PayPal's verification API.
+ * Returns true if valid, false if invalid or unverifiable.
+ * Requires PAYPAL_WEBHOOK_ID env var — set it in Render dashboard.
+ */
+export const verifyPayPalWebhookSignature = async (
+    headers: Record<string, string | string[] | undefined>,
+    rawBody: Buffer | string,
+): Promise<boolean> => {
+    const webhookId = process.env.PAYPAL_WEBHOOK_ID;
+    if (!webhookId) {
+        logger.warn('PAYPAL_WEBHOOK_ID not set — rejecting unverified webhook for security');
+        return false;
+    }
+
+    try {
+        const settings = await getSettings();
+        const clientId = settings.paypal_client_id?.trim();
+        const clientSecret = settings.paypal_secret_key?.trim();
+        if (!clientId || !clientSecret) {
+            logger.error('PayPal credentials missing — cannot verify webhook');
+            return false;
+        }
+
+        const isLive = process.env.PAYPAL_MODE === 'live';
+        const baseUrl = isLive
+            ? 'https://api.paypal.com'
+            : 'https://api.sandbox.paypal.com';
+
+        // 1. Get OAuth2 access token
+        const tokenRes = await axios.post(
+            `${baseUrl}/v1/oauth2/token`,
+            'grant_type=client_credentials',
+            {
+                auth: { username: clientId, password: clientSecret },
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                timeout: 8000,
+            }
+        );
+        const accessToken = tokenRes.data.access_token;
+
+        // 2. Parse raw body
+        const bodyStr = Buffer.isBuffer(rawBody) ? rawBody.toString('utf8') : rawBody;
+        const webhookEvent = JSON.parse(bodyStr);
+
+        // 3. Call PayPal verify-webhook-signature API
+        const verifyRes = await axios.post(
+            `${baseUrl}/v1/notifications/verify-webhook-signature`,
+            {
+                auth_algo:         headers['paypal-auth-algo'],
+                cert_url:          headers['paypal-cert-url'],
+                transmission_id:   headers['paypal-transmission-id'],
+                transmission_sig:  headers['paypal-transmission-sig'],
+                transmission_time: headers['paypal-transmission-time'],
+                webhook_id:        webhookId,
+                webhook_event:     webhookEvent,
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+                timeout: 8000,
+            }
+        );
+
+        const status: string = verifyRes.data.verification_status;
+        logger.info('PayPal webhook verification result', { status });
+        return status === 'SUCCESS';
+    } catch (error: any) {
+        logger.error('PayPal webhook signature verification failed', {
+            message: error.message,
+            response: error.response?.data,
+        });
+        return false;
+    }
+};
+
 export interface CreatePayPalOrderInput {
     userId: string;
     eventId?: string; // Optional for season pass
@@ -65,23 +144,30 @@ export const createPayPalOrder = async (
         // Apply coupon if provided
         if (input.couponCode) {
             const couponResult = await query(
-                `SELECT * FROM coupons 
-         WHERE code = $1 AND is_active = TRUE 
-         AND (valid_until IS NULL OR valid_until > NOW())
-         AND (max_uses IS NULL OR current_uses < max_uses)`,
-                [input.couponCode]
+                `SELECT * FROM coupons
+                 WHERE UPPER(code) = UPPER($1) AND is_active = TRUE
+                 AND (valid_until IS NULL OR valid_until > NOW())
+                 AND (max_uses IS NULL OR current_uses < max_uses)
+                 AND (event_id IS NULL OR event_id = $2)`,
+                [input.couponCode, input.eventId || null]
             );
 
             if (couponResult.rows.length > 0) {
                 const coupon = couponResult.rows[0];
 
-                if (coupon.discount_type === 'percentage') {
-                    discountAmount = (input.amount * coupon.discount_value) / 100;
-                } else {
-                    discountAmount = coupon.discount_value;
+                // Validate min_amount
+                const minAmount = parseFloat(coupon.min_amount || '0');
+                if (minAmount > 0 && input.amount < minAmount) {
+                    throw new Error(`Este cupón requiere un monto mínimo de $${minAmount.toFixed(2)}`);
                 }
 
-                finalAmount = Math.max(input.amount - discountAmount, 0);
+                if (coupon.discount_type === 'percentage') {
+                    discountAmount = Math.round((input.amount * coupon.discount_value) / 100 * 100) / 100;
+                } else {
+                    discountAmount = Math.min(coupon.discount_value, input.amount);
+                }
+                discountAmount = Math.round(discountAmount * 100) / 100;
+                finalAmount = Math.round(Math.max(input.amount - discountAmount, 0) * 100) / 100;
             }
         }
 
@@ -114,12 +200,18 @@ export const createPayPalOrder = async (
                     }),
                 },
             ],
+            payer: {
+                address: {
+                    country_code: 'EC',
+                },
+            },
             application_context: {
-                brand_name: 'PPV Streaming',
+                brand_name: 'Arena Fight Pass',
                 landing_page: 'NO_PREFERENCE',
                 user_action: 'PAY_NOW',
                 return_url: `${process.env.WEB_URL}/payment/success`,
                 cancel_url: `${process.env.WEB_URL}/payment/cancel`,
+                locale: 'es-MX',
             },
         });
 
@@ -132,20 +224,10 @@ export const createPayPalOrder = async (
         }
 
         // Create or update purchase record
-        // For season_pass, event_id is NULL — comparing NULL with = never matches in SQL,
-        // so we need a separate query that checks by purchase_type instead.
-        let existingPurchase;
-        if (input.purchaseType === 'season_pass') {
-            existingPurchase = await query(
-                "SELECT id, payment_status FROM purchases WHERE user_id = $1 AND purchase_type = 'season_pass'",
-                [input.userId]
-            );
-        } else {
-            existingPurchase = await query(
-                'SELECT id, payment_status FROM purchases WHERE user_id = $1 AND event_id = $2',
-                [input.userId, input.eventId]
-            );
-        }
+        const existingPurchase = await query(
+            'SELECT id, payment_status FROM purchases WHERE user_id = $1 AND event_id = $2',
+            [input.userId, input.eventId]
+        );
 
         if (existingPurchase.rows.length > 0) {
             const purchase = existingPurchase.rows[0];
@@ -242,27 +324,33 @@ export const capturePayPalOrder = async (orderId: string): Promise<void> => {
  */
 async function handlePayPalSuccess(orderId: string, _orderDetails: any) {
     await transaction(async (client) => {
-        // Update purchase status
+        // Update purchase status — only if still pending (idempotency guard)
         const result = await client.query(
-            `UPDATE purchases 
+            `UPDATE purchases
        SET payment_status = 'completed'
-       WHERE payment_intent_id = $1
+       WHERE payment_intent_id = $1 AND payment_status != 'completed'
        RETURNING *`,
             [orderId]
         );
 
         if (result.rows.length === 0) {
-            throw new Error('Purchase not found');
+            logger.info('PayPal payment already processed or not found, skipping', { orderId });
+            return;
         }
 
         const purchase = result.rows[0];
 
-        // Update coupon usage if applicable
+        // Update coupon usage atomically (guards against race conditions)
         if (purchase.coupon_code) {
-            await client.query(
-                'UPDATE coupons SET current_uses = current_uses + 1 WHERE code = $1',
+            const couponUpdate = await client.query(
+                `UPDATE coupons SET current_uses = current_uses + 1
+                 WHERE code = $1 AND (max_uses IS NULL OR current_uses < max_uses)
+                 RETURNING id`,
                 [purchase.coupon_code]
             );
+            if (couponUpdate.rowCount === 0) {
+                logger.warn('Coupon max_uses exceeded at capture time', { code: purchase.coupon_code });
+            }
         }
 
         // Create stream token for user
@@ -369,7 +457,14 @@ export const handlePayPalWebhook = async (webhookBody: any): Promise<void> => {
 
         switch (eventType) {
             case 'PAYMENT.CAPTURE.COMPLETED':
-                const orderId = webhookBody.resource.supplementary_data.related_ids.order_id;
+                const orderId = webhookBody.resource?.supplementary_data?.related_ids?.order_id;
+                if (!orderId) {
+                    logger.warn('PayPal webhook PAYMENT.CAPTURE.COMPLETED missing order_id', {
+                        resourceId: webhookBody.resource?.id,
+                        body: JSON.stringify(webhookBody).substring(0, 500),
+                    });
+                    break; // don't throw — return 200 so PayPal stops retrying
+                }
                 await handlePayPalSuccess(orderId, webhookBody.resource);
                 break;
 
@@ -385,6 +480,34 @@ export const handlePayPalWebhook = async (webhookBody: any): Promise<void> => {
         logger.error('PayPal webhook error:', error);
         throw error;
     }
+};
+
+/**
+ * Get the real status of a PayPal order from PayPal's API
+ * Possible statuses: CREATED, SAVED, APPROVED, VOIDED, COMPLETED, PAYER_ACTION_REQUIRED
+ */
+export const getPayPalOrderStatus = async (orderId: string): Promise<{
+    status: string;
+    grossAmount?: string;
+    currency?: string;
+    payerEmail?: string;
+    createTime?: string;
+}> => {
+    const client = await getPayPalClient();
+    const request = new paypal.orders.OrdersGetRequest(orderId);
+    const response = await client.execute(request);
+    const order = response.result;
+
+    const capture = order.purchase_units?.[0]?.payments?.captures?.[0];
+    const amount = order.purchase_units?.[0]?.amount;
+
+    return {
+        status: order.status,
+        grossAmount: capture?.amount?.value || amount?.value,
+        currency: capture?.amount?.currency_code || amount?.currency_code,
+        payerEmail: order.payer?.email_address,
+        createTime: order.create_time,
+    };
 };
 
 export { getPayPalClient as paypalClient };
