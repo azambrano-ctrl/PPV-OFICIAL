@@ -1,103 +1,14 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Save, Trash2, Plus, X } from 'lucide-react';
+import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import ImageUpload from '@/components/admin/ImageUpload';
 import { eventsAPI, promotersAPI, fightersAPI, handleAPIError } from '@/lib/api';
 import { getImageUrl } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { supabase } from '@/lib/supabase';
-
-interface CardImage { id: string; image_url: string; order_index: number; }
-
-function CardImagesSection({ eventId }: { eventId: string }) {
-    const [images, setImages] = useState<CardImage[]>([]);
-    const [uploading, setUploading] = useState(false);
-    const inputRef = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-        eventsAPI.getCardImages(eventId).then(r => setImages(r.data.data)).catch(() => {});
-    }, [eventId]);
-
-    const handleFiles = async (files: FileList | null) => {
-        if (!files || files.length === 0) return;
-        setUploading(true);
-        try {
-            const fd = new FormData();
-            Array.from(files).forEach(f => fd.append('card_images', f));
-            const res = await eventsAPI.addCardImages(eventId, fd);
-            setImages(prev => [...prev, ...res.data.data]);
-            toast.success(`${files.length} imagen(es) subida(s)`);
-        } catch (e) {
-            toast.error(handleAPIError(e));
-        } finally {
-            setUploading(false);
-            if (inputRef.current) inputRef.current.value = '';
-        }
-    };
-
-    const handleDelete = async (imageId: string) => {
-        if (!confirm('¿Eliminar esta imagen de la cartelera?')) return;
-        try {
-            await eventsAPI.deleteCardImage(eventId, imageId);
-            setImages(prev => prev.filter(i => i.id !== imageId));
-            toast.success('Imagen eliminada');
-        } catch (e) {
-            toast.error(handleAPIError(e));
-        }
-    };
-
-    return (
-        <div className="space-y-3">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {images.map(img => (
-                    <div key={img.id} className="relative group rounded-xl overflow-hidden bg-dark-800 border border-dark-700">
-                        <img
-                            src={getImageUrl(img.image_url)}
-                            alt="Cartelera"
-                            className="w-full object-cover"
-                            style={{ maxHeight: '180px' }}
-                        />
-                        <button
-                            type="button"
-                            onClick={() => handleDelete(img.id)}
-                            className="absolute top-2 right-2 bg-red-600 hover:bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                            <X className="w-3.5 h-3.5" />
-                        </button>
-                    </div>
-                ))}
-
-                <button
-                    type="button"
-                    onClick={() => inputRef.current?.click()}
-                    disabled={uploading}
-                    className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-dark-600 hover:border-primary-500 text-gray-500 hover:text-primary-400 transition-colors min-h-[120px] disabled:opacity-50"
-                >
-                    {uploading ? (
-                        <div className="w-5 h-5 border-2 border-primary-500/30 border-t-primary-500 rounded-full animate-spin" />
-                    ) : (
-                        <>
-                            <Plus className="w-6 h-6" />
-                            <span className="text-xs font-bold uppercase tracking-wider">Agregar fotos</span>
-                        </>
-                    )}
-                </button>
-            </div>
-            <input
-                ref={inputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={e => handleFiles(e.target.files)}
-            />
-            <p className="text-xs text-gray-500">Puedes subir varias fotos a la vez. Máx. 10 por lote.</p>
-        </div>
-    );
-}
 
 interface Promoter {
     id: string;
@@ -527,15 +438,15 @@ export default function EditEventPage() {
                         onChange={(file, preview) => {
                             setBannerFile(file);
                             if (file === null && formData.banner_url) {
+                                // User removed the existing image
                                 setRemoveBanner(true);
                                 setFormData({ ...formData, banner_url: '' });
                             } else if (file) {
+                                // User uploaded a new image
                                 setRemoveBanner(false);
                             }
                         }}
                     />
-
-                    <CardImagesSection eventId={eventId} />
                 </div>
 
                 {/* Settings */}

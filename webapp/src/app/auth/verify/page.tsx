@@ -66,14 +66,8 @@ function VerifyContent() {
                 <>
                     <XCircle className="w-16 h-16 text-red-500 mx-auto mb-6" />
                     <h2 className="text-2xl font-bold mb-4">Error de Verificación</h2>
-                    <p className="text-dark-400 mb-6">{message}</p>
-                    <p className="text-sm text-dark-500 mb-8">
-                        Si el administrador ya verificó tu cuenta manualmente, puedes iniciar sesión directamente.
-                    </p>
-                    <Link href="/auth/login" className="btn-primary w-full block mb-3">
-                        Iniciar Sesión
-                    </Link>
-                    <Link href="/" className="btn-secondary w-full block">
+                    <p className="text-dark-400 mb-8">{message}</p>
+                    <Link href="/auth/login" className="btn-secondary w-full block">
                         Volver al Inicio
                     </Link>
                 </>

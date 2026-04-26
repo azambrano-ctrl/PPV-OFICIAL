@@ -44,9 +44,7 @@ export const sendEmail = async (to: string, subject: string, html: string) => {
                 return response.data;
             } catch (apiError: any) {
                 logger.error('Brevo API Error:', apiError.response?.data || apiError.message);
-                // Fallback to SMTP if API fails? No, better to throw or let SMTP try if configured.
-                // For now, let's assuming if Key is there, we want to use it.
-                // If it fails, maybe we try SMTP.
+                throw new Error(`Brevo API failed: ${apiError.response?.data?.message || apiError.message}`);
             }
         }
 
@@ -140,63 +138,45 @@ export const sendPasswordResetEmail = async (to: string, token: string) => {
 /**
  * Send email verification link
  */
-export const sendVerificationEmail = async (
-    to: string,
-    userName: string,
-    token: string,
-    logoUrl?: string | null,
-    siteName?: string
-) => {
-    const brandName = siteName || process.env.EMAIL_FROM_NAME || 'Arena Fight Pass';
+export const sendVerificationEmail = async (to: string, userName: string, token: string) => {
+    const brandName = process.env.EMAIL_FROM_NAME || 'Arena Fight Pass';
     const webUrl = process.env.WEB_URL || 'http://localhost:3000';
     const verifyLink = `${webUrl}/auth/verify?token=${token}`;
-
-    const logoBlock = logoUrl
-        ? `<img src="${logoUrl}" alt="${brandName}" style="max-height: 60px; max-width: 220px; margin-bottom: 12px; object-fit: contain;" /><br/>`
-        : '';
 
     const subject = `Confirma tu cuenta - ${brandName}`;
     const html = `
 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0a0a0a; color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #333;">
     <div style="background-color: #ef4444; padding: 30px; text-align: center;">
-        ${logoBlock}
-        <h1 style="margin: 0; font-size: 26px; text-transform: uppercase; letter-spacing: 2px;">¡Bienvenido a ${brandName}!</h1>
+        <h1 style="margin: 0; font-size: 28px; text-transform: uppercase; letter-spacing: 2px;">¡BIENVENIDO A ARENA FIGHT PASS!</h1>
     </div>
-
+    
     <div style="padding: 40px 30px;">
-        <p style="font-size: 18px; color: #aaa; margin-bottom: 20px;">Hola <strong style="color:#fff;">${userName}</strong>,</p>
-        <p style="font-size: 16px; line-height: 1.7; margin-bottom: 10px; color: #ccc;">
-            Gracias por registrarte en <strong>${brandName}</strong>.
+        <p style="font-size: 18px; color: #aaa; margin-bottom: 30px;">Hola <strong>${userName}</strong>,</p>
+        <p style="font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+            Gracias por registrarte. Para poder comprar eventos y disfrutar de todo el contenido, por favor verifica tu dirección de correo electrónico haciendo clic en el siguiente botón:
         </p>
-        <p style="font-size: 16px; line-height: 1.7; margin-bottom: 30px; color: #ccc;">
-            Para poder comprar eventos y disfrutar de todo el contenido en vivo, por favor confirma tu correo electrónico haciendo clic en el botón:
-        </p>
-
+        
         <div style="text-align: center; margin: 40px 0;">
-            <a href="${verifyLink}"
-               style="display: inline-block; background-color: #ef4444; color: #ffffff; padding: 18px 48px;
-                      text-decoration: none; border-radius: 8px; font-weight: 900; font-size: 16px;
-                      text-transform: uppercase; letter-spacing: 1px;">
-                ✅ CONFIRMAR MI CUENTA
+            <a href="${verifyLink}" style="display: inline-block; background-color: #ef4444; color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">
+                CONFIRMAR MI CUENTA
             </a>
         </div>
-
-        <p style="font-size: 13px; line-height: 1.6; color: #666; margin-bottom: 10px;">
-            Si el botón no funciona, copia y pega este enlace en tu navegador:
-        </p>
-        <p style="font-size: 13px; word-break: break-all;">
+        
+        <p style="font-size: 14px; line-height: 1.6; color: #888; margin-bottom: 30px;">
+            O copia y pega este enlace en tu navegador:<br>
             <a href="${verifyLink}" style="color: #ef4444; text-decoration: none;">${verifyLink}</a>
         </p>
 
-        <p style="font-size: 13px; color: #444; text-align: center; margin-top: 40px;">
-            Si no creaste esta cuenta, puedes ignorar este correo sin problema.
+        <p style="font-size: 14px; color: #555; text-align: center; margin-top: 40px;">
+            Si no creaste esta cuenta, puedes ignorar este correo.
         </p>
     </div>
-
+    
     <div style="padding: 20px; text-align: center; background-color: #000; border-top: 1px solid #111;">
         <p style="margin: 0; color: #333; font-size: 12px;">&copy; ${new Date().getFullYear()} ${brandName}. Todos los derechos reservados.</p>
     </div>
-</div>`;
+</div>
+    `;
 
     return sendEmail(to, subject, html);
 };
@@ -329,31 +309,6 @@ export const sendApprovalEmail = async (to: string, promoterName: string) => {
     </div>
 </div>
 `;
-
-    return sendEmail(to, subject, html);
-};
-
-/**
- * Send 24-hour event reminder email
- */
-export const sendEventReminderEmail = async (
-    to: string,
-    userName: string,
-    eventTitle: string,
-    eventDate: string,
-    eventId: string
-) => {
-    const brandName = process.env.EMAIL_FROM_NAME || 'Arena Fight Pass';
-    const webUrl = process.env.WEB_URL || 'http://localhost:3000';
-
-    const formattedDate = new Date(eventDate).toLocaleDateString('es-ES', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-        hour: '2-digit', minute: '2-digit', timeZone: 'America/Guayaquil',
-    });
-
-    const eventUrl = `${webUrl}/event/${eventId}`;
-    const subject = `⏰ ¡Mañana es el día! ${eventTitle} - ${brandName}`;
-    const html = `<div style="font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;max-width:600px;margin:0 auto;background-color:#0a0a0a;color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #333;"><div style="background:linear-gradient(135deg,#ef4444 0%,#b91c1c 100%);padding:30px;text-align:center;"><p style="margin:0 0 8px 0;font-size:14px;text-transform:uppercase;letter-spacing:3px;color:rgba(255,255,255,0.8);">RECORDATORIO</p><h1 style="margin:0;font-size:28px;text-transform:uppercase;letter-spacing:2px;">¡Faltan 24 horas!</h1></div><div style="padding:40px 30px;"><p style="font-size:18px;color:#aaa;margin-bottom:20px;">Hola <strong style="color:#fff;">${userName}</strong>,</p><div style="background:linear-gradient(135deg,#1a0000 0%,#0a0a0a 100%);padding:24px;border-radius:12px;border:1px solid #ef4444;margin-bottom:36px;text-align:center;"><h2 style="margin:0 0 8px 0;color:#ef4444;font-size:22px;text-transform:uppercase;">${eventTitle}</h2><p style="margin:0;color:#888;font-size:14px;">📅 ${formattedDate}</p></div><div style="text-align:center;margin-bottom:30px;"><a href="${eventUrl}" style="display:inline-block;background-color:#ef4444;color:#ffffff;padding:16px 48px;text-decoration:none;border-radius:8px;font-weight:900;font-size:16px;text-transform:uppercase;">🥊 VER EVENTO</a></div><div style="background-color:#111;padding:20px;border-radius:10px;"><ul style="margin:0;padding-left:18px;color:#888;font-size:14px;line-height:2;"><li>Conéctate 15 minutos antes.</li><li>Asegúrate de tener buena conexión.</li><li>Usa Chrome o Edge actualizados.</li></ul></div></div><div style="padding:20px;text-align:center;background-color:#000;border-top:1px solid #111;"><p style="margin:0;color:#333;font-size:12px;">&copy; ${new Date().getFullYear()} ${brandName}. Todos los derechos reservados.</p></div></div>`;
 
     return sendEmail(to, subject, html);
 };

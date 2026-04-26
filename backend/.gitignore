@@ -16,8 +16,8 @@ build/
 
 # Uploads
 # Uploads
-uploads/*
-!uploads/.gitkeep
+# uploads/*
+# !uploads/.gitkeep
 
 # IDE
 .vscode/

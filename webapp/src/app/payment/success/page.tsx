@@ -13,28 +13,17 @@ function PaymentSuccessContent() {
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
     const [message, setMessage] = useState('Procesando tu pago...');
     const [eventId, setEventId] = useState<string | null>(null);
-    const [orderId, setOrderId] = useState<string | null>(null);
 
     // Use a ref to prevent double execution in React Strict Mode
     const processedRef = useRef(false);
 
-    const runCapture = async (token: string) => {
-        await paymentsAPI.capturePayPal(token);
-        setStatus('success');
-        setMessage('¡Pago completado con éxito!');
-        toast.success('Pago procesado correctamente');
-
-        const storedEventId = sessionStorage.getItem('lastPurchasedEventId');
-        if (storedEventId) {
-            setEventId(storedEventId);
-            sessionStorage.removeItem('lastPurchasedEventId');
-        }
-    };
-
     useEffect(() => {
         const confirmPayment = async () => {
             const token = searchParams.get('token');
+            const paymentId = searchParams.get('paymentId');
+            const payerId = searchParams.get('PayerID');
 
+            // If we already processed this or strictly no params (direct access), stop
             if (processedRef.current) return;
 
             if (!token) {
@@ -44,21 +33,23 @@ function PaymentSuccessContent() {
             }
 
             processedRef.current = true;
-            setOrderId(token);
 
             try {
-                await runCapture(token);
+                await paymentsAPI.capturePayPal(token);
+                setStatus('success');
+                setMessage('¡Pago completado con éxito!');
+                toast.success('Pago procesado correctamente');
+
+                // Retrieve the purchased event ID
+                const storedEventId = sessionStorage.getItem('lastPurchasedEventId');
+                if (storedEventId) {
+                    setEventId(storedEventId);
+                    sessionStorage.removeItem('lastPurchasedEventId');
+                }
             } catch (error: any) {
                 console.error('Payment capture error:', error);
-                // Retry once after 3 seconds in case of transient failure
-                try {
-                    await new Promise(resolve => setTimeout(resolve, 3000));
-                    await runCapture(token);
-                } catch (retryError: any) {
-                    setStatus('error');
-                    const serverMsg = retryError.response?.data?.message || error.response?.data?.message || '';
-                    setMessage(serverMsg || 'Hubo un problema al confirmar tu pago.');
-                }
+                setStatus('error');
+                setMessage('Hubo un problema al confirmar tu pago. ' + (error.response?.data?.message || ''));
             }
         };
 
@@ -96,26 +87,16 @@ function PaymentSuccessContent() {
                     <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-6">
                         <AlertCircle className="w-8 h-8 text-red-500" />
                     </div>
-                    <h2 className="text-2xl font-bold mb-2 text-red-500">Error al Confirmar</h2>
-                    <p className="text-dark-400 mb-4">
+                    <h2 className="text-2xl font-bold mb-2 text-red-500">Error en el Pago</h2>
+                    <p className="text-dark-400 mb-8">
                         {message}
                     </p>
-                    <p className="text-sm text-dark-500 mb-6">
-                        Si ya fue cobrado por PayPal, tu acceso será activado en minutos automáticamente.
-                        Si el problema persiste contáctanos con tu ID de orden:
-                        {orderId && <span className="block mt-1 font-mono text-xs text-primary-400 break-all">{orderId}</span>}
-                    </p>
                     <div className="space-y-3 w-full">
-                        {orderId && (
-                            <button
-                                onClick={() => { processedRef.current = false; runCapture(orderId); setStatus('loading'); }}
-                                className="btn btn-primary w-full"
-                            >
-                                Reintentar confirmación
-                            </button>
-                        )}
-                        <Link href="/events" className="btn btn-secondary w-full block text-center">
-                            Volver a Eventos
+                        <Link href="/events" className="btn btn-primary w-full">
+                            Intentar de nuevo
+                        </Link>
+                        <Link href="/" className="btn btn-secondary w-full block">
+                            Volver al Inicio
                         </Link>
                     </div>
                 </div>

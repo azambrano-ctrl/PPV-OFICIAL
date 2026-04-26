@@ -461,8 +461,8 @@ router.get(
         }
 
         const result = await pool.query(
-            `SELECT id, email, full_name, phone, role, is_verified, created_at
-             FROM users
+            `SELECT id, email, full_name, phone, role, created_at 
+             FROM users 
              ORDER BY created_at DESC`
         );
 
@@ -586,102 +586,6 @@ router.delete(
 );
 
 /**
- * POST /api/auth/users/send-verification-bulk
- * Resend verification email to ALL unverified users (Admin only)
- */
-router.post(
-    '/users/send-verification-bulk',
-    authenticate,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (req.user!.role !== 'admin') {
-            res.status(403).json({ success: false, error: 'Access denied. Admin only.' });
-            return;
-        }
-
-        // Get unverified users
-        const usersResult = await pool.query(
-            `SELECT id, email, full_name FROM users WHERE is_verified = FALSE ORDER BY created_at DESC`
-        );
-        const unverified = usersResult.rows;
-
-        if (unverified.length === 0) {
-            res.json({ success: true, message: 'Todos los usuarios ya están verificados.', sent: 0, failed: 0 });
-            return;
-        }
-
-        // Get site logo and name from settings
-        let logoUrl: string | null = null;
-        let siteName: string | undefined;
-        try {
-            const settingsResult = await pool.query('SELECT site_logo, site_name FROM settings WHERE id = 1');
-            if (settingsResult.rows.length > 0) {
-                logoUrl = settingsResult.rows[0].site_logo || null;
-                siteName = settingsResult.rows[0].site_name || undefined;
-            }
-        } catch (_) { /* settings optional */ }
-
-        let sent = 0;
-        let failed = 0;
-        const errors: string[] = [];
-
-        // Send in batches of 5 to avoid rate limits
-        const BATCH = 5;
-        for (let i = 0; i < unverified.length; i += BATCH) {
-            const batch = unverified.slice(i, i + BATCH);
-            await Promise.all(batch.map(async (user: { id: string; email: string; full_name: string }) => {
-                try {
-                    const token = await createEmailVerificationToken(user.id);
-                    await sendVerificationEmail(user.email, user.full_name, token, logoUrl, siteName);
-                    sent++;
-                } catch (err: any) {
-                    failed++;
-                    errors.push(`${user.email}: ${err.message}`);
-                }
-            }));
-            if (i + BATCH < unverified.length) {
-                await new Promise(r => setTimeout(r, 600));
-            }
-        }
-
-        res.json({
-            success: true,
-            message: `Correos enviados: ${sent}. Fallidos: ${failed}.`,
-            sent,
-            failed,
-            errors: errors.length > 0 ? errors : undefined,
-        });
-    })
-);
-
-/**
- * PUT /api/auth/users/:userId/verify
- * Manually verify a user's email (Admin only)
- */
-router.put(
-    '/users/:userId/verify',
-    authenticate,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (req.user!.role !== 'admin') {
-            res.status(403).json({ success: false, error: 'Access denied. Admin only.' });
-            return;
-        }
-
-        const { userId } = req.params;
-        const result = await pool.query(
-            'UPDATE users SET is_verified = TRUE WHERE id = $1 RETURNING id, email',
-            [userId]
-        );
-
-        if (result.rows.length === 0) {
-            res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
-            return;
-        }
-
-        res.json({ success: true, message: 'Correo verificado exitosamente.', data: result.rows[0] });
-    })
-);
-
-/**
  * POST /api/auth/push-token
  * Update user's push notification token
  */
@@ -697,38 +601,6 @@ router.post(
             success: true,
             message: 'Push token updated successfully',
         });
-    })
-);
-
-/**
- * GET /api/auth/session
- * Exchange HttpOnly cookie for access/refresh tokens (used after OAuth redirect)
- * The tokens are read from the HttpOnly cookie set during OAuth flow
- */
-router.get(
-    '/session',
-    asyncHandler(async (req: Request, res: Response) => {
-        const accessToken = req.cookies?.accessToken;
-        const refreshToken = req.cookies?.refreshToken;
-
-        if (!accessToken || !refreshToken) {
-            res.status(401).json({ success: false, message: 'No active session' });
-            return;
-        }
-
-        try {
-            const { verifyAccessToken } = require('../middleware/auth');
-            const decoded = verifyAccessToken(accessToken);
-            const user = await findUserById(decoded.userId);
-            if (!user) {
-                res.status(401).json({ success: false, message: 'User not found' });
-                return;
-            }
-            const { password_hash, ...safeUser } = user;
-            res.json({ success: true, data: { accessToken, refreshToken, user: safeUser } });
-        } catch (_) {
-            res.status(401).json({ success: false, message: 'Invalid session' });
-        }
     })
 );
 

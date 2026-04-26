@@ -26,25 +26,6 @@ interface ChatBoxProps {
 
 const COMMON_EMOJIS = ['🔥', '🥊', '👏', '🙌', '💪', '🤩', '🎯', '⚡', '💣', '😎', '👑', '💯', '💀', '👽', '😤', '🍿'];
 
-// Generate consistent color per user
-function getUserGradient(userId: string): string {
-    const gradients = [
-        'from-violet-500 to-purple-600',
-        'from-blue-500 to-cyan-500',
-        'from-emerald-500 to-teal-600',
-        'from-orange-500 to-amber-500',
-        'from-pink-500 to-rose-600',
-        'from-indigo-500 to-blue-600',
-        'from-yellow-400 to-orange-500',
-        'from-teal-400 to-cyan-600',
-    ];
-    let hash = 0;
-    for (let i = 0; i < userId.length; i++) {
-        hash = userId.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return gradients[Math.abs(hash) % gradients.length];
-}
-
 export default function ChatBox({ eventId, eventTitle, eventStatus = 'live', socket }: ChatBoxProps) {
     const { user, isAdmin, accessToken } = useAuthStore();
     const [messages, setMessages] = useState<Message[]>([]);
@@ -173,7 +154,7 @@ export default function ChatBox({ eventId, eventTitle, eventStatus = 'live', soc
             try {
                 if (!accessToken || eventStatus !== 'live') return;
 
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events/${eventId}/chat?limit=100`, {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events/${eventId}/chat`, {
                     headers: {
                         'Authorization': `Bearer ${accessToken}`
                     }
@@ -253,24 +234,16 @@ export default function ChatBox({ eventId, eventTitle, eventStatus = 'live', soc
 
     return (
         <div className="flex flex-col h-full bg-black/40 backdrop-blur-md border border-white/10 rounded-lg overflow-hidden shadow-2xl relative">
-            <div className="p-3 border-b border-white/10 bg-white/5 flex items-center justify-between">
+            <div className="p-4 border-b border-white/10 bg-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isConnected ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse' : 'bg-red-500'}`} />
-                    <span className="font-black text-white text-xs uppercase tracking-widest">
-                        {eventStatus === 'live' ? 'Chat en Vivo' : 'Chat'}
+                    <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'}`} />
+                    <span className="font-semibold text-white tracking-wide">
+                        {eventStatus === 'live' ? 'CHAT EN VIVO' : 'CHAT DE REPETICIÓN'}
                     </span>
                 </div>
-                <div className="flex items-center gap-2">
-                    {viewerCount > 0 && (
-                        <div className="flex items-center gap-1 bg-white/5 rounded-full px-2.5 py-1 border border-white/10">
-                            <span className="text-sm">🔥</span>
-                            <span className="text-white/70 text-xs font-bold tabular-nums">{viewerCount.toLocaleString()}</span>
-                        </div>
-                    )}
-                    {!isConnected && (
-                        <span className="text-xs text-red-400 font-medium">Desconectado</span>
-                    )}
-                </div>
+                {!isConnected && (
+                    <span className="text-xs text-red-400 font-medium">Desconectado</span>
+                )}
             </div>
 
             <div
@@ -293,63 +266,64 @@ export default function ChatBox({ eventId, eventTitle, eventStatus = 'live', soc
                     </div>
                 ) : (
                     messages.filter(m => !m.isDeleted || isAdmin).map((msg, idx) => (
-                        <div key={msg.id || idx} className={`flex gap-2.5 group animate-fade-in ${msg.isDeleted ? 'opacity-30 grayscale' : ''}`}>
-                            {/* Avatar */}
-                            <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-[11px] font-black bg-gradient-to-br ${msg.isAdmin ? 'from-primary-500 to-primary-700' : getUserGradient(msg.userId)} text-white shadow-sm`}>
-                                {msg.isAdmin ? <Shield className="w-3.5 h-3.5" /> : (msg.user[0] || '?').toUpperCase()}
+                        <div key={msg.id || idx} className={`flex gap-3 animate-fade-in ${msg.isDeleted ? 'opacity-40 grayscale' : ''}`}>
+                            <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold ${msg.isAdmin ? 'bg-gradient-to-br from-primary-500 to-primary-700 text-white' : 'bg-white/10 text-white/70'
+                                }`}>
+                                {msg.isAdmin ? <Shield className="w-4 h-4" /> : (msg.user[0] || '?').toUpperCase()}
                             </div>
 
-                            {/* Bubble */}
-                            <div className={`flex-1 min-w-0 rounded-2xl rounded-tl-sm px-3 py-2 ${msg.isAdmin ? 'bg-primary-600/15 border border-primary-500/20' : 'bg-white/5 border border-white/5'}`}>
-                                <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                                    <span className={`text-xs font-bold leading-none ${msg.isAdmin ? 'text-primary-400' : 'text-white/80'}`}>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                    <span className={`text-sm font-medium ${msg.isAdmin ? 'text-primary-400' : 'text-white/90'}`}>
                                         {msg.user}
                                     </span>
                                     {msg.isAdmin && (
-                                        <span className="text-[9px] bg-primary-500/30 text-primary-300 px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider">
+                                        <span className="text-[10px] bg-primary-500/20 text-primary-400 px-1.5 py-0.5 rounded border border-primary-500/30">
                                             MOD
                                         </span>
                                     )}
-                                    <span className="text-[10px] text-white/25 ml-auto leading-none">
+                                    <span className="text-[10px] text-white/30 ml-auto">
                                         {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                     {isAdmin && !msg.isDeleted && (
-                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => deleteMessage(msg.id)} className="p-0.5 text-white/30 hover:text-red-400 transition-colors" title="Eliminar">
-                                                <X className="w-3 h-3" />
+                                        <div className="flex items-center gap-1.5 ml-1">
+                                            <button
+                                                onClick={() => deleteMessage(msg.id)}
+                                                className="p-1 text-white/20 hover:text-red-500 hover:bg-red-500/10 rounded transition-all"
+                                                title="Eliminar mensaje"
+                                            >
+                                                <X className="w-3.5 h-3.5" />
                                             </button>
-                                            <button onClick={() => muteUser(msg.userId, msg.user)} className="p-0.5 text-white/30 hover:text-yellow-400 transition-colors" title="Silenciar">
-                                                <Info className="w-3 h-3" />
+                                            <button
+                                                onClick={() => muteUser(msg.userId, msg.user)}
+                                                className="p-1 text-white/20 hover:text-yellow-500 hover:bg-yellow-500/10 rounded transition-all"
+                                                title="Silenciar usuario"
+                                            >
+                                                <Info className="w-3.5 h-3.5" />
                                             </button>
-                                            <button onClick={() => banUser(msg.userId, msg.user)} className="p-0.5 text-white/30 hover:text-orange-400 transition-colors" title="Bloquear">
-                                                <UserMinus className="w-3 h-3" />
+                                            <button
+                                                onClick={() => banUser(msg.userId, msg.user)}
+                                                className="p-1 text-white/20 hover:text-orange-500 hover:bg-orange-500/10 rounded transition-all"
+                                                title="Bloquear usuario"
+                                            >
+                                                <UserMinus className="w-3.5 h-3.5" />
                                             </button>
                                         </div>
                                     )}
                                 </div>
-                                <p className="text-sm text-white/85 break-words leading-relaxed">
+                                <div className="text-sm text-white/80 break-words leading-relaxed">
                                     {msg.isDeleted ? (
-                                        <span className="italic text-white/30 text-xs">Mensaje eliminado por un moderador.</span>
+                                        <span className="italic">Este mensaje fue eliminado por un moderador.</span>
                                     ) : (
                                         msg.message
                                     )}
-                                </p>
+                                </div>
                             </div>
                         </div>
                     ))
                 )}
                 <div ref={messagesEndRef} />
             </div>
-
-            {/* Scroll to bottom button */}
-            {!isAutoScroll && (
-                <button
-                    onClick={() => { setIsAutoScroll(true); messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }}
-                    className="absolute bottom-28 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 bg-primary-600 hover:bg-primary-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg transition-all animate-bounce"
-                >
-                    ↓ Nuevos mensajes
-                </button>
-            )}
 
             <AnimatePresence>
                 {showEmojiPicker && (

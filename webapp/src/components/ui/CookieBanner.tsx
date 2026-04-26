@@ -25,14 +25,10 @@ export default function CookieBanner() {
         <AnimatePresence>
             {isVisible && (
                 <motion.div
-                    initial={{ y: '100%', opacity: 0 }}
+                    initial={{ y: 100, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: '100%', opacity: 0 }}
-                    transition={{
-                        enter: { type: 'spring', duration: 0.5, bounce: 0.2 },
-                        exit: { duration: 0.18, ease: [0.23, 1, 0.32, 1] },
-                        default: { type: 'spring', duration: 0.5, bounce: 0.2 }
-                    }}
+                    exit={{ y: 100, opacity: 0 }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 200 }}
                     className="fixed bottom-6 left-6 right-6 md:left-auto md:right-8 md:max-w-md z-[100]"
                 >
                     <div className="bg-dark-900/80 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden group">

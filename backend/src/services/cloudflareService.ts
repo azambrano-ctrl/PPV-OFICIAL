@@ -82,35 +82,6 @@ export const CloudflareService = {
     },
 
     /**
-     * Get the list of recorded videos for a live input.
-     * Cloudflare automatically records each broadcast as a separate video
-     * with a different UID than the live input itself.
-     * Returns videos sorted newest-first.
-     */
-    async getRecordingsForLiveInput(liveInputUid: string): Promise<{ uid: string; status: { state: string }; created: string }[]> {
-        try {
-            const cfClient = getCfClient();
-            const response = await cfClient.get(`live_inputs/${liveInputUid}/videos`);
-            const videos: any[] = response.data.result || [];
-            // Sort newest first
-            return videos.sort((a, b) =>
-                new Date(b.created || 0).getTime() - new Date(a.created || 0).getTime()
-            );
-        } catch (error: any) {
-            logger.error('Error retrieving recordings for live input:', error);
-            throw error;
-        }
-    },
-
-    /**
-     * Build the HLS playback URL for a recorded video UID.
-     */
-    buildRecordingHlsUrl(videoUid: string): string {
-        const customerId = process.env.CLOUDFLARE_CUSTOMER_ID || process.env.CLOUDFLARE_ACCOUNT_ID;
-        return `https://customer-${customerId}.cloudflarestream.com/${videoUid}/manifest/video.m3u8`;
-    },
-
-    /**
      * Delete a live input
      */
     async deleteLiveInput(uid: string) {

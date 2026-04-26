@@ -56,7 +56,7 @@ const allowedOrigins = [
 
 const io = new Server(httpServer, {
     cors: {
-        origin: allowedOrigins,
+        origin: allowedOrigins.length > 0 ? allowedOrigins : true,
         credentials: true,
     },
 });
@@ -70,22 +70,9 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            imgSrc: ["'self'", "data:", "blob:",
-                "*.b-cdn.net", "*.bunnycdn.com",
-                "*.cloudflarestream.com", "*.cloudflare.com",
-                "*.supabase.co", "*.supabase.com",
-                "*.amazonaws.com",
-            ],
-            mediaSrc: ["'self'", "blob:",
-                "*.b-cdn.net", "*.bunnycdn.com",
-                "*.cloudflarestream.com",
-            ],
-            connectSrc: ["'self'",
-                "*.supabase.co", "*.supabase.com",
-                "*.b-cdn.net", "*.bunnycdn.com",
-                "*.cloudflarestream.com",
-                "wss:", "ws:",
-            ],
+            imgSrc: ["'self'", "data:", "blob:", "*"],
+            mediaSrc: ["'self'", "blob:", "*"],
+            connectSrc: ["'self'", "*"],
         }
     },
     hsts: {
@@ -95,12 +82,14 @@ app.use(helmet({
     }
 }));
 
-// CORS — only allow explicitly whitelisted origins
+// Manual CORS to fix persistent issues - restricted to allowedOrigins
 app.use((req, res, next) => {
     const origin = req.headers.origin;
 
-    if (origin && allowedOrigins.includes(origin)) {
+    if (origin && (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production')) {
         res.setHeader('Access-Control-Allow-Origin', origin);
+    } else if (!origin && process.env.NODE_ENV !== 'production') {
+        res.setHeader('Access-Control-Allow-Origin', '*');
     }
 
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
@@ -113,10 +102,11 @@ app.use((req, res, next) => {
     }
     next();
 });
+
 // Rate limiting
 const limiter = rateLimit({
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
-    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '500'),
+    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '1000'), // Increased to 1000 for admin usage
     message: 'Too many requests from this IP, please try again later.',
 });
 
@@ -125,7 +115,7 @@ app.use('/api/', limiter);
 // Strict rate limiting for auth routes (Brute force protection)
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // Limit each IP to 20 requests per window
+    max: 20, // Limit each IP to 20 requests per window
     message: 'Demasiados intentos desde esta IP, por favor intenta de nuevo en 15 minutos.',
     standardHeaders: true,
     legacyHeaders: false,
@@ -136,9 +126,8 @@ app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/forgot-password', authLimiter);
 
 // Body parsing middleware
-// Raw body needed for webhook signature verification
+// Note: For Stripe webhooks, we need raw body
 app.use('/api/payments/webhooks/stripe', express.raw({ type: 'application/json' }));
-app.use('/api/payments/webhooks/paypal', express.raw({ type: 'application/json' }));
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
@@ -222,9 +211,6 @@ io.use(async (socket, next) => {
 import { moderateUser, checkChatStatus, removeModeration } from './services/promoterService';
 import * as notificationService from './services/notificationService';
 
-// O(1) user→socket map to replace the O(N²) loop on every join
-const userSocketMap = new Map<string, Set<string>>();
-
 // Socket.io connection handling
 io.on('connection', (socket) => {
     logger.info('User connected to socket', {
@@ -270,23 +256,25 @@ io.on('connection', (socket) => {
                 return;
             }
 
-            // --- STRICT GLOBAL 1-TAB/DEVICE POLICY (O(1) via Map) ---
-            const existingIds = userSocketMap.get(userId) || new Set<string>();
-            for (const oldId of existingIds) {
-                if (oldId !== socket.id) {
-                    const oldSocket = io.sockets.sockets.get(oldId);
-                    if (oldSocket) {
-                        logger.info(`[GLOBAL CHAT] 1-device policy: kicking ${oldId} for user ${userId}`);
-                        oldSocket.emit('force_logout', {
-                            message: 'Se ha iniciado sesión en otro dispositivo. Tu sesión anterior fue cerrada.'
-                        });
-                        oldSocket.disconnect(true);
-                    }
-                    existingIds.delete(oldId);
+            // --- STRICT GLOBAL 1-TAB/DEVICE POLICY ---
+            // Find if this user already has an active socket ANYWHERE in the server
+            // (Even if they are watching a different event Reprise vs Live)
+            for (const [_, existingSocket] of io.sockets.sockets.entries()) {
+                if (existingSocket &&
+                    existingSocket.data?.user?.userId === userId &&
+                    existingSocket.id !== socket.id) {
+
+                    logger.info(`[GLOBAL CHAT] Enforcing global 1-device policy for user ${userId}. Kicking old socket ${existingSocket.id}`);
+
+                    // Notify the old socket it's being kicked out
+                    existingSocket.emit('force_logout', {
+                        message: 'Se ha iniciado sesión en otro dispositivo o has abierto otra transmisión. Tu sesión aquí será cerrada por seguridad.'
+                    });
+
+                    // Force the old socket to disconnect
+                    existingSocket.disconnect(true);
                 }
             }
-            existingIds.add(socket.id);
-            userSocketMap.set(userId, existingIds);
             // -----------------------------------------
 
             // Check if user is admin or has purchased the event
@@ -540,18 +528,10 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Disconnect — clean up userSocketMap to prevent memory leak
+    // Disconnect
     socket.on('disconnect', () => {
-        const userId = socket.data.user?.userId;
-        if (userId) {
-            const sockets = userSocketMap.get(userId);
-            if (sockets) {
-                sockets.delete(socket.id);
-                if (sockets.size === 0) userSocketMap.delete(userId);
-            }
-        }
         logger.info('User disconnected from chat', {
-            userId,
+            userId: socket.data.user.userId,
             socketId: socket.id,
         });
     });
@@ -569,15 +549,9 @@ app.use(errorHandler);
 const startReminderCron = () => {
     logger.info('⏰ Starting event reminder cron for Push and Emails...');
 
+    // Set to store notified event-user pairs for current session to avoid duplicates
     const notifiedPushPairs = new Set<string>();
     const notifiedEmailPairs = new Set<string>();
-
-    // Clear tracking sets every 24h to prevent unbounded memory growth
-    setInterval(() => {
-        notifiedPushPairs.clear();
-        notifiedEmailPairs.clear();
-        logger.info('[Reminder] Cleared notification tracking sets');
-    }, 24 * 60 * 60 * 1000);
 
     setInterval(async () => {
         try {

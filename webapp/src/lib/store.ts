@@ -36,14 +36,8 @@ export const useAuthStore = create<AuthState>()(
 
             setAuth: (user, accessToken, refreshToken) => {
                 // Save to localStorage for API interceptor
-                // Wrapped in try-catch because some WebViews (Instagram, Facebook in-app)
-                // block localStorage and throw SecurityError
-                try {
-                    localStorage.setItem('accessToken', accessToken);
-                    localStorage.setItem('refreshToken', refreshToken);
-                } catch (e) {
-                    console.warn('localStorage not available, tokens stored in memory only:', e);
-                }
+                localStorage.setItem('accessToken', accessToken);
+                localStorage.setItem('refreshToken', refreshToken);
 
                 // Cookies are now handled by the server (HttpOnly)
                 set({
@@ -59,10 +53,8 @@ export const useAuthStore = create<AuthState>()(
             setUser: (user) => set({ user }),
 
             logout: () => {
-                try {
-                    localStorage.removeItem('accessToken');
-                    localStorage.removeItem('refreshToken');
-                } catch (_) {}
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
 
                 // Server-side logout should be called by the component or here via a separate fetch
                 // to avoid circular dependency with api.ts. We'll use native fetch for simplicity.

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, BellOff, X, ExternalLink, Calendar, CheckCircle2 } from 'lucide-react';
 import { notificationsAPI, handleAPIError } from '@/lib/api';
-import { initSocket, getSocket } from '@/lib/socket';
+import { io } from 'socket.io-client';
 import { useAuthStore } from '@/lib/store';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -23,24 +23,32 @@ export default function NotificationCenter() {
         if (isAuthenticated && user) {
             fetchNotifications();
 
-            // Reuse the global socket instead of creating a new connection
-            const token = localStorage.getItem('accessToken') || '';
-            const socket = initSocket(token);
+            // Setup real-time notifications via socket
+            const WS_URL = process.env.NEXT_PUBLIC_WS_URL || process.env.NEXT_PUBLIC_API_URL || '';
+            const socket: any = io(WS_URL, {
+                auth: {
+                    token: localStorage.getItem('accessToken')
+                },
+                transports: ['websocket', 'polling']
+            });
+
             socketRef.current = socket;
 
-            const handleNotification = (notification: any) => {
+            socket.on('connect', () => {
+                console.log('[NOTIFICATIONS] Connected to socket');
+            });
+
+            socket.on('new_notification', (notification: any) => {
                 setNotifications(prev => [notification, ...prev]);
                 setUnreadCount(prev => prev + 1);
                 toast.success(notification.title, {
                     icon: '🔔',
                     duration: 5000
                 });
-            };
-
-            socket.on('new_notification', handleNotification);
+            });
 
             return () => {
-                socket.off('new_notification', handleNotification);
+                socket.disconnect();
             };
         }
     }, [isAuthenticated, user]);
@@ -92,25 +100,16 @@ export default function NotificationCenter() {
         }
     };
 
-    const handleToggle = () => {
-        const opening = !isOpen;
-        setIsOpen(opening);
-        // Mark all as read when opening the panel
-        if (opening && unreadCount > 0) {
-            handleMarkAllRead();
-        }
-    };
-
     if (!isAuthenticated) return null;
 
     return (
         <div className="relative" ref={dropdownRef}>
             <button
-                onClick={handleToggle}
+                onClick={() => setIsOpen(!isOpen)}
                 className="relative p-2 rounded-full text-gray-400 hover:text-white hover:bg-white/5 transition-all"
                 title="Notificaciones"
             >
-                <Bell className={`w-6 h-6 ${unreadCount > 0 ? 'animate-pulse text-primary-500' : ''}`} />
+                <Bell className={`w-6 h-6 ${unreadCount > 0 ? 'animate-bounce text-primary-500' : ''}`} />
                 {unreadCount > 0 && (
                     <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-primary-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center ring-2 ring-dark-950">
                         {unreadCount > 9 ? '9+' : unreadCount}
@@ -121,11 +120,9 @@ export default function NotificationCenter() {
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
-                        initial={{ opacity: 0, y: 6, scale: 0.95 }}
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 4, scale: 0.97 }}
-                        transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] }}
-                        style={{ transformOrigin: 'top right' }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         className="absolute -right-4 md:-right-2 mt-3 w-72 md:w-80 bg-dark-900 border border-dark-700 rounded-2xl shadow-2xl z-50 overflow-hidden ring-1 ring-white/5"
                     >
                         <div className="p-3 border-b border-dark-700 flex items-center justify-between bg-dark-800/50">

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { settingsAPI, adminAPI } from '@/lib/api';
+import { settingsAPI } from '@/lib/api';
 import { Save, AlertCircle, Layout, FileText, Image as ImageIcon, X, CreditCard, Facebook, Instagram, Twitter, Video, Plus, Trash2, Trophy } from 'lucide-react';
 import ImageUpload from '@/components/admin/ImageUpload';
 
@@ -10,9 +10,6 @@ type Tab = 'general' | 'about' | 'gallery' | 'payments' | 'season-pass' | 'login
 export default function AdminSettingsPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [testEmailTo, setTestEmailTo] = useState('');
-    const [testEmailStatus, setTestEmailStatus] = useState<{ ok: boolean; msg: string; provider?: string } | null>(null);
-    const [testingEmail, setTestingEmail] = useState(false);
     const [activeTab, setActiveTab] = useState<Tab>('general');
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
@@ -1015,63 +1012,6 @@ export default function AdminSettingsPage() {
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )}
-
-                {/* Tab: Email Test — shown at bottom of payments tab */}
-                {activeTab === 'payments' && (
-                    <div className="bg-dark-900 p-6 rounded-xl border border-dark-800 space-y-4">
-                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                            📧 Probar configuración de correo
-                        </h2>
-                        <p className="text-sm text-dark-400">
-                            Envía un correo de prueba para verificar que <strong className="text-white">BREVO_API_KEY</strong> o <strong className="text-white">EMAIL_USER</strong> están correctamente configurados en Render.
-                        </p>
-                        <div className="flex gap-3 flex-wrap">
-                            <input
-                                type="email"
-                                placeholder="tu@correo.com (opcional, usa el del admin)"
-                                value={testEmailTo}
-                                onChange={(e) => setTestEmailTo(e.target.value)}
-                                className="input flex-1 min-w-[220px]"
-                            />
-                            <button
-                                type="button"
-                                disabled={testingEmail}
-                                onClick={async () => {
-                                    setTestingEmail(true);
-                                    setTestEmailStatus(null);
-                                    try {
-                                        const res = await adminAPI.testEmail(testEmailTo || undefined);
-                                        setTestEmailStatus({ ok: true, msg: res.data.message, provider: res.data.provider });
-                                    } catch (err: any) {
-                                        const d = err.response?.data;
-                                        setTestEmailStatus({ ok: false, msg: d?.message || 'Error desconocido', provider: d?.provider });
-                                    } finally {
-                                        setTestingEmail(false);
-                                    }
-                                }}
-                                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white font-bold rounded-xl transition-colors whitespace-nowrap"
-                            >
-                                {testingEmail ? 'Enviando...' : 'Enviar correo de prueba'}
-                            </button>
-                        </div>
-                        {testEmailStatus && (
-                            <div className={`flex items-start gap-3 p-4 rounded-xl border ${testEmailStatus.ok ? 'bg-green-500/10 border-green-500/30 text-green-300' : 'bg-red-500/10 border-red-500/30 text-red-300'}`}>
-                                <span className="text-xl">{testEmailStatus.ok ? '✅' : '❌'}</span>
-                                <div>
-                                    <p className="font-semibold">{testEmailStatus.msg}</p>
-                                    {testEmailStatus.provider && (
-                                        <p className="text-xs opacity-70 mt-1">Proveedor: <strong>{testEmailStatus.provider}</strong></p>
-                                    )}
-                                    {!testEmailStatus.ok && (
-                                        <p className="text-xs opacity-70 mt-2">
-                                            Agrega <code className="bg-black/30 px-1 rounded">BREVO_API_KEY</code> en las variables de entorno de Render → tu servicio backend → Environment.
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        )}
                     </div>
                 )}
 

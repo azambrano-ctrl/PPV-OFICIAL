@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft, MessageSquare, Info, Share2, Tv, X } from 'lucide-react';
-import toast from 'react-hot-toast';
 import VideoPlayer from '@/components/VideoPlayer';
 import ChatBox from '@/components/ChatBox';
 import ReactionLayer from '@/components/ReactionLayer';
@@ -250,7 +249,7 @@ export default function WatchPage() {
                         className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/5 text-sm font-medium text-white/90"
                         onClick={() => {
                             navigator.clipboard.writeText(window.location.href);
-                            toast.success('¡Enlace copiado!');
+                            alert('Enlace copiado al portapapeles');
                         }}
                     >
                         <Share2 className="w-4 h-4" />

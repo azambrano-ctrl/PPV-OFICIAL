@@ -11,21 +11,17 @@ import {
     BarChart3,
     Film,
     Globe,
-    Mail,
-    Tag,
-    ShoppingCart
+    Mail
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/store';
 
 const navigation = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { name: 'Eventos', href: '/admin/events', icon: Calendar },
-    { name: 'Ventas', href: '/admin/ventas', icon: ShoppingCart },
     { name: 'Promotoras', href: '/admin/promoters', icon: Globe },
     { name: 'Usuarios', href: '/admin/users', icon: Users },
     { name: 'Peleadores', href: '/admin/fighters', icon: Users },
     { name: 'Marketing', href: '/admin/marketing', icon: Mail },
-    { name: 'Cupones', href: '/admin/coupons', icon: Tag },
     { name: 'Estadísticas', href: '/admin/stats', icon: BarChart3 },
     { name: 'Configuración', href: '/admin/settings', icon: Settings },
 ];

@@ -12,7 +12,6 @@ import {
     createPayPalOrder,
     capturePayPalOrder,
     handlePayPalWebhook,
-    verifyPayPalWebhookSignature,
 } from '../services/paypalService';
 import { getEventById } from '../services/eventService';
 
@@ -128,30 +127,6 @@ router.post(
             currency = event.currency;
         }
 
-        // Apply coupon discount if provided
-        let discountAmount = 0;
-        if (couponCode) {
-            const pool = require('../config/database').default;
-            const couponResult = await pool.query(
-                `SELECT * FROM coupons
-                 WHERE UPPER(code) = UPPER($1)
-                   AND is_active = TRUE
-                   AND (valid_until IS NULL OR valid_until > NOW())
-                   AND (max_uses IS NULL OR current_uses < max_uses)
-                   AND (event_id IS NULL OR event_id = $2)`,
-                [couponCode, eventId || null]
-            );
-            if (couponResult.rows.length > 0) {
-                const coupon = couponResult.rows[0];
-                if (coupon.discount_type === 'percentage') {
-                    discountAmount = Math.min(amount * (parseFloat(coupon.discount_value) / 100), amount);
-                } else {
-                    discountAmount = Math.min(parseFloat(coupon.discount_value), amount);
-                }
-                amount = Math.max(0, amount - discountAmount);
-            }
-        }
-
         const paymentData = {
             userId: req.user!.userId,
             eventId,
@@ -194,9 +169,7 @@ router.post(
                 `INSERT INTO purchases (
                     user_id, event_id, purchase_type, amount, currency, payment_method,
                     payment_status, coupon_code, discount_amount, final_amount
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-                ON CONFLICT (user_id, event_id) WHERE purchase_type != 'season_pass'
-                DO NOTHING RETURNING *`,
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
                 [
                     req.user!.userId,
                     eventId || null,
@@ -293,6 +266,7 @@ router.get(
  */
 router.post(
     '/paypal/capture',
+    authenticate,
     validateBody(capturePayPalSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
         const { orderId } = req.body;
@@ -332,24 +306,12 @@ router.post(
 
 /**
  * POST /api/payments/webhooks/paypal
- * PayPal webhook endpoint — signature verified before processing
+ * PayPal webhook endpoint
  */
 router.post(
     '/webhooks/paypal',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        // Verify PayPal signature to prevent fake webhook attacks
-        const isValid = await verifyPayPalWebhookSignature(
-            req.headers as Record<string, string>,
-            req.body as Buffer,
-        );
-
-        if (!isValid) {
-            res.status(401).json({ success: false, message: 'Invalid webhook signature' });
-            return;
-        }
-
-        const body = JSON.parse((req.body as Buffer).toString('utf8'));
-        await handlePayPalWebhook(body);
+        await handlePayPalWebhook(req.body);
 
         res.json({ received: true });
     })
@@ -378,170 +340,6 @@ router.post(
             success: true,
             message: 'Refund initiated successfully',
         });
-    })
-);
-
-/**
- * POST /api/payments/validate-coupon
- * Validate a coupon code for a specific event and return discount info
- */
-router.post(
-    '/validate-coupon',
-    authenticate,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { code, eventId } = req.body as { code: string; eventId?: string };
-
-        if (!code) {
-            res.status(400).json({ success: false, message: 'Código requerido' });
-            return;
-        }
-
-        const pool = require('../config/database').default;
-        const result = await pool.query(
-            `SELECT c.*, e.title as event_title, e.price as event_price
-             FROM coupons c
-             LEFT JOIN events e ON c.event_id = e.id
-             WHERE UPPER(c.code) = UPPER($1)
-               AND c.is_active = TRUE
-               AND (c.valid_until IS NULL OR c.valid_until > NOW())
-               AND (c.max_uses IS NULL OR c.current_uses < c.max_uses)`,
-            [code]
-        );
-
-        if (result.rows.length === 0) {
-            res.status(404).json({ success: false, message: 'Cupón inválido o expirado' });
-            return;
-        }
-
-        const coupon = result.rows[0];
-
-        // If coupon is event-specific, check it matches
-        if (coupon.event_id && eventId && coupon.event_id !== eventId) {
-            res.status(400).json({
-                success: false,
-                message: `Este cupón solo aplica para el evento: ${coupon.event_title}`
-            });
-            return;
-        }
-
-        res.json({
-            success: true,
-            data: {
-                id: coupon.id,
-                code: coupon.code,
-                discountType: coupon.discount_type,
-                discountValue: parseFloat(coupon.discount_value),
-                eventId: coupon.event_id,
-                eventTitle: coupon.event_title,
-                minAmount: parseFloat(coupon.min_amount || '0'),
-            }
-        });
-    })
-);
-
-/**
- * GET /api/payments/coupons
- * List all coupons (Admin only)
- */
-router.get(
-    '/coupons',
-    authenticate,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (req.user!.role !== 'admin') {
-            res.status(403).json({ success: false, error: 'Admin only' });
-            return;
-        }
-        const pool = require('../config/database').default;
-        const result = await pool.query(
-            `SELECT c.*, e.title as event_title
-             FROM coupons c
-             LEFT JOIN events e ON c.event_id = e.id
-             ORDER BY c.created_at DESC`
-        );
-        res.json({ success: true, data: result.rows });
-    })
-);
-
-/**
- * POST /api/payments/coupons
- * Create a coupon (Admin only)
- */
-router.post(
-    '/coupons',
-    authenticate,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (req.user!.role !== 'admin') {
-            res.status(403).json({ success: false, error: 'Admin only' });
-            return;
-        }
-        const { code, discountType, discountValue, eventId, maxUses, validUntil, minAmount } = req.body;
-
-        if (!code || !discountType || !discountValue) {
-            res.status(400).json({ success: false, message: 'Código, tipo y valor son obligatorios' });
-            return;
-        }
-
-        const pool = require('../config/database').default;
-        const result = await pool.query(
-            `INSERT INTO coupons (code, discount_type, discount_value, event_id, max_uses, valid_until, min_amount, is_active)
-             VALUES (UPPER($1), $2, $3, $4, $5, $6, $7, TRUE)
-             RETURNING *`,
-            [code, discountType, discountValue, eventId || null, maxUses || null, validUntil || null, minAmount || 0]
-        );
-        res.json({ success: true, data: result.rows[0] });
-    })
-);
-
-/**
- * PUT /api/payments/coupons/:id
- * Update a coupon (Admin only)
- */
-router.put(
-    '/coupons/:id',
-    authenticate,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (req.user!.role !== 'admin') {
-            res.status(403).json({ success: false, error: 'Admin only' });
-            return;
-        }
-        const { code, discountType, discountValue, eventId, maxUses, validUntil, minAmount, isActive } = req.body;
-        const pool = require('../config/database').default;
-        const result = await pool.query(
-            `UPDATE coupons SET
-               code = UPPER($1),
-               discount_type = $2,
-               discount_value = $3,
-               event_id = $4,
-               max_uses = $5,
-               valid_until = $6,
-               min_amount = $7,
-               is_active = $8
-             WHERE id = $9 RETURNING *`,
-            [code, discountType, discountValue, eventId || null, maxUses || null, validUntil || null, minAmount || 0, isActive ?? true, req.params.id]
-        );
-        if (result.rows.length === 0) {
-            res.status(404).json({ success: false, message: 'Cupón no encontrado' });
-            return;
-        }
-        res.json({ success: true, data: result.rows[0] });
-    })
-);
-
-/**
- * DELETE /api/payments/coupons/:id
- * Permanently delete a coupon (Admin only)
- */
-router.delete(
-    '/coupons/:id',
-    authenticate,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (req.user!.role !== 'admin') {
-            res.status(403).json({ success: false, error: 'Admin only' });
-            return;
-        }
-        const pool = require('../config/database').default;
-        await pool.query('DELETE FROM coupons WHERE id = $1', [req.params.id]);
-        res.json({ success: true, message: 'Cupón eliminado' });
     })
 );
 

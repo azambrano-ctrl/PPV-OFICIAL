@@ -32,7 +32,6 @@ export interface CreateEventInput {
     currency?: string;
     thumbnail_url?: string;
     banner_url?: string;
-    card_image_url?: string;
     max_viewers?: number;
     free_viewers_limit?: number | null;
     is_featured?: boolean;
@@ -119,8 +118,8 @@ export const createEvent = async (input: CreateEventInput): Promise<Event> => {
     const result = await query(
         `INSERT INTO events (
       title, description, event_date, duration_minutes, price, currency,
-      thumbnail_url, banner_url, card_image_url, max_viewers, is_featured, created_by, stream_key, promoter_id, free_viewers_limit
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      thumbnail_url, banner_url, max_viewers, is_featured, created_by, stream_key, promoter_id, free_viewers_limit
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
     RETURNING *`,
         [
             input.title,
@@ -131,7 +130,6 @@ export const createEvent = async (input: CreateEventInput): Promise<Event> => {
             input.currency || 'USD',
             input.thumbnail_url,
             input.banner_url,
-            input.card_image_url,
             input.max_viewers,
             input.is_featured || false,
             input.created_by,
@@ -164,7 +162,6 @@ export const updateEvent = async (
         'currency',
         'thumbnail_url',
         'banner_url',
-        'card_image_url',
         'status',
         'max_viewers',
         'free_viewers_limit',
@@ -367,33 +364,4 @@ export const removeFighterFromEvent = async (eventId: string, fighterId: string)
     if (result.rowCount === 0) {
         throw new Error('El peleador no fue encontrado en este evento');
     }
-};
-
-export const getEventCardImages = async (eventId: string) => {
-    const result = await query(
-        'SELECT * FROM event_card_images WHERE event_id = $1 ORDER BY order_index ASC, created_at ASC',
-        [eventId]
-    );
-    return result.rows;
-};
-
-export const addEventCardImage = async (eventId: string, imageUrl: string) => {
-    const orderRes = await query(
-        'SELECT COALESCE(MAX(order_index), -1) + 1 AS next FROM event_card_images WHERE event_id = $1',
-        [eventId]
-    );
-    const nextOrder = parseInt(orderRes.rows[0].next);
-    const result = await query(
-        'INSERT INTO event_card_images (event_id, image_url, order_index) VALUES ($1, $2, $3) RETURNING *',
-        [eventId, imageUrl, nextOrder]
-    );
-    return result.rows[0];
-};
-
-export const deleteEventCardImage = async (eventId: string, imageId: string) => {
-    const result = await query(
-        'DELETE FROM event_card_images WHERE id = $1 AND event_id = $2 RETURNING *',
-        [imageId, eventId]
-    );
-    if (result.rowCount === 0) throw new Error('Imagen no encontrada');
 };

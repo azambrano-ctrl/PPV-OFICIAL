@@ -1,329 +1,366 @@
+// Componente de Marketing para el Panel de Administrador
 'use client';
 
 import { useState } from 'react';
-import { Send, Users, AlertCircle, Shield, User as UserIcon, Mail, Eye, EyeOff } from 'lucide-react';
+import { Send, Users, AlertCircle, CheckCircle2, Shield, User as UserIcon, Mail } from 'lucide-react';
 import { adminAPI, handleAPIError } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { useSettingsStore } from '@/lib/store';
-
-interface EmailFields {
-    title: string;
-    body: string;
-    buttonText: string;
-    buttonUrl: string;
-    couponCode: string;
-    footerNote: string;
-}
-
-const TEMPLATES: { name: string; emoji: string; subject: string; fields: EmailFields }[] = [
-    {
-        name: 'Nuevo Evento',
-        emoji: '🔥',
-        subject: '🔥 ¡NUEVO EVENTO CONFIRMADO! No te pierdas la pelea del año',
-        fields: {
-            title: '¡LA ESPERA TERMINÓ!',
-            body: 'Prepárate para la noche más explosiva del año. Los mejores peleadores entran a la jaula y tú puedes vivirlo en primera fila desde cualquier dispositivo.\n\n📅 Fecha: [Fecha del evento]\n⏰ Hora: [Hora exacta]',
-            buttonText: 'COMPRAR TICKET AHORA',
-            buttonUrl: 'https://arenafightpass.com/events',
-            couponCode: '',
-            footerNote: '',
-        }
-    },
-    {
-        name: 'Estamos en Vivo',
-        emoji: '🔴',
-        subject: '🔴 ¡ESTAMOS EN VIVO! Entra ahora a la transmisión',
-        fields: {
-            title: '◉ ¡LAS PELEAS COMENZARON!',
-            body: 'Las peleas estelares están en curso ahora mismo.\n\nSi ya tienes tu ticket, entra a tu cuenta ahora. Si aún no lo tienes, ¡todavía puedes comprar el pase y no perderte ni un solo nocaut!',
-            buttonText: 'VER TRANSMISIÓN EN VIVO',
-            buttonUrl: 'https://arenafightpass.com/events',
-            couponCode: '',
-            footerNote: '',
-        }
-    },
-    {
-        name: 'Código Descuento',
-        emoji: '🎁',
-        subject: '🎁 Tienes un descuento exclusivo para tu próximo PPV',
-        fields: {
-            title: '¡Un regalo para los verdaderos fans!',
-            body: 'Queremos agradecerte por ser parte de la comunidad. Usa este código especial para obtener un descuento en el próximo evento.',
-            buttonText: 'CANJEAR DESCUENTO',
-            buttonUrl: 'https://arenafightpass.com/events',
-            couponCode: 'FIGHT20',
-            footerNote: '*Válido para los primeros 50 tickets o hasta el [FECHA LÍMITE].',
-        }
-    },
-    {
-        name: 'Noticias / Update',
-        emoji: '🚀',
-        subject: '🚀 Novedades en Arena Fight Pass que te van a encantar',
-        fields: {
-            title: '¡Seguimos mejorando para ti!',
-            body: 'Hola, hemos estado trabajando para traerte la mejor experiencia de streaming de combate.\n\n✅ Transmisiones más rápidas y estables\n✅ Nuevos eventos disponibles\n✅ Mejor experiencia en móvil',
-            buttonText: 'EXPLORAR LA PLATAFORMA',
-            buttonUrl: 'https://arenafightpass.com',
-            couponCode: '',
-            footerNote: '',
-        }
-    },
-];
-
-function buildHtml(fields: EmailFields, logoUrl: string | null | undefined, brandName: string): string {
-    const logoBlock = logoUrl
-        ? `<div style="text-align:center;margin-bottom:24px;"><img src="${logoUrl}" alt="${brandName}" style="max-height:55px;max-width:200px;object-fit:contain;" /></div>`
-        : '';
-
-    const couponBlock = fields.couponCode
-        ? `<div style="background:#111;color:#ef4444;font-size:26px;font-weight:900;letter-spacing:4px;padding:16px;margin:28px auto;max-width:240px;border-radius:8px;text-align:center;border:1px dashed #ef4444;">${fields.couponCode}</div>`
-        : '';
-
-    const buttonBlock = fields.buttonText && fields.buttonUrl
-        ? `<div style="text-align:center;margin:32px 0;">
-            <a href="${fields.buttonUrl}" style="display:inline-block;background-color:#ef4444;color:#fff;padding:16px 40px;text-decoration:none;border-radius:8px;font-weight:900;font-size:15px;text-transform:uppercase;letter-spacing:1px;">${fields.buttonText}</a>
-           </div>`
-        : '';
-
-    const footerNote = fields.footerNote
-        ? `<p style="font-size:12px;color:#444;text-align:center;margin-top:24px;">${fields.footerNote}</p>`
-        : '';
-
-    const bodyHtml = fields.body
-        .split('\n')
-        .map(line => line.trim() === '' ? '<br/>' : `<p style="margin:0 0 12px 0;">${line}</p>`)
-        .join('');
-
-    return `
-<div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;background:#0a0a0a;border:1px solid #222;border-radius:14px;overflow:hidden;">
-  <div style="background:#ef4444;padding:28px;text-align:center;">
-    ${logoBlock}
-    <h1 style="margin:0;font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:2px;color:#fff;">${fields.title}</h1>
-  </div>
-  <div style="padding:36px 32px;color:#ccc;font-size:16px;line-height:1.7;">
-    ${bodyHtml}
-    ${couponBlock}
-    ${buttonBlock}
-    ${footerNote}
-  </div>
-  <div style="padding:18px;text-align:center;background:#000;border-top:1px solid #111;">
-    <p style="margin:0;color:#333;font-size:12px;">&copy; ${new Date().getFullYear()} ${brandName}. Todos los derechos reservados.</p>
-  </div>
-</div>`.trim();
-}
 
 export default function AdminMarketingPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [recipientType, setRecipientType] = useState('all');
     const [specificEmail, setSpecificEmail] = useState('');
     const [subject, setSubject] = useState('');
-    const [showPreview, setShowPreview] = useState(false);
-    const [fields, setFields] = useState<EmailFields>({
-        title: '',
-        body: '',
-        buttonText: '',
-        buttonUrl: '',
-        couponCode: '',
-        footerNote: '',
-    });
-
+    const [body, setBody] = useState('');
     const { settings } = useSettingsStore();
-    const brandName = settings?.site_name || 'Arena Fight Pass';
 
-    const applyTemplate = (tpl: typeof TEMPLATES[0]) => {
-        setSubject(tpl.subject);
-        setFields(tpl.fields);
-        setShowPreview(false);
-        toast.success(`Plantilla "${tpl.name}" aplicada`);
+    const logoHtml = settings?.site_logo
+        ? `<div style="text-align: center; margin-bottom: 25px;"><img src="${settings.site_logo}" alt="Logo" style="max-height: 60px; max-width: 200px; height: auto;" /></div>\n`
+        : '';
+
+    const templates = [
+        {
+            name: 'Anuncio Nuevo Evento',
+            subject: '🔥 ¡NUEVO EVENTO CONFIRMADO! No te pierdas la pelea del año',
+            body: `<div style="text-align: center; padding: 20px; background-color: #111; border-radius: 10px; border: 1px solid #333;">
+    <h1 style="color: #ef4444; margin-bottom: 5px; text-transform: uppercase;">¡LA ESPERA TERMINÓ!</h1>
+    <h2 style="color: #fff; margin-top: 0;">[NOMBRE DEL EVENTO V.S NOMBRE]</h2>
+    
+    <p style="color: #aaa; font-size: 16px; line-height: 1.6;">
+        Prepárate para la noche más explosiva del año. Los mejores peleadores entran a la jaula y tú puedes vivirlo en primera fila desde cualquier dispositivo.
+    </p>
+
+    <div style="margin: 30px 0;">
+        <p style="color: #fff; font-size: 18px; margin: 5px 0;">📅 <strong>Fecha:</strong> [Fecha del evento]</p>
+        <p style="color: #fff; font-size: 18px; margin: 5px 0;">⏰ <strong>Hora:</strong> [Hora exacta]</p>
+    </div>
+
+    <a href="https://arenafightpass.com/events" style="display: inline-block; background-color: #ef4444; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 18px; text-transform: uppercase;">
+        COMPRAR TICKET PPV AHORA
+    </a>
+</div>`
+        },
+        {
+            name: 'Estamos en Vivo',
+            subject: '🔴 ¡ESTAMOS EN VIVO! Entra ahora a la transmisión',
+            body: `<div style="text-align: center; padding: 30px 20px;">
+    <div style="display: inline-block; background-color: #ef4444; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; margin-bottom: 20px;">
+        ◉ EN DIRECTO
+    </div>
+    
+    <h2 style="color: #111; font-size: 24px;">Las peleas estelares están a punto de comenzar</h2>
+    
+    <p style="color: #444; font-size: 16px; margin-bottom: 30px;">
+        Si ya tienes tu ticket, ingresa a tu cuenta ahora mismo. Si aún no lo tienes, ¡todavía estás a tiempo de comprar el pase y no perderte ni un solo nocaut!
+    </p>
+
+    <a href="https://arenafightpass.com/watch/[ID_DEL_EVENTO]" style="display: inline-block; background-color: #111; color: #fff; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
+        IR A LA TRANSMISIÓN
+    </a>
+</div>`
+        },
+        {
+            name: 'Descuento / Pase',
+            subject: '🎁 Tienes un 20% de descuento para tu próximo PPV',
+            body: `<div style="border: 2px dashed #ef4444; padding: 30px; text-align: center; background-color: #fcfcfc; border-radius: 10px;">
+    <h2 style="color: #111; margin-top: 0;">¡Un regalo para los verdaderos fans del combate!</h2>
+    
+    <p style="color: #333; font-size: 16px;">
+        Queremos agradecerte por ser parte de la comunidad de Arena Fight Pass. Usa este código especial para obtener un <strong>20% de descuento</strong> en el próximo evento de la cartelera.
+    </p>
+
+    <div style="background-color: #111; color: #ef4444; font-size: 28px; font-weight: 900; letter-spacing: 3px; padding: 15px; margin: 25px auto; max-width: 250px; border-radius: 5px;">
+        FIGHT20
+    </div>
+
+    <p style="color: #666; font-size: 12px;">*Válido únicamente para los primeros 50 tickets o hasta el [FECHA LÍMITE].</p>
+
+    <br>
+    <a href="https://arenafightpass.com/events" style="display: inline-block; background-color: #ef4444; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+        CANJEAR CÓDIGO AHORA
+    </a>
+</div>`
+        },
+        {
+            name: 'Actualización App',
+            subject: '🚀 ¡Nuevas funciones increíbles en Arena Fight Pass!',
+            body: `<div style="padding: 20px;">
+    <h2 style="color: #111;">¡Seguimos mejorando para ti!</h2>
+    
+    <p style="color: #444; font-size: 16px;">
+        Hola, luchador. Hemos estado trabajando duro para traerte la mejor experiencia de streaming de deportes de combate en Latinoamérica.
+    </p>
+    
+    <h3 style="color: #ef4444;">¿Qué hay de nuevo?</h3>
+    <ul style="color: #444; font-size: 15px; line-height: 1.8;">
+        <li>✅ <strong>Transmisiones más rápidas:</strong> Ahora con tecnología Cloudflare para cero interrupciones.</li>
+        <li>✅ <strong>Eventos Gratuitos:</strong> Disfruta de la nueva sección "Re-prise" con combates legendarios sin costo.</li>
+        <li>✅ <strong>Mejor reproductor:</strong> Cambia la calidad, pausa y retrocede con nuestro nuevo sistema.</li>
+    </ul>
+
+    <p style="color: #444; font-size: 16px; margin-top: 25px;">
+        Entra ahora y descubre todas las novedades.
+    </p>
+
+    <a href="https://arenafightpass.com" style="display: inline-block; background-color: #111; color: #fff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+        EXPLORAR PLATAFORMA
+    </a>
+</div>`
+        }
+    ];
+
+    const applyTemplate = (template: any) => {
+        setSubject(template.subject);
+        setBody(template.body);
+        toast.success(`Plantilla "${template.name}" aplicada`);
     };
-
-    const previewHtml = buildHtml(fields, settings?.site_logo, brandName);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!subject.trim() || !fields.title.trim() || !fields.body.trim()) {
-            toast.error('El asunto, título y mensaje son obligatorios');
+        if (!subject.trim() || !body.trim()) {
+            toast.error('El asunto y el mensaje son obligatorios');
             return;
         }
 
-        if (recipientType === 'specific' && (!specificEmail.trim() || !specificEmail.includes('@'))) {
-            toast.error('Ingresa un correo electrónico válido');
-            return;
+        if (recipientType === 'specific') {
+            if (!specificEmail.trim() || !specificEmail.includes('@')) {
+                toast.error('Por favor ingresa un correo electrónico válido');
+                return;
+            }
         }
 
-        const target = recipientType === 'specific'
-            ? specificEmail
-            : recipientType === 'all' ? 'TODOS los usuarios' : `usuarios con rol: ${recipientType}`;
+        const confirmMessage = recipientType === 'specific'
+            ? `¿Estás seguro de enviar este correo a ${specificEmail}?`
+            : recipientType === 'all'
+                ? '¿Estás seguro de enviar este correo a TODOS los usuarios registrados?'
+                : `¿Estás seguro de enviar este correo a los usuarios con rol: ${recipientType}?`;
 
-        if (!confirm(`¿Enviar este correo a ${target}?`)) return;
+        if (!confirm(confirmMessage)) {
+            return;
+        }
 
         setIsSubmitting(true);
+
         try {
-            await adminAPI.sendMassEmail({
+            // Only inject <br> tags if the user is sending plain text.
+            const isHtml = /<[a-z][\s\S]*>/i.test(body);
+            const formattedBody = isHtml ? body : body.replace(/\n/g, '<br>');
+
+            // Automatically inject logo if not present
+            const bodyHasLogo = body.includes('<img');
+            const finalLogo = (!bodyHasLogo && settings?.site_logo)
+                ? `<div style="text-align: center; margin-bottom: 25px;"><img src="${settings.site_logo}" alt="Logo" style="max-height: 60px; max-width: 200px; height: auto;" /></div>\n`
+                : '';
+
+            const htmlMessage = `
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0a0a0a; border: 1px solid #222; border-radius: 12px; padding: 30px;">
+                    ${finalLogo}
+                    <div style="color: #e5e5e5; font-size: 16px; line-height: 1.6;">
+                        ${formattedBody}
+                    </div>
+                </div>
+            `;
+
+            const response = await adminAPI.sendMassEmail({
                 subject,
-                body: previewHtml,
+                body: htmlMessage,
                 role: recipientType,
-                specificEmail: recipientType === 'specific' ? specificEmail : undefined,
+                specificEmail: recipientType === 'specific' ? specificEmail : undefined
             });
-            toast.success('¡Correos enviados correctamente!');
+
+            toast.success(response.data.message || 'Proceso de envío iniciado');
             setSubject('');
-            setFields({ title: '', body: '', buttonText: '', buttonUrl: '', couponCode: '', footerNote: '' });
+            setBody('');
         } catch (error) {
-            toast.error(handleAPIError(error) || 'Error al enviar los correos');
+            const message = handleAPIError(error);
+            toast.error(message || 'Error al enviar los correos');
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const f = (key: keyof EmailFields) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-        setFields(prev => ({ ...prev, [key]: e.target.value }));
-
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             <div>
-                <h1 className="text-3xl font-bold text-white mb-2">Email Marketing</h1>
-                <p className="text-gray-400">Envía correos a los usuarios de la plataforma</p>
+                <h1 className="text-3xl font-bold text-white mb-2">Email Marketing & Anuncios</h1>
+                <p className="text-gray-400">Envía correos masivos a los usuarios de la plataforma</p>
             </div>
 
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-blue-300">
-                    Elige una plantilla o redacta tu mensaje. El logo y diseño se aplican automáticamente — no necesitas saber HTML.
-                </p>
+                <div>
+                    <h3 className="text-blue-400 font-medium mb-1">Información sobre el envío</h3>
+                    <p className="text-sm text-blue-300">
+                        Los correos se envían en segundo plano para no bloquear el panel. Dependiendo de la cantidad de usuarios, el proceso puede tardar unos minutos en completarse a través del servicio SMTP.
+                    </p>
+                </div>
             </div>
 
-            {/* Plantillas */}
+            {/* Quick Templates */}
             <div>
-                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Plantillas rápidas</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {TEMPLATES.map((tpl) => (
+                <h3 className="text-lg font-medium text-white mb-3">Plantillas Rápidas</h3>
+                <div className="flex flex-wrap gap-2">
+                    {templates.map((template, index) => (
                         <button
-                            key={tpl.name}
-                            onClick={() => applyTemplate(tpl)}
-                            className="flex flex-col items-center gap-2 p-4 bg-dark-800 hover:bg-dark-700 border border-dark-600 hover:border-primary-500/50 rounded-xl text-sm font-medium text-gray-300 hover:text-white transition-all"
+                            key={index}
+                            onClick={() => applyTemplate(template)}
+                            className="bg-dark-800 hover:bg-dark-700 border border-dark-600 text-gray-300 px-4 py-2 rounded-lg text-sm transition-colors"
                         >
-                            <span className="text-2xl">{tpl.emoji}</span>
-                            <span>{tpl.name}</span>
+                            {template.name}
                         </button>
                     ))}
+                    <button
+                        onClick={() => { setSubject(''); setBody(''); toast.success('Formulario limpiado'); }}
+                        className="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-lg text-sm transition-colors border border-red-500/20 ml-auto"
+                    >
+                        Limpiar Todo
+                    </button>
                 </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Destinatarios */}
-                <div className="card p-6">
-                    <h2 className="text-base font-semibold text-white mb-4">Destinatarios</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {[
-                            { value: 'all', label: 'Todos', icon: Users, color: 'primary' },
-                            { value: 'promoter', label: 'Promotoras', icon: Shield, color: 'purple' },
-                            { value: 'user', label: 'Usuarios', icon: UserIcon, color: 'green' },
-                            { value: 'specific', label: 'Correo específico', icon: Mail, color: 'orange' },
-                        ].map(({ value, label, icon: Icon, color }) => (
-                            <label key={value}
-                                className={`flex items-center gap-2 p-3 border rounded-xl cursor-pointer transition-all ${recipientType === value ? `border-${color}-500 bg-${color}-500/10 text-white` : 'border-dark-700 bg-dark-800 text-gray-400 hover:border-dark-600'}`}>
-                                <input type="radio" name="recipientType" value={value}
-                                    checked={recipientType === value}
+            <form onSubmit={handleSubmit} className="card p-6 space-y-6">
+                <div>
+                    <h2 className="text-xl font-semibold text-white mb-4">Redactar Mensaje</h2>
+
+                    <div className="mb-6">
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Destinatarios
+                        </label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                            <label className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${recipientType === 'all' ? 'border-primary-500 bg-primary-500/10' : 'border-dark-700 bg-dark-800 hover:border-dark-600'}`}>
+                                <input
+                                    type="radio"
+                                    name="recipientType"
+                                    value="all"
+                                    checked={recipientType === 'all'}
                                     onChange={(e) => setRecipientType(e.target.value)}
-                                    className="sr-only" />
-                                <Icon className="w-4 h-4 flex-shrink-0" />
-                                <span className="text-sm font-medium">{label}</span>
+                                    className="sr-only"
+                                />
+                                <Users className={`w-5 h-5 mr-3 ${recipientType === 'all' ? 'text-primary-500' : 'text-gray-500'}`} />
+                                <div>
+                                    <div className={`font-medium ${recipientType === 'all' ? 'text-white' : 'text-gray-300'}`}>Todos los Usuarios</div>
+                                </div>
                             </label>
-                        ))}
+
+                            <label className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${recipientType === 'promoter' ? 'border-purple-500 bg-purple-500/10' : 'border-dark-700 bg-dark-800 hover:border-dark-600'}`}>
+                                <input
+                                    type="radio"
+                                    name="recipientType"
+                                    value="promoter"
+                                    checked={recipientType === 'promoter'}
+                                    onChange={(e) => setRecipientType(e.target.value)}
+                                    className="sr-only"
+                                />
+                                <Shield className={`w-5 h-5 mr-3 ${recipientType === 'promoter' ? 'text-purple-500' : 'text-gray-500'}`} />
+                                <div>
+                                    <div className={`font-medium ${recipientType === 'promoter' ? 'text-white' : 'text-gray-300'}`}>Promotoras</div>
+                                </div>
+                            </label>
+
+                            <label className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${recipientType === 'user' ? 'border-green-500 bg-green-500/10' : 'border-dark-700 bg-dark-800 hover:border-dark-600'}`}>
+                                <input
+                                    type="radio"
+                                    name="recipientType"
+                                    value="user"
+                                    checked={recipientType === 'user'}
+                                    onChange={(e) => setRecipientType(e.target.value)}
+                                    className="sr-only"
+                                />
+                                <UserIcon className={`w-5 h-5 mr-3 ${recipientType === 'user' ? 'text-green-500' : 'text-gray-500'}`} />
+                                <div>
+                                    <div className={`font-medium ${recipientType === 'user' ? 'text-white' : 'text-gray-300'}`}>Usuarios Normales</div>
+                                </div>
+                            </label>
+
+                            <label className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${recipientType === 'specific' ? 'border-orange-500 bg-orange-500/10' : 'border-dark-700 bg-dark-800 hover:border-dark-600'}`}>
+                                <input
+                                    type="radio"
+                                    name="recipientType"
+                                    value="specific"
+                                    checked={recipientType === 'specific'}
+                                    onChange={(e) => setRecipientType(e.target.value)}
+                                    className="sr-only"
+                                />
+                                <Mail className={`w-5 h-5 mr-3 ${recipientType === 'specific' ? 'text-orange-500' : 'text-gray-500'}`} />
+                                <div>
+                                    <div className={`font-medium ${recipientType === 'specific' ? 'text-white' : 'text-gray-300'}`}>Correo Específico</div>
+                                </div>
+                            </label>
+                        </div>
+
+                        {recipientType === 'specific' && (
+                            <div className="mt-4 animate-fade-in bg-dark-800 p-4 border border-dark-700 rounded-lg max-w-xl">
+                                <label htmlFor="specificEmail" className="block text-sm font-medium text-gray-300 mb-1">
+                                    Dirección de Correo Destino
+                                </label>
+                                <input
+                                    id="specificEmail"
+                                    type="email"
+                                    value={specificEmail}
+                                    onChange={(e) => setSpecificEmail(e.target.value)}
+                                    placeholder="ejemplo@correo.com"
+                                    className="input w-full"
+                                />
+                                <p className="text-xs text-orange-400 mt-2">
+                                    El mensaje solo se enviará a esta cuenta. Útil para hacer pruebas antes de enviar a todos.
+                                </p>
+                            </div>
+                        )}
                     </div>
-                    {recipientType === 'specific' && (
-                        <input type="email" value={specificEmail}
-                            onChange={(e) => setSpecificEmail(e.target.value)}
-                            placeholder="correo@ejemplo.com"
-                            className="input w-full mt-4 max-w-sm" />
-                    )}
+
+                    <div className="space-y-4">
+                        <div>
+                            <label htmlFor="subject" className="block text-sm font-medium text-gray-300 mb-1">
+                                Asunto del Correo
+                            </label>
+                            <input
+                                id="subject"
+                                type="text"
+                                required
+                                value={subject}
+                                onChange={(e) => setSubject(e.target.value)}
+                                placeholder="Ej: ¡Nuevo Evento de PPV Oficial Disponible!"
+                                className="input w-full"
+                            />
+                        </div>
+
+                        <div>
+                            <label htmlFor="body" className="block text-sm font-medium text-gray-300 mb-1">
+                                Mensaje (Cuerpo del correo)
+                            </label>
+                            <textarea
+                                id="body"
+                                required
+                                value={body}
+                                onChange={(e) => setBody(e.target.value)}
+                                placeholder="Escribe tu mensaje aquí..."
+                                className="input w-full min-h-[300px] resize-y"
+                            />
+                            <p className="text-xs text-gray-500 mt-2">
+                                Nota: Puedes escribir texto normal y se enviará con el logo de tu plataforma y tema oscuro automáticamente. Si pegas código HTML, se respetará tu diseño.
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Redactar */}
-                <div className="card p-6 space-y-5">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-base font-semibold text-white">Redactar mensaje</h2>
-                        <button type="button" onClick={() => setShowPreview(!showPreview)}
-                            className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
-                            {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            {showPreview ? 'Ocultar vista previa' : 'Ver vista previa'}
-                        </button>
-                    </div>
-
-                    {/* Asunto */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Asunto del correo <span className="text-red-400">*</span></label>
-                        <input type="text" required value={subject} onChange={(e) => setSubject(e.target.value)}
-                            placeholder="Ej: ¡Nuevo evento disponible esta noche!"
-                            className="input w-full" />
-                    </div>
-
-                    {/* Título */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Título del correo <span className="text-red-400">*</span></label>
-                        <input type="text" required value={fields.title} onChange={f('title')}
-                            placeholder="Ej: ¡LA PELEA DEL AÑO!"
-                            className="input w-full" />
-                        <p className="text-xs text-gray-500 mt-1">Aparece en la cabecera roja en mayúsculas.</p>
-                    </div>
-
-                    {/* Mensaje */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Mensaje <span className="text-red-400">*</span></label>
-                        <textarea required value={fields.body} onChange={f('body')}
-                            placeholder="Escribe el cuerpo del correo aquí. Puedes usar emojis y saltos de línea."
-                            className="input w-full min-h-[140px] resize-y" />
-                    </div>
-
-                    {/* Botón CTA (opcional) */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-dark-800/50 rounded-xl border border-dark-700">
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Texto del botón <span className="text-gray-500">(opcional)</span></label>
-                            <input type="text" value={fields.buttonText} onChange={f('buttonText')}
-                                placeholder="Ej: COMPRAR TICKET" className="input w-full text-sm" />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">URL del botón</label>
-                            <input type="url" value={fields.buttonUrl} onChange={f('buttonUrl')}
-                                placeholder="https://arenafightpass.com/events"
-                                className="input w-full text-sm" />
-                        </div>
-                    </div>
-
-                    {/* Código descuento (opcional) */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-dark-800/50 rounded-xl border border-dark-700">
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Código de descuento <span className="text-gray-500">(opcional)</span></label>
-                            <input type="text" value={fields.couponCode} onChange={f('couponCode')}
-                                placeholder="Ej: FIGHT20"
-                                className="input w-full font-mono tracking-widest text-yellow-400" />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Nota al pie</label>
-                            <input type="text" value={fields.footerNote} onChange={f('footerNote')}
-                                placeholder="Ej: Válido hasta el 30/04"
-                                className="input w-full text-sm" />
-                        </div>
-                    </div>
-
-                    {/* Vista previa */}
-                    {showPreview && (
-                        <div>
-                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Vista previa del correo</p>
-                            <div className="rounded-xl overflow-hidden border border-dark-700 bg-white"
-                                dangerouslySetInnerHTML={{ __html: previewHtml }} />
-                        </div>
-                    )}
-                </div>
-
-                <div className="flex justify-end">
-                    <button type="submit" disabled={isSubmitting || !subject.trim() || !fields.title.trim() || !fields.body.trim()}
-                        className="btn btn-primary px-8 flex items-center gap-2 min-w-[200px] justify-center">
+                <div className="flex justify-end pt-4 border-t border-dark-800">
+                    <button
+                        type="submit"
+                        disabled={isSubmitting || !subject.trim() || !body.trim()}
+                        className="btn btn-primary px-8 flex items-center justify-center min-w-[200px]"
+                    >
                         {isSubmitting ? (
-                            <><div className="spinner w-5 h-5 border-2 border-white/20 border-t-white" /> Enviando...</>
+                            <>
+                                <div className="spinner w-5 h-5 mr-3 border-2 border-white/20 border-t-white" />
+                                Enviando Correos...
+                            </>
                         ) : (
-                            <><Send className="w-5 h-5" /> Enviar correo masivo</>
+                            <>
+                                <Send className="w-5 h-5 mr-2" />
+                                Enviar Mensaje Masivo
+                            </>
                         )}
                     </button>
                 </div>

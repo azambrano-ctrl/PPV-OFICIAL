@@ -269,7 +269,7 @@ export const createEmailVerificationToken = async (userId: string): Promise<stri
     await query('DELETE FROM email_verification_tokens WHERE user_id = $1', [userId]);
 
     const token = crypto.randomBytes(32).toString('hex');
-    const expires = new Date(Date.now() + 7 * 24 * 3600000); // 7 days
+    const expires = new Date(Date.now() + 24 * 3600000); // 24 hours
 
     await query(
         'INSERT INTO email_verification_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)',
@@ -283,12 +283,11 @@ export const createEmailVerificationToken = async (userId: string): Promise<stri
  * Verify email token
  */
 export const verifyEmailToken = async (token: string): Promise<void> => {
-    // Look up token regardless of expiry, joining with user to check is_verified
+    // Find valid token
     const result = await query(
-        `SELECT evt.*, u.is_verified
-         FROM email_verification_tokens evt
-         JOIN users u ON u.id = evt.user_id
-         WHERE evt.token = $1`,
+        `SELECT * FROM email_verification_tokens 
+         WHERE token = $1 
+         AND expires_at > NOW()`,
         [token]
     );
 
@@ -296,17 +295,6 @@ export const verifyEmailToken = async (token: string): Promise<void> => {
 
     if (!tokenRecord) {
         throw new Error('Invalid or expired verification token');
-    }
-
-    // If account is already verified (e.g. admin did it manually), treat as success
-    if (tokenRecord.is_verified) {
-        await query('DELETE FROM email_verification_tokens WHERE id = $1', [tokenRecord.id]);
-        return;
-    }
-
-    // Now check expiry for unverified accounts
-    if (new Date(tokenRecord.expires_at) < new Date()) {
-        throw new Error('El enlace de verificación ha expirado. Por favor, solicita un nuevo enlace desde tu perfil.');
     }
 
     // Mark user as verified

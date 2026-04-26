@@ -5,35 +5,20 @@ dotenv.config();
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production'
-        ? { rejectUnauthorized: process.env.DATABASE_SSL_CERT ? true : false,
-            ca: process.env.DATABASE_SSL_CERT || undefined }
-        : false,
-    // Conservative pool for 512MB Render free tier
-    max: process.env.NODE_ENV === 'production' ? 5 : 10,
-    min: 1,
-    idleTimeoutMillis: 15000,       // Reclaim idle connections faster
-    connectionTimeoutMillis: 3000,  // Fail fast instead of queuing forever
-    statement_timeout: 15000,       // Kill stuck queries after 15s
-    application_name: 'ppv-backend',
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000,
 });
 
+// Test connection on startup
 pool.on('connect', () => {
-    console.log('✅ Database connected');
+    console.log('✅ Database connected successfully');
 });
 
 pool.on('error', (err: any) => {
-    console.error('❌ Unexpected database pool error:', err);
-});
-
-// Log pool exhaustion warnings
-pool.on('acquire', () => {
-    const total = pool.totalCount;
-    const idle = pool.idleCount;
-    const waiting = pool.waitingCount;
-    if (waiting > 2) {
-        console.warn(`⚠️ DB pool pressure: total=${total} idle=${idle} waiting=${waiting}`);
-    }
+    console.error('❌ Unexpected database error on idle client:', err);
+    // Don't exit process, let the pool handle reconnection or other clients continue
 });
 
 /**

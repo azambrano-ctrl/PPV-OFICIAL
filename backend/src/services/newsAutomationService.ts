@@ -77,10 +77,9 @@ export class NewsAutomationService {
         try {
             const response = await axios.get(feedConfig.url, {
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (compatible; ArenaFightPass/1.0)',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
                 },
-                timeout: 10000,                      // 10s instead of 30s
-                maxContentLength: 5 * 1024 * 1024,  // 5MB max to avoid RAM spikes
+                timeout: 30000
             });
             const feed = await parser.parseString(response.data);
             logger.info(`[NewsAutomation] Fetching feed: ${feedConfig.name} (${feed.items.length} items)`);
@@ -114,13 +113,10 @@ export class NewsAutomationService {
                         thumbnail_url = (item as any).mediaThumbnail.$.url;
                     }
 
-                    // Fallback to OG Image — with 5s timeout to avoid blocking the loop
+                    // Fallback to OG Image
                     if (!thumbnail_url && link) {
                         logger.debug(`[NewsAutomation] Image missing for "${title}", trying OG fallback...`);
-                        thumbnail_url = await Promise.race([
-                            fetchOGImage(link),
-                            new Promise<string>(resolve => setTimeout(() => resolve(''), 5000))
-                        ]);
+                        thumbnail_url = await fetchOGImage(link);
                     }
 
                     // Cleanup image URL
