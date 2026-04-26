@@ -46,7 +46,9 @@ api.interceptors.response.use(
         // If error is 401 and we haven't retried yet
         const errorCode = (error.response?.data as any)?.code;
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        const isAuthEndpoint = originalRequest?.url?.includes('/auth/login') || originalRequest?.url?.includes('/auth/register');
+
+        if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
             // Break loop immediately for session conflicts or missing session IDs
             if (errorCode === 'SESSION_INVALID' || errorCode === 'SESSION_CONFLICT') {
                 if (typeof window !== 'undefined') {
