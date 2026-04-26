@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Edit, Trash2, Globe, Users, CheckCircle, Shield, Phone, MapPin } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Globe, Users, CheckCircle, Shield, Phone, MapPin, FileText } from 'lucide-react';
 import { promotersAPI, handleAPIError } from '@/lib/api';
 import { getImageUrl } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -249,6 +249,14 @@ export default function AdminPromotersPage() {
                                                 <Plus className="w-4 h-4" />
                                             </button>
                                         )}
+                                        <Link
+                                            href={`/admin/contract/${promoter.id}`}
+                                            target="_blank"
+                                            className="p-2 hover:bg-dark-700 rounded-lg transition-colors text-green-400"
+                                            title="Ver / Descargar Contrato"
+                                        >
+                                            <FileText className="w-4 h-4" />
+                                        </Link>
                                         <Link
                                             href={`/admin/promoters/${promoter.id}/edit`}
                                             className="p-2 hover:bg-dark-700 rounded-lg transition-colors text-blue-400"
