@@ -1,5 +1,6 @@
 import { Router, Response } from 'express';
 import axios from 'axios';
+import bcrypt from 'bcryptjs';
 import { asyncHandler } from '../middleware/errorHandler';
 import { authenticate, requireAdmin, AuthRequest } from '../middleware/auth';
 import pool from '../config/database';
@@ -1230,6 +1231,67 @@ router.post(
             success: true,
             message: `Acceso otorgado a "${event.title}"`,
         });
+    })
+);
+
+/**
+ * POST /api/admin/promoters/create-account
+ * Create a fully linked promoter + user account in one step (Admin only)
+ */
+router.post(
+    '/promoters/create-account',
+    authenticate,
+    requireAdmin,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { name, email, password } = req.body;
+
+        if (!name || !email || !password) {
+            res.status(400).json({ success: false, message: 'name, email y password son requeridos' });
+            return;
+        }
+
+        // Check email not taken
+        const existing = await pool.query('SELECT id FROM users WHERE LOWER(email) = LOWER($1)', [email]);
+        if (existing.rows.length > 0) {
+            res.status(400).json({ success: false, message: 'El correo ya está registrado' });
+            return;
+        }
+
+        const password_hash = await bcrypt.hash(password, 10);
+        const slug = name.toLowerCase().replace(/[^\w\s]/gi, '').replace(/\s+/g, '-') + '-' + Date.now();
+
+        // Transaction: create promoter + user linked together
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            const promoterRes = await client.query(
+                `INSERT INTO promoters (name, slug, status) VALUES ($1, $2, 'active') RETURNING id`,
+                [name, slug]
+            );
+            const promoterId = promoterRes.rows[0].id;
+
+            const userRes = await client.query(
+                `INSERT INTO users (email, password_hash, full_name, role, promoter_id, is_verified)
+                 VALUES ($1, $2, $3, 'promoter', $4, true) RETURNING id, email, full_name`,
+                [email, password_hash, name, promoterId]
+            );
+
+            await client.query('COMMIT');
+
+            logger.info('[Admin] Promoter account created', { email, promoterId });
+
+            res.status(201).json({
+                success: true,
+                message: 'Cuenta de promotora creada',
+                data: { user: userRes.rows[0], promoterId },
+            });
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
     })
 );
 

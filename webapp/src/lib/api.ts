@@ -291,6 +291,9 @@ export const adminAPI = {
     testEmail: (to?: string) =>
         api.post('/admin/test-email', { to }),
 
+    createPromoterAccount: (data: { name: string; email: string; password: string }) =>
+        api.post('/admin/promoters/create-account', data),
+
     grantEventAccess: (userId: string, eventId: string) =>
         api.post('/admin/grant-access', { userId, eventId }),
 
