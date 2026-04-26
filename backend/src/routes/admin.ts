@@ -1295,4 +1295,68 @@ router.post(
     })
 );
 
+/**
+ * POST /api/admin/users/:userId/make-promoter
+ * Upgrade an existing user to promoter role and create/link a promoter profile (Admin only)
+ */
+router.post(
+    '/users/:userId/make-promoter',
+    authenticate,
+    requireAdmin,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { userId } = req.params;
+        const { promoterName } = req.body;
+
+        if (!promoterName) {
+            res.status(400).json({ success: false, message: 'promoterName es requerido' });
+            return;
+        }
+
+        const userRes = await pool.query('SELECT id, email, full_name, role, promoter_id FROM users WHERE id = $1', [userId]);
+        if (userRes.rows.length === 0) {
+            res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+            return;
+        }
+
+        const user = userRes.rows[0];
+        if (user.promoter_id) {
+            res.status(400).json({ success: false, message: 'El usuario ya está vinculado a una promotora' });
+            return;
+        }
+
+        const slug = promoterName.toLowerCase().replace(/[^\w\s]/gi, '').replace(/\s+/g, '-') + '-' + Date.now();
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            const promoterRes = await client.query(
+                `INSERT INTO promoters (name, slug, status) VALUES ($1, $2, 'active') RETURNING id`,
+                [promoterName, slug]
+            );
+            const promoterId = promoterRes.rows[0].id;
+
+            await client.query(
+                `UPDATE users SET role = 'promoter', promoter_id = $1 WHERE id = $2`,
+                [promoterId, userId]
+            );
+
+            await client.query('COMMIT');
+
+            logger.info('[Admin] User upgraded to promoter', { userId, email: user.email, promoterId });
+
+            res.json({
+                success: true,
+                message: 'Usuario convertido a promotora exitosamente',
+                data: { promoterId, promoterName, userId },
+            });
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    })
+);
+
 export default router;

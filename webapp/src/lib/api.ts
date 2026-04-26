@@ -317,6 +317,9 @@ export const adminAPI = {
 
     grantAccessByPurchase: (purchaseId: string) =>
         api.post(`/admin/purchases/${purchaseId}/grant-access`),
+
+    makePromoter: (userId: string, promoterName: string) =>
+        api.post(`/admin/users/${userId}/make-promoter`, { promoterName }),
 };
 
 export const newsletterAPI = {

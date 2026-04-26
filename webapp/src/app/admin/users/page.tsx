@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Search, Filter, UserCheck, UserX, Shield, User as UserIcon, Trash2, MailCheck, MailWarning, Send, KeyRound, Ticket, X } from 'lucide-react';
+import { Search, Filter, UserCheck, UserX, Shield, User as UserIcon, Trash2, MailCheck, MailWarning, Send, KeyRound, Ticket, X, Megaphone } from 'lucide-react';
 import { authAPI, adminAPI, eventsAPI, handleAPIError } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -48,6 +48,9 @@ export default function AdminUsersPage() {
     const [loadingPurchases, setLoadingPurchases] = useState(false);
     const [selectedEventId, setSelectedEventId] = useState('');
     const [granting, setGranting] = useState(false);
+    const [makePromoterModal, setMakePromoterModal] = useState<{ user: User } | null>(null);
+    const [promoterName, setPromoterName] = useState('');
+    const [makingPromoter, setMakingPromoter] = useState(false);
 
     useEffect(() => {
         loadUsers();
@@ -173,6 +176,22 @@ export default function AdminUsersPage() {
             toast.success(`Email de reset enviado a ${user.email}`);
         } catch (error) {
             toast.error(handleAPIError(error));
+        }
+    };
+
+    const handleMakePromoter = async () => {
+        if (!makePromoterModal || !promoterName.trim()) return;
+        setMakingPromoter(true);
+        try {
+            await adminAPI.makePromoter(makePromoterModal.user.id, promoterName.trim());
+            toast.success(`${makePromoterModal.user.full_name} ahora es promotora: "${promoterName.trim()}"`);
+            setMakePromoterModal(null);
+            setPromoterName('');
+            loadUsers();
+        } catch (error) {
+            toast.error(handleAPIError(error));
+        } finally {
+            setMakingPromoter(false);
         }
     };
 
@@ -385,13 +404,23 @@ export default function AdminUsersPage() {
                                                     </button>
                                                 )}
                                                 {user.role === 'user' ? (
-                                                    <button
-                                                        onClick={() => handleRoleChange(user.id, 'admin')}
-                                                        className="btn btn-sm bg-red-600 hover:bg-red-700 text-white"
-                                                    >
-                                                        <Shield className="w-4 h-4 mr-1" />
-                                                        Hacer Admin
-                                                    </button>
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleRoleChange(user.id, 'admin')}
+                                                            className="btn btn-sm bg-red-600 hover:bg-red-700 text-white"
+                                                        >
+                                                            <Shield className="w-4 h-4 mr-1" />
+                                                            Hacer Admin
+                                                        </button>
+                                                        <button
+                                                            onClick={() => { setMakePromoterModal({ user }); setPromoterName(user.full_name || ''); }}
+                                                            className="btn btn-sm bg-purple-600 hover:bg-purple-700 text-white"
+                                                            title="Convertir en promotora"
+                                                        >
+                                                            <Megaphone className="w-4 h-4 mr-1" />
+                                                            Promotora
+                                                        </button>
+                                                    </>
                                                 ) : user.role === 'admin' ? (
                                                     <button
                                                         onClick={() => handleRoleChange(user.id, 'user')}
@@ -440,6 +469,56 @@ export default function AdminUsersPage() {
                     </button>
                 )}
             </div>
+
+            {/* Make Promoter Modal */}
+            {makePromoterModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
+                    <div className="card p-6 w-full max-w-md space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                <Megaphone className="w-5 h-5 text-purple-400" />
+                                Convertir en Promotora
+                            </h3>
+                            <button onClick={() => setMakePromoterModal(null)} className="text-gray-500 hover:text-white">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <p className="text-sm text-gray-400">
+                            Usuario: <span className="text-white font-semibold">{makePromoterModal.user.full_name}</span>
+                            <br />
+                            <span className="text-gray-500">{makePromoterModal.user.email}</span>
+                        </p>
+                        <div>
+                            <label className="block text-sm text-gray-400 mb-1">Nombre de la Promotora *</label>
+                            <input
+                                type="text"
+                                value={promoterName}
+                                onChange={(e) => setPromoterName(e.target.value)}
+                                className="input w-full"
+                                placeholder="Ej: Arena Fight Pass - Ecuador"
+                                autoFocus
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Se creará un perfil de promotora y el usuario tendrá acceso al panel de promotoras.</p>
+                        </div>
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                onClick={() => setMakePromoterModal(null)}
+                                className="btn btn-secondary flex-1"
+                                disabled={makingPromoter}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleMakePromoter}
+                                disabled={!promoterName.trim() || makingPromoter}
+                                className="btn btn-primary flex-1 bg-purple-600 hover:bg-purple-700 disabled:opacity-50"
+                            >
+                                {makingPromoter ? 'Convirtiendo...' : 'Hacer Promotora'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Grant Access Modal */}
             {grantModal && (
