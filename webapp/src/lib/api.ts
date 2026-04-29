@@ -179,6 +179,8 @@ export const eventsAPI = {
 
     delete: (id: string) =>
         api.delete(`/events/${id}`),
+    deleteForce: (id: string) =>
+        api.delete(`/events/${id}?force=true`),
 
     getStats: (id: string) =>
         api.get(`/events/${id}/stats`),

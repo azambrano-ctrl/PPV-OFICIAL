@@ -209,11 +209,17 @@ export const updateEvent = async (
 /**
  * Delete event
  */
-export const deleteEvent = async (id: string): Promise<void> => {
+export const deleteEvent = async (id: string, force = false): Promise<void> => {
     // 1. Verificar si hay compras asociadas
     const purchases = await query('SELECT COUNT(*) FROM purchases WHERE event_id = $1', [id]);
-    if (parseInt(purchases.rows[0].count) > 0) {
-        throw new Error('No se puede eliminar un evento que ya tiene ventas registradas. Considera cancelarlo o finalizarlo.');
+    const purchaseCount = parseInt(purchases.rows[0].count);
+    if (purchaseCount > 0 && !force) {
+        throw new Error(`Este evento tiene ${purchaseCount} compra(s) registrada(s). Para eliminarlo de todas formas usa la opción "Forzar eliminación".`);
+    }
+
+    // Si hay compras y se fuerza, eliminar también las compras
+    if (purchaseCount > 0 && force) {
+        await query('DELETE FROM purchases WHERE event_id = $1', [id]).catch(() => { });
     }
 
     // 2. Borrar datos técnicos asociados (borrado en cascada manual)

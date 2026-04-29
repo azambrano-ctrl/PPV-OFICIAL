@@ -98,18 +98,30 @@ export default function AdminEventsPage() {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('¿Estás seguro de que quieres eliminar este evento?')) {
-            return;
-        }
+    const handleDelete = async (id: string, force = false) => {
+        const confirmMsg = force
+            ? '⚠️ FORZAR ELIMINACIÓN: Se borrarán también todas las compras de este evento. ¿Estás seguro?'
+            : '¿Estás seguro de que quieres eliminar este evento?';
+
+        if (!confirm(confirmMsg)) return;
 
         try {
-            await eventsAPI.delete(id);
+            if (force) {
+                await eventsAPI.deleteForce(id);
+            } else {
+                await eventsAPI.delete(id);
+            }
             toast.success('Evento eliminado exitosamente');
             loadEvents();
-        } catch (error) {
+        } catch (error: any) {
             const message = handleAPIError(error);
-            toast.error(message);
+            // Si el error es por compras, ofrecer forzar eliminación
+            if (message.includes('compra')) {
+                const forceIt = confirm(`${message}\n\n¿Deseas forzar la eliminación y borrar también las compras?`);
+                if (forceIt) handleDelete(id, true);
+            } else {
+                toast.error(message);
+            }
         }
     };
 

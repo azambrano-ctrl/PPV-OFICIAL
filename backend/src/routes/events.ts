@@ -317,12 +317,13 @@ router.delete(
     requireAdmin,
     validateParams(eventIdSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await deleteEvent(req.params.id);
-
-        res.json({
-            success: true,
-            message: 'Event deleted successfully',
-        });
+        const force = req.query.force === 'true';
+        try {
+            await deleteEvent(req.params.id, force);
+            res.json({ success: true, message: 'Event deleted successfully' });
+        } catch (error: any) {
+            res.status(400).json({ success: false, message: error.message });
+        }
     })
 );
 
