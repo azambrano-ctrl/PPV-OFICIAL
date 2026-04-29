@@ -29,6 +29,8 @@ interface Event {
     event_date: string;
     status: string;
     thumbnail_url?: string;
+    waiting_room_bg_url?: string;
+    waiting_room_music_url?: string;
     price?: number;
 }
 
@@ -87,8 +89,36 @@ export default function WatchPage() {
                 const eventData = await eventRes.json();
                 setEvent(eventData.data);
 
+                // ── Waiting room check BEFORE fetching stream token ──
+                const evStatus = eventData.data.status as string;
+                const evDate = new Date(eventData.data.event_date).getTime();
+                const isScheduled =
+                    evStatus === 'scheduled' ||
+                    (evStatus !== 'live' && evStatus !== 'reprise' && evStatus !== 'finished' && evDate > Date.now());
+
+                if (isScheduled) {
+                    setShowWaitingRoom(true);
+                    // Init socket so waiting room can listen for status change
+                    const socketInstance = initSocket(token);
+                    setSocket(socketInstance);
+                    socketInstance.on('viewers_count', (data: { count: number }) => {
+                        setViewerCount(data.count);
+                    });
+                    socketInstance.on('force_logout', (data: { message: string }) => {
+                        setError(data.message);
+                        disconnectSocket();
+                        localStorage.removeItem('accessToken');
+                        localStorage.removeItem('refreshToken');
+                        localStorage.removeItem('user');
+                        useAuthStore.getState().logout();
+                        setTimeout(() => { window.location.href = '/auth/login?msg=multi_device'; }, 4000);
+                    });
+                    setLoading(false);
+                    return; // Don't attempt stream token for non-live events
+                }
+
                 // Show ad overlay for free events (pase libre) ONLY if they are not live
-                if (Number(eventData.data.price) === 0 && eventData.data.status !== 'live') {
+                if (Number(eventData.data.price) === 0 && evStatus !== 'live') {
                     setShowAdOverlay(true);
                     setAdCountdown(10);
                 }
@@ -117,13 +147,6 @@ export default function WatchPage() {
 
                 const streamResData = await streamRes.json();
                 setStreamData(streamResData.data);
-
-                // Show waiting room if event is not live and not reprise and has a future date
-                const evStatus = eventData.data.status;
-                const evDate = new Date(eventData.data.event_date).getTime();
-                if (evStatus === 'scheduled' || (evStatus !== 'live' && evStatus !== 'reprise' && evStatus !== 'finished' && evDate > Date.now())) {
-                    setShowWaitingRoom(true);
-                }
 
                 // Initialize socket
                 const socketInstance = initSocket(token);
@@ -216,15 +239,17 @@ export default function WatchPage() {
     }
 
     // Show waiting room for upcoming events
-    if (showWaitingRoom && event && !showAdOverlay) {
+    if (showWaitingRoom && event) {
         return (
             <WaitingRoom
                 event={event}
                 socket={socket}
                 onEventLive={() => {
                     setShowWaitingRoom(false);
-                    // Re-fetch stream token in case it changed
+                    // Force re-fetch so stream token is obtained now that event is live
                     lastFetchedId.current = null;
+                    disconnectSocket();
+                    setSocket(null);
                 }}
             />
         );
