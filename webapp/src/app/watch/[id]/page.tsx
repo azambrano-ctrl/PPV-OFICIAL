@@ -10,6 +10,7 @@ import VideoPlayer from '@/components/VideoPlayer';
 import ChatBox from '@/components/ChatBox';
 import ReactionLayer from '@/components/ReactionLayer';
 import AdSense from '@/components/ui/AdSense';
+import WaitingRoom from '@/components/WaitingRoom';
 import { initSocket, disconnectSocket } from '@/lib/socket';
 import { useAuthStore } from '@/lib/store';
 import type { Socket } from 'socket.io-client';
@@ -45,6 +46,7 @@ export default function WatchPage() {
     const [showAdOverlay, setShowAdOverlay] = useState(false);
     const [adCountdown, setAdCountdown] = useState(10);
     const [viewerCount, setViewerCount] = useState<number>(0);
+    const [showWaitingRoom, setShowWaitingRoom] = useState(false);
     const { user } = useAuthStore();
 
     const lastFetchedId = useRef<string | null>(null);
@@ -115,6 +117,13 @@ export default function WatchPage() {
 
                 const streamResData = await streamRes.json();
                 setStreamData(streamResData.data);
+
+                // Show waiting room if event is not live and not reprise and has a future date
+                const evStatus = eventData.data.status;
+                const evDate = new Date(eventData.data.event_date).getTime();
+                if (evStatus === 'scheduled' || (evStatus !== 'live' && evStatus !== 'reprise' && evStatus !== 'finished' && evDate > Date.now())) {
+                    setShowWaitingRoom(true);
+                }
 
                 // Initialize socket
                 const socketInstance = initSocket(token);
@@ -203,6 +212,21 @@ export default function WatchPage() {
                     </div>
                 </div>
             </div>
+        );
+    }
+
+    // Show waiting room for upcoming events
+    if (showWaitingRoom && event && !showAdOverlay) {
+        return (
+            <WaitingRoom
+                event={event}
+                socket={socket}
+                onEventLive={() => {
+                    setShowWaitingRoom(false);
+                    // Re-fetch stream token in case it changed
+                    lastFetchedId.current = null;
+                }}
+            />
         );
     }
 
