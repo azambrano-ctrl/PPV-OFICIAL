@@ -460,18 +460,33 @@ export default function EventDetailPage() {
                                                 </span>
                                             </div>
 
-                                            {isLive || isPast(eventDate) || isFinished || event.status === 'reprise' ? (
+                                            {isLive ? (
                                                 <button
                                                     onClick={handleWatchNow}
-                                                    className={`w-full btn font-black text-base py-3 ${isLive ? 'bg-green-600 hover:bg-green-500 text-white border-green-500 shadow-lg shadow-green-600/30 animate-pulse' : 'btn-primary'}`}
+                                                    className="w-full btn bg-green-600 hover:bg-green-500 text-white border-green-500 shadow-lg shadow-green-600/30 animate-pulse font-black text-base py-3"
                                                 >
                                                     <Play className="w-5 h-5 mr-2 fill-current" />
-                                                    {isLive ? '▶ Ver Ahora — En Vivo' : 'Ver Repetición'}
+                                                    ▶ Ver Ahora — En Vivo
+                                                </button>
+                                            ) : isPast(eventDate) || isFinished || event.status === 'reprise' ? (
+                                                <button
+                                                    onClick={handleWatchNow}
+                                                    className="w-full btn btn-primary font-black text-base py-3"
+                                                >
+                                                    <Play className="w-5 h-5 mr-2 fill-current" />
+                                                    Ver Repetición
                                                 </button>
                                             ) : (
-                                                <div className="text-center py-4 bg-dark-800 rounded-xl">
-                                                    <p className="text-dark-300 font-semibold">El evento comenzará pronto</p>
-                                                    <p className="text-sm text-dark-500 mt-1">Recibirás una notificación cuando inicie</p>
+                                                // Upcoming event with access → enter waiting room
+                                                <div className="space-y-3">
+                                                    <button
+                                                        onClick={handleWatchNow}
+                                                        className="w-full btn font-black text-base py-3 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 hover:text-yellow-200 transition-all"
+                                                    >
+                                                        <span className="mr-2">🎟</span>
+                                                        Entrar a Sala de Espera
+                                                    </button>
+                                                    <p className="text-center text-xs text-dark-400">El stream iniciará automáticamente cuando comience</p>
                                                 </div>
                                             )}
                                         </div>
