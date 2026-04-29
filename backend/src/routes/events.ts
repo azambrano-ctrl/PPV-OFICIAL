@@ -283,6 +283,16 @@ router.put(
                 updates.card_image_url = null;
             }
 
+            if (files?.waiting_room_bg) {
+                updates.waiting_room_bg_url = files.waiting_room_bg[0].path;
+            } else if (req.body.remove_waiting_room_bg === 'true') {
+                updates.waiting_room_bg_url = null;
+            }
+
+            if (req.body.waiting_room_music_url !== undefined) {
+                updates.waiting_room_music_url = req.body.waiting_room_music_url === '' ? null : req.body.waiting_room_music_url;
+            }
+
             if (req.body.trailer_url !== undefined) {
                 updates.trailer_url = req.body.trailer_url === '' ? null : req.body.trailer_url;
             }

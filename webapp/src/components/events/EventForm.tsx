@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, X, Plus, Clock, Calendar, DollarSign, Image as ImageIcon } from 'lucide-react';
+import { Save, X, Plus, Clock, Calendar, DollarSign, Image as ImageIcon, Music, Timer } from 'lucide-react';
 import ImageUpload from '@/components/admin/ImageUpload';
 import { eventsAPI, handleAPIError } from '@/lib/api';
 import { getImageUrl } from '@/lib/utils';
@@ -31,9 +31,12 @@ export default function EventForm({ event, onSuccess, onCancel, isAdmin }: Event
     const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
     const [bannerFile, setBannerFile] = useState<File | null>(null);
     const [cardFile, setCardFile] = useState<File | null>(null);
+    const [waitingRoomBgFile, setWaitingRoomBgFile] = useState<File | null>(null);
     const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
     const [cardPreview, setCardPreview] = useState<string | null>(null);
+    const [waitingRoomBgPreview, setWaitingRoomBgPreview] = useState<string | null>(null);
+    const [waitingRoomMusicUrl, setWaitingRoomMusicUrl] = useState('');
 
     useEffect(() => {
         if (event) {
@@ -59,6 +62,8 @@ export default function EventForm({ event, onSuccess, onCancel, isAdmin }: Event
             if (event.thumbnail_url) setThumbnailPreview(getImageUrl(event.thumbnail_url) as string | null);
             if (event.banner_url) setBannerPreview(getImageUrl(event.banner_url) as string | null);
             if (event.card_image_url) setCardPreview(getImageUrl(event.card_image_url) as string | null);
+            if (event.waiting_room_bg_url) setWaitingRoomBgPreview(getImageUrl(event.waiting_room_bg_url) as string | null);
+            if (event.waiting_room_music_url) setWaitingRoomMusicUrl(event.waiting_room_music_url);
         }
     }, [event]);
 
@@ -84,6 +89,8 @@ export default function EventForm({ event, onSuccess, onCancel, isAdmin }: Event
             if (thumbnailFile) data.append('thumbnail', thumbnailFile);
             if (bannerFile) data.append('banner', bannerFile);
             if (cardFile) data.append('card', cardFile);
+            if (waitingRoomBgFile) data.append('waiting_room_bg', waitingRoomBgFile);
+            data.append('waiting_room_music_url', waitingRoomMusicUrl);
 
             if (event?.id) {
                 await eventsAPI.update(event.id, data);
@@ -259,6 +266,54 @@ export default function EventForm({ event, onSuccess, onCancel, isAdmin }: Event
                             />
                         </div>
                     </section>
+
+                    {isAdmin && (
+                        <section className="bg-dark-900/50 p-6 rounded-3xl border border-yellow-500/20 space-y-5">
+                            <h3 className="text-lg font-bold text-white uppercase italic tracking-wider flex items-center gap-2">
+                                <Timer className="w-5 h-5 text-yellow-400" />
+                                <span className="text-yellow-400">Sala de Espera</span>
+                            </h3>
+                            <p className="text-xs text-gray-500">Se muestra a los usuarios con acceso antes de que el evento inicie.</p>
+
+                            <ImageUpload
+                                label="Fondo personalizado (reemplaza el thumbnail)"
+                                onChange={(file) => setWaitingRoomBgFile(file)}
+                                value={waitingRoomBgPreview || undefined}
+                            />
+                            {waitingRoomBgPreview && (
+                                <button
+                                    type="button"
+                                    onClick={() => { setWaitingRoomBgPreview(null); setWaitingRoomBgFile(null); }}
+                                    className="text-xs text-red-400 hover:text-red-300 font-bold uppercase tracking-wider"
+                                >
+                                    × Quitar fondo personalizado
+                                </button>
+                            )}
+
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+                                    <Music className="w-3 h-3 text-yellow-400" />
+                                    URL de Música (MP3 directo)
+                                </label>
+                                <input
+                                    type="url"
+                                    value={waitingRoomMusicUrl}
+                                    onChange={(e) => setWaitingRoomMusicUrl(e.target.value)}
+                                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-yellow-500/50 outline-none transition-all text-sm"
+                                    placeholder="https://ejemplo.com/musica.mp3"
+                                />
+                                <p className="text-[10px] text-gray-600 mt-1">Pega un enlace directo a un archivo MP3. Si está vacío, se usa la música por defecto.</p>
+                                {waitingRoomMusicUrl && (
+                                    <div className="mt-3 flex items-center gap-3 bg-dark-800 border border-dark-700 rounded-xl px-4 py-3">
+                                        <Music className="w-4 h-4 text-yellow-400 shrink-0" />
+                                        <span className="text-xs text-gray-400 truncate flex-1">{waitingRoomMusicUrl}</span>
+                                        <audio controls className="h-8" src={waitingRoomMusicUrl} />
+                                        <button type="button" onClick={() => setWaitingRoomMusicUrl('')} className="text-red-400 hover:text-red-300 text-xs font-bold shrink-0">× Quitar</button>
+                                    </div>
+                                )}
+                            </div>
+                        </section>
+                    )}
 
                     <div className="flex items-center justify-end gap-3 pt-6">
                         <button

@@ -114,6 +114,7 @@ export const uploadEventImages = handleUploads([
     { name: 'thumbnail', maxCount: 1 },
     { name: 'banner', maxCount: 1 },
     { name: 'card', maxCount: 1 },
+    { name: 'waiting_room_bg', maxCount: 1 },
 ]);
 
 export const uploadCardImages = handleUploads([

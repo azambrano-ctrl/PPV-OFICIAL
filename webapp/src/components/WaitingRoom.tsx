@@ -15,6 +15,8 @@ interface WaitingRoomProps {
         event_date: string;
         status: string;
         thumbnail_url?: string;
+        waiting_room_bg_url?: string;
+        waiting_room_music_url?: string;
         price?: number;
     };
     socket: Socket | null;
@@ -100,11 +102,12 @@ export default function WaitingRoom({ event, socket, onEventLive }: WaitingRoomP
         };
     }, [socket, onEventLive]);
 
-    // Music toggle — ambient hype loop
+    // Music toggle — use custom URL or default ambient loop
+    const DEFAULT_MUSIC = 'https://cdn.pixabay.com/audio/2022/10/16/audio_12b5c2b8b5.mp3';
     const toggleMusic = useCallback(() => {
         if (!audioRef.current) {
-            // Use a free ambient sports/hype loop from CDN
-            const audio = new Audio('https://cdn.pixabay.com/audio/2022/10/16/audio_12b5c2b8b5.mp3');
+            const musicUrl = event.waiting_room_music_url || DEFAULT_MUSIC;
+            const audio = new Audio(musicUrl);
             audio.loop = true;
             audio.volume = 0.35;
             audioRef.current = audio;
@@ -130,14 +133,19 @@ export default function WaitingRoom({ event, socket, onEventLive }: WaitingRoomP
     };
 
     const isToday = timeLeft.days === 0;
-    const thumbnail = event.thumbnail_url ? getImageUrl(event.thumbnail_url) : null;
+    // Custom bg takes priority, then thumbnail
+    const bgImage = event.waiting_room_bg_url
+        ? getImageUrl(event.waiting_room_bg_url)
+        : event.thumbnail_url
+            ? getImageUrl(event.thumbnail_url)
+            : null;
 
     return (
         <div className="fixed inset-0 flex overflow-hidden text-white">
             {/* ── Background ── */}
             <div className="absolute inset-0 z-0">
-                {thumbnail ? (
-                    <img src={thumbnail} className="w-full h-full object-cover scale-110" alt="" />
+                {bgImage ? (
+                    <img src={bgImage} className="w-full h-full object-cover scale-110" alt="" />
                 ) : (
                     <div className="w-full h-full bg-gradient-to-br from-gray-950 via-red-950/30 to-gray-950" />
                 )}
