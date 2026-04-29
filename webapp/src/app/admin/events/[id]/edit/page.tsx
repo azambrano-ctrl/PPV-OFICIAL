@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Save, Trash2, Plus, X } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Plus, X, Music, Timer } from 'lucide-react';
 import Link from 'next/link';
 import ImageUpload from '@/components/admin/ImageUpload';
 import { eventsAPI, promotersAPI, fightersAPI, handleAPIError } from '@/lib/api';
@@ -131,6 +131,9 @@ export default function EditEventPage() {
     const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
     const [bannerFile, setBannerFile] = useState<File | null>(null);
     const [trailerVideoFile, setTrailerVideoFile] = useState<File | null>(null);
+    const [waitingRoomBgFile, setWaitingRoomBgFile] = useState<File | null>(null);
+    const [waitingRoomBgPreview, setWaitingRoomBgPreview] = useState<string | null>(null);
+    const [waitingRoomMusicUrl, setWaitingRoomMusicUrl] = useState('');
     const [removeThumbnail, setRemoveThumbnail] = useState(false);
     const [removeBanner, setRemoveBanner] = useState(false);
 
@@ -210,6 +213,9 @@ export default function EditEventPage() {
                 promoter_id: event.promoter_id || '',
                 trailer_url: event.trailer_url || '',
             });
+
+            if (event.waiting_room_bg_url) setWaitingRoomBgPreview(getImageUrl(event.waiting_room_bg_url) as string);
+            if (event.waiting_room_music_url) setWaitingRoomMusicUrl(event.waiting_room_music_url);
         } catch (error) {
             const message = handleAPIError(error);
             toast.error(message);
@@ -291,6 +297,10 @@ export default function EditEventPage() {
             if (finalTrailerUrl !== undefined) {
                 data.append('trailer_url', finalTrailerUrl);
             }
+
+            // Waiting room assets
+            if (waitingRoomBgFile) data.append('waiting_room_bg', waitingRoomBgFile);
+            data.append('waiting_room_music_url', waitingRoomMusicUrl);
 
             await eventsAPI.update(eventId, data);
             toast.success('Evento actualizado exitosamente');
@@ -658,6 +668,59 @@ export default function EditEventPage() {
                         <label htmlFor="featured" className="text-sm text-gray-300">
                             Marcar como evento destacado
                         </label>
+                    </div>
+                </div>
+
+                {/* Waiting Room */}
+                <div className="card p-6 space-y-5 border border-yellow-500/20">
+                    <h2 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
+                        <Timer className="w-5 h-5 text-yellow-400" />
+                        <span className="text-yellow-400">Sala de Espera</span>
+                    </h2>
+                    <p className="text-xs text-gray-500">Se muestra a los usuarios con acceso antes de que el evento inicie.</p>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Fondo personalizado</label>
+                        <ImageUpload
+                            label="Reemplaza el thumbnail como fondo de la sala de espera"
+                            value={waitingRoomBgPreview || undefined}
+                            onChange={(file) => {
+                                setWaitingRoomBgFile(file);
+                                if (!file) setWaitingRoomBgPreview(null);
+                            }}
+                        />
+                        {waitingRoomBgPreview && (
+                            <button
+                                type="button"
+                                onClick={() => { setWaitingRoomBgPreview(null); setWaitingRoomBgFile(null); }}
+                                className="mt-2 text-xs text-red-400 hover:text-red-300 font-bold uppercase tracking-wider"
+                            >
+                                × Quitar fondo personalizado
+                            </button>
+                        )}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                            <Music className="w-4 h-4 text-yellow-400" />
+                            URL de Música (MP3 directo)
+                        </label>
+                        <input
+                            type="url"
+                            value={waitingRoomMusicUrl}
+                            onChange={(e) => setWaitingRoomMusicUrl(e.target.value)}
+                            className="input"
+                            placeholder="https://ejemplo.com/musica.mp3"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Enlace directo a un archivo MP3. Si está vacío, se usa música ambiental por defecto.</p>
+                        {waitingRoomMusicUrl && (
+                            <div className="mt-3 flex items-center gap-3 bg-dark-800 border border-dark-700 rounded-xl px-4 py-3">
+                                <Music className="w-4 h-4 text-yellow-400 shrink-0" />
+                                <span className="text-xs text-gray-400 truncate flex-1">{waitingRoomMusicUrl}</span>
+                                <audio controls className="h-8" src={waitingRoomMusicUrl} />
+                                <button type="button" onClick={() => setWaitingRoomMusicUrl('')} className="text-red-400 hover:text-red-300 text-xs font-bold shrink-0">× Quitar</button>
+                            </div>
+                        )}
                     </div>
                 </div>
 
