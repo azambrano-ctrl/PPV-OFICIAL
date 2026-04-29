@@ -214,6 +214,23 @@ export default function WatchPage() {
         );
     }
 
+    // Waiting room must be checked BEFORE the streamData guard —
+    // scheduled events never have a streamData but are valid.
+    if (showWaitingRoom && event) {
+        return (
+            <WaitingRoom
+                event={event}
+                socket={socket}
+                onEventLive={() => {
+                    setShowWaitingRoom(false);
+                    lastFetchedId.current = null;
+                    disconnectSocket();
+                    setSocket(null);
+                }}
+            />
+        );
+    }
+
     if (error || !event || !streamData) {
         return (
             <div className="min-h-screen bg-dark-950 flex items-center justify-center p-4">
@@ -235,23 +252,6 @@ export default function WatchPage() {
                     </div>
                 </div>
             </div>
-        );
-    }
-
-    // Show waiting room for upcoming events
-    if (showWaitingRoom && event) {
-        return (
-            <WaitingRoom
-                event={event}
-                socket={socket}
-                onEventLive={() => {
-                    setShowWaitingRoom(false);
-                    // Force re-fetch so stream token is obtained now that event is live
-                    lastFetchedId.current = null;
-                    disconnectSocket();
-                    setSocket(null);
-                }}
-            />
         );
     }
 
