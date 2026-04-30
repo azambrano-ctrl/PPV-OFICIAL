@@ -1,19 +1,53 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, Component } from 'react';
+import dynamic from 'next/dynamic';
 
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft, MessageSquare, Info, Share2, Tv, X } from 'lucide-react';
+import { ChevronLeft, MessageSquare, Info, Share2, Tv } from 'lucide-react';
 import toast from 'react-hot-toast';
 import VideoPlayer from '@/components/VideoPlayer';
 import ChatBox from '@/components/ChatBox';
 import ReactionLayer from '@/components/ReactionLayer';
 import AdSense from '@/components/ui/AdSense';
-import WaitingRoom from '@/components/WaitingRoom';
 import { initSocket, disconnectSocket } from '@/lib/socket';
 import { useAuthStore } from '@/lib/store';
 import type { Socket } from 'socket.io-client';
+
+// Load WaitingRoom only on client — avoids SSR/hydration crashes
+// (uses Audio API, navigator.clipboard, setInterval with Date.now())
+const WaitingRoom = dynamic(() => import('@/components/WaitingRoom'), { ssr: false });
+
+// Error boundary to display the actual error instead of a black screen
+interface EBState { error: Error | null }
+class WaitingRoomBoundary extends Component<{ children: React.ReactNode }, EBState> {
+    constructor(props: { children: React.ReactNode }) {
+        super(props);
+        this.state = { error: null };
+    }
+    static getDerivedStateFromError(error: Error) { return { error }; }
+    render() {
+        if (this.state.error) {
+            return (
+                <div className="fixed inset-0 bg-black flex flex-col items-center justify-center p-8 text-white">
+                    <Info className="w-12 h-12 text-red-500 mb-4" />
+                    <h2 className="text-xl font-bold mb-2">Error en Sala de Espera</h2>
+                    <pre className="text-xs text-red-300 bg-red-950/40 rounded-xl p-4 max-w-xl w-full overflow-auto text-left">
+                        {this.state.error.message}
+                    </pre>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="mt-6 px-6 py-3 bg-red-600 hover:bg-red-500 rounded-full font-bold text-sm"
+                    >
+                        Recargar página
+                    </button>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
 
 interface StreamData {
     token: string;
@@ -218,16 +252,18 @@ export default function WatchPage() {
     // scheduled events never have a streamData but are valid.
     if (showWaitingRoom && event) {
         return (
-            <WaitingRoom
-                event={event}
-                socket={socket}
-                onEventLive={() => {
-                    setShowWaitingRoom(false);
-                    lastFetchedId.current = null;
-                    disconnectSocket();
-                    setSocket(null);
-                }}
-            />
+            <WaitingRoomBoundary>
+                <WaitingRoom
+                    event={event}
+                    socket={socket}
+                    onEventLive={() => {
+                        setShowWaitingRoom(false);
+                        lastFetchedId.current = null;
+                        disconnectSocket();
+                        setSocket(null);
+                    }}
+                />
+            </WaitingRoomBoundary>
         );
     }
 
