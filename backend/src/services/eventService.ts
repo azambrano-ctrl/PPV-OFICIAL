@@ -172,6 +172,8 @@ export const updateEvent = async (
         'stream_url',
         'trailer_url',
         'promoter_id',
+        'waiting_room_bg_url',
+        'waiting_room_music_url',
     ];
 
     for (const [key, value] of Object.entries(updates)) {
