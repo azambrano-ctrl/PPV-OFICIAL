@@ -105,6 +105,16 @@ async function handleUpcomingToLive() {
 
         for (const event of result.rows) {
             logger.info(`[BackgroundService] Event "${event.title}" (${event.id}) is now LIVE.`);
+            // Notify all viewers in the waiting room in real time
+            try {
+                const io = (global as any).io;
+                if (io) {
+                    io.to(`event_${event.id}`).emit('event_status_change', { status: 'live' });
+                    logger.info(`[BackgroundService] Socket emitted event_status_change for ${event.id}`);
+                }
+            } catch (emitErr) {
+                logger.warn('[BackgroundService] Could not emit event_status_change:', emitErr);
+            }
         }
     } catch (error) {
         logger.error('[BackgroundService] Error updating upcoming to live:', error);

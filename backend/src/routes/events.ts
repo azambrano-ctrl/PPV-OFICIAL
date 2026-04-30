@@ -301,6 +301,14 @@ router.put(
             const event = await updateEvent(eventId, updates);
             console.log('[DEBUG] Event updated successfully in DB');
 
+            // Notify waiting room if status changed to live
+            try {
+                const io = (global as any).io;
+                if (io && updates.status) {
+                    io.to(`event_${event.id}`).emit('event_status_change', { status: event.status });
+                }
+            } catch (_) { /* non-critical */ }
+
             res.json({
                 success: true,
                 message: 'Evento actualizado exitosamente',
@@ -512,6 +520,14 @@ router.patch(
     validateBody(z.object({ status: z.enum(['upcoming', 'live', 'finished', 'cancelled', 'reprise', 'pending', 'draft']) })),
     asyncHandler(async (req: AuthRequest, res: Response) => {
         const event = await updateEventStatus(req.params.id, req.body.status);
+
+        // Notify waiting room viewers in real time when event goes live
+        try {
+            const io = (global as any).io;
+            if (io) {
+                io.to(`event_${event.id}`).emit('event_status_change', { status: event.status });
+            }
+        } catch (_) { /* non-critical */ }
 
         res.json({
             success: true,

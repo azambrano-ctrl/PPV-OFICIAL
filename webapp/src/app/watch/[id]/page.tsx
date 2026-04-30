@@ -132,9 +132,20 @@ export default function WatchPage() {
 
                 if (isScheduled) {
                     setShowWaitingRoom(true);
-                    // Init socket so waiting room can listen for status change
+                    // Init socket so waiting room can receive event_status_change
                     const socketInstance = initSocket(token);
                     setSocket(socketInstance);
+
+                    // Join the event room immediately so we receive socket events
+                    // (don't wait for ChatBox — it's hidden on mobile)
+                    socketInstance.on('connect', () => {
+                        socketInstance.emit('join_event', eventId);
+                    });
+                    // If already connected, join right away
+                    if (socketInstance.connected) {
+                        socketInstance.emit('join_event', eventId);
+                    }
+
                     socketInstance.on('viewers_count', (data: { count: number }) => {
                         setViewerCount(data.count);
                     });
