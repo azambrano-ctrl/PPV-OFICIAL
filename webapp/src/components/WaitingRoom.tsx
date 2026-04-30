@@ -1,11 +1,14 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Music, MusicOff, Users, Share2, Bell, Zap } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { Music, MusicOff, Users, Share2, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
-import ChatBox from '@/components/ChatBox';
 import { getImageUrl } from '@/lib/utils';
 import type { Socket } from 'socket.io-client';
+
+// Load ChatBox dynamically to prevent SSR issues with framer-motion/socket.io
+const ChatBox = dynamic(() => import('@/components/ChatBox'), { ssr: false });
 
 interface WaitingRoomProps {
     event: {
