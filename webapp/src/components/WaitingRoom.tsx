@@ -45,7 +45,7 @@ function getTimeLeft(targetDate: string): TimeLeft {
 
 function pad(n: number) { return String(n).padStart(2, '0'); }
 
-const DEFAULT_MUSIC = 'https://cdn.pixabay.com/audio/2022/10/16/audio_12b5c2b8b5.mp3';
+const DEFAULT_MUSIC: string | null = null; // no default — admin must configure music URL
 
 export default function WaitingRoom({ event, socket, onEventLive }: WaitingRoomProps) {
     const [timeLeft, setTimeLeft] = useState<TimeLeft>(() => getTimeLeft(event.event_date));
@@ -103,10 +103,13 @@ export default function WaitingRoom({ event, socket, onEventLive }: WaitingRoomP
         };
     }, [socket, onEventLive]);
 
+    const hasMusicUrl = !!(event.waiting_room_music_url || DEFAULT_MUSIC);
+
     // Music toggle
     const toggleMusic = useCallback(() => {
         if (!audioRef.current) {
             const musicUrl = event.waiting_room_music_url || DEFAULT_MUSIC;
+            if (!musicUrl) return;
             const audio = new Audio(musicUrl);
             audio.loop = true;
             audio.volume = 0.5;
@@ -233,19 +236,21 @@ export default function WaitingRoom({ event, socket, onEventLive }: WaitingRoomP
 
                     {/* Action bar */}
                     <div className="flex items-center gap-3 flex-wrap justify-center">
-                        {/* Music toggle */}
-                        <button
-                            onClick={toggleMusic}
-                            className={[
-                                'flex items-center gap-2 px-5 py-3 rounded-full text-sm font-bold uppercase tracking-wider transition-all',
-                                musicOn
-                                    ? 'bg-red-600 text-white shadow-lg shadow-red-600/30'
-                                    : 'bg-white/10 border border-white/20 text-white/70 hover:text-white hover:bg-white/20',
-                            ].join(' ')}
-                        >
-                            {musicOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-                            {musicOn ? 'Música: ON' : 'Música: OFF'}
-                        </button>
+                        {/* Music toggle — only shown when a music URL is configured */}
+                        {hasMusicUrl && (
+                            <button
+                                onClick={toggleMusic}
+                                className={[
+                                    'flex items-center gap-2 px-5 py-3 rounded-full text-sm font-bold uppercase tracking-wider transition-all',
+                                    musicOn
+                                        ? 'bg-red-600 text-white shadow-lg shadow-red-600/30'
+                                        : 'bg-white/10 border border-white/20 text-white/70 hover:text-white hover:bg-white/20',
+                                ].join(' ')}
+                            >
+                                {musicOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                                {musicOn ? 'Música: ON' : 'Música: OFF'}
+                            </button>
+                        )}
 
                         {/* Share */}
                         <button

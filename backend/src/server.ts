@@ -50,15 +50,19 @@ const httpServer = createServer(app);
 // Socket.io setup for real-time chat
 const allowedOrigins = [
     process.env.WEB_URL,
+    process.env.FRONTEND_URL,
     'http://localhost:3000',
     'http://localhost:5173',
 ].filter(Boolean) as string[];
 
 const io = new Server(httpServer, {
     cors: {
-        origin: allowedOrigins,
+        // If no origins configured (misconfigured env) allow all to avoid silent failures
+        origin: allowedOrigins.length > 2 ? allowedOrigins : true,
         credentials: true,
     },
+    // Allow both websocket and polling fallback
+    transports: ['websocket', 'polling'],
 });
 
 // Inject io into global for services to use
