@@ -1,14 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
-import dynamic from 'next/dynamic';
-import { Music, MusicOff, Users, Share2, Zap } from 'lucide-react';
+import { useEffect, useRef, useState, useCallback, Suspense } from 'react';
+import { Music, Volume2, VolumeX, Users, Share2, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ChatBox from '@/components/ChatBox';
 import { getImageUrl } from '@/lib/utils';
 import type { Socket } from 'socket.io-client';
-
-// Load ChatBox dynamically to prevent SSR issues with framer-motion/socket.io
-const ChatBox = dynamic(() => import('@/components/ChatBox'), { ssr: false });
 
 interface WaitingRoomProps {
     event: {
@@ -48,8 +45,10 @@ function getTimeLeft(targetDate: string): TimeLeft {
 
 function pad(n: number) { return String(n).padStart(2, '0'); }
 
+const DEFAULT_MUSIC = 'https://cdn.pixabay.com/audio/2022/10/16/audio_12b5c2b8b5.mp3';
+
 export default function WaitingRoom({ event, socket, onEventLive }: WaitingRoomProps) {
-    const [timeLeft, setTimeLeft] = useState<TimeLeft>(getTimeLeft(event.event_date));
+    const [timeLeft, setTimeLeft] = useState<TimeLeft>(() => getTimeLeft(event.event_date));
     const [musicOn, setMusicOn] = useState(false);
     const [viewerCount, setViewerCount] = useState(0);
     const [pulse, setPulse] = useState(false);
@@ -61,7 +60,6 @@ export default function WaitingRoom({ event, socket, onEventLive }: WaitingRoomP
         const tick = setInterval(() => {
             const t = getTimeLeft(event.event_date);
             setTimeLeft(t);
-            // Pulse animation on each second
             setPulse(true);
             setTimeout(() => setPulse(false), 300);
             if (t.total <= 0) clearInterval(tick);
@@ -105,8 +103,7 @@ export default function WaitingRoom({ event, socket, onEventLive }: WaitingRoomP
         };
     }, [socket, onEventLive]);
 
-    // Music toggle — use custom URL or default ambient loop
-    const DEFAULT_MUSIC = 'https://cdn.pixabay.com/audio/2022/10/16/audio_12b5c2b8b5.mp3';
+    // Music toggle
     const toggleMusic = useCallback(() => {
         if (!audioRef.current) {
             const musicUrl = event.waiting_room_music_url || DEFAULT_MUSIC;
@@ -120,8 +117,8 @@ export default function WaitingRoom({ event, socket, onEventLive }: WaitingRoomP
         } else {
             audioRef.current.play().catch(() => toast.error('Activa el audio en tu navegador'));
         }
-        setMusicOn(!musicOn);
-    }, [musicOn]);
+        setMusicOn(prev => !prev);
+    }, [musicOn, event.waiting_room_music_url]);
 
     // Cleanup audio on unmount
     useEffect(() => {
@@ -131,34 +128,33 @@ export default function WaitingRoom({ event, socket, onEventLive }: WaitingRoomP
     }, []);
 
     const shareEvent = () => {
-        navigator.clipboard.writeText(window.location.href);
-        toast.success('¡Enlace copiado!');
+        if (typeof navigator !== 'undefined' && navigator.clipboard) {
+            navigator.clipboard.writeText(window.location.href);
+            toast.success('¡Enlace copiado!');
+        }
     };
 
     const isToday = timeLeft.days === 0;
-    // Custom bg takes priority, then thumbnail
     const bgImage = event.waiting_room_bg_url
         ? getImageUrl(event.waiting_room_bg_url)
         : event.thumbnail_url
             ? getImageUrl(event.thumbnail_url)
-            : null;
+            : undefined;
 
     return (
         <div className="fixed inset-0 flex overflow-hidden text-white">
-            {/* ── Background ── */}
+            {/* Background */}
             <div className="absolute inset-0 z-0">
                 {bgImage ? (
                     <img src={bgImage} className="w-full h-full object-cover scale-110" alt="" />
                 ) : (
                     <div className="w-full h-full bg-gradient-to-br from-gray-950 via-red-950/30 to-gray-950" />
                 )}
-                {/* Heavy blur + dark overlay */}
                 <div className="absolute inset-0 backdrop-blur-2xl bg-black/75" />
-                {/* Radial glow center */}
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(220,38,38,0.15)_0%,_transparent_70%)]" />
             </div>
 
-            {/* ── Main content ── */}
+            {/* Main content */}
             <div className="relative z-10 flex flex-1 flex-col md:flex-row overflow-hidden">
 
                 {/* Left: Waiting area */}
@@ -185,27 +181,25 @@ export default function WaitingRoom({ event, socket, onEventLive }: WaitingRoomP
                     </div>
 
                     {/* Countdown */}
-                    <div className="flex items-start gap-3 sm:gap-6">
-                        {[
+                    <div className="flex items-start gap-1 sm:gap-4">
+                        {([
                             { label: 'Días', value: timeLeft.days },
                             { label: 'Horas', value: timeLeft.hours },
                             { label: 'Min', value: timeLeft.minutes },
                             { label: 'Seg', value: timeLeft.seconds },
-                        ].map((unit, i) => (
-                            <div key={unit.label} className="flex items-start gap-3 sm:gap-6">
+                        ] as const).map((unit, i) => (
+                            <div key={unit.label} className="flex items-start gap-1 sm:gap-4">
                                 <div className="flex flex-col items-center">
-                                    <div className={`
-                                        relative w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32
-                                        bg-white/5 border border-white/10 backdrop-blur-sm rounded-2xl
-                                        flex items-center justify-center
-                                        shadow-[0_0_30px_rgba(220,38,38,0.2)]
-                                        transition-transform duration-300
-                                        ${unit.label === 'Seg' && pulse ? 'scale-95' : 'scale-100'}
-                                    `}>
+                                    <div className={[
+                                        'relative w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32',
+                                        'bg-white/5 border border-white/10 backdrop-blur-sm rounded-2xl',
+                                        'flex items-center justify-center',
+                                        'shadow-[0_0_30px_rgba(220,38,38,0.2)] transition-transform duration-300',
+                                        unit.label === 'Seg' && pulse ? 'scale-95' : 'scale-100',
+                                    ].join(' ')}>
                                         <span className="text-4xl sm:text-6xl md:text-7xl font-black tabular-nums tracking-tighter">
                                             {pad(unit.value)}
                                         </span>
-                                        {/* Top shine */}
                                         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-t-2xl" />
                                     </div>
                                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mt-2">
@@ -213,32 +207,33 @@ export default function WaitingRoom({ event, socket, onEventLive }: WaitingRoomP
                                     </span>
                                 </div>
                                 {i < 3 && (
-                                    <span className="text-4xl sm:text-6xl font-black text-white/20 mt-3 sm:mt-5">:</span>
+                                    <span className="text-4xl sm:text-6xl font-black text-white/20 mt-3 sm:mt-5 select-none">:</span>
                                 )}
                             </div>
                         ))}
                     </div>
 
-                    {/* Fecha legible */}
+                    {/* Readable date */}
                     <p className="text-white/40 text-sm font-bold uppercase tracking-widest">
-                        {new Date(event.event_date).toLocaleDateString('es-EC', {
+                        {new Date(event.event_date).toLocaleString('es-EC', {
                             weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-                            hour: '2-digit', minute: '2-digit'
+                            hour: '2-digit', minute: '2-digit',
                         })}
                     </p>
 
                     {/* Action bar */}
                     <div className="flex items-center gap-3 flex-wrap justify-center">
-                        {/* Music */}
+                        {/* Music toggle */}
                         <button
                             onClick={toggleMusic}
-                            className={`flex items-center gap-2 px-5 py-3 rounded-full text-sm font-bold uppercase tracking-wider transition-all
-                                ${musicOn
+                            className={[
+                                'flex items-center gap-2 px-5 py-3 rounded-full text-sm font-bold uppercase tracking-wider transition-all',
+                                musicOn
                                     ? 'bg-red-600 text-white shadow-lg shadow-red-600/30'
-                                    : 'bg-white/10 border border-white/20 text-white/70 hover:text-white hover:bg-white/20'
-                                }`}
+                                    : 'bg-white/10 border border-white/20 text-white/70 hover:text-white hover:bg-white/20',
+                            ].join(' ')}
                         >
-                            {musicOn ? <Music className="w-4 h-4" /> : <MusicOff className="w-4 h-4" />}
+                            {musicOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
                             {musicOn ? 'Música: ON' : 'Música: OFF'}
                         </button>
 
@@ -255,12 +250,12 @@ export default function WaitingRoom({ event, socket, onEventLive }: WaitingRoomP
                         {viewerCount > 0 && (
                             <div className="flex items-center gap-2 px-4 py-3 rounded-full bg-white/5 border border-white/10 text-white/50 text-sm">
                                 <Users className="w-4 h-4" />
-                                <span className="font-bold">{viewerCount} esperando</span>
+                                <span className="font-bold">{viewerCount.toLocaleString()} esperando</span>
                             </div>
                         )}
                     </div>
 
-                    {/* Hype message */}
+                    {/* Hype */}
                     <div className="flex items-center gap-2 text-white/30 text-xs font-bold uppercase tracking-widest animate-pulse">
                         <Zap className="w-3 h-3 text-yellow-500/60" />
                         El stream iniciará automáticamente cuando comience el evento
@@ -278,12 +273,14 @@ export default function WaitingRoom({ event, socket, onEventLive }: WaitingRoomP
                         </span>
                     </div>
                     <div className="flex-1 min-h-0">
-                        <ChatBox
-                            eventId={event.id}
-                            eventTitle={event.title}
-                            eventStatus={event.status}
-                            socket={socket}
-                        />
+                        <Suspense fallback={<div className="flex-1" />}>
+                            <ChatBox
+                                eventId={event.id}
+                                eventTitle={event.title}
+                                eventStatus={event.status}
+                                socket={socket}
+                            />
+                        </Suspense>
                     </div>
                 </div>
             </div>
