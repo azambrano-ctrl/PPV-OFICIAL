@@ -109,15 +109,25 @@ export default function WaitingRoom({ event, socket, onEventLive }: WaitingRoomP
             const musicUrl = event.waiting_room_music_url || DEFAULT_MUSIC;
             const audio = new Audio(musicUrl);
             audio.loop = true;
-            audio.volume = 0.35;
+            audio.volume = 0.5;
+            audio.onerror = () => {
+                toast.error('No se pudo cargar la música de sala de espera');
+                setMusicOn(false);
+                audioRef.current = null;
+            };
             audioRef.current = audio;
         }
         if (musicOn) {
             audioRef.current.pause();
+            setMusicOn(false);
         } else {
-            audioRef.current.play().catch(() => toast.error('Activa el audio en tu navegador'));
+            audioRef.current.play()
+                .then(() => setMusicOn(true))
+                .catch(() => {
+                    toast.error('El navegador bloqueó el audio. Intenta de nuevo.');
+                    setMusicOn(false);
+                });
         }
-        setMusicOn(prev => !prev);
     }, [musicOn, event.waiting_room_music_url]);
 
     // Cleanup audio on unmount
@@ -150,8 +160,8 @@ export default function WaitingRoom({ event, socket, onEventLive }: WaitingRoomP
                 ) : (
                     <div className="w-full h-full bg-gradient-to-br from-gray-950 via-red-950/30 to-gray-950" />
                 )}
-                <div className="absolute inset-0 backdrop-blur-2xl bg-black/75" />
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(220,38,38,0.15)_0%,_transparent_70%)]" />
+                <div className="absolute inset-0 backdrop-blur-sm bg-black/55" />
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(220,38,38,0.10)_0%,_transparent_70%)]" />
             </div>
 
             {/* Main content */}
